@@ -43,24 +43,26 @@ Bookly está organizado en **microservicios independientes** dentro de un **mono
 ```
 📂 bookly-monorepo  
 ├── **apps/** *(Microservicios principales)*  
-│   ├── **auth-service/** → Gestión de autenticación y usuarios  
-│   ├── **resources-service/** → Administración de espacios y equipos  
-│   ├── **availability-service/** → Disponibilidad y reservas  
-│   ├── **stockpile-service/** → Aprobaciones y solicitudes  
-│   ├── **reports-service/** → Reportes y análisis de uso  
-│   ├── **api-gateway/** → Balanceo de carga y seguridad  
+│   ├── **auth-app/** → Gestión de autenticación y usuarios  
+│   ├── **resources-app/** → Administración de espacios y equipos  
+│   ├── **availability-app/** → Disponibilidad y reservas  
+│   ├── **stockpile-app/** → Aprobaciones y solicitudes  
+│   ├── **reports-app/** → Reportes y análisis de uso  
+│   ├── **notifications-app/** → Notificaciones y comunicacion con usuarios  
+│   ├── **gateway/** → Balanceo de carga y seguridad  
 │  
-├── **libs/** *(Librerías compartidas entre microservicios)*  
+├── **libs/** *(Librerías compartidas entre microservicios)*
 │   ├── **common/** → Middlewares, interceptores, utilidades  
 │   ├── **dto/** → Data Transfer Objects (DTOs)  
 │   ├── **event-bus/** → Implementación de eventos RabbitMQ  
 │   ├── **monitoring/** → OpenTelemetry y Sentry  
+│   ├── **ui-atomic/** → UI en Atomic Design reusable en varias apps
 │  
 ├── **infrastructure/** *(Infraestructura como Código - IaC)*  
 │   ├── **pulumi/** → Configuración de despliegue en la nube  
 │   ├── **k8s/** → Archivos YAML para Kubernetes  
 │  
-├── **tests/** *(Pruebas automatizadas con Jasmine - BDD)*  
+├── **tests/** *(Pruebas automatizadas con Jest - BDD)*  
 ├── **scripts/** *(Automatización de despliegue con GitHub Actions)*  
 ```
 
