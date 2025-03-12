@@ -46,27 +46,27 @@ lerna-debug.log
 *.swn
 
 # 6. 🏗 Archivos de infraestructura y despliegue (Pulumi, Terraform, Kubernetes)
-pulumi/
-*.tfstate
-*.tfstate.backup
-pulumi.*.yaml
-pulumi.*.json
+#pulumi/
+#*.tfstate
+#*.tfstate.backup
+#pulumi.*.yaml
+#pulumi.*.json
 *.tfvars
 *.terraform.lock.hcl
-.kube/
-k8s/
-k8s/*.yaml
-helm/
-helm/*.tgz
+#.kube/
+#k8s/
+#k8s/*.yaml
+#helm/
+#helm/*.tgz
 
 # 7. 🚦 SonarQube y herramientas de calidad
-.sonar/
-sonar-project.properties
+#.sonar/
+#sonar-project.properties
 
 # 8. 🤖 Archivos de CI/CD y GitHub Actions
-.github/workflows/
-.github/*.yml
-.github/*.yaml
+#.github/workflows/
+#.github/*.yml
+#.github/*.yaml
 
 # 9. 🎨 Archivos del Frontend (Next.js, Storybook, Vite)
 .next/

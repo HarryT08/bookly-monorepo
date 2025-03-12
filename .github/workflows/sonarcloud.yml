@@ -1,0 +1,47 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - trunk
+      - develop
+      - sonarcloud
+  pull_request:
+    branches:
+      - trunk
+      - develop
+      - sonarcloud
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run linting and tests
+        run: |
+          nx affected --target=lint
+          nx affected --target=test --ci --code-coverage
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=bookly-monorepo
+            -Dsonar.organization=henderorlando
+            -Dsonar.sources=./
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**
+            -Dsonar.tests=./
+            -Dsonar.test.inclusions=**/*.spec.ts
+            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
