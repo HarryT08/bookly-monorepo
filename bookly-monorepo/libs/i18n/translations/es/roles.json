@@ -1,0 +1,7 @@
+{
+  "CREATE_SUCCESS": "Rol creado exitosamente.",
+  "UPDATE_SUCCESS": "Rol actualizado exitosamente.",
+  "DELETE_SUCCESS": "Rol eliminado exitosamente.",
+  "ASSIGN_SUCCESS": "Rol asignado exitosamente.",
+  "NOT_FOUND": "Rol no encontrado."
+}
