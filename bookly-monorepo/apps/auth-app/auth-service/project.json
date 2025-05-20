@@ -17,6 +17,13 @@
         }
       }
     },
+    "dev": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "auth-service:build:development",
+        "watch": true
+      }
+    },
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",

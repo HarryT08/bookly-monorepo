@@ -1,6 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateRoleDto } from '../dto/create-role.dto';
-import { AssignRoleDto } from '../dto/assign-role.dto';
 import { I18nContext } from 'nestjs-i18n';
 import { Logger } from '@bookly-monorepo/logging';
 
@@ -11,9 +9,9 @@ export class RolesService {
     { id: '2', name: 'user' },
   ];
   private userRoles = {} as Record<string, string[]>;
-  constructor(private readonly logger: Logger) {}
+  private readonly logger = new Logger(RolesService.name);
 
-  async createRole(createRoleDto: CreateRoleDto, i18n: I18nContext) {
+  async createRole(createRoleDto: any, i18n: I18nContext) {
     const newRole = { id: (this.roles.length + 1).toString(), name: createRoleDto.name };
     this.roles.push(newRole);
     this.logger.info('Role created', newRole);
@@ -24,7 +22,7 @@ export class RolesService {
     return { roles: this.roles };
   }
 
-  async updateRole(id: string, createRoleDto: CreateRoleDto, i18n: I18nContext) {
+  async updateRole(id: string, createRoleDto: any, i18n: I18nContext) {
     const role = this.roles.find(r => r.id === id);
     if (!role) throw new NotFoundException(await i18n.t('roles.NOT_FOUND'));
     role.name = createRoleDto.name;
@@ -40,7 +38,7 @@ export class RolesService {
     return { message: await i18n.t('roles.DELETE_SUCCESS') };
   }
 
-  async assignRole(assignRoleDto: AssignRoleDto, i18n: I18nContext) {
+  async assignRole(assignRoleDto: any, i18n: I18nContext) {
     if (!this.userRoles[assignRoleDto.userId]) {
       this.userRoles[assignRoleDto.userId] = [];
     }

@@ -1,11 +1,44 @@
 import { Body, Controller, HttpException, HttpStatus, Post, Inject } from '@nestjs/common';
-import { AuthResponseDto, CreateUserDto, LoginDto, RefreshTokenDto, UserResponseDto } from '@bookly-monorepo/dto';
+import { Logger } from '@bookly-monorepo/logging';
+
+// Define DTOs locally until properly shared in @bookly-monorepo/dto
+class CreateUserDto {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+class LoginDto {
+  email: string;
+  password: string;
+}
+
+class RefreshTokenDto {
+  refreshToken: string;
+}
+
+class UserResponseDto {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+class AuthResponseDto {
+  accessToken: string;
+  refreshToken: string;
+  user: UserResponseDto;
+}
+
 import { LoginUserCommand } from '../../application/commands/login-user.command';
 import { RegisterUserCommand } from '../../application/commands/register-user.command';
-import { CommandBus } from '../../app/buses/cqrs-bus';
+import { CommandBus } from '../../application/buses/cqrs-bus';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     @Inject('CommandBus') private readonly commandBus: CommandBus
   ) {}
@@ -15,12 +48,13 @@ export class AuthController {
    */
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    this.logger.info('User registration attempt', { email: createUserDto.email });
     try {
       const command = new RegisterUserCommand(createUserDto);
       return await this.commandBus.execute(command);
     } catch (error) {
       throw new HttpException(
-        error.message || 'Error al registrar usuario',
+        error.message ?? 'Error al registrar usuario',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -36,7 +70,7 @@ export class AuthController {
       return await this.commandBus.execute(command);
     } catch (error) {
       throw new HttpException(
-        error.message || 'Credenciales inválidas',
+        error.message ?? 'Credenciales inválidas',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -53,7 +87,7 @@ export class AuthController {
       return await this.commandBus.execute(command);
     } catch (error) {
       throw new HttpException(
-        error.message || 'Token inválido o expirado',
+        error.message ?? 'Token inválido o expirado',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -71,7 +105,7 @@ export class AuthController {
       return { success: true };
     } catch (error) {
       throw new HttpException(
-        error.message || 'Error al cerrar sesión',
+        error.message ?? 'Error al cerrar sesión',
         HttpStatus.BAD_REQUEST,
       );
     }

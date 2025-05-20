@@ -6,9 +6,9 @@ import { ModuleRef } from '@nestjs/core';
  */
 @Injectable()
 export class CommandBus {
-  private handlers = new Map<string, any>();
+  private readonly handlers = new Map<string, any>();
 
-  constructor(private moduleRef: ModuleRef) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   /**
    * Registra un manejador de comandos
@@ -34,19 +34,23 @@ export class CommandBus {
   }
 
   /**
-   * Hook que NestJS llama cuando el mu00f3dulo se inicializa
+   * Hook que NestJS llama cuando el módulo se inicializa
    */
   async onModuleInit() {
-    // En versiones recientes de NestJS, introspect requiere un token
-    // Como este es un ejemplo/código simulado, simplemente comentamos esto por ahora
-    // y lo implementamos manualmente cuando sea necesario
-    
-    // const providers = this.moduleRef.introspect(/* token */);
+    try {
+      // En versiones recientes de NestJS, introspect requiere un token
+      // Como este es un ejemplo/código simulado, simplemente comentamos esto por ahora
+      // y lo implementamos manualmente cuando sea necesario
 
-    // Por simplicidad, haremos esto manualmente en onModuleInit de cada handler
-    // Ejemplo de cómo se registraría manualmente:
-    // const loginHandler = await this.moduleRef.resolve(LoginUserHandler);
-    // this.registerHandler('auth.loginUser', loginHandler);
+      // const providers = this.moduleRef.introspect(/* token */);
+
+      // Por simplicidad, haremos esto manualmente en onModuleInit de cada handler
+      // Ejemplo de cómo se registraría manualmente:
+      // const loginHandler = await this.moduleRef.resolve(LoginUserHandler);
+      // this.registerHandler('auth.loginUser', loginHandler);
+    } catch (error) {
+      console.error('Error inicializando CommandBus:', error);
+    }
   }
 }
 
@@ -55,9 +59,9 @@ export class CommandBus {
  */
 @Injectable()
 export class QueryBus {
-  private handlers = new Map<string, any>();
+  private readonly handlers = new Map<string, any>();
 
-  constructor(private moduleRef: ModuleRef) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   /**
    * Registra un manejador de consultas
@@ -86,11 +90,15 @@ export class QueryBus {
    * Hook que NestJS llama cuando el mu00f3dulo se inicializa
    */
   async onModuleInit() {
-    // Similar a CommandBus, aquí usaremos una implementación manual
-    // El método introspect en versiones recientes requiere un token
-    
-    // Ejemplo de cómo se registraría manualmente:
-    // const profileHandler = await this.moduleRef.resolve(GetUserProfileHandler);
-    // this.registerHandler('auth.getUserProfile', profileHandler);
+    try {
+      // Similar a CommandBus, aquí usaremos una implementación manual
+      // El método introspect en versiones recientes requiere un token
+
+      // Ejemplo de cómo se registraría manualmente:
+      // const profileHandler = await this.moduleRef.resolve(GetUserProfileHandler);
+      // this.registerHandler('auth.getUserProfile', profileHandler);
+    } catch (error) {
+      console.error('Error inicializando QueryBus:', error);
+    }
   }
 }

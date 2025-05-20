@@ -1,24 +1,27 @@
 import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { LoginDto } from '../dto/login.dto';
 import { I18nContext } from 'nestjs-i18n';
 import { Logger } from '@bookly-monorepo/logging';
 import { User } from '../../domain/entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly logger: Logger) {}
+  private readonly logger = new Logger(AuthService.name);
 
-  async register(createUserDto: CreateUserDto, i18n: I18nContext) {
-    // Simulación registro
+  constructor(
+    private readonly jwtService: JwtService
+  ) {}
+
+  async register(createUserDto: any, i18n: I18nContext) {
+    // Implementation to be moved to command handlers
     this.logger.info('User registered', { email: createUserDto.email });
     return {
       message: await i18n.t('auth.REGISTER_SUCCESS'),
     };
   }
 
-  async login(loginDto: LoginDto, i18n: I18nContext) {
-    // Simulación autenticación
+  async login(loginDto: any, i18n: I18nContext) {
+    // Implementation to be moved to command handlers
     const isValid = loginDto.email === 'test@example.com' && loginDto.password === 'password123';
     if (!isValid) {
       this.logger.warn(`Login failed for email: ${loginDto.email}`);
@@ -32,7 +35,7 @@ export class AuthService {
   }
 
   async logout(user: Partial<User>, i18n: I18nContext) {
-    // Simulación logout
+    // Implementation to be moved to command handlers
     this.logger.info('User logged out', { userId: user?.id });
     return {
       message: await i18n.t('auth.LOGOUT_SUCCESS'),
@@ -40,7 +43,7 @@ export class AuthService {
   }
 
   async sendPasswordReset(email: string, i18n: I18nContext) {
-    // Simulación envío de correo de recuperación
+    // Implementation to be moved to command handlers
     if (email !== 'test@example.com') {
       this.logger.warn(`Password reset requested for non-existent user: ${email}`);
       throw new NotFoundException(await i18n.t('auth.LOGIN_FAILED'));
@@ -52,7 +55,7 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string, i18n: I18nContext) {
-    // Simulación de reseteo de contraseña
+    // Implementation to be moved to command handlers
     if (token !== 'valid-token') {
       this.logger.warn(`Invalid password reset token: ${token}`);
       throw new UnauthorizedException(await i18n.t('auth.LOGIN_FAILED'));

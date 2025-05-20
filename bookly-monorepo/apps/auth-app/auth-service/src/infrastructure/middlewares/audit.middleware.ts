@@ -12,7 +12,7 @@ declare module 'express' {
 
 @Injectable()
 export class AuditMiddleware implements NestMiddleware {
-  constructor(private readonly logger: Logger) {}
+  private readonly logger = new Logger(AuditMiddleware.name);
 
   use(req: Request, res: Response, next: NextFunction) {
     const user = req.user ?? {};

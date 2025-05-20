@@ -7,11 +7,11 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AuthModule } from './app/auth.module';
+import { AppModule } from './application/app.module';
 
 async function bootstrap() {
   // Crear la aplicaciu00f3n NestJS
-  const app = await NestFactory.create(AuthModule);
+  const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
   // Configurar prefijo global para las rutas

@@ -8,7 +8,7 @@ export default () => ({
 
   // MongoDB
   database: {
-    uri: process.env.MONGODB_URI ?? 'mongodb://user:pass@localhost:27017/bookly-auth',
+    uri: process.env.MONGODB_URI ?? 'mongodb://user:pass@localhost:27017/',
   },
 
   // JWT
