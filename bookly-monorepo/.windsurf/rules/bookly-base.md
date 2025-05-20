@@ -3,7 +3,7 @@ trigger: always_on
 ---
 
 # Bookly – Sistema de Reservas Institucionales
-Bookly es una solución tecnológica diseñada para optimizar la gestión de reservas de espacios institucionales (salas, auditorios, equipos, etc.) en universidades como la Universidad Francisco de Paula Santander (UFPS).
+Bookly es una solución tecnológica diseñada para optimizar la gestión de reservas de espacios y recursos institucionales (salas, auditorios, equipos, etc.) en universidades como la Universidad Francisco de Paula Santander (UFPS).
 ## ✨ Arquitectura General
 Bookly sigue los principios de:
 - Arquitectura Hexagonal (Ports & Adapters)

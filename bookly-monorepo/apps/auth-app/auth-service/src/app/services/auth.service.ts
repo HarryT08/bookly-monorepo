@@ -3,6 +3,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { LoginDto } from '../dto/login.dto';
 import { I18nContext } from 'nestjs-i18n';
 import { Logger } from '@bookly-monorepo/logging';
+import { User } from '../../domain/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +21,7 @@ export class AuthService {
     // Simulación autenticación
     const isValid = loginDto.email === 'test@example.com' && loginDto.password === 'password123';
     if (!isValid) {
-      this.logger.warn('Login failed', { email: loginDto.email });
+      this.logger.warn(`Login failed for email: ${loginDto.email}`);
       throw new UnauthorizedException(await i18n.t('auth.LOGIN_FAILED'));
     }
     this.logger.info('User logged in', { email: loginDto.email });
@@ -30,7 +31,7 @@ export class AuthService {
     };
   }
 
-  async logout(user: any, i18n: I18nContext) {
+  async logout(user: Partial<User>, i18n: I18nContext) {
     // Simulación logout
     this.logger.info('User logged out', { userId: user?.id });
     return {
@@ -41,7 +42,7 @@ export class AuthService {
   async sendPasswordReset(email: string, i18n: I18nContext) {
     // Simulación envío de correo de recuperación
     if (email !== 'test@example.com') {
-      this.logger.warn('Password reset requested for non-existent user', { email });
+      this.logger.warn(`Password reset requested for non-existent user: ${email}`);
       throw new NotFoundException(await i18n.t('auth.LOGIN_FAILED'));
     }
     this.logger.info('Password reset email sent', { email });
@@ -53,7 +54,7 @@ export class AuthService {
   async resetPassword(token: string, newPassword: string, i18n: I18nContext) {
     // Simulación de reseteo de contraseña
     if (token !== 'valid-token') {
-      this.logger.warn('Invalid password reset token', { token });
+      this.logger.warn(`Invalid password reset token: ${token}`);
       throw new UnauthorizedException(await i18n.t('auth.LOGIN_FAILED'));
     }
     this.logger.info('Password reset successful', { token });
