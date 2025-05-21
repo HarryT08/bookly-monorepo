@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventBusModule } from '@bookly-monorepo/event-bus';
+import { CqrsModule, CommandBus, QueryBus } from '@nestjs/cqrs';
 
 // Import controllers, services and schemas
 import { UsersController } from '../infrastructure/controllers/users.controller';
@@ -12,14 +13,18 @@ import { MongooseUserRepository } from '../infrastructure/repositories/mongoose-
 
 // Import event-related classes
 import { UserEventsPublisher } from '../infrastructure/event-publishers/user-events.publisher';
-import { AuthEventsListener } from '../infrastructure/event-listeners/auth-events.listener';
+import { 
+  AuthEventsModule, 
+  UserRegisteredHandler, 
+  UserAuthenticatedHandler, 
+  UsersCommandHandler 
+} from '../infrastructure/event-listeners/auth-events.listener';
 
 // Import commands and queries handlers
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 
-// Import the command bus
-import { CqrsModule } from '@nestjs/cqrs';
+// Usamos CqrsModule para la arquitectura de comandos y consultas
 
 @Module({
   imports: [
@@ -43,10 +48,23 @@ import { CqrsModule } from '@nestjs/cqrs';
   providers: [
     UserService,
     UserEventsPublisher,
-    AuthEventsListener,
+    // Nuevo módulo y handlers de eventos
+    AuthEventsModule,
+    UserRegisteredHandler,
+    UserAuthenticatedHandler,
+    UsersCommandHandler,
     {
       provide: 'UserRepository',
       useClass: MongooseUserRepository,
+    },
+    // Proporcionar los buses con los tokens nombrados que espera el controlador
+    {
+      provide: 'CommandBus',
+      useExisting: CommandBus
+    },
+    {
+      provide: 'QueryBus',
+      useExisting: QueryBus
     },
     ...CommandHandlers,
     ...QueryHandlers,

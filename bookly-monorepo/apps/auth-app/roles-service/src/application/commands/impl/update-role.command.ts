@@ -1,4 +1,4 @@
-import { UpdateRoleDto } from '../../../infrastructure/dtos/update-role.dto';
+import { UpdateRoleDto } from '@bookly-monorepo/dto';
 
 export class UpdateRoleCommand {
   constructor(

@@ -1,19 +1,45 @@
+import {
+  DatabaseName,
+  DEFAULT_JWT_ACCESS_EXPIRATION,
+  DEFAULT_JWT_ACCESS_SECRET,
+  DEFAULT_MONGODB_URI,
+  EnvVariable,
+  Environment,
+  Language,
+  ServicePort,
+  ServiceUrl
+} from '@bookly-monorepo/common';
+import {
+  DEFAULT_RABBITMQ_URL,
+  EventExchange,
+  ServiceName
+} from '@bookly-monorepo/event-bus';
+
+/**
+ * Configuraciu00f3n para el servicio de roles
+ */
 export default () => ({
   app: {
-    name: 'roles-service',
-    port: parseInt(process.env.ROLES_SERVICE_PORT ?? '3002', 10),
-    environment: process.env.NODE_ENV ?? 'development',
-    defaultLanguage: process.env.DEFAULT_LANGUAGE ?? 'es',
+    name: ServiceName.ROLES,
+    port: parseInt(process.env[EnvVariable.ROLES_SERVICE_PORT] ?? ServicePort.ROLES.toString(), 10),
+    environment: process.env[EnvVariable.NODE_ENV] ?? Environment.DEVELOPMENT,
+    defaultLanguage: process.env[EnvVariable.DEFAULT_LANGUAGE] ?? Language.SPANISH,
   },
   database: {
-    uri: process.env.MONGODB_URI ?? 'mongodb://user:pass@localhost:27017/bookly-roles',
+    uri: process.env[EnvVariable.MONGODB_URI] ?? DEFAULT_MONGODB_URI,
+    dbName: DatabaseName.ROLES,
   },
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET ?? 'your-access-secret-key',
-    accessExpiration: process.env.JWT_ACCESS_EXPIRATION ?? '1h',
+    accessSecret: process.env[EnvVariable.JWT_ACCESS_SECRET] ?? DEFAULT_JWT_ACCESS_SECRET,
+    accessExpiration: process.env[EnvVariable.JWT_ACCESS_EXPIRATION] ?? DEFAULT_JWT_ACCESS_EXPIRATION,
   },
   services: {
-    authService: process.env.AUTH_SERVICE_URL ?? 'http://localhost:3000',
-    usersService: process.env.USERS_SERVICE_URL ?? 'http://localhost:3001',
+    authService: process.env[EnvVariable.AUTH_SERVICE_URL] ?? ServiceUrl.AUTH,
+    usersService: process.env[EnvVariable.USERS_SERVICE_URL] ?? ServiceUrl.USERS,
+  },
+  rabbitmq: {
+    url: process.env[EnvVariable.RABBITMQ_URI] ?? DEFAULT_RABBITMQ_URL,
+    serviceName: ServiceName.ROLES,
+    authExchange: process.env[EnvVariable.RABBITMQ_ROLES_EXCHANGE] ?? EventExchange.ROLES,
   },
 });

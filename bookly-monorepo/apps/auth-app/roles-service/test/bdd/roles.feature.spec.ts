@@ -2,14 +2,43 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RolesService } from '../../src/infrastructure/services/roles.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { Role } from '../../src/domain/entities/role.entity';
-import { EventBusService } from '@bookly-monorepo/event-bus';
 import { Model } from 'mongoose';
 import { NotFoundException } from '@nestjs/common';
+import { RoleEventsPublisher } from '../../src/infrastructure/event-publishers/role-events.publisher';
 
+/**
+ * Tipos auxiliares para testing
+ */
+// Tipo para objetos de rol mockeados
+type MockRoleDocument = Partial<Role> & {
+  _id: string;
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  save: jest.Mock;
+  toJSON: jest.Mock;
+}
+
+// Tipo para simular queries de mongoose
+interface MockExecQuery {
+  exec: jest.Mock;
+  // Propiedades mínimas necesarias para el tipo Query<...>
+  _mongooseOptions: any;
+}
+
+// Tipo para el constructor del modelo
+type ModelConstructor = (doc?: Record<string, unknown>) => MockRoleDocument;
+
+/**
+ * Pruebas de funcionamiento del servicio de roles usando enfoque BDD
+ * (Behavior Driven Development)
+ */
 describe('ROLE MANAGEMENT FEATURES', () => {
+  // Dependencias del servicio
   let rolesService: RolesService;
   let roleModel: Model<Role>;
-  let eventBus: EventBusService;
+  let roleEventsPublisher: RoleEventsPublisher;
   
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -27,27 +56,38 @@ describe('ROLE MANAGEMENT FEATURES', () => {
           },
         },
         {
-          provide: EventBusService,
+          provide: RoleEventsPublisher,
           useValue: {
-            publish: jest.fn(),
+            publishRoleCreated: jest.fn(),
+            publishRoleUpdated: jest.fn(),
+            publishRoleDeleted: jest.fn(),
+            publishRoleAssigned: jest.fn(),
           },
         },
       ],
     }).compile();
 
+    // Obtener instancias necesarias del módulo de prueba
     rolesService = module.get<RolesService>(RolesService);
     roleModel = module.get<Model<Role>>(getModelToken(Role.name));
-    eventBus = module.get<EventBusService>(EventBusService);
+    roleEventsPublisher = module.get<RoleEventsPublisher>(RoleEventsPublisher);
   });
 
+  // Limpiar mocks antes de cada prueba
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
+  /**
+   * Pruebas de creación de un nuevo rol
+   */
   describe('FEATURE: Creating a new role', () => {
-    // Define test data
-    const mockRole = {
+    /**
+     * Datos mock para pruebas
+     */
+    const mockRole: MockRoleDocument = {
       _id: 'role-id-123',
+      id: 'role-id-123',
       name: 'admin',
       description: 'Administrator role',
       permissions: ['read', 'write', 'delete'],
@@ -57,8 +97,11 @@ describe('ROLE MANAGEMENT FEATURES', () => {
         description: 'Administrator role',
         permissions: ['read', 'write', 'delete'],
       }),
-      save: jest.fn().mockReturnThis(),
+      save: jest.fn(),
     };
+    
+    // Configurar el mock para retornarse a sí mismo después de definirlo
+    mockRole.save.mockResolvedValue(mockRole);
 
     const createRoleDto = {
       name: 'admin',
@@ -74,17 +117,20 @@ describe('ROLE MANAGEMENT FEATURES', () => {
         expect(true).toBe(true);
       });
 
-      // WHEN
+      /**
+       * WHEN - Cuando el administrador envía datos válidos de rol
+       */
       it('WHEN the admin submits valid role data', async () => {
-        // Mock the model constructor to return our mock role
-        jest.spyOn(roleModel as any, 'constructor').mockImplementation(() => mockRole);
-        // Mock the save method
+        // Configurar el mock del constructor del modelo para devolver nuestro rol mock
+        jest.spyOn(roleModel as unknown as { constructor: ModelConstructor }, 'constructor')
+          .mockImplementation(() => mockRole);
+        // Configurar el método save para resolver con éxito
         mockRole.save.mockResolvedValue(mockRole);
 
-        // Execute the creation
+        // Ejecutar la creación del rol
         await rolesService.create(createRoleDto);
 
-        // Verify the role data was processed
+        // Verificar que los datos del rol fueron procesados
         expect(mockRole.save).toHaveBeenCalled();
       });
 
@@ -100,8 +146,10 @@ describe('ROLE MANAGEMENT FEATURES', () => {
         // Verify the result
         expect(result).toEqual(mockRole);
         
-        // Verify the event was published
-        expect(eventBus.publish).toHaveBeenCalledWith('role.created', { role: expect.any(Object) });
+        // Verificar que el evento fue publicado mediante el publisher dedicado
+        expect(roleEventsPublisher.publishRoleCreated).toHaveBeenCalledWith(expect.objectContaining({
+          name: 'admin'
+        }));
       });
     });
 
@@ -260,8 +308,11 @@ describe('ROLE MANAGEMENT FEATURES', () => {
         // Verify the role was saved
         expect(mockRole.save).toHaveBeenCalled();
         
-        // Verify the event was published
-        expect(eventBus.publish).toHaveBeenCalledWith('role.updated', { role: expect.any(Object) });
+        // Verificar que el evento fue publicado mediante el publisher dedicado
+        expect(roleEventsPublisher.publishRoleUpdated).toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'admin' }),
+          expect.objectContaining({ description: 'Updated Administrator role' })
+        );
         
         // Verify the result
         expect(result).toEqual(mockRole);
@@ -310,8 +361,8 @@ describe('ROLE MANAGEMENT FEATURES', () => {
         // Verify the result
         expect(result).toEqual({ id: 'role-id-123', message: 'Role deleted successfully' });
         
-        // Verify the event was published
-        expect(eventBus.publish).toHaveBeenCalledWith('role.deleted', { roleId: 'role-id-123' });
+        // Verificar que el evento fue publicado mediante el publisher dedicado
+        expect(roleEventsPublisher.publishRoleDeleted).toHaveBeenCalledWith('role-id-123');
       });
     });
   });
@@ -351,10 +402,10 @@ describe('ROLE MANAGEMENT FEATURES', () => {
         // Verify the result
         expect(result).toEqual({ message: 'Role admin assigned to user user-id-123 successfully' });
         
-        // Verify the event was published
-        expect(eventBus.publish).toHaveBeenCalledWith('role.assigned', { 
-          userId: 'user-id-123', 
-          roleId: 'role-id-123', 
+        // Verificar que el evento fue publicado mediante el publisher dedicado
+        expect(roleEventsPublisher.publishRoleAssigned).toHaveBeenCalledWith({
+          userId: 'user-id-123',
+          roleId: 'role-id-123',
           roleName: 'admin'
         });
       });

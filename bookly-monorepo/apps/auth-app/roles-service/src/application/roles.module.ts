@@ -8,21 +8,23 @@ import { RolesService } from '../infrastructure/services/roles.service';
 import { Role, RoleSchema } from '../domain/entities/role.entity';
 import { MongooseRoleRepository } from '../infrastructure/repositories/mongoose-role.repository';
 
-// Import event publishers and listeners
+// Import event publishers
 import { RoleEventsPublisher } from '../infrastructure/event-publishers/role-events.publisher';
-import { AuthEventsListener } from '../infrastructure/event-listeners/auth-events.listener';
 
 // Import commands and queries handlers
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 
-// Import the command bus
-import { CqrsModule } from '@nestjs/cqrs';
+// Import the command bus and query bus
+import { CqrsModule, CommandBus, QueryBus } from '@nestjs/cqrs';
 
 @Module({
   imports: [
     CqrsModule,
-    EventBusModule,
+    // Registrar EventBusModule con la configuraciu00f3n adecuada siguiendo el patrón del servicio de usuarios
+    EventBusModule.register({
+      serviceName: 'roles-service',
+    }),
     MongooseModule.forFeature([
       { name: Role.name, schema: RoleSchema },
     ]),
@@ -31,10 +33,18 @@ import { CqrsModule } from '@nestjs/cqrs';
   providers: [
     RolesService,
     RoleEventsPublisher,
-    AuthEventsListener,
     {
       provide: 'RoleRepository',
       useClass: MongooseRoleRepository,
+    },
+    // Proporcionar los buses con los tokens nombrados que espera el controlador
+    {
+      provide: 'CommandBus',
+      useExisting: CommandBus
+    },
+    {
+      provide: 'QueryBus',
+      useExisting: QueryBus
     },
     ...CommandHandlers,
     ...QueryHandlers,

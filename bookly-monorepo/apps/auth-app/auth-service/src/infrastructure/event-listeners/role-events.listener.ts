@@ -7,6 +7,13 @@ import {
   PermissionAddedEvent, 
   PermissionRemovedEvent 
 } from '../../domain/events/role-events';
+import {
+  ROLE_CREATED_EVENT,
+  ROLE_UPDATED_EVENT,
+  ROLE_DELETED_EVENT,
+  PERMISSION_ADDED_EVENT,
+  PERMISSION_REMOVED_EVENT
+} from '../../domain/constants/event-patterns';
 
 /**
  * Listener para eventos relacionados con roles provenientes de roles-service
@@ -26,34 +33,62 @@ export class RoleEventsListener implements OnModuleInit {
 
   private subscribeToRoleEvents() {
     // Escuchar evento de rol creado
-    this.eventSubscriber.subscribe('role.created', async (event: RoleCreatedEvent) => {
-      this.logger.log(`Recibido evento role.created: ${JSON.stringify(event)}`);
-      // Aquí se puede implementar cualquier lógica necesaria cuando un rol es creado
-      // Por ejemplo, actualizar cache local de roles, etc.
+    this.eventSubscriber.registerHandler({
+      event: ROLE_CREATED_EVENT,
+      handler: async (event) => {
+        const payload = event.payload as RoleCreatedEvent;
+        this.logger.log(`Recibido evento role.created: ${JSON.stringify(payload)}`);
+        // Aquí se puede implementar cualquier lógica necesaria cuando un rol es creado
+        // Por ejemplo, actualizar cache local de roles, etc.
+        this.logger.debug(`Rol creado: ${payload.name} (${payload.roleId})`);
+      }
     });
 
     // Escuchar evento de rol actualizado
-    this.eventSubscriber.subscribe('role.updated', async (event: RoleUpdatedEvent) => {
-      this.logger.log(`Recibido evento role.updated: ${JSON.stringify(event)}`);
-      // Actualizar información local si es necesario
+    this.eventSubscriber.registerHandler({
+      event: ROLE_UPDATED_EVENT,
+      handler: async (event) => {
+        const payload = event.payload as RoleUpdatedEvent;
+        this.logger.log(`Recibido evento role.updated: ${JSON.stringify(payload)}`);
+        // Actualizar información local si es necesario
+        this.logger.debug(`Rol actualizado: ${payload.roleId}`);
+        if (payload.name) {
+          this.logger.debug(`Nuevo nombre del rol: ${payload.name}`);
+        }
+      }
     });
 
     // Escuchar evento de rol eliminado
-    this.eventSubscriber.subscribe('role.deleted', async (event: RoleDeletedEvent) => {
-      this.logger.log(`Recibido evento role.deleted: ${JSON.stringify(event)}`);
-      // Actualizar información local si es necesario
+    this.eventSubscriber.registerHandler({
+      event: ROLE_DELETED_EVENT,
+      handler: async (event) => {
+        const payload = event.payload as RoleDeletedEvent;
+        this.logger.log(`Recibido evento role.deleted: ${JSON.stringify(payload)}`);
+        // Actualizar información local si es necesario
+        this.logger.debug(`Rol eliminado: ${payload.roleId}`);
+      }
     });
 
     // Escuchar evento de permiso añadido a un rol
-    this.eventSubscriber.subscribe('role.permission.added', async (event: PermissionAddedEvent) => {
-      this.logger.log(`Recibido evento role.permission.added: ${JSON.stringify(event)}`);
-      // Manejar la actualización de permisos según sea necesario
+    this.eventSubscriber.registerHandler({
+      event: PERMISSION_ADDED_EVENT,
+      handler: async (event) => {
+        const payload = event.payload as PermissionAddedEvent;
+        this.logger.log(`Recibido evento role.permission.added: ${JSON.stringify(payload)}`);
+        // Manejar la actualización de permisos según sea necesario
+        this.logger.debug(`Permiso '${payload.permission}' añadido al rol ${payload.roleId}`);
+      }
     });
-
+    
     // Escuchar evento de permiso eliminado de un rol
-    this.eventSubscriber.subscribe('role.permission.removed', async (event: PermissionRemovedEvent) => {
-      this.logger.log(`Recibido evento role.permission.removed: ${JSON.stringify(event)}`);
-      // Manejar la actualización de permisos según sea necesario
+    this.eventSubscriber.registerHandler({
+      event: PERMISSION_REMOVED_EVENT,
+      handler: async (event) => {
+        const payload = event.payload as PermissionRemovedEvent;
+        this.logger.log(`Recibido evento role.permission.removed: ${JSON.stringify(payload)}`);
+        // Manejar la actualización de permisos según sea necesario
+        this.logger.debug(`Permiso '${payload.permission}' eliminado del rol ${payload.roleId}`);
+      }
     });
     
   }

@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventSubscriber } from '@bookly-monorepo/event-bus';
-import { UserServiceProxy } from '../services/user-service-proxy';
-import { RoleServiceProxy } from '../services/role-service-proxy';
+import { UserServiceProxy } from '../proxies/user-service.proxy';
+import { RoleServiceProxy } from '../proxies/role-service.proxy';
 
 /**
  * Listener para respuestas a comandos enviados a otros servicios
@@ -23,15 +23,25 @@ export class CommandResponsesListener implements OnModuleInit {
 
   private subscribeToCommandResponses() {
     // Suscribirse a todas las respuestas de comandos de usuarios
-    this.eventSubscriber.subscribe('users.*.response.*', (data: any, eventName: string) => {
-      this.logger.debug(`Recibida respuesta de comando: ${eventName}`);
-      this.userServiceProxy.handleCommandResponse(eventName, data);
+    this.eventSubscriber.registerHandler({
+      event: 'users.*.response.*',
+      handler: (event) => {
+        const { data, pattern } = event;
+        this.logger.debug(`Recibida respuesta de comando de usuario: ${pattern}`);
+        // Procesar la respuesta utilizando el proxy de usuario
+        this.userServiceProxy.handleCommandResponse(pattern, data);
+      }
     });
 
     // Suscribirse a todas las respuestas de comandos de roles
-    this.eventSubscriber.subscribe('roles.*.response.*', (data: any, eventName: string) => {
-      this.logger.debug(`Recibida respuesta de comando: ${eventName}`);
-      this.roleServiceProxy.handleCommandResponse(eventName, data);
+    this.eventSubscriber.registerHandler({
+      event: 'roles.*.response.*',
+      handler: (event) => {
+        const { data, pattern } = event;
+        this.logger.debug(`Recibida respuesta de comando de rol: ${pattern}`);
+        // Procesar la respuesta utilizando el proxy de rol
+        this.roleServiceProxy.handleCommandResponse(pattern, data);
+      }
     });
   }
 }

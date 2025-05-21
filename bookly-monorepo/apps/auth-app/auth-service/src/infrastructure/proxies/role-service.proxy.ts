@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EventPublisher, EventSubscriber } from '@bookly-monorepo/event-bus';
+import { EventPublisher, EventSubscriber, IEvent, IEventHandler } from '@bookly-monorepo/event-bus';
 import { v4 as uuidv4 } from 'uuid';
 
 // Interfaces para los tipos de retorno
@@ -129,16 +129,22 @@ export class RoleServiceProxy {
       // Crear el nombre del evento de respuesta
       const responseEvent = `roles.response.${correlationId}`;
 
-      // Suscribirse al evento de respuesta
-      const subscription = this.eventSubscriber.subscribe(responseEvent, async (response: CommandResponse) => {
-        // Limpieza: cancelar la suscripción una vez recibida la respuesta
-        subscription.unsubscribe();
+      // Crear un handler temporal para este evento específico
+      class TemporaryHandler implements IEventHandler<IEvent> {
+        constructor(private readonly resolver: (data: T) => void, private readonly rejecter: (error: Error) => void) {}
 
-        if (response.error) {
-          return reject(new Error(response.error));
+        async handle(event: IEvent): Promise<void> {
+          const response = event.payload as CommandResponse;
+          if (response.error) {
+            return this.rejecter(new Error(response.error));
+          }
+          return this.resolver(response.data as T);
         }
-        return resolve(response.data as T);
-      });
+      }
+
+      // Registrar el handler temporalmente
+      const handlerInstance = new TemporaryHandler(resolve, reject);
+      this.eventSubscriber.registerHandler(responseEvent, handlerInstance);
 
       // Publicar el comando con el evento de respuesta incluido
       this.eventPublisher.publish(commandName, {

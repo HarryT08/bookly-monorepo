@@ -3,9 +3,8 @@ import { Controller, Get, Post, Body, Param, Put, Delete, Inject } from '@nestjs
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EventBusService } from '@bookly-monorepo/event-bus';
 
-// DTOs
-import { CreateRoleDto } from '../dtos/create-role.dto';
-import { UpdateRoleDto } from '../dtos/update-role.dto';
+// DTOs compartidos desde la biblioteca dto
+import { CreateRoleDto, UpdateRoleDto, IRole } from '@bookly-monorepo/dto';
 
 // Los comandos y queries se implementan directamente con objetos tipo
 // No necesitamos importar clases específicas

@@ -6,14 +6,36 @@ import { ConfigService } from '@nestjs/config';
 import { I18nService } from 'nestjs-i18n';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 
-describe('AuthService', () => {
-  let service: AuthService;
-  let jwtService: JwtService;
-  let eventBus: EventBusService;
-  let configService: ConfigService;
-  let i18nService: I18nService;
+// Interfaces para tipos de DTOs usados en las pruebas
+interface CreateUserDto {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
 
+interface LoginDto {
+  email: string;
+  password: string;
+}
+
+interface UserEntity {
+  id: string;
+}
+
+/**
+ * Pruebas unitarias para el servicio de autenticación
+ */
+describe('AuthService', () => {
+  // Dependencias del servicio
+  let service: AuthService;
+  let eventBus: EventBusService; // Usado en las pruebas para verificar publicación de eventos
+
+  /**
+   * Configuración de pruebas
+   */
   beforeEach(async () => {
+    // Crear módulo de prueba con mocks para las dependencias
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -30,6 +52,7 @@ describe('AuthService', () => {
             publish: jest.fn(),
           },
         },
+
         {
           provide: ConfigService,
           useValue: {
@@ -62,28 +85,33 @@ describe('AuthService', () => {
       ],
     }).compile();
 
+    // Obtener instancias de las dependencias
     service = module.get<AuthService>(AuthService);
-    jwtService = module.get<JwtService>(JwtService);
     eventBus = module.get<EventBusService>(EventBusService);
-    configService = module.get<ConfigService>(ConfigService);
-    i18nService = module.get<I18nService>(I18nService);
   });
 
+  // Verificación básica de la instancia del servicio
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
+  /**
+   * Pruebas para el método register
+   */
   describe('register', () => {
+    // Datos de prueba
+    const createUserDto: CreateUserDto = {
+      email: 'test@example.com',
+      password: 'password123',
+      firstName: 'Test',
+      lastName: 'User',
+    };
+    
     it('should register a user and publish an event', async () => {
-      const createUserDto = {
-        email: 'test@example.com',
-        password: 'password123',
-        firstName: 'Test',
-        lastName: 'User',
-      };
-
+      // Ejecutar el método bajo prueba
       const result = await service.register(createUserDto);
 
+      // Verificaciones
       expect(result).toEqual({ message: 'Usuario registrado exitosamente' });
       expect(eventBus.publish).toHaveBeenCalledWith('auth.registerUser', {
         userData: createUserDto,
@@ -92,30 +120,31 @@ describe('AuthService', () => {
     });
 
     it('should handle registration errors', async () => {
-      const createUserDto = {
-        email: 'test@example.com',
-        password: 'password123',
-        firstName: 'Test',
-        lastName: 'User',
-      };
-
+      // Simular error durante la publicación del evento
       jest.spyOn(eventBus, 'publish').mockImplementationOnce(() => {
         throw new Error('Error publicando evento');
       });
 
+      // Verificar que se lanza la excepción adecuada
       await expect(service.register(createUserDto)).rejects.toThrow(UnauthorizedException);
     });
   });
 
+  /**
+   * Pruebas para el método login
+   */
   describe('login', () => {
+    // Datos de prueba
+    const loginDto: LoginDto = {
+      email: 'test@example.com',
+      password: 'password123',
+    };
+    
     it('should authenticate a user with valid credentials', async () => {
-      const loginDto = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
+      // Ejecutar el método bajo prueba
       const result = await service.login(loginDto);
 
+      // Verificaciones
       expect(result).toEqual({
         message: 'Inicio de sesión exitoso',
         token: 'jwt-token-simulado',
@@ -123,51 +152,71 @@ describe('AuthService', () => {
     });
 
     it('should reject authentication with invalid credentials', async () => {
-      const loginDto = {
+      // Datos de prueba con credenciales inválidas
+      const invalidLoginDto: LoginDto = {
         email: 'test@example.com',
         password: 'wrongpassword',
       };
 
-      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      // Verificar que se lanza la excepción adecuada
+      await expect(service.login(invalidLoginDto)).rejects.toThrow(UnauthorizedException);
     });
   });
 
+  /**
+   * Pruebas para el método logout
+   */
   describe('logout', () => {
     it('should log out a user', async () => {
-      const user = { id: 'user-id-123' };
+      // Datos de prueba
+      const user: UserEntity = { id: 'user-id-123' };
 
+      // Ejecutar el método bajo prueba
       const result = await service.logout(user);
 
+      // Verificaciones
       expect(result).toEqual({
         message: 'Sesión cerrada exitosamente',
       });
     });
   });
 
+  /**
+   * Pruebas para el método sendPasswordReset
+   */
   describe('sendPasswordReset', () => {
     it('should send a password reset email for a valid user', async () => {
+      // Ejecutar el método bajo prueba
       const result = await service.sendPasswordReset('test@example.com');
 
+      // Verificaciones
       expect(result).toEqual({
         message: 'Solicitud de restablecimiento de contraseña enviada',
       });
     });
 
     it('should throw NotFoundException for non-existent user', async () => {
+      // Verificar que se lanza la excepción adecuada para usuario inexistente
       await expect(service.sendPasswordReset('nonexistent@example.com')).rejects.toThrow(NotFoundException);
     });
   });
 
+  /**
+   * Pruebas para el método resetPassword
+   */
   describe('resetPassword', () => {
     it('should reset password with valid token', async () => {
+      // Ejecutar el método bajo prueba
       const result = await service.resetPassword('valid-token', 'newpassword123');
 
+      // Verificaciones
       expect(result).toEqual({
         message: 'Contraseña restablecida exitosamente',
       });
     });
 
     it('should throw UnauthorizedException for invalid token', async () => {
+      // Verificar que se lanza la excepción adecuada para token inválido
       await expect(service.resetPassword('invalid-token', 'newpassword123')).rejects.toThrow(UnauthorizedException);
     });
   });

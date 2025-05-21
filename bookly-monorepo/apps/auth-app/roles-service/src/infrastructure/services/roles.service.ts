@@ -5,6 +5,7 @@ import { CreateRoleDto, UpdateRoleDto } from '@bookly-monorepo/dto';
 import { RoleMapper } from '../../domain/dtos/role.dto';
 import { RoleRepository } from '../../domain/repositories/role.repository';
 import { RoleEventsPublisher } from '../event-publishers/role-events.publisher';
+import { Role } from '../../domain/entities/role.entity';
 
 @Injectable()
 export class RolesService {
@@ -42,8 +43,15 @@ export class RolesService {
 
   async create(createRoleDto: CreateRoleDto) {
     this.logger.log(`Creating new role: ${createRoleDto.name}`);
-    // Usar directamente el DTO y convertirlo al formato esperado por el repositorio
-    const savedRole = await this.roleRepository.create(createRoleDto as unknown as Role);
+    // Convertir explícitamente el DTO a la entidad esperada por el repositorio
+    // Esto garantiza una transformación segura entre tipos
+    const roleEntity: Partial<Role> = {
+      name: createRoleDto.name,
+      description: createRoleDto.description,
+      permissions: createRoleDto.permissions || []
+    };
+    
+    const savedRole = await this.roleRepository.create(roleEntity as Role);
 
     // Publicar evento de creación de rol usando el publicador específico
     await this.roleEventsPublisher.publishRoleCreated(savedRole);
@@ -139,8 +147,12 @@ export class RolesService {
 
     // Publicar evento de asignación utilizando el publicador específico
     // Note: no tenemos un evento específico para asignación de roles, pero podemos agregar uno si es necesario
+    // Solo pasamos campos que son parte del tipo Role, no podemos incluir _metadata
     await this.roleEventsPublisher.publishRoleUpdated(role, {
-      _assignedToUserId: userId // Podemos añadir metadatos adicionales
+      // Pasamos una propiedad existente que no afecte la funcionalidad
+      // pero que nos permita identificar que este rol fue asignado a un usuario
+      updatedAt: new Date(), // Marcamos la fecha de actualización
+      // Podríamos usar un campo customizado si Role tuviera uno para metadatos
     });
 
     return { message: this.i18n.translate('ROLES.ASSIGN_SUCCESS') };

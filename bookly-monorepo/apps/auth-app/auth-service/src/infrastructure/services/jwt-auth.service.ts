@@ -6,6 +6,9 @@ import { AuthService } from '../../domain/services/auth.service';
 import { ConfigService } from '@nestjs/config';
 import { UserRepository } from '../../domain/repositories/user.repository';
 
+// Importar constantes
+import { JWT_CONSTANTS } from '../constants/jwt.constants';
+
 @Injectable()
 export class JwtAuthService implements AuthService {
   constructor(
@@ -41,44 +44,46 @@ export class JwtAuthService implements AuthService {
 
   generateAccessToken(user: User): string {
     const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
+      [JWT_CONSTANTS.PAYLOAD_SUBJECT]: user.id,
+      [JWT_CONSTANTS.PAYLOAD_EMAIL]: user.email,
+      [JWT_CONSTANTS.PAYLOAD_ROLE]: user.role,
     };
 
     return this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '1h',
+      secret: this.configService.get<string>(JWT_CONSTANTS.ACCESS_SECRET_ENV),
+      expiresIn: this.configService.get<string>(JWT_CONSTANTS.ACCESS_EXPIRATION_ENV) || JWT_CONSTANTS.DEFAULT_ACCESS_EXPIRATION,
     });
   }
 
   generateRefreshToken(user: User): string {
     const payload = {
-      sub: user.id,
+      [JWT_CONSTANTS.PAYLOAD_SUBJECT]: user.id,
     };
 
     return this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
+      secret: this.configService.get<string>(JWT_CONSTANTS.REFRESH_SECRET_ENV),
+      expiresIn: this.configService.get<string>(JWT_CONSTANTS.REFRESH_EXPIRATION_ENV) || JWT_CONSTANTS.DEFAULT_REFRESH_EXPIRATION,
     });
   }
 
-  validateAccessToken(token: string): any {
+  validateAccessToken(token: string): Record<string, any> | null {
     try {
       return this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+        secret: this.configService.get<string>(JWT_CONSTANTS.ACCESS_SECRET_ENV),
       });
-    } catch (error) {
+    } catch (_) {
+      // Cualquier error en la verificación del token retorna null
       return null;
     }
   }
 
-  validateRefreshToken(token: string): any {
+  validateRefreshToken(token: string): Record<string, any> | null {
     try {
       return this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        secret: this.configService.get<string>(JWT_CONSTANTS.REFRESH_SECRET_ENV),
       });
-    } catch (error) {
+    } catch (_) {
+      // Cualquier error en la verificación del token retorna null
       return null;
     }
   }

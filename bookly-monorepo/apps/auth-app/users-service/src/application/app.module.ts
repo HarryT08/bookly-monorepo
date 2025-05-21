@@ -2,8 +2,8 @@ import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { I18nModule, I18nJsonLoader, AcceptLanguageResolver, HeaderResolver, QueryResolver } from 'nestjs-i18n';
-import { EventBusModule } from '@bookly-monorepo/event-bus';
-import { CommonModule } from '@bookly-monorepo/common';
+import { CommonModule, EnvVariable, Environment } from '@bookly-monorepo/common';
+import { EventBusModule, DEFAULT_RABBITMQ_URL, EventExchange, ServiceName } from '@bookly-monorepo/event-bus';
 import { DtoModule } from '@bookly-monorepo/dto';
 import * as path from 'path';
 
@@ -32,6 +32,7 @@ import configuration from '../infrastructure/config/configuration';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('database.uri') || 'mongodb://user:pass@localhost:27017',
+        dbName: 'bookly-users',
       }),
       inject: [ConfigService],
     }),
@@ -57,15 +58,19 @@ import configuration from '../infrastructure/config/configuration';
 
     // Shared modules
     CommonModule.register(),
+    // Configuración del EventBus - usamos null como URL en desarrollo para usar implementación en memoria
     EventBusModule.register({
-      serviceName: 'users-service',
-      rabbitmqUrl: process.env.RABBITMQ_URI,
+      serviceName: ServiceName.USERS,
+      rabbitmqUrl: process.env[EnvVariable.NODE_ENV] === Environment.PRODUCTION 
+        ? (process.env[EnvVariable.RABBITMQ_URI] ?? DEFAULT_RABBITMQ_URL)
+        : null,
+      exchange: process.env[EnvVariable.RABBITMQ_USERS_EXCHANGE] ?? EventExchange.USERS,
     }),
     DtoModule,
 
     // Service-specific modules
     UsersModule,
-    
+
     // CQRS buses
     BusesModule,
   ],
@@ -75,6 +80,6 @@ export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuditMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
+      .forRoutes({ path: '*path', method: RequestMethod.ALL });
   }
 }

@@ -6,34 +6,61 @@ import { Model } from 'mongoose';
 import { NotFoundException } from '@nestjs/common';
 import { UserEventsPublisher } from '../../src/infrastructure/event-publishers/user-events.publisher';
 
-// Tipos para mocks
-type MockUserDocument = User & {
+/**
+ * Tipos auxiliares para testing
+ */
+// Tipo para objetos de usuario mockeados
+type MockUserDocument = Partial<User> & {
   _id: string;
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  role: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
   save: jest.Mock;
   toJSON: jest.Mock;
+}
+
+// Tipo para simular queries de mongoose
+interface MockExecQuery {
+  exec: jest.Mock;
+  // Propiedades mínimas necesarias para el tipo Query<...>
+  _mongooseOptions: any;
 }
 
 // Tipo para el constructor del modelo
 type ModelConstructor = (doc?: Record<string, unknown>) => MockUserDocument;
 
+/**
+ * Pruebas de funcionamiento del servicio de usuarios usando enfoque BDD
+ * (Behavior Driven Development)
+ */
 describe('USER MANAGEMENT FEATURES', () => {
+  // Dependencias del servicio
   let userService: UserService;
   let userModel: Model<User>;
   let userEventsPublisher: UserEventsPublisher;
   
+  /**
+   * Configuración global para todas las pruebas
+   */
   beforeAll(async () => {
+    // Crear módulo de prueba con mocks para las dependencias
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
         {
           provide: getModelToken(User.name),
           useValue: {
-            find: jest.fn(),
-            findById: jest.fn(),
-            findOne: jest.fn(),
-            findByIdAndDelete: jest.fn(),
-            new: jest.fn(),
             constructor: jest.fn(),
+            findById: jest.fn().mockReturnThis(),
+            findByIdAndDelete: jest.fn(),
+            findOne: jest.fn().mockReturnThis(),
+            exec: jest.fn(),
           },
         },
         {
@@ -47,39 +74,48 @@ describe('USER MANAGEMENT FEATURES', () => {
       ],
     }).compile();
 
+    // Obtener instancias necesarias del módulo de prueba
     userService = module.get<UserService>(UserService);
     userModel = module.get<Model<User>>(getModelToken(User.name));
     userEventsPublisher = module.get<UserEventsPublisher>(UserEventsPublisher);
   });
 
+  // Limpiar mocks antes de cada prueba
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('FEATURE: Creating a new user', () => {
-    // Define test data
-    const mockUser = {
+    /**
+     * Datos mock para pruebas
+     */
+    const mockUser: MockUserDocument = {
       _id: 'user-id-123',
+      email: 'john.doe@example.com',
       firstName: 'John',
       lastName: 'Doe',
-      email: 'john.doe@example.com',
-      password: 'hashedPassword',
+      password: 'hashed_password',
+      role: 'user',
       isActive: true,
-      toJSON: jest.fn().mockReturnValue({
-        id: 'user-id-123',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-      }),
-      save: jest.fn().mockReturnThis(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      id: 'user-id-123',
+      save: jest.fn(),
+      toJSON: jest.fn().mockReturnThis(),
     };
+    
+    // Configurar el mock para retornarse a sí mismo después de definirlo
+    mockUser.save.mockResolvedValue(mockUser);
 
+    // DTOs comunes para las pruebas
     const createUserDto = {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@example.com',
       password: 'password123',
     };
+
+    // El updateUserDto se usará en otros escenarios de prueba
 
     describe('SCENARIO: Admin creates a valid new user', () => {
       // GIVEN
@@ -89,17 +125,20 @@ describe('USER MANAGEMENT FEATURES', () => {
         expect(true).toBe(true);
       });
 
-      // WHEN
+      /**
+       * WHEN - Cuando el administrador envía datos válidos de usuario
+       */
       it('WHEN the admin submits valid user data', async () => {
-        // Mock the model constructor to return our mock user
-        jest.spyOn(userModel as unknown as { constructor: ModelConstructor }, 'constructor').mockImplementation(() => mockUser);
-        // Mock the save method
+        // Configurar el mock del constructor del modelo para devolver nuestro usuario mock
+        jest.spyOn(userModel as unknown as { constructor: ModelConstructor }, 'constructor')
+          .mockImplementation(() => mockUser);
+        // Configurar el método save para resolver con éxito
         mockUser.save.mockResolvedValue(mockUser);
 
-        // Execute the creation
+        // Ejecutar la creación del usuario
         await userService.create(createUserDto);
 
-        // Verify the user data was processed
+        // Verificar que los datos del usuario fueron procesados
         expect(mockUser.save).toHaveBeenCalled();
       });
 
@@ -127,7 +166,8 @@ describe('USER MANAGEMENT FEATURES', () => {
       beforeEach(() => {
         jest.spyOn(userModel, 'findOne').mockReturnValueOnce({
           exec: jest.fn().mockResolvedValueOnce(mockUser),
-        } as { exec: jest.Mock });
+          _mongooseOptions: {}
+        } as any);
       });
 
       // GIVEN
@@ -205,7 +245,8 @@ describe('USER MANAGEMENT FEATURES', () => {
         // Mock findById to return null (user not found)
         jest.spyOn(userModel, 'findById').mockReturnValueOnce({
           exec: jest.fn().mockResolvedValueOnce(null),
-        } as { exec: jest.Mock });
+          _mongooseOptions: {}
+        } as any);
       });
 
       // WHEN/THEN combined for exception testing
@@ -240,7 +281,7 @@ describe('USER MANAGEMENT FEATURES', () => {
       // GIVEN
       it('GIVEN an existing user in the system', () => {
         // Mock the user retrieval
-        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as MockUserDocument);
+        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as any);
       });
 
       // WHEN
@@ -255,7 +296,7 @@ describe('USER MANAGEMENT FEATURES', () => {
       // THEN
       it('THEN the user should be updated and an event published', async () => {
         // Reset mocks
-        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as MockUserDocument);
+        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as any);
         
         // Execute the update
         const result = await userService.update('user-id-123', updateUserDto);
@@ -288,7 +329,7 @@ describe('USER MANAGEMENT FEATURES', () => {
       // GIVEN
       it('GIVEN an existing user in the system', () => {
         // Mock the user retrieval
-        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as MockUserDocument);
+        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as any);
         // Mock successful deletion
         jest.spyOn(userModel, 'findByIdAndDelete').mockResolvedValueOnce(true as unknown);
       });
@@ -308,7 +349,7 @@ describe('USER MANAGEMENT FEATURES', () => {
       // THEN
       it('THEN the user should be removed and an event published', async () => {
         // Reset mocks
-        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as MockUserDocument);
+        jest.spyOn(userService, 'findById').mockResolvedValueOnce(mockUser as any);
         jest.spyOn(userModel, 'findByIdAndDelete').mockResolvedValueOnce(true as unknown);
         
         // Execute the deletion

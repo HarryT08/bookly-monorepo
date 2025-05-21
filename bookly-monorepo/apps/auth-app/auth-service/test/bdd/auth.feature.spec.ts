@@ -6,14 +6,37 @@ import { ConfigService } from '@nestjs/config';
 import { I18nService } from 'nestjs-i18n';
 import { UnauthorizedException, NotFoundException } from '@nestjs/common';
 
+// Interfaces para tipos de DTOs usados en las pruebas
+interface RegisterUserDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
+interface LoginDto {
+  email: string;
+  password: string;
+}
+
+interface User {
+  id: string;
+  email?: string;
+}
+
+/**
+ * Pruebas de características BDD para la gestión de autenticación
+ */
 describe('AUTH MANAGEMENT FEATURES', () => {
+  // Dependencias del servicio
   let authService: AuthService;
-  let jwtService: JwtService;
-  let eventBus: EventBusService;
-  let configService: ConfigService;
-  let i18nService: I18nService;
+  let eventBus: EventBusService; // Usado para verificar la publicación de eventos
   
+  /**
+   * Configuración inicial para todas las pruebas
+   */
   beforeAll(async () => {
+    // Crear módulo de prueba con mocks para las dependencias
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -30,6 +53,7 @@ describe('AUTH MANAGEMENT FEATURES', () => {
             publish: jest.fn(),
           },
         },
+
         {
           provide: ConfigService,
           useValue: {
@@ -49,11 +73,11 @@ describe('AUTH MANAGEMENT FEATURES', () => {
               const translations = {
                 'AUTH.REGISTER_SUCCESS': 'Usuario registrado exitosamente',
                 'AUTH.REGISTER_FAILED': 'Error al registrar usuario',
-                'AUTH.LOGIN_SUCCESS': 'Inicio de sesiu00f3n exitoso',
-                'AUTH.LOGIN_FAILED': 'Credenciales invu00e1lidas',
-                'AUTH.LOGOUT_SUCCESS': 'Sesiu00f3n cerrada exitosamente',
-                'AUTH.PASSWORD_RESET_REQUEST': 'Solicitud de restablecimiento de contraseu00f1a enviada',
-                'AUTH.PASSWORD_RESET_SUCCESS': 'Contraseu00f1a restablecida exitosamente',
+                'AUTH.LOGIN_SUCCESS': 'Inicio de sesión exitoso',
+                'AUTH.LOGIN_FAILED': 'Credenciales inválidas',
+                'AUTH.LOGOUT_SUCCESS': 'Sesión cerrada exitosamente',
+                'AUTH.PASSWORD_RESET_REQUEST': 'Solicitud de restablecimiento de contraseña enviada',
+                'AUTH.PASSWORD_RESET_SUCCESS': 'Contraseña restablecida exitosamente',
               };
               return Promise.resolve(translations[key] || key);
             }),
@@ -62,30 +86,37 @@ describe('AUTH MANAGEMENT FEATURES', () => {
       ],
     }).compile();
 
+    // Obtener instancias de las dependencias
     authService = module.get<AuthService>(AuthService);
-    jwtService = module.get<JwtService>(JwtService);
     eventBus = module.get<EventBusService>(EventBusService);
-    configService = module.get<ConfigService>(ConfigService);
-    i18nService = module.get<I18nService>(I18nService);
   });
 
+  /**
+   * Limpieza de mocks antes de cada prueba
+   */
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
+  /**
+   * Característica: Registro de usuarios
+   */
   describe('FEATURE: User Registration', () => {
-    // Define test data
-    const registerUserDto = {
+    // Datos de prueba
+    const registerUserDto: RegisterUserDto = {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@example.com',
       password: 'password123',
     };
 
+    /**
+     * Escenario: Usuario se registra con información válida
+     */
     describe('SCENARIO: User registers with valid information', () => {
       // GIVEN
       it('GIVEN a user with valid registration data', () => {
-        // Validation of data would happen here
+        // Validación de datos
         expect(registerUserDto).toBeDefined();
         expect(registerUserDto.email).toBeDefined();
         expect(registerUserDto.password).toBeDefined();
@@ -93,10 +124,10 @@ describe('AUTH MANAGEMENT FEATURES', () => {
 
       // WHEN
       it('WHEN the user submits registration data', async () => {
-        // Execute the registration
+        // Ejecutar el registro
         await authService.register(registerUserDto);
 
-        // Verify the event was published
+        // Verificar que el evento fue publicado
         expect(eventBus.publish).toHaveBeenCalledWith('auth.registerUser', {
           userData: registerUserDto,
           requestId: expect.any(String),
@@ -105,32 +136,39 @@ describe('AUTH MANAGEMENT FEATURES', () => {
 
       // THEN
       it('THEN a success message should be returned and user creation event should be published', async () => {
-        // Execute and verify registration
+        // Ejecutar y verificar el registro
         const result = await authService.register(registerUserDto);
         
-        // Verify the result has a success message
+        // Verificar que el resultado contiene un mensaje de éxito
         expect(result).toEqual({ message: 'Usuario registrado exitosamente' });
         
-        // Verify the event was published
+        // Verificar que el evento fue publicado
         expect(eventBus.publish).toHaveBeenCalledWith('auth.registerUser', {
-          userData: expect.any(Object),
+          userData: registerUserDto,
           requestId: expect.any(String),
         });
       });
     });
   });
 
+  /**
+   * Característica: Autenticación de usuarios
+   */
   describe('FEATURE: User Authentication', () => {
-    const loginDto = {
+    // Datos de prueba para login
+    const loginDto: LoginDto = {
       email: 'test@example.com',
       password: 'password123',
     };
 
-    const invalidLoginDto = {
+    const invalidLoginDto: LoginDto = {
       email: 'test@example.com',
       password: 'wrongpassword',
     };
 
+    /**
+     * Escenario: Usuario inicia sesión con credenciales válidas
+     */
     describe('SCENARIO: User logs in with valid credentials', () => {
       // GIVEN
       it('GIVEN a user with valid credentials', () => {
@@ -140,42 +178,47 @@ describe('AUTH MANAGEMENT FEATURES', () => {
 
       // WHEN
       it('WHEN the user submits login credentials', async () => {
-        // Execute the login
+        // Ejecutar el inicio de sesión
         const result = await authService.login(loginDto);
         
-        // Verify login was successful
+        // Verificar que el inicio de sesión fue procesado
         expect(result).toBeDefined();
-        expect(result.token).toBeDefined();
       });
 
       // THEN
       it('THEN the user should be authenticated and receive a token', async () => {
-        // Execute and verify login
+        // Ejecutar y verificar el inicio de sesión
         const result = await authService.login(loginDto);
         
-        // Verify the result
+        // Verificar el resultado
         expect(result).toEqual({
-          message: 'Inicio de sesiu00f3n exitoso',
+          message: 'Inicio de sesión exitoso',
           token: 'jwt-token-simulado',
         });
       });
     });
 
+    /**
+     * Escenario: Usuario intenta iniciar sesión con credenciales inválidas
+     */
     describe('SCENARIO: User attempts to log in with invalid credentials', () => {
       // GIVEN
       it('GIVEN a user with invalid credentials', () => {
         expect(invalidLoginDto.email).toBe('test@example.com');
-        expect(invalidLoginDto.password).not.toBe('password123');
+        expect(invalidLoginDto.password).toBe('wrongpassword');
       });
 
-      // WHEN/THEN combined for exception testing
+      // WHEN/THEN combinados para prueba de excepción
       it('WHEN the user submits invalid credentials THEN authentication should fail', async () => {
-        // Expect login to throw an UnauthorizedException
+        // Verificar que se lanza la excepción adecuada
         await expect(authService.login(invalidLoginDto)).rejects.toThrow(UnauthorizedException);
       });
     });
   });
 
+  /**
+   * Característica: Restablecimiento de contraseña
+   */
   describe('FEATURE: Password Reset', () => {
     describe('SCENARIO: User requests password reset with valid email', () => {
       // GIVEN
@@ -186,21 +229,21 @@ describe('AUTH MANAGEMENT FEATURES', () => {
 
       // WHEN
       it('WHEN the user requests a password reset', async () => {
-        // Execute the password reset request
+        // Ejecutar el restablecimiento de contraseña
         const result = await authService.sendPasswordReset('test@example.com');
         
-        // Verify the request was processed
+        // Verificar que el restablecimiento fue procesado
         expect(result).toBeDefined();
       });
 
       // THEN
       it('THEN a password reset email should be sent', async () => {
-        // Execute and verify password reset request
+        // Ejecutar y verificar el restablecimiento de contraseña
         const result = await authService.sendPasswordReset('test@example.com');
         
-        // Verify the result
+        // Verificar el resultado
         expect(result).toEqual({
-          message: 'Solicitud de restablecimiento de contraseu00f1a enviada',
+          message: 'Solicitud de restablecimiento de contraseña enviada',
         });
       });
     });
@@ -212,9 +255,9 @@ describe('AUTH MANAGEMENT FEATURES', () => {
         expect(invalidEmail).not.toBe('test@example.com');
       });
 
-      // WHEN/THEN combined for exception testing
+      // WHEN/THEN combinados para prueba de excepción
       it('WHEN the user requests a password reset with invalid email THEN it should fail', async () => {
-        // Expect password reset request to throw a NotFoundException
+        // Verificar que se lanza la excepción adecuada
         await expect(authService.sendPasswordReset('nonexistent@example.com')).rejects.toThrow(NotFoundException);
       });
     });
@@ -228,21 +271,21 @@ describe('AUTH MANAGEMENT FEATURES', () => {
 
       // WHEN
       it('WHEN the user submits a new password with the token', async () => {
-        // Execute the password reset
+        // Ejecutar el restablecimiento de contraseña
         const result = await authService.resetPassword('valid-token', 'newpassword123');
         
-        // Verify the reset was processed
+        // Verificar que el restablecimiento fue procesado
         expect(result).toBeDefined();
       });
 
       // THEN
       it('THEN the user\'s password should be updated', async () => {
-        // Execute and verify password reset
+        // Ejecutar y verificar el restablecimiento de contraseña
         const result = await authService.resetPassword('valid-token', 'newpassword123');
         
-        // Verify the result
+        // Verificar el resultado
         expect(result).toEqual({
-          message: 'Contraseu00f1a restablecida exitosamente',
+          message: 'Contraseña restablecida exitosamente',
         });
       });
     });
@@ -254,40 +297,45 @@ describe('AUTH MANAGEMENT FEATURES', () => {
         expect(invalidToken).not.toBe('valid-token');
       });
 
-      // WHEN/THEN combined for exception testing
+      // WHEN/THEN combinados para prueba de excepción
       it('WHEN the user submits a new password with an invalid token THEN it should fail', async () => {
-        // Expect password reset to throw an UnauthorizedException
+        // Verificar que se lanza la excepción adecuada
         await expect(authService.resetPassword('invalid-token', 'newpassword123')).rejects.toThrow(UnauthorizedException);
       });
     });
   });
 
+  /**
+   * Característica: Cierre de sesión de usuarios
+   */
   describe('FEATURE: User Logout', () => {
     describe('SCENARIO: User logs out successfully', () => {
+      // Datos de prueba
+      const user: User = { id: 'user-id-123', email: 'test@example.com' };
+      
       // GIVEN
       it('GIVEN an authenticated user', () => {
-        const user = { id: 'user-id-123', email: 'test@example.com' };
         expect(user).toBeDefined();
         expect(user.id).toBe('user-id-123');
       });
 
       // WHEN
       it('WHEN the user requests to log out', async () => {
-        // Execute the logout
+        // Ejecutar el cierre de sesión
         const result = await authService.logout({ id: 'user-id-123' });
         
-        // Verify the logout was processed
+        // Verificar que el cierre de sesión fue procesado
         expect(result).toBeDefined();
       });
 
       // THEN
       it('THEN the user should be logged out successfully', async () => {
-        // Execute and verify logout
+        // Ejecutar y verificar el cierre de sesión
         const result = await authService.logout({ id: 'user-id-123' });
         
-        // Verify the result
+        // Verificar el resultado
         expect(result).toEqual({
-          message: 'Sesiu00f3n cerrada exitosamente',
+          message: 'Sesión cerrada exitosamente',
         });
       });
     });
