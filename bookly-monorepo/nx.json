@@ -46,7 +46,8 @@
         "apps/stockpile-app/stockpile-service-e2e/**/*",
         "apps/reports-app/reports-service-e2e/**/*",
         "apps/notifications-app/notifications-service-e2e/**/*",
-        "apps/gateway/api-gateway-e2e/**/*"
+        "apps/gateway/api-gateway-e2e/**/*",
+        "apps/auth-app-e2e/**/*"
       ]
     },
     {

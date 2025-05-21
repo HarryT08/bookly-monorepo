@@ -1,46 +1,11 @@
+import { IRepository } from '@bookly-monorepo/common';
 import { User } from '../entities/user.entity';
 
 /**
- * Interfaz del repositorio para la entidad User
+ * Repositorio para usuarios en el servicio de autenticación
  */
-export interface UserRepository {
-  /**
-   * Busca un usuario por su ID
-   */
-  findById(id: string): Promise<User | null>;
-
-  /**
-   * Busca un usuario por su email
-   */
+export interface UserRepository extends IRepository<User> {
   findByEmail(email: string): Promise<User | null>;
-
-  /**
-   * Busca todos los usuarios
-   */
-  findAll(): Promise<User[]>;
-
-  /**
-   * Crea un nuevo usuario
-   */
-  create(user: Omit<User, 'id'>): Promise<User>;
-
-  /**
-   * Actualiza un usuario existente
-   */
-  update(id: string, user: Partial<User>): Promise<User | null>;
-
-  /**
-   * Elimina un usuario por su ID
-   */
-  delete(id: string): Promise<boolean>;
-
-  /**
-   * Actualiza el token de refresco de un usuario
-   */
   updateRefreshToken(userId: string, refreshToken: string | null): Promise<void>;
-
-  /**
-   * Busca un usuario por su token de refresco
-   */
   findByRefreshToken(refreshToken: string): Promise<User | null>;
 }

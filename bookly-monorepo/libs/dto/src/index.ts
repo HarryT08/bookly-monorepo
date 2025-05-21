@@ -6,6 +6,8 @@ export * from './lib/common/base.dto';
 // Auth DTOs
 export * from './lib/auth/auth.dto';
 export * from './lib/auth/user.dto';
+export * from './lib/auth/user.interface';
+export * from './lib/auth/role.dto';
 
 // Resources DTOs
 export * from './lib/resources/resource.dto';

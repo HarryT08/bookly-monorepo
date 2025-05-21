@@ -7,7 +7,19 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
 import { AppModule } from './application/app.module';
+
+// Agregar manejadores globales de excepciones no capturadas
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // No terminamos el proceso para que Node siga funcionando
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // No terminamos el proceso para que Node siga funcionando
+});
 
 async function bootstrap() {
   // Crear la aplicaciu00f3n NestJS

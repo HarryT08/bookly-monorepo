@@ -1,39 +1,10 @@
 import { Body, Controller, HttpException, HttpStatus, Post, Inject } from '@nestjs/common';
 import { Logger } from '@bookly-monorepo/logging';
 
-// Define DTOs locally until properly shared in @bookly-monorepo/dto
-class CreateUserDto {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}
-
-class LoginDto {
-  email: string;
-  password: string;
-}
-
-class RefreshTokenDto {
-  refreshToken: string;
-}
-
-class UserResponseDto {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
-
-class AuthResponseDto {
-  accessToken: string;
-  refreshToken: string;
-  user: UserResponseDto;
-}
-
-import { LoginUserCommand } from '../../application/commands/login-user.command';
-import { RegisterUserCommand } from '../../application/commands/register-user.command';
+import { LoginUserCommand } from '../../application/commands/impl/login-user.command';
+import { RegisterUserCommand } from '../../application/commands/impl/register-user.command';
 import { CommandBus } from '../../application/buses/cqrs-bus';
+import { CreateUserDto, AuthResponseDto, LoginDto, RefreshTokenDto, UserResponseDto } from '@bookly-monorepo/dto';
 
 @Controller('auth')
 export class AuthController {
