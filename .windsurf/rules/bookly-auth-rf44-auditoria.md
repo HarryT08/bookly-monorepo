@@ -2,68 +2,78 @@
 trigger: manual
 ---
 
-RF-44: Registro de accesos y actividades para auditoría, que aporta trazabilidad y seguridad
-HU-36: Registro de Accesos y Actividades para Auditoría
-Historia de Usuario
-Como Administrador, quiero que el sistema registre de forma automática todos los accesos y actividades realizadas por los usuarios para asegurar la trazabilidad de las acciones, detectar posibles incidentes de seguridad y facilitar auditorías internas y externas.
-Criterios de Aceptación
-El sistema debe registrar cada inicio de sesión, cierre de sesión y acción relevante (creación, modificación, eliminación de datos, cambios de configuración, etc.).
-Cada registro debe incluir:
-Identificación del usuario (ID, nombre, rol).
-Fecha y hora exacta de la acción.
-Tipo de acción realizada (login, logout, actualización, eliminación, etc.).
-Dirección IP y, si es posible, información del dispositivo o navegador.
-Los registros deben ser inalterables y almacenarse de forma segura garantizando su integridad.
-Implementar una interfaz de consulta para que administradores autorizados filtren y visualicen registros (por usuario, fecha, acción, etc.).
-La funcion debe incluir opción de exportar los registros en formato CSV para auditoría.
-La validación y registro de cada acción deben realizarse en menos de 2 segundos en condiciones normales.
-Toda acción de acceso y actividad debe quedar registrada en el historial de auditoría de la plataforma.
-Para estructurar la solución, se desglosa en dos sub-historias:
-SubHU-36.1: Registro Automático de Accesos y Actividades
-Historia de Usuario
-Como Administrador, quiero que el sistema registre automáticamente todos los accesos y actividades críticas para disponer de un historial completo y confiable que sirva como evidencia en auditorías y para el análisis de incidentes.
-Criterios de Aceptación
-El sistema debe capturar y almacenar de manera automática cada inicio de sesión, cierre de sesión y acción relevante (por ejemplo, creación, edición o eliminación de recursos).
-Los registros deben incluir información detallada: usuario, rol, fecha, hora, tipo de acción, dirección IP y datos adicionales relevantes.
-Los registros deben almacenarse de forma segura (por ejemplo, en una base de datos de logs o mediante un servicio de logging centralizado).
-Se deben implementar validaciones que aseguren la integridad y consistencia de la información registrada.
-En caso de error en el registro, el sistema debe notificar al administrador y registrar la incidencia.
-La operación de registro no debe afectar significativamente el rendimiento del sistema (tiempo de registro < 2 segundos).
-Tareas y Subtareas
-Tarea 1: Diseño del Modelo de Datos para Auditoría
-Subtarea 1.1: Definir el esquema del log, incluyendo campos como ID de usuario, nombre, rol, fecha/hora, tipo de acción, IP y otros metadatos.
-Subtarea 1.2: Validar el diseño del modelo con el equipo de seguridad y auditoría.
-Tarea 2: Desarrollo del Módulo de Registro Automático
-Subtarea 2.1: Implementar un interceptor/middleware en NestJS que capture todas las solicitudes y acciones relevantes.
-Subtarea 2.2: Desarrollar la lógica para almacenar la información capturada en la base de datos (MongoDB mediante Prisma) o enviarla a un sistema de logging centralizado (por ejemplo, Winston integrado con OpenTelemetry y Sentry).
-Subtarea 2.3: Incluir validaciones de datos antes de guardar cada registro.
-Subtarea 2.4: Realizar pruebas unitarias para asegurar la correcta captura y almacenamiento de registros.
-Tarea 3: Manejo de Errores y Notificaciones
-Subtarea 3.1: Configurar manejo de excepciones para capturar errores en el proceso de registro.
-Subtarea 3.2: Notificar a los administradores en caso de fallos críticos en el sistema de logging.
-Tarea 4: Pruebas y Documentación
-Subtarea 4.1: Desarrollar pruebas de integración utilizando Jasmine con escenarios Given-When-Then.
-Subtarea 4.2: Documentar el modelo de datos, la implementación del middleware y el flujo de registro en la guía técnica.
-Subtarea 4.3: Integrar el módulo de auditoría en el pipeline de CI/CD (GitHub Actions, SonarQube, Pulumi).
-SubHU-36.2: Consulta y Exportación del Historial de Auditoría
-Historia de Usuario
-Como Administrador, quiero consultar y exportar el historial de accesos y actividades para auditar el uso del sistema, detectar posibles incidentes y cumplir con las normativas de seguridad institucional.
-Criterios de Aceptación
-La interfaz debe permitir visualizar una lista detallada de los registros de auditoría, con opciones de filtrado por usuario, fecha, tipo de acción, y dirección IP.
-Los administradores autorizados deben poder exportar los registros filtrados en formato CSV.
-La consulta debe responder en menos de 2 segundos en condiciones normales de carga.
-La interfaz debe ser responsiva y accesible tanto en dispositivos de escritorio como móviles.
-Todas las consultas y exportaciones deben quedar registradas en el historial de auditoría.
-Solo los usuarios con permisos adecuados pueden acceder a esta funcionalidad.
-Tareas y Subtareas
-Tarea 1: Diseño de la Interfaz de Consulta de Auditoría
-Subtarea 1.1: Crear wireframes y mockups de la pantalla de consulta de auditoría, incluyendo filtros y opciones de exportación.
-Subtarea 1.2: Validar el diseño con administradores y el equipo de auditoría, ajustando según sea necesario.
-Tarea 2: Desarrollo del Endpoint de Consulta de Auditoría
-Subtarea 2.1: Definir el DTO para la consulta que incluya filtros por usuario, fecha, tipo de acción, etc.
-Subtarea 2.2: Implementar la lógica en el servicio para recuperar y formatear los registros de auditoría desde la base de datos.
-Subtarea 2.3: Optimizar la consulta para asegurar un tiempo de respuesta inferior a 2 segundos.
-Tarea 3: Desarrollo del Módulo de Exportación a CSV
-Subtarea 3.1: Implementar la lógica para generar un archivo CSV a partir de los datos filtrados.
-Subtarea 3.2: Integrar la opción de exportación en la interfaz de consulta.
-Subtarea 3.3: Validar el formato del CSV (encabez
+## RF-44: Registro de accesos y actividades dentro del sistema para auditoría
+
+El sistema debe contar con un registro detallado de accesos y actividades realizadas por los usuarios dentro de la plataforma, permitiendo la auditoría y monitoreo de acciones clave.
+
+Este registro debe incluir información sobre:
+
+- Intentos de acceso y autenticación (exitosos y fallidos).
+- Acciones críticas dentro del sistema (creación, modificación o eliminación de reservas, cambios en la configuración de recursos, asignación de permisos).
+- Modificaciones en la gestión de usuarios y roles.
+- Exportaciones de reportes y generación de auditorías.
+
+El propósito de esta funcionalidad es garantizar la transparencia, seguridad y trazabilidad en el uso del sistema, permitiendo detectar accesos no autorizados, identificar patrones de uso sospechosos y auditar la correcta utilización de los recursos.
+
+### Criterios de Aceptación
+
+- El sistema debe registrar en un log de auditoría todos los accesos y actividades relevantes, incluyendo:
+  - Usuario que realizó la acción.
+  - Fecha y hora exacta del evento.
+  - Dirección IP y dispositivo utilizado.
+  - Tipo de acción realizada (inicio de sesión, modificación de datos, eliminación de registros, etc.).
+- Los administradores deben poder visualizar y filtrar los registros de auditoría según:
+  - Usuario específico.
+  - Fecha y hora del evento.
+  - Tipo de acción registrada.
+  - Alcance de la acción.
+  - Nivel de la acción.
+- Los registros de auditoría deben poder exportarse en formato CSV.
+- Si un usuario realiza intentos fallidos consecutivos de acceso, el sistema debe generar alertas de seguridad.
+- Debe existir una retención configurable de los registros para almacenamiento a largo plazo.
+- Solo los administradores con permisos de auditoría deben poder acceder a este módulo.
+- En caso de cambios críticos en el sistema (modificación de permisos, eliminación de usuarios o ajustes en la configuración de seguridad), el sistema debe generar notificaciones automáticas a los administradores responsables.
+
+### Flujo de Uso Mejorado
+
+#### Registro de accesos y eventos en el sistema
+
+- Un usuario inicia sesión en la plataforma.
+- El sistema registra la autenticación con información del usuario, IP, dispositivo y ubicación aproximada.
+- Si el usuario realiza intentos fallidos consecutivos, se genera una alerta.
+
+#### Registro de actividades dentro del sistema
+
+- Cada vez que un usuario realiza una acción relevante (ejemplo: modifica una reserva, cambia un permiso, genera un reporte), el sistema almacena el evento con detalles específicos.
+- Si la acción es crítica (ejemplo: eliminación de un recurso), el sistema puede requerir doble confirmación para evitar errores accidentales.
+
+#### Consulta y auditoría de registros
+
+- Un administrador accede al módulo "Auditoría".
+- Filtra los registros por fecha, usuario o tipo de acción.
+- Visualiza un listado detallado de eventos y, si es necesario, exporta el informe para su análisis externo.
+
+#### Alertas de seguridad y reportes automáticos
+
+- Si un usuario genera múltiples accesos fallidos o realiza acciones sospechosas, el sistema envía una alerta a los administradores.
+- Los administradores pueden programar reportes automáticos de auditoría que se generen y envíen periódicamente.
+
+### Restricciones y Consideraciones
+
+- **Acceso restringido a registros de auditoría**
+  - Solo administradores con permisos específicos deben poder ver y exportar estos registros.
+- **Retención de registros**
+  - Se debe definir una política para almacenar logs de auditoría, considerando normativas de seguridad y privacidad.
+- **Manejo de datos sensibles**
+  - La información registrada no debe ser alterada por ningún usuario y debe estar protegida contra accesos no autorizados.
+- **Prevención de alertas innecesarias**
+  - Si un usuario genera varios accesos fallidos pero dentro de un tiempo prolongado, el sistema no debe generar una alerta crítica automáticamente.
+- **Registros en tiempo real**
+  - Los logs de auditoría deben actualizarse inmediatamente después de cada evento sin afectar el rendimiento del sistema.
+
+### Requerimientos No Funcionales Relacionados
+
+- **Escalabilidad**: El sistema debe permitir almacenar y consultar grandes volúmenes de registros sin afectar la velocidad de respuesta.
+- **Seguridad**: Se deben aplicar cifrados y restricciones de acceso a los registros de auditoría para evitar manipulaciones.
+- **Usabilidad**: La interfaz debe ser intuitiva, con filtros de búsqueda avanzados y opciones de exportación accesibles.
+- **Disponibilidad**: La funcionalidad debe estar operativa 24/7, permitiendo auditorías en cualquier momento.

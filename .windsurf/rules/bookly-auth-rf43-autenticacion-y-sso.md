@@ -2,67 +2,82 @@
 trigger: manual
 ---
 
-RF-43: Implementación de autenticación y autorización mediante credenciales o SSO, asegurando un acceso controlado
-HU-35: Implementación de Autenticación y Autorización Segura
-Historia de Usuario
-Como Usuario de la plataforma, quiero iniciar sesión mediante mis credenciales o a través de un sistema SSO para acceder de forma segura y centralizada a mis funciones sin tener que gestionar múltiples contraseñas, garantizando la integridad y confidencialidad de mi información.
-Criterios de Aceptación
-El sistema debe permitir la autenticación tradicional mediante usuario (correo electrónico o identificador) y contraseña.
-El sistema debe integrarse con un mecanismo de Single Sign-On (SSO) utilizando protocolos estándar (por ejemplo, OAuth2 o SAML) para usuarios universitarios.
-Tras la autenticación, se debe generar un token de acceso seguro (por ejemplo, JWT) con un tiempo de expiración configurable.
-El sistema debe validar y autorizar el acceso basándose en el token emitido, integrándose con el módulo de roles (RF-41).
-Se debe implementar un mecanismo de renovación y revocación de tokens.
-Los accesos, tanto exitosos como fallidos, deben registrarse en el historial de auditoría.
-La interfaz de inicio de sesión y SSO debe ser intuitiva y adaptable a dispositivos móviles y de escritorio.
-La respuesta del sistema (autenticación exitosa o error) debe ocurrir en menos de 2 segundos en condiciones normales de carga.
-Para estructurar la solución se desglosa en dos sub-historias:
-SubHU-35.1: Autenticación Tradicional mediante Credenciales
-Historia de Usuario
-Como Usuario, quiero iniciar sesión introduciendo mi usuario y contraseña para acceder al sistema de manera rápida y segura.
-Criterios de Aceptación
-La interfaz debe mostrar un formulario de login con campos para usuario (correo electrónico o ID) y contraseña.
-El sistema validará las credenciales contra la base de datos de usuarios.
-En caso de autenticación exitosa, se generará un token JWT y se redirigirá al usuario a la página principal.
-Si las credenciales son inválidas, se mostrará un mensaje de error claro y se registrará el intento fallido.
-Todas las acciones de login (éxito o error) se deben registrar en el historial de auditoría.
-Tareas y Subtareas
-Tarea 1: Diseño de la Interfaz de Login
-Subtarea 1.1: Crear wireframes y mockups del formulario de inicio de sesión.
-Subtarea 1.2: Validar el diseño con usuarios y stakeholders.
-Tarea 2: Desarrollo del Endpoint de Autenticación
-Subtarea 2.1: Definir el DTO para el login (usuario y contraseña).
-Subtarea 2.2: Implementar la lógica en el servicio de autenticación en NestJS, utilizando Passport.js (o similar) para validar credenciales.
-Subtarea 2.3: Integrar con la base de datos de usuarios usando Prisma y MongoDB.
-Subtarea 2.4: Generar y emitir un token JWT seguro tras la validación.
-Tarea 3: Registro de Auditoría y Manejo de Errores
-Subtarea 3.1: Configurar logging (ej., Winston) para registrar cada intento de login.
-Subtarea 3.2: Implementar manejo de excepciones para capturar y reportar errores de autenticación.
-Tarea 4: Pruebas y Documentación
-Subtarea 4.1: Desarrollar pruebas unitarias e integración con Jasmine (escenarios Given-When-Then) para el flujo de login.
-Subtarea 4.2: Documentar la funcionalidad en la guía del usuario y en la documentación técnica.
-Subtarea 4.3: Incluir el módulo de autenticación en el pipeline de CI/CD.
-SubHU-35.2: Integración con SSO (Single Sign-On)
-Historia de Usuario
-Como Usuario universitario, quiero iniciar sesión utilizando un sistema SSO para acceder a la plataforma sin tener que recordar credenciales adicionales, aprovechando la infraestructura de autenticación centralizada de la universidad.
-Criterios de Aceptación
-El sistema debe ofrecer una opción para iniciar sesión mediante SSO.
-La integración SSO debe utilizar protocolos estándar (por ejemplo, OAuth2 o SAML) y validar la identidad del usuario contra el proveedor institucional.
-Tras la autenticación SSO, el sistema debe mapear los datos del usuario al modelo interno y generar un token JWT.
-El flujo SSO debe ser transparente para el usuario y completar la autenticación en menos de 2 segundos.
-Los accesos mediante SSO deben quedar registrados en el historial de auditoría, incluyendo detalles del proveedor SSO.
-Se debe manejar correctamente cualquier error en la autenticación SSO, notificando al usuario y registrando la incidencia.
-Tareas y Subtareas
-Tarea 1: Investigación y Selección del Protocolo SSO
-Subtarea 1.1: Investigar las opciones de integración SSO (OAuth2, SAML) y seleccionar la que se ajuste a los requerimientos de la universidad.
-Subtarea 1.2: Documentar las especificaciones y configuraciones necesarias.
-Tarea 2: Desarrollo del Módulo de Integración SSO en NestJS
-Subtarea 2.1: Configurar el módulo de autenticación en NestJS para soportar SSO (por ejemplo, utilizando Passport con estrategias SAML o OAuth2).
-Subtarea 2.2: Implementar endpoints para redirección y callback del SSO.
-Subtarea 2.3: Mapear la respuesta del proveedor SSO al modelo interno de usuario y generar un token JWT.
-Tarea 3: Registro de Auditoría y Manejo de Excepciones
-Subtarea 3.1: Configurar logging para registrar cada autenticación vía SSO, incluyendo información relevante del proveedor.
-Subtarea 3.2: Implementar manejo de excepciones para capturar errores en el flujo SSO y notificar a los administradores.
-Tarea 4: Pruebas y Documentación
-Subtarea 4.1: Desarrollar pruebas unitarias e integración utilizando Jasmine con escenarios BDD (Given-When-Then) para el flujo SSO.
-Subtarea 4.2: Documentar el proceso de integración SSO en la guía del usuario y la documentación técnica.
-Subtarea 4.3: Integrar la funcionalidad SSO en el pipeline de CI/CD.
+## RF-43: Implementación de autenticación y autorización mediante credenciales universitarias o SSO
+
+El sistema debe implementar un mecanismo de autenticación y autorización basado en credenciales universitarias o Single Sign-On (SSO), permitiendo que los usuarios accedan utilizando sus cuentas institucionales sin necesidad de crear credenciales adicionales.
+
+Este sistema de autenticación garantizará que solo los usuarios autorizados puedan acceder a la plataforma y se les asignen permisos según su perfil (estudiante, docente, administrativo, vigilante o administrador).
+
+La integración con SSO facilitará la gestión centralizada de usuarios, proporcionando una experiencia de acceso más fluida, segura y alineada con los protocolos de identidad de la universidad.
+
+### Criterios de Aceptación
+
+- El sistema debe permitir el inicio de sesión mediante credenciales universitarias, integrándose con los servicios de autenticación institucionales.
+- Debe soportar Single Sign-On (SSO), permitiendo a los usuarios acceder sin necesidad de ingresar sus credenciales múltiples veces si ya están autenticados en otros sistemas de la universidad.
+- La autenticación debe verificar automáticamente el rol del usuario y asignarle los permisos correspondientes dentro del sistema.
+- Si un usuario no tiene permisos de acceso, el sistema debe mostrar un mensaje de restricción y redirigirlo al administrador.
+- Se debe registrar un historial de accesos, almacenando información como:
+  - Fecha y hora del acceso.
+  - Dirección IP y dispositivo utilizado.
+  - Resultado del intento de autenticación (exitoso o fallido).
+- Los administradores deben poder gestionar manualmente los accesos en casos excepcionales (ejemplo: usuarios externos invitados).
+  - La gestión manual de acceso equivale a un registro de usuario con los siguientes datos:
+    - Nombre del usuario nuevo para las comunicaciones.
+    - Email del usuario nuevo que debe ser verificado.
+    - Rol con el que va a entrar el usuario.
+- Si el servicio de autenticación falla, el sistema debe ofrecer un método de respaldo para garantizar el acceso a usuarios con permisos especiales.
+  - Cuando un usuario ingresa con SSO por primera vez será registrado sin clave.
+  - Si el usuario intenta ingresar sin SSO y no tiene clave asignada, deberá verificar el email.
+
+### Flujo de Uso Mejorado
+
+#### Inicio de sesión mediante SSO o credenciales universitarias
+
+- El usuario accede al portal de reservas.
+- Se le presenta la opción de autenticarse con:
+  - SSO (inicio de sesión único vinculado a la universidad).
+  - Ingreso manual de credenciales.
+- Si el usuario ya está autenticado con el SSO institucional, el acceso debe ser automático.
+
+#### Validación de credenciales y asignación de permisos
+
+- El sistema verifica la identidad del usuario con el servicio de autenticación de la universidad.
+- Si las credenciales son válidas, el sistema recupera el perfil del usuario y asigna los permisos correspondientes.
+- Si el perfil no es suficiente para identificar y asignar los permisos correspondientes, el sistema muestra un mensaje de error de permisos y notifica al administrador.
+- Si la autenticación falla o el usuario no tiene permisos, el sistema muestra un mensaje de error de autenticación y notifica al administrador.
+
+#### Acceso y uso del sistema
+
+- Una vez autenticado, el usuario accede al sistema y visualiza las opciones disponibles según su rol:
+  - Estudiante: Reservar recursos, consultar disponibilidad.
+  - Docente: Aprobar reservas de estudiantes, gestionar horarios.
+  - Administrador general: Control total del sistema, gestión de roles y reportes.
+  - Administrador de programa de estudio: Control total sobre el programa de estudio, gestión de roles y reportes.
+  - Vigilante: Ver reservas activas y validar acceso.
+  - Administrativo: Gestionar reportes y disponibilidad de recursos.
+
+#### Registro y auditoría de accesos
+
+- Cada intento de inicio de sesión se almacena en un registro de actividad, indicando la fecha, hora y estado de la autenticación.
+- Los administradores pueden consultar el historial de accesos y detectar intentos fallidos o accesos sospechosos.
+
+### Restricciones y Consideraciones
+
+- **Dependencia del servicio de autenticación institucional**
+  - Si el SSO o el sistema de credenciales de la universidad presenta fallos, el acceso a la plataforma se realiza con clave propia.
+- **Manejo de usuarios sin credenciales universitarias**
+  - Los usuarios (invitados, proveedores, externos) pueden acceder con un método de autenticación alterno de clave propia.
+- **Expiración de sesiones (configurable)**
+  - Debe establecerse un tiempo máximo de inactividad antes de cerrar automáticamente la sesión del usuario por seguridad.
+- **Revocación de accesos**
+  - Si un usuario deja de pertenecer a la universidad, su acceso debe ser revocado automáticamente mediante la integración con el sistema de autenticación.
+- **Seguridad en dispositivos compartidos**
+  - Se debe habilitar un botón de "Cerrar sesión en todos los dispositivos" para evitar accesos no autorizados en equipos públicos.
+
+### Requerimientos No Funcionales Relacionados
+
+- **Escalabilidad**: El sistema debe permitir un alto número de autenticaciones simultáneas sin afectar el rendimiento.
+- **Rendimiento**: El inicio de sesión debe realizarse en menos de 3 segundos en condiciones normales.
+- **Seguridad**: Se debe utilizar protocolos seguros de autenticación como OAuth2, SAML o OpenID Connect para proteger las credenciales.
+- **Usabilidad**: La interfaz de inicio de sesión debe ser intuitiva, permitiendo el acceso con un solo clic mediante SSO.
+- **Disponibilidad**: La funcionalidad debe estar operativa 24/7, garantizando que los usuarios puedan acceder en cualquier momento.
