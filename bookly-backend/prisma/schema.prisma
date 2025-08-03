@@ -67,11 +67,17 @@ model UserRole {
 model Resource {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
+  code        String   @unique // Auto-generated unique code
   description String?
-  type        String // ROOM, EQUIPMENT, AUDITORIUM, etc.
+  type        String   // ROOM, EQUIPMENT, AUDITORIUM, LABORATORY, COMPUTER, etc.
   capacity    Int?
   location    String?
-  attributes  Json? // Flexible attributes for different resource types
+  status      String   @default("AVAILABLE") // AVAILABLE, MAINTENANCE, OUT_OF_SERVICE, RESERVED
+  attributes  Json?    // Flexible attributes for different resource types
+  
+  // Available schedules and rules (RF-05)
+  availableSchedules Json? // Contains: operating hours, restrictions, priorities, min/max reservation time, minimum advance notice
+  
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
