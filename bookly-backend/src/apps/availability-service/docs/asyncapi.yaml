@@ -1,0 +1,494 @@
+asyncapi: 3.0.0
+info:
+  title: Bookly Availability Service Events
+  version: 1.0.0
+  description: |
+    AsyncAPI specification for Availability Service events in Bookly system.
+    Covers RF-07 (Schedule Management) event-driven architecture.
+  contact:
+    name: Bookly Development Team
+    email: dev@bookly.ufps.edu.co
+  license:
+    name: MIT
+
+servers:
+  rabbitmq:
+    host: localhost:5672
+    protocol: amqp
+    description: RabbitMQ message broker for event distribution
+    variables:
+      port:
+        default: '5672'
+        description: RabbitMQ port
+  redis:
+    host: localhost:6379
+    protocol: redis
+    description: Redis for event caching and real-time notifications
+
+channels:
+  schedule/created:
+    address: bookly.availability.schedule.created
+    messages:
+      ScheduleCreated:
+        $ref: '#/components/messages/ScheduleCreated'
+    description: Published when a new schedule is created (RF-07)
+
+  schedule/updated:
+    address: bookly.availability.schedule.updated
+    messages:
+      ScheduleUpdated:
+        $ref: '#/components/messages/ScheduleUpdated'
+    description: Published when an existing schedule is modified
+
+  schedule/deleted:
+    address: bookly.availability.schedule.deleted
+    messages:
+      ScheduleDeleted:
+        $ref: '#/components/messages/ScheduleDeleted'
+    description: Published when a schedule is deleted or deactivated
+
+  reservation/created:
+    address: bookly.availability.reservation.created
+    messages:
+      ReservationCreated:
+        $ref: '#/components/messages/ReservationCreated'
+    description: Published when a new reservation is created
+
+  reservation/updated:
+    address: bookly.availability.reservation.updated
+    messages:
+      ReservationUpdated:
+        $ref: '#/components/messages/ReservationUpdated'
+    description: Published when reservation status or details change
+
+  reservation/cancelled:
+    address: bookly.availability.reservation.cancelled
+    messages:
+      ReservationCancelled:
+        $ref: '#/components/messages/ReservationCancelled'
+    description: Published when a reservation is cancelled
+
+  availability/changed:
+    address: bookly.availability.changed
+    messages:
+      AvailabilityChanged:
+        $ref: '#/components/messages/AvailabilityChanged'
+    description: Published when resource availability changes
+
+operations:
+  publishScheduleCreated:
+    action: send
+    channel:
+      $ref: '#/channels/schedule~1created'
+    summary: Publish schedule creation event
+    description: Notifies other services when a new schedule is created
+
+  publishReservationCreated:
+    action: send
+    channel:
+      $ref: '#/channels/reservation~1created'
+    summary: Publish reservation creation event
+    description: Notifies other services when a new reservation is created
+
+  subscribeToResourceUpdates:
+    action: receive
+    channel:
+      address: bookly.resources.updated
+    summary: Subscribe to resource updates
+    description: Listens for resource changes from resources-service
+
+components:
+  messages:
+    ScheduleCreated:
+      name: ScheduleCreated
+      title: Schedule Created Event
+      summary: Event published when a new schedule is created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ScheduleCreatedPayload'
+      examples:
+        - name: Regular Schedule Created
+          summary: Example of regular schedule creation
+          payload:
+            eventId: "evt_schedule_001"
+            eventType: "ScheduleCreated"
+            timestamp: "2024-01-15T10:30:00Z"
+            version: "1.0"
+            data:
+              scheduleId: "schedule_456"
+              resourceId: "classroom_a101"
+              name: "Horario Regular Aula A101"
+              type: "REGULAR"
+              startDate: "2024-01-15T08:00:00Z"
+              endDate: "2024-12-15T18:00:00Z"
+              isActive: true
+              restrictions:
+                minAdvanceHours: 24
+                maxDurationHours: 4
+                allowedUserTypes: ["PROFESSOR", "ADMIN"]
+
+    ScheduleUpdated:
+      name: ScheduleUpdated
+      title: Schedule Updated Event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ScheduleUpdatedPayload'
+
+    ScheduleDeleted:
+      name: ScheduleDeleted
+      title: Schedule Deleted Event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ScheduleDeletedPayload'
+
+    ReservationCreated:
+      name: ReservationCreated
+      title: Reservation Created Event
+      summary: Event published when a new reservation is created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReservationCreatedPayload'
+      examples:
+        - name: Simple Reservation Created
+          summary: Example of simple reservation creation
+          payload:
+            eventId: "evt_reservation_001"
+            eventType: "ReservationCreated"
+            timestamp: "2024-01-15T10:30:00Z"
+            version: "1.0"
+            data:
+              reservationId: "reservation_789"
+              resourceId: "classroom_a101"
+              userId: "prof_martinez_123"
+              title: "Clase de Matemáticas Avanzadas"
+              startDate: "2024-01-16T10:00:00Z"
+              endDate: "2024-01-16T12:00:00Z"
+              status: "PENDING"
+              isRecurring: false
+
+    ReservationUpdated:
+      name: ReservationUpdated
+      title: Reservation Updated Event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReservationUpdatedPayload'
+
+    ReservationCancelled:
+      name: ReservationCancelled
+      title: Reservation Cancelled Event
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReservationCancelledPayload'
+
+    AvailabilityChanged:
+      name: AvailabilityChanged
+      title: Availability Changed Event
+      summary: Event published when resource availability changes
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AvailabilityChangedPayload'
+
+  schemas:
+    ScheduleCreatedPayload:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - version
+        - data
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for the event
+        eventType:
+          type: string
+          enum: [ScheduleCreated]
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        version:
+          type: string
+          description: Event schema version
+        data:
+          type: object
+          required:
+            - scheduleId
+            - resourceId
+            - name
+            - type
+            - isActive
+          properties:
+            scheduleId:
+              type: string
+              description: Unique identifier for the schedule
+            resourceId:
+              type: string
+              description: ID of the resource this schedule applies to
+            name:
+              type: string
+              description: Human-readable name for the schedule
+            type:
+              type: string
+              enum: [REGULAR, RESTRICTED, EXCEPTION, MAINTENANCE]
+              description: Type of schedule
+            startDate:
+              type: string
+              format: date-time
+              description: When the schedule becomes effective
+            endDate:
+              type: string
+              format: date-time
+              description: When the schedule expires (optional)
+            isActive:
+              type: boolean
+              description: Whether the schedule is currently active
+            restrictions:
+              type: object
+              description: Schedule restrictions and rules
+            recurrenceRule:
+              type: object
+              description: Recurrence pattern for the schedule
+
+    ScheduleUpdatedPayload:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - version
+        - data
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [ScheduleUpdated]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        data:
+          type: object
+          required:
+            - scheduleId
+            - changes
+          properties:
+            scheduleId:
+              type: string
+            changes:
+              type: object
+              description: Fields that were modified
+            previousValues:
+              type: object
+              description: Previous values before update
+
+    ScheduleDeletedPayload:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - version
+        - data
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [ScheduleDeleted]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        data:
+          type: object
+          required:
+            - scheduleId
+            - resourceId
+          properties:
+            scheduleId:
+              type: string
+            resourceId:
+              type: string
+            reason:
+              type: string
+              description: Reason for deletion
+
+    ReservationCreatedPayload:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - version
+        - data
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [ReservationCreated]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        data:
+          type: object
+          required:
+            - reservationId
+            - resourceId
+            - userId
+            - title
+            - startDate
+            - endDate
+            - status
+          properties:
+            reservationId:
+              type: string
+            resourceId:
+              type: string
+            userId:
+              type: string
+            title:
+              type: string
+            description:
+              type: string
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+            status:
+              type: string
+              enum: [PENDING, APPROVED, REJECTED, CANCELLED, COMPLETED]
+            isRecurring:
+              type: boolean
+            recurrence:
+              type: object
+              description: Recurrence pattern if applicable
+
+    ReservationUpdatedPayload:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - version
+        - data
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [ReservationUpdated]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        data:
+          type: object
+          required:
+            - reservationId
+            - changes
+          properties:
+            reservationId:
+              type: string
+            changes:
+              type: object
+            previousStatus:
+              type: string
+            newStatus:
+              type: string
+
+    ReservationCancelledPayload:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - version
+        - data
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [ReservationCancelled]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        data:
+          type: object
+          required:
+            - reservationId
+            - resourceId
+            - userId
+            - reason
+          properties:
+            reservationId:
+              type: string
+            resourceId:
+              type: string
+            userId:
+              type: string
+            reason:
+              type: string
+              description: Reason for cancellation
+            cancelledBy:
+              type: string
+              description: Who cancelled the reservation
+
+    AvailabilityChangedPayload:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - timestamp
+        - version
+        - data
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [AvailabilityChanged]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        data:
+          type: object
+          required:
+            - resourceId
+            - changeType
+            - affectedTimeSlots
+          properties:
+            resourceId:
+              type: string
+            changeType:
+              type: string
+              enum: [SCHEDULE_ADDED, SCHEDULE_REMOVED, RESERVATION_CREATED, RESERVATION_CANCELLED]
+            affectedTimeSlots:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                  startTime:
+                    type: string
+                  endTime:
+                    type: string
+                  available:
+                    type: boolean

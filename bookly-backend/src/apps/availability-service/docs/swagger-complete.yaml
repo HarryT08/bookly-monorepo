@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Bookly Availability Service API
+  description: |
+    # Bookly Availability Service - Hito 2 Complete
+    
+    Comprehensive API for managing resource availability, reservations, calendar integrations, and audit trails.
+    
+    ## Features Implemented
+    
+    ### RF-07: Schedule and Availability Management
+    - Create and manage complex schedules with recurrence rules
+    - Handle availability slots with conflict detection
+    - Support for maintenance windows and exceptions
+    
+    ### RF-08: Calendar Integration
+    - Google Calendar, Microsoft Outlook, iCal integration
+    - Internal calendar with reservation synchronization
+    - Automatic conflict detection across all calendar sources
+    
+    ### RF-10: Calendar Visualization
+    - Multiple view types: monthly, weekly, daily, agenda
+    - Event filtering by type and status
+    - Multi-resource calendar views
+    
+    ### RF-11: Reservation History and Audit Trail
+    - Complete audit trail for all reservation actions
+    - Advanced filtering and search capabilities
+    - CSV export for external analysis
+    
+  version: 2.0.0
+  contact:
+    name: Bookly Development Team
+    email: dev@bookly.ufps.edu.co
+
+servers:
+  - url: https://api.bookly.ufps.edu.co/v2
+    description: Production server
+  - url: http://localhost:3000
+    description: Development server
+
+tags:
+  - name: RF-07 Availability
+    description: Schedule and availability management endpoints
+  - name: RF-08 Calendar Integration
+    description: Calendar integration endpoints for external providers
+  - name: RF-10 Calendar Views
+    description: Calendar visualization with multiple view types
+  - name: RF-11 History & Audit
+    description: Reservation history and audit trail endpoints
+
+paths:
+  /availability/basic:
+    post:
+      tags: [RF-07 Availability]
+      summary: Create basic availability
+      description: Creates a basic availability slot for a resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAvailabilityDto'
+      responses:
+        '201':
+          description: Availability created successfully
+        '400':
+          description: Bad request
+        '409':
+          description: Conflict with existing availability
+
+  /availability/calendar-integration:
+    post:
+      tags: [RF-08 Calendar Integration]
+      summary: Create calendar integration
+      description: Creates integration with external calendar providers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCalendarIntegrationDto'
+      responses:
+        '201':
+          description: Integration created successfully
+
+  /availability/calendar-view:
+    get:
+      tags: [RF-10 Calendar Views]
+      summary: Get calendar view
+      description: Retrieves comprehensive calendar view with events from all sources
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: viewType
+          in: query
+          schema:
+            $ref: '#/components/schemas/CalendarViewType'
+      responses:
+        '200':
+          description: Calendar view retrieved successfully
+
+  /availability/reservation-history/detailed:
+    get:
+      tags: [RF-11 History & Audit]
+      summary: Get detailed history
+      description: Retrieves comprehensive reservation history with advanced filtering
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: History retrieved successfully
+
+components:
+  schemas:
+    CreateAvailabilityDto:
+      type: object
+      required: [resourceId, startDate, endDate]
+      properties:
+        resourceId:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        isRecurring:
+          type: boolean
+
+    CreateCalendarIntegrationDto:
+      type: object
+      required: [name, provider, resourceId]
+      properties:
+        name:
+          type: string
+        provider:
+          $ref: '#/components/schemas/CalendarProvider'
+        resourceId:
+          type: string
+
+    CalendarProvider:
+      type: string
+      enum: [GOOGLE, OUTLOOK, ICAL, INTERNAL]
+
+    CalendarViewType:
+      type: string
+      enum: [MONTH, WEEK, DAY, AGENDA]
+
+    HistoryAction:
+      type: string
+      enum: [CREATED, UPDATED, CANCELLED, CONFIRMED, REJECTED]

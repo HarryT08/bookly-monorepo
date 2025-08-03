@@ -29,6 +29,7 @@ model User {
   roles        UserRole[]
   reservations Reservation[]
   feedbacks    Feedback[]
+  reservationHistory ReservationHistory[]
 
   @@map("users")
 }
@@ -87,6 +88,9 @@ model Resource {
   categoryId   String?       @db.ObjectId
   reservations Reservation[]
   maintenance  Maintenance[]
+  availability Availability[]
+  schedules    Schedule[]
+  calendarIntegrations CalendarIntegration[]
 
   @@map("resources")
 }
@@ -147,6 +151,7 @@ model Reservation {
 
   // Stockpile relations
   approvals Approval[]
+  history   ReservationHistory[]
 
   @@map("reservations")
 }
@@ -161,7 +166,93 @@ model Availability {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id])
+
   @@map("availability")
+}
+
+// RF-07: Schedule model for complex scheduling rules
+model Schedule {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId    String   @db.ObjectId
+  name          String   // Schedule name (e.g., "Semester 1", "Maintenance Period")
+  type          String   // REGULAR, EXCEPTION, MAINTENANCE, ACADEMIC_EVENT
+  startDate     DateTime
+  endDate       DateTime?
+  recurrenceRule Json?   // Recurrence pattern (RRULE format)
+  restrictions  Json?    // User type restrictions, priority rules
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id])
+
+  @@map("schedules")
+}
+
+// RF-08: Calendar integration configuration
+model CalendarIntegration {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId    String?  @db.ObjectId // null for global integration
+  provider      String   // GOOGLE, OUTLOOK, ICAL, INTERNAL
+  name          String   // Integration name
+  credentials   Json     // Encrypted credentials (API keys, tokens)
+  calendarId    String?  // External calendar ID
+  syncInterval  Int      @default(30) // Minutes
+  lastSync      DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  resource Resource? @relation(fields: [resourceId], references: [id])
+  events   CalendarEvent[]
+
+  @@map("calendar_integrations")
+}
+
+// RF-08: External calendar events
+model CalendarEvent {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  integrationId String   @db.ObjectId
+  externalId    String   // External event ID
+  title         String
+  description   String?
+  startDate     DateTime
+  endDate       DateTime
+  isAllDay      Boolean  @default(false)
+  status        String   // CONFIRMED, TENTATIVE, CANCELLED
+  lastSync      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  integration CalendarIntegration @relation(fields: [integrationId], references: [id])
+
+  @@unique([integrationId, externalId])
+  @@map("calendar_events")
+}
+
+// RF-11: Reservation history for audit trail
+model ReservationHistory {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reservationId String   @db.ObjectId
+  userId        String   @db.ObjectId
+  action        String   // CREATED, MODIFIED, CANCELLED, APPROVED, REJECTED, COMPLETED
+  previousData  Json?    // Previous state
+  newData       Json?    // New state
+  reason        String?  // Reason for change
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@map("reservation_history")
 }
 
 model WaitingList {
