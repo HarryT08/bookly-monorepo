@@ -1,0 +1,28 @@
+// Common DTOs shared across all services
+export * from './common/pagination.dto';
+export * from './common/response.dto';
+export * from './common/base-entity.dto';
+
+// Auth Service DTOs
+export * from './auth/login.dto';
+export * from './auth/register.dto';
+export * from './auth/user.dto';
+export * from './auth/role.dto';
+
+// Resources Service DTOs
+export * from './resources/resource.dto';
+export * from './resources/category.dto';
+export * from './resources/maintenance.dto';
+
+// Availability Service DTOs
+export * from './availability/reservation.dto';
+export * from './availability/availability.dto';
+export * from './availability/waiting-list.dto';
+
+// Stockpile Service DTOs
+export * from './stockpile/approval.dto';
+export * from './stockpile/check-in-out.dto';
+
+// Reports Service DTOs
+export * from './reports/feedback.dto';
+export * from './reports/audit-log.dto';

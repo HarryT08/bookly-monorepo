@@ -1,0 +1,39 @@
+{
+  "success": "Operation successful",
+  "error": "Operation error",
+  "notFound": "Resource not found",
+  "unauthorized": "Unauthorized",
+  "forbidden": "Access denied",
+  "validation": {
+    "failed": "Validation error",
+    "required": "Required field",
+    "invalid": "Invalid value",
+    "tooShort": "Value too short",
+    "tooLong": "Value too long",
+    "invalidEmail": "Invalid email",
+    "invalidDate": "Invalid date"
+  },
+  "auth": {
+    "loginSuccess": "Login successful",
+    "loginFailed": "Invalid credentials",
+    "logoutSuccess": "Logout successful",
+    "tokenExpired": "Token expired",
+    "accessDenied": "Access denied"
+  },
+  "resources": {
+    "created": "Resource created successfully",
+    "updated": "Resource updated successfully",
+    "deleted": "Resource deleted successfully",
+    "notFound": "Resource not found",
+    "alreadyExists": "Resource already exists"
+  },
+  "reservations": {
+    "created": "Reservation created successfully",
+    "updated": "Reservation updated successfully",
+    "cancelled": "Reservation cancelled successfully",
+    "approved": "Reservation approved",
+    "rejected": "Reservation rejected",
+    "conflictDetected": "Schedule conflict detected",
+    "notAvailable": "Resource not available at requested time"
+  }
+}

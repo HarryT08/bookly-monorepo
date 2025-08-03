@@ -1,0 +1,22 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapping": {
+    "^@/(.*)$": "<rootDir>/../src/$1",
+    "^@libs/(.*)$": "<rootDir>/../src/libs/$1",
+    "^@apps/(.*)$": "<rootDir>/../src/apps/$1",
+    "^@common/(.*)$": "<rootDir>/../src/libs/common/$1",
+    "^@dto/(.*)$": "<rootDir>/../src/libs/dto/$1",
+    "^@event-bus/(.*)$": "<rootDir>/../src/libs/event-bus/$1",
+    "^@logging/(.*)$": "<rootDir>/../src/libs/logging/$1",
+    "^@monitoring/(.*)$": "<rootDir>/../src/libs/monitoring/$1",
+    "^@i18n/(.*)$": "<rootDir>/../src/libs/i18n/$1"
+  },
+  "setupFilesAfterEnv": ["<rootDir>/setup-e2e.ts"],
+  "testTimeout": 30000
+}
