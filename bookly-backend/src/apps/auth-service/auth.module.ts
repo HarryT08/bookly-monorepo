@@ -1,36 +1,48 @@
 import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CqrsModule } from '@nestjs/cqrs';
 
 // Domain
-import { UserRepository } from './domain/repositories/user.repository';
-import { RoleRepository } from './domain/repositories/role.repository';
+import { UserRepository } from '@apps/auth-service/domain/repositories/user.repository';
+import { RoleRepository } from '@apps/auth-service/domain/repositories/role.repository';
+import { PermissionRepository } from '@apps/auth-service/domain/repositories/permission.repository';
 
 // Application
-import { LoginHandler } from './application/commands/handlers/login.handler';
-import { RegisterHandler } from './application/commands/handlers/register.handler';
-import { GetUserHandler } from './application/queries/handlers/get-user.handler';
-import { GetUsersHandler } from './application/queries/handlers/get-users.handler';
-import { AuthService } from './application/services/auth.service';
-import { UserService } from './application/services/user.service';
-import { RoleService } from './application/services/role.service';
+import { LoginHandler } from '@apps/auth-service/application/commands/handlers/login.handler';
+import { RegisterHandler } from '@apps/auth-service/application/commands/handlers/register.handler';
+import { GetUserHandler } from '@apps/auth-service/application/queries/handlers/get-user.handler';
+import { GetUsersHandler } from '@apps/auth-service/application/queries/handlers/get-users.handler';
+import { AuthService } from '@apps/auth-service/application/services/auth.service';
+import { UserService } from '@apps/auth-service/application/services/user.service';
+import { RoleService } from '@apps/auth-service/application/services/role.service';
+import { PermissionService } from '@apps/auth-service/application/services/permission.service';
 
 // Infrastructure
-import { AuthController } from './infrastructure/controllers/auth.controller';
-import { UserController } from './infrastructure/controllers/user.controller';
-import { RoleController } from './infrastructure/controllers/role.controller';
+import { AuthController } from '@apps/auth-service/infrastructure/controllers/auth.controller';
+import { UserController } from '@apps/auth-service/infrastructure/controllers/user.controller';
+import { RoleController } from '@apps/auth-service/infrastructure/controllers/role.controller';
+import { PermissionController } from '@apps/auth-service/infrastructure/controllers/permission.controller';
+import { OAuthController } from '@apps/auth-service/infrastructure/controllers/oauth.controller';
+import { SSOConfigGuard } from './infrastructure/guards/sso-config.guard';
+import { ResourceModificationGuard } from './infrastructure/guards/resource-modification.guard';
+import { DoubleConfirmationGuard } from './infrastructure/guards/double-confirmation.guard';
+import { ResourceAuditMiddleware } from './infrastructure/middleware/resource-audit.middleware';
+import { RegisterCommandHandler } from './application/handlers/register.handler';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
+import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
+import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 
-const CommandHandlers = [LoginHandler, RegisterHandler];
+const CommandHandlers = [LoginHandler, RegisterHandler, RegisterCommandHandler];
 const QueryHandlers = [GetUserHandler, GetUsersHandler];
 
 @Module({
   imports: [
+    ConfigModule,
     CqrsModule,
     PassportModule,
     JwtModule.registerAsync({
@@ -44,16 +56,30 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController, UserController, RoleController],
+  controllers: [
+    AuthController,
+    UserController,
+    RoleController,
+    PermissionController,
+    // Conditionally include OAuthController only if SSO is configured
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [OAuthController] : []),
+  ],
   providers: [
     // Services
     AuthService,
     UserService,
     RoleService,
+    PermissionService,
 
     // Strategies
     JwtStrategy,
     LocalStrategy,
+    // Conditionally include GoogleStrategy only if SSO is configured
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [GoogleStrategy] : []),
+    SSOConfigGuard,
+    ResourceModificationGuard,
+    DoubleConfirmationGuard,
+    ResourceAuditMiddleware,
 
     // Repositories
     {
@@ -64,11 +90,15 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
       provide: RoleRepository,
       useClass: PrismaRoleRepository,
     },
+    {
+      provide: PermissionRepository,
+      useClass: PrismaPermissionRepository,
+    },
 
     // CQRS Handlers
     ...CommandHandlers,
     ...QueryHandlers,
   ],
-  exports: [AuthService, UserService, RoleService],
+  exports: [AuthService, UserService, RoleService, PermissionService],
 })
 export class AuthModule {}

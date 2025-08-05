@@ -34,7 +34,7 @@ import {
   SentNotificationDto, 
   NotificationChannelType
 } from '@dto/stockpile/notification-template.dto';
-import { LoggingHelper } from '@/apps/stockpile-service/infrastructure/utils/logging.helper';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()
 @CommandHandler(CreateNotificationChannelCommand)

@@ -2,19 +2,32 @@ export interface User {
   id: string;
   email: string;
   username: string;
-  password: string;
+  password?: string;
   firstName: string;
   lastName: string;
   isActive: boolean;
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  lastLoginAt?: Date;
+  loginAttempts: number;
+  lockedUntil?: Date;
+  ssoProvider?: string;
+  ssoId?: string;
   createdAt: Date;
   updatedAt: Date;
-  roles?: UserRole[];
+  userRoles?: UserRole[];
 }
 
 export interface UserRole {
   id: string;
   userId: string;
   roleId: string;
+  programId?: string;
+  assignedAt: Date;
+  assignedBy?: string;
+  isActive: boolean;
   role?: Role;
 }
 
@@ -22,10 +35,35 @@ export interface Role {
   id: string;
   name: string;
   description?: string;
-  permissions: string[];
+  isActive: boolean;
+  isPredefined: boolean;
+  category?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: string;
+  rolePermissions?: RolePermission[];
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  resource: string;
+  action: string;
+  scope: string;
+  conditions?: any;
+  description?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface RolePermission {
+  id: string;
+  roleId: string;
+  permissionId: string;
+  grantedAt: Date;
+  grantedBy?: string;
+  permission?: Permission;
 }
 
 export class UserEntity implements User {
@@ -33,19 +71,28 @@ export class UserEntity implements User {
     public id: string,
     public email: string,
     public username: string,
-    public password: string,
+    public password: string | undefined,
     public firstName: string,
     public lastName: string,
     public isActive: boolean = true,
+    public isEmailVerified: boolean = false,
+    public emailVerificationToken: string | undefined = undefined,
+    public passwordResetToken: string | undefined = undefined,
+    public passwordResetExpires: Date | undefined = undefined,
+    public lastLoginAt: Date | undefined = undefined,
+    public loginAttempts: number = 0,
+    public lockedUntil: Date | undefined = undefined,
+    public ssoProvider: string | undefined = undefined,
+    public ssoId: string | undefined = undefined,
     public createdAt: Date = new Date(),
     public updatedAt: Date = new Date(),
-    public roles?: UserRole[],
+    public userRoles?: UserRole[],
   ) {}
 
   static create(
     email: string,
     username: string,
-    password: string,
+    password: string | undefined,
     firstName: string,
     lastName: string,
   ): UserEntity {
@@ -76,13 +123,51 @@ export class UserEntity implements User {
   }
 
   hasRole(roleName: string): boolean {
-    return this.roles?.some(userRole => userRole.role?.name === roleName) || false;
+    return this.userRoles?.some(userRole => userRole.role?.name === roleName) || false;
   }
 
-  hasPermission(permission: string): boolean {
-    return this.roles?.some(userRole => 
-      userRole.role?.permissions.includes(permission)
+  hasPermission(resource: string, action: string, scope: string = 'global'): boolean {
+    return this.userRoles?.some(userRole => 
+      userRole.role?.rolePermissions?.some(rolePermission => 
+        rolePermission.permission?.resource === resource &&
+        rolePermission.permission?.action === action &&
+        rolePermission.permission?.scope === scope &&
+        rolePermission.permission?.isActive
+      )
     ) || false;
+  }
+
+  getAllPermissions(): Permission[] {
+    const permissions: Permission[] = [];
+    this.userRoles?.forEach(userRole => {
+      userRole.role?.rolePermissions?.forEach(rolePermission => {
+        if (rolePermission.permission && rolePermission.permission.isActive) {
+          permissions.push(rolePermission.permission);
+        }
+      });
+    });
+    return permissions;
+  }
+
+  isAccountLocked(): boolean {
+    return this.lockedUntil ? this.lockedUntil > new Date() : false;
+  }
+
+  incrementLoginAttempts(): void {
+    this.loginAttempts += 1;
+    this.updatedAt = new Date();
+    
+    // Lock account after 5 failed attempts for 15 minutes
+    if (this.loginAttempts >= 5) {
+      this.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+    }
+  }
+
+  resetLoginAttempts(): void {
+    this.loginAttempts = 0;
+    this.lockedUntil = undefined;
+    this.lastLoginAt = new Date();
+    this.updatedAt = new Date();
   }
 
   getFullName(): string {

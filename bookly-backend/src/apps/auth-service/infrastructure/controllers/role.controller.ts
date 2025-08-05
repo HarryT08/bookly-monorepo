@@ -37,23 +37,23 @@ export class RoleController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create new role' })
+  @ApiOperation({ summary: 'Create a new role' })
   @ApiResponse({ status: 201, description: 'Role created successfully' })
   async create(@Body() data: any) {
-    return this.roleService.create(data);
+    return this.roleService.create(data, 'admin-user-id');
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update role' })
+  @ApiOperation({ summary: 'Update a role' })
   @ApiResponse({ status: 200, description: 'Role updated successfully' })
   async update(@Param('id') id: string, @Body() data: any) {
-    return this.roleService.update(id, data);
+    return this.roleService.update(id, data, 'admin-user-id');
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete role' })
+  @ApiOperation({ summary: 'Delete a role' })
   @ApiResponse({ status: 200, description: 'Role deleted successfully' })
   async delete(@Param('id') id: string) {
-    return this.roleService.delete(id);
+    return this.roleService.delete(id, 'admin-user-id');
   }
 }

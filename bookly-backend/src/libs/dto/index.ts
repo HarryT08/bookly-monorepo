@@ -8,6 +8,7 @@ export * from './auth/login.dto';
 export * from './auth/register.dto';
 export * from './auth/user.dto';
 export * from './auth/role.dto';
+export * from './auth/permission.dto';
 
 // Resources Service DTOs
 export * from './resources/resource.dto';

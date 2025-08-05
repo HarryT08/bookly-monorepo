@@ -105,12 +105,10 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   async removeRole(userId: string, roleId: string): Promise<void> {
-    await this.prisma.userRole.delete({
+    await this.prisma.userRole.deleteMany({
       where: {
-        userId_roleId: {
-          userId,
-          roleId,
-        },
+        userId,
+        roleId,
       },
     });
   }
@@ -119,9 +117,39 @@ export class PrismaUserRepository implements UserRepository {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
-        roles: {
+        userRoles: {
           include: {
-            role: true,
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    return user ? this.toDomainWithRoles(user) : null;
+  }
+
+  async findByEmailWithRoles(email: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        userRoles: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -144,7 +172,7 @@ export class PrismaUserRepository implements UserRepository {
   }
 
   private toDomainWithRoles(user: any): UserEntity {
-    return new UserEntity(
+    const userEntity = new UserEntity(
       user.id,
       user.email,
       user.username,
@@ -154,7 +182,56 @@ export class PrismaUserRepository implements UserRepository {
       user.isActive,
       user.createdAt,
       user.updatedAt,
-      user.roles,
     );
+    
+    // Set additional fields from schema
+    userEntity.isEmailVerified = user.isEmailVerified || false;
+    userEntity.emailVerificationToken = user.emailVerificationToken;
+    userEntity.passwordResetToken = user.passwordResetToken;
+    userEntity.passwordResetExpires = user.passwordResetExpires;
+    userEntity.loginAttempts = user.loginAttempts || 0;
+    userEntity.lockedUntil = user.lockedUntil;
+    userEntity.lastLoginAt = user.lastLoginAt;
+    userEntity.ssoProvider = user.ssoProvider;
+    userEntity.ssoId = user.ssoId;
+    userEntity.userRoles = user.userRoles;
+    
+    return userEntity;
+  }
+
+  async findUserRoles(userId: string): Promise<Array<{ role: { name: string } }>> {
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { userId },
+      include: {
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return userRoles;
+  }
+
+  async updateSSOInfo(userId: string, ssoProvider: string, ssoId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ssoProvider,
+        ssoId,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        lastLoginAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
   }
 }

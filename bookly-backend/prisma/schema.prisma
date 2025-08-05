@@ -18,21 +18,32 @@ model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   email     String   @unique
   username  String   @unique
-  password  String
+  password  String?
   firstName String
   lastName  String
   isActive  Boolean  @default(true)
+  isEmailVerified Boolean @default(false)
+  emailVerificationToken String?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+  lastLoginAt DateTime?
+  loginAttempts Int @default(0)
+  lockedUntil DateTime?
+  ssoProvider String? // google, microsoft, etc.
+  ssoId String? // External SSO identifier
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  roles              UserRole[]
+  userRoles          UserRole[]
   reservations       Reservation[]
   feedbacks          Feedback[]
   reservationHistory ReservationHistory[]
   approvalRequests   ApprovalRequest[] // As approver
   approvalActions    ApprovalAction[]  // Actions taken
   sentNotifications  SentNotification[] // As recipient
+  auditLogs          AuditLog[] // Actions performed by this user
+  accessLogs         AccessLog[] // Login/logout logs
 
   @@map("users")
 }
@@ -41,13 +52,16 @@ model Role {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   description String?
-  permissions String[]
   isActive    Boolean  @default(true)
+  isPredefined Boolean @default(false) // Cannot be edited/deleted if true
+  category    String? // STUDENT, TEACHER, ADMIN, GUARD, ADMINISTRATIVE
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId // User who created this role
 
   // Relations
-  users UserRole[]
+  userRoles   UserRole[]
+  rolePermissions RolePermission[]
 
   @@map("roles")
 }
@@ -56,12 +70,70 @@ model UserRole {
   id     String @id @default(auto()) @map("_id") @db.ObjectId
   userId String @db.ObjectId
   roleId String @db.ObjectId
+  programId String? @db.ObjectId // Academic program scope
+  assignedAt DateTime @default(now())
+  assignedBy String? @db.ObjectId // User who assigned this role
+  isActive Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
 
-  @@unique([userId, roleId])
+  @@unique([userId, roleId, programId])
   @@map("user_roles")
+}
+
+// Granular permissions system
+model Permission {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique // e.g., "resources:create", "users:update:own"
+  resource    String   // e.g., "resources", "users", "reservations"
+  action      String   // e.g., "create", "read", "update", "delete"
+  scope       String   @default("global") // "global", "program", "own"
+  conditions  Json?    // Additional conditions for the permission
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action, scope])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  roleId       String @db.ObjectId
+  permissionId String @db.ObjectId
+  grantedAt    DateTime @default(now())
+  grantedBy    String? @db.ObjectId
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+
+
+// Access logging for authentication events
+model AccessLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?  @db.ObjectId // Null for failed login attempts
+  email       String?  // Email used in login attempt
+  action      String   // "LOGIN", "LOGOUT", "LOGIN_FAILED", "PASSWORD_RESET"
+  success     Boolean
+  ipAddress   String?
+  userAgent   String?
+  ssoProvider String?  // "google", "microsoft", null for local auth
+  failureReason String? // Reason for failure
+  timestamp   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("access_logs")
 }
 
 // ========================================
@@ -663,6 +735,9 @@ model AuditLog {
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
 }

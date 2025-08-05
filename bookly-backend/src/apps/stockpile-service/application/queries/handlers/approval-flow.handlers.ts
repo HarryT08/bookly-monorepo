@@ -15,7 +15,7 @@ import {
 } from '../approval-flow.queries';
 import { ApprovalFlowRepository } from '../../../domain/repositories/approval-flow.repository';
 import { ApprovalFlowEntity, ApprovalLevelEntity, ApprovalRequestEntity } from '../../../domain/entities/approval-flow.entity';
-import { LoggingHelper } from '@/apps/stockpile-service/infrastructure/utils/logging.helper';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()
 @QueryHandler(GetApprovalFlowsQuery)

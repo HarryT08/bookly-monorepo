@@ -23,7 +23,7 @@ import {
   NotificationConfigDto, 
   SentNotificationDto 
 } from '@dto/stockpile/notification-template.dto';
-import { LoggingHelper } from '@/apps/stockpile-service/infrastructure/utils/logging.helper';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 import { NotificationChannelEntity } from '@/apps/stockpile-service/domain/entities/notification-template.entity';
 import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
 

@@ -42,6 +42,7 @@
     "@opentelemetry/sdk-node": "^0.47.0",
     "@prisma/client": "^6.13.0",
     "@sentry/node": "^7.99.0",
+    "@types/passport-google-oauth20": "^2.0.16",
     "amqplib": "^0.10.3",
     "axios": "^1.11.0",
     "bcrypt": "^5.1.1",
@@ -51,6 +52,7 @@
     "ical": "^0.8.0",
     "nestjs-i18n": "^10.4.5",
     "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "prisma": "^6.13.0",
@@ -104,6 +106,17 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1",
+      "^@libs/(.*)$": "<rootDir>/libs/$1",
+      "^@apps/(.*)$": "<rootDir>/apps/$1",
+      "^@common/(.*)$": "<rootDir>/libs/common/$1",
+      "^@dto/(.*)$": "<rootDir>/libs/dto/$1",
+      "^@event-bus/(.*)$": "<rootDir>/libs/event-bus/$1",
+      "^@logging/(.*)$": "<rootDir>/libs/logging/$1",
+      "^@monitoring/(.*)$": "<rootDir>/libs/monitoring/$1",
+      "^@i18n/(.*)$": "<rootDir>/libs/i18n/$1"
+    }
   }
 }

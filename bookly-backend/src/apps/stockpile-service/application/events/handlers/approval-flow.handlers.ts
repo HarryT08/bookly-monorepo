@@ -17,7 +17,7 @@ import {
 import { 
   SendNotificationCommand 
 } from '../../commands/notification-template.commands';
-import { LoggingHelper } from '@/apps/stockpile-service/infrastructure/utils/logging.helper';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
 
 @Injectable()
