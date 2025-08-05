@@ -22,6 +22,9 @@ export * from './availability/waiting-list.dto';
 // Stockpile Service DTOs
 export * from './stockpile/approval.dto';
 export * from './stockpile/check-in-out.dto';
+export * from './stockpile/approval-flow.dto';
+export * from './stockpile/document-template.dto';
+export * from './stockpile/notification-template.dto';
 
 // Reports Service DTOs
 export * from './reports/feedback.dto';
