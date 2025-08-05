@@ -9,9 +9,8 @@ import {
   SentNotificationEntity,
   NotificationEventType,
 } from '../../domain/entities/notification-template.entity';
-import { LoggingHelper } from '../utils/logging.helper';
-import { SentNotification } from '@prisma/client';
 import { NotificationChannelType } from '@/libs/dto';
+import { LoggingHelper } from '@logging/logging.helper';
 
 @Injectable()
 export class PrismaNotificationTemplateRepository implements NotificationTemplateRepository {

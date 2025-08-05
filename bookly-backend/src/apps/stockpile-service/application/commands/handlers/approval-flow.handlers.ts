@@ -29,7 +29,7 @@ import {
   ApprovalRequestTimeoutEvent,
   ApprovalReminderEvent
 } from '../../../domain/events/approval-flow.events';
-import { LoggingHelper } from '../../../infrastructure/utils/logging.helper';
+import { LoggingHelper } from '@logging/logging.helper';
 
 @Injectable()
 @CommandHandler(CreateApprovalFlowCommand)

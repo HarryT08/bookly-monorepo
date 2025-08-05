@@ -25,7 +25,7 @@ import {
   GeneratedDocumentDto,
   DocumentEventType
 } from '@dto/stockpile/document-template.dto';
-import { LoggingHelper } from '../../infrastructure/utils/logging.helper';
+import { LoggingHelper } from '@logging/logging.helper';
 
 @Injectable()
 export class DocumentTemplateService {

@@ -27,7 +27,7 @@ import {
   ApprovalLevelDto,
   ApprovalRequestDto
 } from '@dto/stockpile/approval-flow.dto';
-import { LoggingHelper } from '../../infrastructure/utils/logging.helper';
+import { LoggingHelper } from '@logging/logging.helper';
 
 @Injectable()
 export class ApprovalFlowService {
