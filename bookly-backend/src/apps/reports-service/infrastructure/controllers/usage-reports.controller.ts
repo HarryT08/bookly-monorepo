@@ -1,0 +1,289 @@
+import { 
+  Controller, 
+  Get, 
+  Query, 
+  UseGuards, 
+  Request,
+  HttpException,
+  HttpStatus,
+  ValidationPipe,
+  UsePipes
+} from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
+import { 
+  ApiTags, 
+  ApiOperation, 
+  ApiResponse, 
+  ApiBearerAuth,
+  ApiQuery 
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '@/libs/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@/libs/common/guards/roles.guard';
+import { Roles } from '@/libs/common/decorators/roles.decorator';
+import { UsageReportFiltersDto } from '@dto/reports/usage-report-filters.dto';
+import { UsageReportResponseDto } from '@dto/reports/report-response.dto';
+import { 
+  UsageReportQuery, 
+  UsageReportSummaryQuery, 
+  ReportFilterOptionsQuery 
+} from '../../application/queries/usage-report.query';
+import { LoggingService } from '@logging/logging.service';
+import { LoggingHelper } from '@/libs/logging/logging.helper';
+
+/**
+ * RF-31: Usage Reports Controller
+ * Handles endpoints for generating usage reports by program, period, and resource type
+ */
+@ApiTags('Usage Reports')
+@Controller('reports/usage')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+export class UsageReportsController {
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly loggingService: LoggingService,
+  ) {}
+
+  /**
+   * Generate usage report with filters
+   * RF-31: Reports about resource utilization by academic program, period, and resource type
+   */
+  @Get()
+  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
+  @ApiOperation({ 
+    summary: 'Generate usage report',
+    description: 'Generate detailed usage report filtered by program, period, and resource type' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Usage report generated successfully',
+    type: UsageReportResponseDto 
+  })
+  @ApiResponse({ status: 400, description: 'Invalid filters provided' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async generateUsageReport(
+    @Query() filters: UsageReportFiltersDto,
+    @Request() req: any,
+  ): Promise<UsageReportResponseDto> {
+    const startTime = Date.now();
+    const requestId = req.headers['x-request-id'] || `req_${Date.now()}`;
+
+    try {
+      this.loggingService.log(
+        `Usage report requested`,
+        'UsageReportsController',
+        LoggingHelper.logParams({ 
+          userId: req.user.id, 
+          filters: JSON.stringify(filters),
+          requestId 
+        })
+      );
+
+      const query = new UsageReportQuery(
+        filters,
+        req.user.id,
+        req.user.roles || [],
+        requestId,
+      );
+
+      const result = await this.queryBus.execute<UsageReportQuery, UsageReportResponseDto>(query);
+
+      const executionTime = Date.now() - startTime;
+
+      this.loggingService.log(
+        `Usage report generated successfully`,
+        'UsageReportsController',
+        LoggingHelper.logParams({ 
+          userId: req.user.id,
+          recordCount: result.data.length,
+          executionTime,
+          requestId 
+        })
+      );
+
+      return result;
+
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+
+      this.loggingService.error(
+        `Error generating usage report: ${error.message}`,
+        error.stack,
+        LoggingHelper.logParams({ 
+          userId: req.user?.id,
+          filters: JSON.stringify(filters),
+          executionTime,
+          requestId 
+        })
+      );
+
+      throw new HttpException(
+        {
+          message: 'Error generating usage report',
+          error: error.message,
+          timestamp: new Date().toISOString(),
+          path: '/reports/usage',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get usage report summary statistics
+   */
+  @Get('summary')
+  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
+  @ApiOperation({ 
+    summary: 'Get usage report summary',
+    description: 'Get summary statistics for usage report with given filters' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Usage report summary retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalResources: { type: 'number', example: 15 },
+        totalReservations: { type: 'number', example: 450 },
+        averageUtilization: { type: 'number', example: 75.5 },
+        mostUsedResource: { type: 'string', example: 'Aula Magna' },
+        leastUsedResource: { type: 'string', example: 'Laboratorio 3' },
+      },
+    }
+  })
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async getUsageReportSummary(
+    @Query() filters: UsageReportFiltersDto,
+    @Request() req: any,
+  ): Promise<any> {
+    try {
+      this.loggingService.log(
+        `Usage report summary requested`,
+        'UsageReportsController',
+        LoggingHelper.logParams({ 
+          userId: req.user.id, 
+          filters: JSON.stringify(filters) 
+        })
+      );
+
+      const query = new UsageReportSummaryQuery(
+        filters,
+        req.user.id,
+        req.user.roles || [],
+      );
+
+      const result = await this.queryBus.execute(query);
+
+      return result;
+
+    } catch (error) {
+      this.loggingService.error(
+        `Error getting usage report summary: ${error.message}`,
+        error.stack,
+        LoggingHelper.logParams({ 
+          userId: req.user?.id,
+          filters: JSON.stringify(filters) 
+        })
+      );
+
+      throw new HttpException(
+        {
+          message: 'Error getting usage report summary',
+          error: error.message,
+          timestamp: new Date().toISOString(),
+          path: '/reports/usage/summary',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Get available filter options for usage reports
+   */
+  @Get('filter-options/:filterType')
+  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
+  @ApiOperation({ 
+    summary: 'Get filter options',
+    description: 'Get available options for report filters (programs, resource types, categories, users)' 
+  })
+  @ApiQuery({ 
+    name: 'filterType', 
+    enum: ['programs', 'resourceTypes', 'categories', 'users'],
+    description: 'Type of filter options to retrieve' 
+  })
+  @ApiQuery({ 
+    name: 'userType', 
+    required: false,
+    description: 'Filter users by type (only applicable for users filterType)' 
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Filter options retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          code: { type: 'string' },
+          count: { type: 'number' },
+        },
+      },
+    }
+  })
+  async getFilterOptions(
+    @Query('filterType') filterType: 'programs' | 'resourceTypes' | 'categories' | 'users',
+    @Query('userType') userType?: string,
+    @Request() req?: any,
+  ): Promise<any[]> {
+    try {
+      this.loggingService.log(
+        `Filter options requested`,
+        'UsageReportsController',
+        LoggingHelper.logParams({ 
+          userId: req?.user?.id, 
+          filterType, 
+          userType 
+        })
+      );
+
+      const query = new ReportFilterOptionsQuery(
+        filterType,
+        req?.user?.id || 'anonymous',
+        req?.user?.roles || [],
+        userType,
+      );
+
+      const result = await this.queryBus.execute(query);
+
+      return result;
+
+    } catch (error) {
+      this.loggingService.error(
+        `Error getting filter options: ${error.message}`,
+        error.stack,
+        LoggingHelper.logParams({ 
+          userId: req?.user?.id,
+          filterType,
+          userType 
+        })
+      );
+
+      throw new HttpException(
+        {
+          message: 'Error getting filter options',
+          error: error.message,
+          timestamp: new Date().toISOString(),
+          path: `/reports/usage/filter-options/${filterType}`,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+}

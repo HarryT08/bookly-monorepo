@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { GetUsersQuery } from '../get-users.query';
-import { UserService } from '../../services/user.service';
-import { UserEntity } from '../../../domain/entities/user.entity';
+import { GetUsersQuery } from '../queries/get-users.query';
+import { UserService } from '../services/user.service';
+import { UserEntity } from '../../domain/entities/user.entity';
 import { LoggingService } from '@logging/logging.service';
 
 @QueryHandler(GetUsersQuery)

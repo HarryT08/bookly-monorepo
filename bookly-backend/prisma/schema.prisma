@@ -44,6 +44,12 @@ model User {
   sentNotifications  SentNotification[] // As recipient
   auditLogs          AuditLog[] // Actions performed by this user
   accessLogs         AccessLog[] // Login/logout logs
+  
+  // Reports relations (Hito 5)
+  generatedReports   GeneratedReport[]
+  reportExports      ReportExport[]
+  reportAccessLogs   ReportAccessLog[]
+  scheduledReports   ScheduledReport[]
 
   @@map("users")
 }
@@ -740,4 +746,182 @@ model AuditLog {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// ========================================
+// HITO 5: REPORTS PERSISTENT STORAGE MODELS
+// ========================================
+
+// RF-31, RF-32, RF-33: Persistent report storage for caching and history
+model GeneratedReport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Report identification
+  reportType    String   // USAGE, USER_RESERVATIONS, RESOURCE_UTILIZATION
+  title         String
+  description   String?
+  
+  // Generation details
+  generatedBy   String   @db.ObjectId
+  generatedAt   DateTime @default(now())
+  
+  // Filters and parameters used
+  filters       Json     // Original filters applied
+  parameters    Json?    // Additional parameters
+  
+  // Data and metadata
+  data          Json     // Report data (for caching)
+  metadata      Json     // Report metadata (execution time, record count, etc.)
+  summary       Json?    // Summary statistics
+  
+  // Cache and lifecycle
+  cacheKey      String   @unique // Redis cache key
+  isValid       Boolean  @default(true) // Cache validity
+  expiresAt     DateTime? // Cache expiration
+  
+  // File exports
+  hasExports    Boolean  @default(false)
+  exportPaths   Json?    // Paths to exported files (CSV, Excel, etc.)
+  
+  // Access control
+  isPublic      Boolean  @default(false)
+  allowedUsers  String[] @db.ObjectId // Users who can access this report
+  allowedRoles  String[] // Roles that can access this report
+  
+  // Status and tracking
+  status        String   @default("COMPLETED") // GENERATING, COMPLETED, FAILED, EXPIRED
+  errorMessage  String?
+  accessCount   Int      @default(0) // How many times accessed
+  lastAccessed  DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [generatedBy], references: [id])
+  exports       ReportExport[]
+  accessLogs    ReportAccessLog[]
+
+  @@index([reportType, generatedAt])
+  @@index([generatedBy, createdAt])
+  @@index([expiresAt])
+  @@map("generated_reports")
+}
+
+// RF-33: Export tracking for CSV and other formats
+model ReportExport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportId      String   @db.ObjectId
+  
+  // Export details
+  format        String   // CSV, EXCEL, JSON, PDF
+  filename      String
+  filePath      String
+  fileSize      Int      // Size in bytes
+  
+  // Export configuration
+  columns       String[] // Columns included
+  customHeaders String[] // Custom column headers
+  includeMetadata Boolean @default(true)
+  delimiter     String   @default(",") // For CSV
+  
+  // Generation details
+  exportedBy    String   @db.ObjectId
+  exportedAt    DateTime @default(now())
+  
+  // Access and lifecycle
+  downloadCount Int      @default(0)
+  lastDownload  DateTime?
+  expiresAt     DateTime? // File expiration
+  isAvailable   Boolean  @default(true)
+  
+  // Email delivery (if applicable)
+  sentByEmail   Boolean  @default(false)
+  emailAddress  String?
+  emailSentAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  report        GeneratedReport @relation(fields: [reportId], references: [id])
+  user          User @relation(fields: [exportedBy], references: [id])
+
+  @@index([reportId, format])
+  @@index([exportedBy, createdAt])
+  @@index([expiresAt])
+  @@map("report_exports")
+}
+
+// Access logging for reports (security and analytics)
+model ReportAccessLog {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportId      String   @db.ObjectId
+  
+  // Access details
+  accessedBy    String   @db.ObjectId
+  accessedAt    DateTime @default(now())
+  accessType    String   // VIEW, DOWNLOAD, EXPORT, SHARE
+  
+  // Request details
+  ipAddress     String?
+  userAgent     String?
+  sessionId     String?
+  
+  // Context
+  filters       Json?    // Filters applied during access
+  duration      Int?     // Time spent viewing (in seconds)
+  
+  createdAt     DateTime @default(now())
+
+  // Relations
+  report        GeneratedReport @relation(fields: [reportId], references: [id])
+  user          User @relation(fields: [accessedBy], references: [id])
+
+  @@index([reportId, accessedAt])
+  @@index([accessedBy, createdAt])
+  @@map("report_access_logs")
+}
+
+// Scheduled reports configuration
+model ScheduledReport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Schedule identification
+  name          String
+  description   String?
+  
+  // Report configuration
+  reportType    String   // USAGE, USER_RESERVATIONS, etc.
+  filters       Json     // Default filters
+  parameters    Json?    // Additional parameters
+  
+  // Schedule configuration
+  cronExpression String  // Cron expression for scheduling
+  timezone      String   @default("America/Bogota")
+  isActive      Boolean  @default(true)
+  
+  // Recipients
+  recipientEmails String[]
+  recipientRoles  String[]
+  
+  // Export settings
+  autoExport    Boolean  @default(false)
+  exportFormats String[] // CSV, EXCEL, etc.
+  
+  // Lifecycle
+  createdBy     String   @db.ObjectId
+  lastRun       DateTime?
+  nextRun       DateTime?
+  runCount      Int      @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [createdBy], references: [id])
+
+  @@index([nextRun, isActive])
+  @@index([createdBy])
+  @@map("scheduled_reports")
 }

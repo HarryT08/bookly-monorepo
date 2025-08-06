@@ -1,75 +1,55 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
-import { RegisterCommand } from '@apps/auth-service/application/commands/register.command';
-import { UserRepository } from '@apps/auth-service/domain/repositories/user.repository';
-import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
-import { LoggingService } from '@libs/logging/logging.service';
-import { LoggingHelper } from '@libs/logging/logging.helper';
+import { ConflictException } from '@nestjs/common';
+import { RegisterCommand } from '@/apps/auth-service/application/commands/register.command';
+import { UserService } from '@/apps/auth-service/application/services/user.service';
+import { UserEntity } from '@/apps/auth-service/domain/entities/user.entity';
+import { LoggingService } from '@logging/logging.service';
+import { MonitoringService } from '@monitoring/monitoring.service';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 
 @CommandHandler(RegisterCommand)
-export class RegisterCommandHandler implements ICommandHandler<RegisterCommand> {
+export class RegisterHandler implements ICommandHandler<RegisterCommand> {
   constructor(
-    private readonly userRepository: UserRepository,
+    private readonly userService: UserService,
     private readonly loggingService: LoggingService,
+    private readonly monitoringService: MonitoringService,
   ) {}
 
   async execute(command: RegisterCommand): Promise<UserEntity> {
     const { email, username, password, firstName, lastName } = command;
 
     try {
+      this.loggingService.log(`Registration attempt for email: ${email}`, 'RegisterHandler');
+
       // Check if user already exists
-      const existingUser = await this.userRepository.findByEmail(email);
-      if (existingUser) {
-        this.loggingService.warn('Registration attempt failed - Email already exists', {
-          email,
-        });
-        throw new BadRequestException('Email already registered');
+      const existingUserByEmail = await this.userService.findByEmail(email);
+      if (existingUserByEmail) {
+        throw new ConflictException('User with this email already exists');
+      }
+
+      const existingUserByUsername = await this.userService.findByUsername(username);
+      if (existingUserByUsername) {
+        throw new ConflictException('User with this username already exists');
       }
 
       // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       // Create user entity
-      const newUser = new UserEntity(
-        crypto.randomUUID(),
-        email,
-        username || email.split('@')[0],
-        hashedPassword,
-        firstName,
-        lastName,
-        true, // isActive
-        false, // isEmailVerified - requires verification
-        crypto.randomUUID(), // emailVerificationToken
-        null, // passwordResetToken
-        null, // passwordResetExpires
-        null, // lastLoginAt
-        0, // loginAttempts
-        null, // lockedUntil
-        null, // ssoProvider
-        null, // ssoId
-        new Date(), // createdAt
-        new Date(), // updatedAt
-      );
+      const userEntity = UserEntity.create(email, username, hashedPassword, firstName, lastName);
 
       // Save user
-      const createdUser = await this.userRepository.create(newUser);
+      const createdUser = await this.userService.create(userEntity);
 
-      this.loggingService.log('User registration successful', {
-        userId: createdUser.id,
-        email: createdUser.email,
-      });
+      this.loggingService.log(`User registered successfully: ${createdUser.id}`, 'RegisterHandler');
+      this.monitoringService.captureMessage(`New user registered: ${email}`, 'info');
 
       return createdUser;
     } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      this.loggingService.error('Error during user registration', error, LoggingHelper.logParams({
-        email,
-      }));
-      throw new BadRequestException('Registration failed');
+      this.loggingService.error(`Registration error for email: ${email}`, error, 'RegisterHandler');
+      this.monitoringService.captureException(error, { email, command: 'RegisterCommand' });
+      throw error;
     }
   }
 }

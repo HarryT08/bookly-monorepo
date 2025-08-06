@@ -1,0 +1,437 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ExportReportHandler } from '../../application/handlers/export-report.handler';
+import { ReportsRepository } from '../../domain/repositories/reports.repository';
+import { GeneratedReportsRepository, ReportExportsRepository } from '../../domain/repositories/generated-reports.repository';
+import { LoggingService } from '@logging/logging.service';
+import { RedisService } from '@event-bus/services/redis.service';
+import { ReportsAuditService } from '../../application/services/audit.service';
+import { ExportReportQuery } from '../../application/queries/export-report.query';
+import { ExportCsvDto, ExportFormat, ReportType } from '@dto/reports/export-csv.dto';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Mock fs module
+jest.mock('fs');
+jest.mock('path');
+
+describe('ExportReportHandler', () => {
+  let handler: ExportReportHandler;
+  let reportsRepository: jest.Mocked<ReportsRepository>;
+  let exportRepository: jest.Mocked<ReportExportsRepository>;
+  let generatedReportsRepository: jest.Mocked<GeneratedReportsRepository>;
+  let loggingService: jest.Mocked<LoggingService>;
+  let redisService: jest.Mocked<RedisService>;
+  let auditService: jest.Mocked<ReportsAuditService>;
+
+  const mockFs = fs as jest.Mocked<typeof fs>;
+  const mockPath = path as jest.Mocked<typeof path>;
+
+  const mockReportData = {
+    data: [
+      {
+        resourceId: 'res-1',
+        resourceName: 'Aula Magna',
+        resourceType: 'CLASSROOM',
+        totalReservations: 25,
+        totalHours: 150,
+        utilizationRate: 75.5,
+      },
+    ],
+    totalCount: 1,
+  };
+
+  beforeEach(async () => {
+    const mockReportsRepository = {
+      generateUsageReport: jest.fn(),
+      generateUserReport: jest.fn(),
+    };
+
+    const mockGeneratedReportsRepository = {
+      saveExport: jest.fn(),
+      findExportById: jest.fn(),
+      getExportHistory: jest.fn(),
+      findReportById: jest.fn(),
+    };
+
+    const mockLoggingService = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    };
+
+    const mockRedisService = {
+      get: jest.fn(),
+      set: jest.fn(),
+    };
+
+    const mockAuditService = {
+      auditReportExport: jest.fn(),
+      auditReportDownload: jest.fn(),
+      auditReportError: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ExportReportHandler,
+        {
+          provide: 'ReportsRepository',
+          useValue: mockReportsRepository,
+        },
+        {
+          provide: 'GeneratedReportsRepository',
+          useValue: mockGeneratedReportsRepository,
+        },
+        {
+          provide: 'ReportExportsRepository',
+          useValue: mockGeneratedReportsRepository, // Same mock for now
+        },
+        {
+          provide: LoggingService,
+          useValue: mockLoggingService,
+        },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
+        },
+        {
+          provide: ReportsAuditService,
+          useValue: mockAuditService,
+        },
+      ],
+    }).compile();
+
+    handler = module.get<ExportReportHandler>(ExportReportHandler);
+    reportsRepository = module.get('ReportsRepository') as jest.Mocked<ReportsRepository>;
+    exportRepository = module.get('ReportExportsRepository') as jest.Mocked<ReportExportsRepository>;
+    generatedReportsRepository = module.get('GeneratedReportsRepository') as jest.Mocked<GeneratedReportsRepository>;
+    loggingService = module.get<LoggingService>(LoggingService) as jest.Mocked<LoggingService>;
+    redisService = module.get<RedisService>(RedisService) as jest.Mocked<RedisService>;
+    auditService = module.get<ReportsAuditService>(ReportsAuditService) as jest.Mocked<ReportsAuditService>;
+
+    // Setup path mocks
+    mockPath.join.mockImplementation((...args) => args.join('/'));
+    mockPath.resolve.mockImplementation((dir) => `/app/${dir}`);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('execute - CSV Export', () => {
+    it('should export usage report to CSV successfully', async () => {
+      // Given: Valid export configuration for usage report
+      const exportConfig: ExportCsvDto = {
+        reportType: ReportType.USAGE,
+        format: ExportFormat.CSV,
+        filename: 'usage-report-2024',
+        columns: ['resourceName', 'totalReservations', 'utilizationRate'],
+        filters: {
+          programIds: ['prog-1'],
+          startDate: '2024-01-01',
+          endDate: '2024-01-31',
+        },
+      };
+
+      const query = new ExportReportQuery(
+        exportConfig,
+        [],
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      // Mock report data retrieval
+      reportsRepository.generateUsageReport.mockResolvedValue(mockReportData as any);
+
+      // Mock file system operations
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.writeFileSync.mockImplementation(() => {});
+      mockFs.statSync.mockReturnValue({ size: 1024 } as any);
+
+      // Mock export saving
+      exportRepository.saveExport.mockResolvedValue({
+        id: 'export-123',
+        filename: 'usage-report-2024.csv',
+        filePath: '/app/exports/usage-report-2024.csv',
+      });
+
+      // When: Handler executes the export
+      const result = await handler.execute(query);
+
+      // Then: Export should be created successfully
+      expect(result).toBeDefined();
+      expect(result.filename).toBe('usage-report-2024.csv');
+      expect(result.status).toBe('SUCCESS');
+
+      // And: Report data should be retrieved
+      expect(reportsRepository.generateUsageReport).toHaveBeenCalledWith(exportConfig.filters);
+
+      // And: File should be written
+      expect(mockFs.writeFileSync).toHaveBeenCalled();
+
+      // And: Export should be saved to database
+      expect(exportRepository.saveExport).toHaveBeenCalledWith({
+        reportType: ReportType.USAGE,
+        format: ExportFormat.CSV,
+        filename: 'usage-report-2024.csv',
+        filePath: expect.stringContaining('usage-report-2024.csv'),
+        createdBy: 'user-123',
+        filters: exportConfig.filters,
+        columns: exportConfig.columns,
+        status: 'COMPLETED',
+        isAvailable: true,
+        expiresAt: expect.any(Date),
+      });
+
+      // And: Export should be audited
+      expect(auditService.auditReportExport).toHaveBeenCalledWith({
+        userId: 'user-123',
+        reportType: ReportType.USAGE,
+        exportFormat: ExportFormat.CSV,
+        filename: 'usage-report-2024.csv',
+        executionTime: expect.any(Number),
+        exportId: expect.any(String),
+        requestId: 'req-456',
+        userRoles: ['ADMIN'],
+      });
+    });
+
+    it('should export user report to CSV successfully', async () => {
+      // Given: Valid export configuration for user report
+      const exportConfig: ExportCsvDto = {
+        reportType: ReportType.USER_RESERVATIONS,
+        format: ExportFormat.CSV,
+        filename: 'user-report-2024',
+        columns: ['userName', 'totalReservations', 'utilizationRate'],
+        filters: {
+          userTypes: ['TEACHER'],
+          startDate: '2024-01-01',
+          endDate: '2024-01-31',
+        },
+      };
+
+      const query = new ExportReportQuery(
+        exportConfig,
+        [],
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      const mockUserReportData = {
+        data: [
+          {
+            userId: 'user-1',
+            userName: 'Prof. García',
+            userType: 'TEACHER',
+            totalReservations: 15,
+            utilizationRate: 85.0,
+          },
+        ],
+        totalCount: 1,
+      };
+
+      // Mock report data retrieval
+      reportsRepository.generateUserReport.mockResolvedValue(mockUserReportData as any);
+
+      // Mock file system operations
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.writeFileSync.mockImplementation(() => {});
+      mockFs.statSync.mockReturnValue({ size: 2048 } as any);
+
+      // Mock export saving
+      exportRepository.saveExport.mockResolvedValue({
+        id: 'export-456',
+        filename: 'user-report-2024.csv',
+        filePath: '/app/exports/user-report-2024.csv',
+      });
+
+      // When: Handler executes the export
+      const result = await handler.execute(query);
+
+      // Then: Export should be created successfully
+      expect(result).toBeDefined();
+      expect(result.filename).toBe('user-report-2024.csv');
+      expect(result.fileSize).toBe(2048);
+
+      // And: User report data should be retrieved
+      expect(reportsRepository.generateUserReport).toHaveBeenCalledWith(exportConfig.filters);
+    });
+
+    it('should handle export errors gracefully', async () => {
+      // Given: Export configuration that will cause an error
+      const exportConfig: ExportCsvDto = {
+        reportType: ReportType.USAGE,
+        format: ExportFormat.CSV,
+        filename: 'failing-export',
+        columns: ['resourceName'],
+        filters: { programIds: ['prog-1'] },
+      };
+
+      const query = new ExportReportQuery(
+        exportConfig,
+        [],
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      const repositoryError = new Error('Database connection failed');
+
+      // Mock repository to throw error
+      reportsRepository.generateUsageReport.mockRejectedValue(repositoryError);
+
+      // When: Handler executes the export
+      const result = await handler.execute(query);
+      
+      // Then: Should return failed status
+      expect(result.status).toBe('FAILED');
+      expect(result.errorMessage).toContain('Database connection failed');
+
+      // And: Error should be audited
+      expect(auditService.auditReportError).toHaveBeenCalledWith({
+        userId: 'user-123',
+        action: 'CSV_EXPORT',
+        errorType: 'REPOSITORY_ERROR',
+        errorMessage: 'Database connection failed',
+        stackTrace: expect.any(String),
+        requestId: 'req-456',
+        userRoles: ['ADMIN'],
+      });
+    });
+
+    it('should handle file system errors during export', async () => {
+      // Given: Valid export configuration but file system error
+      const exportConfig: ExportCsvDto = {
+        reportType: ReportType.USAGE,
+        format: ExportFormat.CSV,
+        filename: 'fs-error-export',
+        columns: ['resourceName'],
+        filters: { programIds: ['prog-1'] },
+      };
+
+      const query = new ExportReportQuery(
+        exportConfig,
+        [],
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      // Mock successful data retrieval
+      reportsRepository.generateUsageReport.mockResolvedValue(mockReportData as any);
+
+      // Mock file system to throw error
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.writeFileSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      // When: Handler executes the export
+      const result = await handler.execute(query);
+      
+      // Then: Should return failed status
+      expect(result.status).toBe('FAILED');
+      expect(result.errorMessage).toContain('Permission denied');
+
+      // And: Error should be logged
+      expect(loggingService.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error exporting report'),
+        expect.any(String),
+        expect.any(Object)
+      );
+    });
+
+    it('should create exports directory if it does not exist', async () => {
+      // Given: Exports directory does not exist
+      const exportConfig: ExportCsvDto = {
+        reportType: ReportType.USAGE,
+        format: ExportFormat.CSV,
+        filename: 'new-dir-export',
+        columns: ['resourceName'],
+        filters: { programIds: ['prog-1'] },
+      };
+
+      const query = new ExportReportQuery(
+        exportConfig,
+        [],
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      // Mock report data retrieval
+      reportsRepository.generateUsageReport.mockResolvedValue(mockReportData as any);
+
+      // Mock directory does not exist
+      mockFs.existsSync.mockReturnValue(false);
+      mockFs.mkdirSync.mockImplementation(() => '/app/exports');
+      mockFs.writeFileSync.mockImplementation(() => {});
+      mockFs.statSync.mockReturnValue({ size: 512 } as any);
+
+      // Mock export saving
+      exportRepository.saveExport.mockResolvedValue({
+        id: 'export-789',
+        filename: 'new-dir-export.csv',
+        filePath: '/app/exports/new-dir-export.csv',
+      });
+
+      // When: Handler executes the export
+      const result = await handler.execute(query);
+
+      // Then: Directory should be created
+      expect(mockFs.mkdirSync).toHaveBeenCalledWith(
+        expect.stringContaining('exports'),
+        { recursive: true }
+      );
+
+      // And: Export should succeed
+      expect(result).toBeDefined();
+      expect(result.status).toBe('SUCCESS');
+    });
+
+    it('should generate unique filename when file already exists', async () => {
+      // Given: Export with filename that already exists
+      const exportConfig: ExportCsvDto = {
+        reportType: ReportType.USAGE,
+        format: ExportFormat.CSV,
+        filename: 'existing-file',
+        columns: ['resourceName'],
+        filters: { programIds: ['prog-1'] },
+      };
+
+      const query = new ExportReportQuery(
+        exportConfig,
+        [],
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      // Mock report data retrieval
+      reportsRepository.generateUsageReport.mockResolvedValue(mockReportData as any);
+
+      // Mock file system operations
+      mockFs.existsSync.mockReturnValue(true);
+      mockFs.writeFileSync.mockImplementation(() => {});
+      mockFs.statSync.mockReturnValue({ size: 256 } as any);
+
+      // Mock export saving
+      exportRepository.saveExport.mockResolvedValue({
+        id: 'export-unique',
+        filename: expect.stringMatching(/existing-file.*\.csv/),
+        filePath: expect.stringContaining('existing-file'),
+      });
+
+      // When: Handler executes the export
+      const result = await handler.execute(query);
+
+      // Then: Export should succeed with potentially modified filename
+      expect(result).toBeDefined();
+      expect(result.filename).toMatch(/existing-file.*\.csv/);
+    });
+  });
+
+  // Note: CSV generation is handled internally by the handler
+  // These tests would require exposing private methods or integration testing
+});

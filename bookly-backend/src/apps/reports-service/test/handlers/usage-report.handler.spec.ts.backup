@@ -1,0 +1,392 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { UsageReportHandler } from '../../application/handlers/usage-report.handler';
+import { ReportsRepository } from '../../domain/repositories/reports.repository';
+import { GeneratedReportsRepository } from '../../domain/repositories/generated-reports.repository';
+import { LoggingService } from '@logging/logging.service';
+import { RedisService } from '@event-bus/services/redis.service';
+import { ReportsAuditService } from '../../application/services/audit.service';
+import { UsageReportQuery } from '../../application/queries/usage-report.query';
+import { ResourceType, UsageReportFiltersDto } from '@dto/reports/usage-report-filters.dto';
+
+describe('UsageReportHandler', () => {
+  let handler: UsageReportHandler;
+  let reportsRepository: jest.Mocked<ReportsRepository>;
+  let generatedReportsRepository: jest.Mocked<GeneratedReportsRepository>;
+  let loggingService: jest.Mocked<LoggingService>;
+  let redisService: jest.Mocked<RedisService>;
+  let auditService: jest.Mocked<ReportsAuditService>;
+
+  const mockUsageReportData = {
+    data: [
+      {
+        resourceId: 'res-1',
+        resourceName: 'Aula Magna',
+        resourceType: 'CLASSROOM',
+        category: 'Aulas',
+        totalReservations: 25,
+        totalHours: 150,
+        utilizationRate: 75.5,
+        program: 'Ingeniería de Sistemas',
+        period: '2024-01',
+      },
+    ],
+    totalCount: 1,
+    executionTime: 500,
+  };
+
+  const mockSummary = {
+    totalResources: 15,
+    totalReservations: 450,
+    averageUtilization: 75.5,
+    mostUsedResource: 'Aula Magna',
+    leastUsedResource: 'Laboratorio 3',
+  };
+
+  beforeEach(async () => {
+    const mockReportsRepository = {
+      generateUsageReport: jest.fn(),
+      getUsageReportSummary: jest.fn(),
+      getFilterOptions: jest.fn(),
+    };
+
+    const mockGeneratedReportsRepository = {
+      saveReport: jest.fn(),
+      findByFilters: jest.fn(),
+      updateAccess: jest.fn(),
+    };
+
+    const mockLoggingService = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    };
+
+    const mockRedisService = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    };
+
+    const mockAuditService = {
+      auditReportGeneration: jest.fn(),
+      auditReportAccess: jest.fn(),
+      auditPerformanceMetrics: jest.fn(),
+      auditDataAccess: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UsageReportHandler,
+        {
+          provide: 'ReportsRepository',
+          useValue: mockReportsRepository,
+        },
+        {
+          provide: 'GeneratedReportsRepository',
+          useValue: mockGeneratedReportsRepository,
+        },
+        {
+          provide: LoggingService,
+          useValue: mockLoggingService,
+        },
+        {
+          provide: RedisService,
+          useValue: mockRedisService,
+        },
+        {
+          provide: ReportsAuditService,
+          useValue: mockAuditService,
+        },
+      ],
+    }).compile();
+
+    handler = module.get<UsageReportHandler>(UsageReportHandler);
+    reportsRepository = module.get('ReportsRepository') as jest.Mocked<ReportsRepository>;
+    generatedReportsRepository = module.get('GeneratedReportsRepository') as jest.Mocked<GeneratedReportsRepository>;
+    loggingService = module.get<LoggingService>(LoggingService) as jest.Mocked<LoggingService>;
+    redisService = module.get<RedisService>(RedisService) as jest.Mocked<RedisService>;
+    auditService = module.get<ReportsAuditService>(ReportsAuditService) as jest.Mocked<ReportsAuditService>;
+  });
+
+  describe('execute - Usage Report Generation', () => {
+    it('should generate usage report successfully when no cache exists', async () => {
+      // Given: No cached report exists and valid filters are provided
+      const filters: UsageReportFiltersDto = {
+        programIds: ['prog-1'],
+        resourceTypes: [ResourceType.CLASSROOM],
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+        page: 1,
+        limit: 50,
+      };
+
+      const query = new UsageReportQuery(
+        filters,
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      redisService.get.mockResolvedValue(null); // No cache
+      reportsRepository.generateUsageReport.mockResolvedValue(mockUsageReportData as any);
+      reportsRepository.getUsageReportSummary.mockResolvedValue(mockSummary);
+      generatedReportsRepository.saveReport.mockResolvedValue({
+        id: 'report-123',
+        cacheKey: 'cache-key-123',
+      });
+
+      // When: Handler executes the query
+      const result = await handler.execute(query);
+
+      // Then: Report should be generated successfully
+      expect(result).toBeDefined();
+      expect(result.data).toEqual(mockUsageReportData.data);
+      expect(result.summary).toEqual(mockSummary);
+      expect(result.metadata.reportType).toBe('USAGE_REPORT');
+      expect(result.metadata.generatedBy).toBe('user-123');
+      expect(result.pagination.total).toBe(1);
+
+      // And: Repository methods should be called
+      expect(reportsRepository.generateUsageReport).toHaveBeenCalledWith(filters);
+      expect(reportsRepository.getUsageReportSummary).toHaveBeenCalledWith(filters);
+
+      // And: Audit should be logged
+      expect(auditService.auditReportGeneration).toHaveBeenCalledWith({
+        userId: 'user-123',
+        reportType: 'usage',
+        filters,
+        recordCount: 1,
+        executionTime: expect.any(Number),
+        cacheHit: false,
+        requestId: 'req-456',
+        userRoles: ['ADMIN'],
+      });
+
+      expect(auditService.auditPerformanceMetrics).toHaveBeenCalled();
+      expect(auditService.auditDataAccess).toHaveBeenCalled();
+    });
+
+    it('should serve report from cache when available', async () => {
+      // Given: Cached report exists
+      const filters: UsageReportFiltersDto = {
+        programIds: ['prog-1'],
+        page: 1,
+        limit: 50,
+      };
+
+      const query = new UsageReportQuery(
+        filters,
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      const cachedReport = {
+        reportId: 'cached-report-123',
+        data: {
+          data: mockUsageReportData.data,
+          summary: mockSummary,
+          metadata: {
+            reportType: 'USAGE_REPORT',
+            generatedBy: 'user-123',
+            generatedAt: new Date().toISOString(),
+          },
+          pagination: {
+            page: 1,
+            limit: 50,
+            total: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          },
+        },
+      };
+
+      redisService.get.mockResolvedValue(JSON.stringify(cachedReport));
+      generatedReportsRepository.updateAccess.mockResolvedValue(undefined);
+
+      // When: Handler executes the query
+      const result = await handler.execute(query);
+
+      // Then: Cached report should be returned
+      expect(result).toEqual(cachedReport.data);
+
+      // And: Repository generation methods should NOT be called
+      expect(reportsRepository.generateUsageReport).not.toHaveBeenCalled();
+      expect(reportsRepository.getUsageReportSummary).not.toHaveBeenCalled();
+
+      // And: Cache hit should be audited
+      expect(auditService.auditReportGeneration).toHaveBeenCalledWith({
+        userId: 'user-123',
+        reportType: 'usage',
+        filters,
+        recordCount: 1,
+        executionTime: expect.any(Number),
+        cacheHit: true,
+        requestId: 'req-456',
+        userRoles: ['ADMIN'],
+      });
+
+      expect(auditService.auditReportAccess).toHaveBeenCalledWith({
+        userId: 'user-123',
+        reportId: 'cached-report-123',
+        reportType: 'usage',
+        accessType: 'VIEW',
+        userRoles: ['ADMIN'],
+      });
+    });
+
+    it('should handle repository errors gracefully', async () => {
+      // Given: Repository throws an error
+      const filters: UsageReportFiltersDto = {
+        programIds: ['prog-1'],
+        page: 1,
+        limit: 50,
+      };
+
+      const query = new UsageReportQuery(
+        filters,
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      const repositoryError = new Error('Database connection failed');
+
+      redisService.get.mockResolvedValue(null);
+      reportsRepository.generateUsageReport.mockRejectedValue(repositoryError);
+
+      // When: Handler executes the query
+      const result = await handler.execute(query);
+      
+      // Then: Should return empty result or handle gracefully
+      expect(result).toBeDefined();
+
+      // And: Error should be logged
+      expect(loggingService.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error generating usage report'),
+        expect.any(String),
+        expect.any(Object)
+      );
+    });
+
+    it('should determine query complexity correctly', async () => {
+      // Given: Complex filters with multiple criteria
+      const complexFilters: UsageReportFiltersDto = {
+        programIds: ['prog-1', 'prog-2'],
+        resourceTypes: [ResourceType.CLASSROOM, ResourceType.LABORATORY],
+        categoryIds: ['cat-1'],
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+        groupBy: 'program',
+        page: 1,
+        limit: 50,
+      };
+
+      const query = new UsageReportQuery(
+        complexFilters,
+        'user-123',
+        ['ADMIN'],
+        'req-456'
+      );
+
+      redisService.get.mockResolvedValue(null);
+      reportsRepository.generateUsageReport.mockResolvedValue(mockUsageReportData as any);
+      reportsRepository.getUsageReportSummary.mockResolvedValue(mockSummary);
+      generatedReportsRepository.saveReport.mockResolvedValue({
+        id: 'report-123',
+        cacheKey: 'cache-key-123',
+      });
+
+      // When: Handler executes the query
+      await handler.execute(query);
+
+      // Then: Performance metrics should be recorded
+      expect(auditService.auditPerformanceMetrics).toHaveBeenCalledWith({
+        action: 'USAGE_REPORT_GENERATION',
+        executionTime: expect.any(Number),
+        recordCount: 1,
+        queryComplexity: expect.any(String), // Could be MEDIUM or HIGH depending on logic
+        cacheHit: false,
+        userId: 'user-123',
+        requestId: 'req-456',
+      });
+    });
+
+    it('should determine access scope based on user roles', async () => {
+      // Given: User with PROGRAM_ADMIN role
+      const filters: UsageReportFiltersDto = {
+        programIds: ['prog-1'],
+        page: 1,
+        limit: 50,
+      };
+
+      const query = new UsageReportQuery(
+        filters,
+        'user-123',
+        ['PROGRAM_ADMIN'],
+        'req-456'
+      );
+
+      redisService.get.mockResolvedValue(null);
+      reportsRepository.generateUsageReport.mockResolvedValue(mockUsageReportData as any);
+      reportsRepository.getUsageReportSummary.mockResolvedValue(mockSummary);
+      generatedReportsRepository.saveReport.mockResolvedValue({
+        id: 'report-123',
+        cacheKey: 'cache-key-123',
+      });
+
+      // When: Handler executes the query
+      await handler.execute(query);
+
+      // Then: Data access should be scoped to PROGRAM level
+      expect(auditService.auditDataAccess).toHaveBeenCalledWith({
+        userId: 'user-123',
+        dataType: 'RESERVATION_DATA',
+        accessScope: 'PROGRAM',
+        recordCount: 1,
+        filters,
+        userRoles: ['PROGRAM_ADMIN'],
+        justification: 'Usage report generation',
+      });
+    });
+  });
+
+  describe('Helper Methods', () => {
+    it('should generate consistent cache keys for same filters', () => {
+      // Given: Two identical filter objects
+      const filters1 = { programIds: ['prog-1'], resourceTypes: ['CLASSROOM'] };
+      const filters2 = { resourceTypes: ['CLASSROOM'], programIds: ['prog-1'] };
+
+      // When: Cache keys are generated
+      const key1 = (handler as any).generateCacheKey('usage_report', filters1);
+      const key2 = (handler as any).generateCacheKey('usage_report', filters2);
+
+      // Then: Keys should be identical (order-independent)
+      expect(key1).toBe(key2);
+      expect(key1).toMatch(/^[a-f0-9]{32}$/); // MD5 hash format
+    });
+
+    it('should determine LOW complexity for simple filters', () => {
+      // Given: Simple filters
+      const simpleFilters = { programIds: ['prog-1'], page: 1, limit: 50 };
+
+      // When: Complexity is determined
+      const complexity = (handler as any).determineQueryComplexity(simpleFilters);
+
+      // Then: Should be LOW complexity
+      expect(complexity).toBe('LOW');
+    });
+
+    it('should determine GLOBAL access scope for ADMIN users', () => {
+      // Given: Admin user roles
+      const adminRoles = ['ADMIN', 'USER'];
+
+      // When: Access scope is determined
+      const scope = (handler as any).determineAccessScope(adminRoles);
+
+      // Then: Should be GLOBAL scope
+      expect(scope).toBe('GLOBAL');
+    });
+  });
+});

@@ -5,6 +5,10 @@ import { OpenTelemetryService } from './services/opentelemetry.service';
 
 @Injectable()
 export class MonitoringService {
+  recordMetric: any;
+  startTrace: any;
+  finishTrace: any;
+  addTraceTag: any;
   constructor(
     private readonly configService: ConfigService,
     private readonly sentryService: SentryService,
@@ -28,26 +32,32 @@ export class MonitoringService {
   }
 
   startTransaction(name: string, operation: string): any {
+    this.startTrace = this.openTelemetryService.startTransaction(name, operation);
     return this.openTelemetryService.startTransaction(name, operation);
   }
 
   finishTransaction(transaction: any): void {
+    this.finishTrace = this.openTelemetryService.finishTransaction(transaction);
     this.openTelemetryService.finishTransaction(transaction);
   }
 
   addBreadcrumb(message: string, category: string, level: 'info' | 'warning' | 'error' = 'info'): void {
     this.sentryService.addBreadcrumb(message, category, level);
+    this.openTelemetryService.addBreadcrumb(message, category, level);
   }
 
   setUser(user: { id: string; email?: string; username?: string }): void {
     this.sentryService.setUser(user);
+    this.openTelemetryService.setUser(user);
   }
 
   setTag(key: string, value: string): void {
     this.sentryService.setTag(key, value);
+    this.openTelemetryService.setTag(key, value);
   }
 
   setContext(key: string, context: any): void {
     this.sentryService.setContext(key, context);
+    this.openTelemetryService.setContext(key, context);
   }
 }

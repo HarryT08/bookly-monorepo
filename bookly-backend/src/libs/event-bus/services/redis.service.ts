@@ -6,6 +6,49 @@ import { DomainEvent } from './event-bus.service';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
+  /**
+   * Creates a Redis multi/pipeline for batch operations
+   * In Redis v4+, use multi() instead of pipeline()
+   */
+  multi() {
+    return this.client.multi();
+  }
+
+  /**
+   * Legacy pipeline method - redirects to multi() for compatibility
+   * @deprecated Use multi() instead
+   */
+  pipeline() {
+    return this.client.multi();
+  }
+
+  zRemRangeByRank(key: string, start: number, stop: number) {
+    return this.client.zRemRangeByRank(key, start, stop);
+  }
+
+  getClient() {
+    return this.client;
+  }
+
+  zRemRangeByScore(key: string, min: number, max: number) {
+    return this.client.zRemRangeByScore(key, min, max);
+  }
+
+  zCard(key: string) {
+    return this.client.zCard(key);
+  }
+
+  zRange(key: string, start: number, stop: number, options?: any) {
+    return this.client.zRange(key, start, stop, options);
+  }
+
+  keys(pattern: string): Promise<string[]> {
+    return this.client.keys(pattern);
+  }
+
+  ttl(key: string) {
+    return this.client.ttl(key);
+  }
   private client: RedisClientType;
 
   constructor(
@@ -83,5 +126,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async getReservationAvailability(resourceId: string, date: string): Promise<any> {
     const key = `availability:${resourceId}:${date}`;
     return await this.get(key);
+  }
+
+  async zRangeWithScores(key: string, start: number, stop: number): Promise<Array<{ score: number; value: string }>> {
+    return await this.client.zRangeWithScores(key, start, stop);
   }
 }

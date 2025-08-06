@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UnauthorizedException } from '@nestjs/common';
-import { LoginCommand } from '../login.command';
-import { AuthService } from '../../services/auth.service';
+import { LoginCommand } from '../commands/login.command';
+import { AuthService } from '../services/auth.service';
 import { LoggingService } from '@logging/logging.service';
 import { MonitoringService } from '@monitoring/monitoring.service';
 

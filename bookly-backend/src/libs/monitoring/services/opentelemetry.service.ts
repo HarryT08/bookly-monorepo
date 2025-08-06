@@ -7,6 +7,18 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 
 @Injectable()
 export class OpenTelemetryService {
+  addBreadcrumb(message: string, category: string, level: string) {
+    throw new Error('Method not implemented.');
+  }
+  setUser(user: { id: string; email?: string; username?: string; }) {
+    throw new Error('Method not implemented.');
+  }
+  setTag(key: string, value: string) {
+    throw new Error('Method not implemented.');
+  }
+  setContext(key: string, context: any) {
+    throw new Error('Method not implemented.');
+  }
   private sdk: NodeSDK;
 
   constructor(private readonly configService: ConfigService) {}

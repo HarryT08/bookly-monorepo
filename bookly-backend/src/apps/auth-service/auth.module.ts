@@ -10,10 +10,9 @@ import { RoleRepository } from '@apps/auth-service/domain/repositories/role.repo
 import { PermissionRepository } from '@apps/auth-service/domain/repositories/permission.repository';
 
 // Application
-import { LoginHandler } from '@apps/auth-service/application/commands/handlers/login.handler';
-import { RegisterHandler } from '@apps/auth-service/application/commands/handlers/register.handler';
-import { GetUserHandler } from '@apps/auth-service/application/queries/handlers/get-user.handler';
-import { GetUsersHandler } from '@apps/auth-service/application/queries/handlers/get-users.handler';
+import { LoginHandler } from '@/apps/auth-service/application/handlers/login.handler';
+import { GetUserHandler } from '@/apps/auth-service/application/handlers/get-user.handler';
+import { GetUsersHandler } from '@/apps/auth-service/application/handlers/get-users.handler';
 import { AuthService } from '@apps/auth-service/application/services/auth.service';
 import { UserService } from '@apps/auth-service/application/services/user.service';
 import { RoleService } from '@apps/auth-service/application/services/role.service';
@@ -29,7 +28,7 @@ import { SSOConfigGuard } from './infrastructure/guards/sso-config.guard';
 import { ResourceModificationGuard } from './infrastructure/guards/resource-modification.guard';
 import { DoubleConfirmationGuard } from './infrastructure/guards/double-confirmation.guard';
 import { ResourceAuditMiddleware } from './infrastructure/middleware/resource-audit.middleware';
-import { RegisterCommandHandler } from './application/handlers/register.handler';
+import { RegisterHandler } from './application/handlers/register.handler';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
 import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
@@ -37,7 +36,7 @@ import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 
-const CommandHandlers = [LoginHandler, RegisterHandler, RegisterCommandHandler];
+const CommandHandlers = [LoginHandler, RegisterHandler];
 const QueryHandlers = [GetUserHandler, GetUsersHandler];
 
 @Module({
