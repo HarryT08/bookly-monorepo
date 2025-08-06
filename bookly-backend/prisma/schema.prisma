@@ -50,6 +50,13 @@ model User {
   reportExports      ReportExport[]
   reportAccessLogs   ReportAccessLog[]
   scheduledReports   ScheduledReport[]
+  
+  // HITO 6: Resource management relations
+  assignedResourceCategories ResourceCategory[] @relation("AssignedResourceCategory")
+  resourceImports           ResourceImport[]    @relation("ResourceImports")
+  responsibleForResources   ResourceResponsible[] @relation("ResponsibleForResources")
+  assignedResponsibles      ResourceResponsible[] @relation("AssignedResponsible")
+  reportedMaintenances      Maintenance[]       @relation("ReportedMaintenance")
 
   @@map("users")
 }
@@ -81,8 +88,9 @@ model UserRole {
   assignedBy String? @db.ObjectId // User who assigned this role
   isActive Boolean @default(true)
 
-  user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
+  role    Role     @relation(fields: [roleId], references: [id])
+  program Program? @relation(fields: [programId], references: [id]) // HITO 6
 
   @@unique([userId, roleId, programId])
   @@map("user_roles")
@@ -146,6 +154,25 @@ model AccessLog {
 // RESOURCES SERVICE MODELS
 // ========================================
 
+// HITO 6: Academic Program model for resource classification
+model Program {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  code        String   @unique // Unique program code (e.g., "ING-SIS", "MED-GEN")
+  description String?
+  facultyName String   // Faculty name this program belongs to
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  resources     Resource[]    // Resources assigned to this program
+  userRoles     UserRole[]    // User roles in this program
+  approvalFlows ApprovalFlow[] // Program-specific approval flows
+
+  @@map("programs")
+}
+
 model Resource {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
@@ -160,6 +187,11 @@ model Resource {
   // Available schedules and rules (RF-05)
   availableSchedules Json? // Contains: operating hours, restrictions, priorities, min/max reservation time, minimum advance notice
   
+  // HITO 6: New fields for enhanced resource management
+  programId         String?  @db.ObjectId // Academic program assignment (RF-02)
+  defaultSchedule   Json?    // Default schedule (6am-10pm, mon-sat)
+  defaultMaintenance Json?   // Default maintenance (cleaning every 2 days)
+  
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -167,11 +199,14 @@ model Resource {
   // Relations
   category     Category?     @relation(fields: [categoryId], references: [id])
   categoryId   String?       @db.ObjectId
+  program      Program?      @relation(fields: [programId], references: [id]) // HITO 6
   reservations Reservation[]
   maintenance  Maintenance[]
   availability Availability[]
   schedules    Schedule[]
   calendarIntegrations CalendarIntegration[]
+  resourceCategories ResourceCategory[] // HITO 6: Multiple categories
+  responsibles ResourceResponsible[]     // HITO 6: Resource responsibles
 
   @@map("resources")
 }
@@ -182,17 +217,97 @@ model Category {
   description String?
   color       String? // For UI purposes
   isActive    Boolean  @default(true)
+  // HITO 6: Enhanced category management
+  isDefault   Boolean  @default(false) // Default categories cannot be deleted
+  priority    Int      @default(0) // Display order
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
   resources           Resource[]
+  resourceCategories  ResourceCategory[] // HITO 6: Multiple categories per resource
   approvalFlows       ApprovalFlow[] // Approval flows for this category
   documentTemplates   DocumentTemplate[] // Document templates for this category
   notificationTemplates NotificationTemplate[] // Notification templates for this category
   notificationConfigs NotificationConfig[] // Notification configs for this category
 
   @@map("categories")
+}
+
+// HITO 6: Junction table for multiple categories per resource
+model ResourceCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  user     User     @relation("AssignedResourceCategory", fields: [assignedBy], references: [id])
+
+  @@unique([resourceId, categoryId])
+  @@map("resource_categories")
+}
+
+// HITO 6: Dynamic maintenance types
+model MaintenanceType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique // PREVENTIVO, CORRECTIVO, EMERGENCIA, etc.
+  description String?
+  color       String? // For UI purposes
+  priority    Int      @default(0) // Priority level
+  isDefault   Boolean  @default(false) // Default types cannot be deleted
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  maintenances Maintenance[]
+
+  @@map("maintenance_types")
+}
+
+// HITO 6: Resource import tracking
+model ResourceImport {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  filename         String
+  originalFilename String
+  totalRows        Int
+  successfulRows   Int
+  failedRows       Int
+  status           String // PROCESSING, COMPLETED, FAILED, CANCELLED
+  errors           Json? // Error details per row
+  summary          Json? // Import summary
+  
+  // Metadata
+  importedBy String   @db.ObjectId
+  importedAt DateTime @default(now())
+  completedAt DateTime?
+  
+  // Relations
+  user User @relation("ResourceImports", fields: [importedBy], references: [id])
+
+  @@map("resource_imports")
+}
+
+// HITO 6: Resource responsibility assignment
+model ResourceResponsible {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId String   @db.ObjectId
+  userId     String   @db.ObjectId
+  assignedBy String   @db.ObjectId // Administrator who assigned
+  assignedAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+  
+  // Relations
+  resource       Resource @relation(fields: [resourceId], references: [id])
+  user           User     @relation("ResponsibleForResources", fields: [userId], references: [id])
+  assignedByUser User     @relation("AssignedResponsible", fields: [assignedBy], references: [id])
+  
+  @@unique([resourceId, userId])
+  @@map("resource_responsibles")
 }
 
 model Maintenance {
@@ -203,11 +318,22 @@ model Maintenance {
   status      String // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
   startDate   DateTime
   endDate     DateTime?
+  
+  // HITO 6: Enhanced maintenance management
+  maintenanceTypeId String?  @db.ObjectId // Dynamic maintenance types
+  reportedBy        String?  @db.ObjectId // User who reported (students/staff can report)
+  severity          String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  evidence          Json?    // Photos, documents, etc.
+  estimatedDuration Int?     // Estimated duration in minutes
+  actualDuration    Int?     // Actual duration in minutes
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  resource Resource @relation(fields: [resourceId], references: [id])
+  resource        Resource         @relation(fields: [resourceId], references: [id])
+  maintenanceType MaintenanceType? @relation(fields: [maintenanceTypeId], references: [id]) // HITO 6
+  reporter        User?            @relation("ReportedMaintenance", fields: [reportedBy], references: [id]) // HITO 6
 
   @@map("maintenance")
 }
@@ -421,6 +547,7 @@ model ApprovalFlow {
   levels        ApprovalLevel[]
   reservations  Reservation[]
   category      Category? @relation(fields: [categoryId], references: [id])
+  program       Program?  @relation(fields: [programId], references: [id]) // HITO 6
 
   @@map("approval_flows")
 }
