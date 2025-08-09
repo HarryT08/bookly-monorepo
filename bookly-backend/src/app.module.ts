@@ -18,7 +18,7 @@ import { ResourcesModule } from './apps/resources-service/resources.module';
 import { AvailabilityModule } from './apps/availability-service/availability.module';
 import { StockpileModule } from './apps/stockpile-service/stockpile.module';
 import { ReportsModule } from './apps/reports-service/reports.module';
-import { ApiGatewayModule } from './apps/api-gateway/api-gateway.module';
+//import { ApiGatewayModule } from './apps/api-gateway/api-gateway.module';
 
 // Health Check
 import { HealthModule } from './health/health.module';
@@ -58,7 +58,7 @@ import { HealthModule } from './health/health.module';
     AvailabilityModule,
     StockpileModule,
     ReportsModule,
-    ApiGatewayModule,
+    //ApiGatewayModule,
 
     // Health Check
     HealthModule,
