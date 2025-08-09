@@ -1,6 +1,6 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Injectable, Inject } from '@nestjs/common';
-import { LoggingService } from '@logging/logging.service';
+import { IQueryHandler, QueryHandler } from "@nestjs/cqrs";
+import { Injectable, Inject } from "@nestjs/common";
+import { LoggingService } from "@logging/logging.service";
 import { 
   UserReportQuery, 
   UserReportSummaryQuery, 
@@ -8,7 +8,8 @@ import {
 } from '../queries/user-report.query';
 import { ReportsRepository } from '../../domain/repositories/reports.repository';
 import { GeneratedReportsRepository } from '../../domain/repositories/generated-reports.repository';
-import { UserReportResponseDto, PaginationDto } from '@dto/reports/report-response.dto';
+import { UserReportResponseDto } from '@dto/reports/report-response.dto';
+import { PaginationMetaDto } from '@dto/common/pagination-meta.dto';
 import * as crypto from 'crypto';
 import { RedisService } from '@/libs/event-bus/services/redis.service';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
@@ -66,8 +67,8 @@ export class UserReportHandler implements IQueryHandler<UserReportQuery> {
 
       const executionTime = Date.now() - startTime;
 
-      // Build pagination
-      const pagination: PaginationDto = {
+      // Build pagination metadata
+      const pagination: PaginationMetaDto = {
         page: filters.page || 1,
         limit: filters.limit || 50,
         total: reportData.totalCount,

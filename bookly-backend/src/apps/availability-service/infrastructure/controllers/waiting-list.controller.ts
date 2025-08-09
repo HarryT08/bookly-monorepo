@@ -41,17 +41,19 @@ import { EscalatePriorityDto } from '@/apps/availability-service/infrastructure/
 
 // Services
 import { WaitingListService } from '@/apps/availability-service/application/services/waiting-list.service';
+// URL Map
+import { AVAILABILITY_URLS } from '../../utils/maps/urls.map';
 
 @ApiTags('Waiting List')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('waiting-list')
+@Controller(AVAILABILITY_URLS.WAITING_LIST)
 export class WaitingListController {
   constructor(
     private readonly waitingListService: WaitingListService
   ) {}
 
-  @Post('join')
+  @Post(AVAILABILITY_URLS.WAITING_LIST_JOIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Join a waiting list',
@@ -83,7 +85,7 @@ export class WaitingListController {
     });
   }
 
-  @Get('my-entries')
+  @Get(AVAILABILITY_URLS.MY_WAITING_LIST)
   @ApiOperation({
     summary: 'Get current user waiting list entries',
     description: 'Retrieves all waiting list entries for the current user'
@@ -107,7 +109,7 @@ export class WaitingListController {
     return await this.waitingListService.getUserEntries(user.id, status);
   }
 
-  @Get('entries/:id')
+  @Get(AVAILABILITY_URLS.WAITING_LIST_ENTRY_BY_ID)
   @ApiOperation({
     summary: 'Get waiting list entry by ID',
     description: 'Retrieves a specific waiting list entry'
@@ -135,7 +137,7 @@ export class WaitingListController {
     return await this.waitingListService.getEntry(id, user.id);
   }
 
-  @Post('entries/:id/confirm')
+  @Post(AVAILABILITY_URLS.WAITING_LIST_ENTRY_CONFIRM)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Confirm waiting list notification',
@@ -168,7 +170,7 @@ export class WaitingListController {
     return await this.waitingListService.confirmEntry(id, user.id);
   }
 
-  @Delete('entries/:id')
+  @Delete(AVAILABILITY_URLS.WAITING_LIST_LEAVE_ENTRY)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Leave waiting list',
@@ -200,7 +202,7 @@ export class WaitingListController {
     await this.waitingListService.leaveWaitingList(id, user.id);
   }
 
-  @Get('resource/:resourceId')
+  @Get(AVAILABILITY_URLS.WAITING_LIST_FOR_RESOURCE)
   @ApiOperation({
     summary: 'Get waiting list for resource',
     description: 'Retrieves the waiting list entries for a specific resource'
@@ -239,7 +241,7 @@ export class WaitingListController {
     return await this.waitingListService.getResourceWaitingList(resourceId, queryDto);
   }
 
-  @Post('entries/:id/escalate')
+  @Post(AVAILABILITY_URLS.WAITING_LIST_ENTRY_ESCALATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Escalate user priority',
@@ -275,7 +277,7 @@ export class WaitingListController {
     );
   }
 
-  @Post('process-available-slots')
+  @Post(AVAILABILITY_URLS.WAITING_LIST_PROCESS_AVAILABLE_SLOTS)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Process available slots',
@@ -329,7 +331,7 @@ export class WaitingListController {
     );
   }
 
-  @Get('stats/resource/:resourceId')
+  @Get(AVAILABILITY_URLS.WAITING_LIST_STATS_RESOURCE)
   @ApiOperation({
     summary: 'Get waiting list statistics',
     description: 'Retrieves comprehensive statistics for a resource waiting list'
@@ -360,7 +362,7 @@ export class WaitingListController {
     return await this.waitingListService.getStatistics(resourceId, timeRange);
   }
 
-  @Post('validate-join')
+  @Post(AVAILABILITY_URLS.WAITING_LIST_VALIDATE_JOIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Validate joining waiting list',
@@ -399,7 +401,7 @@ export class WaitingListController {
     });
   }
 
-  @Get('entries/:id/position')
+  @Get(AVAILABILITY_URLS.WAITING_LIST_ENTRY_POSITION)
   @ApiOperation({
     summary: 'Get current position in waiting list',
     description: 'Gets the current position and estimated wait time for a waiting list entry'
@@ -436,7 +438,7 @@ export class WaitingListController {
     return await this.waitingListService.getPosition(id, user.id);
   }
 
-  @Post('bulk-notify')
+  @Post(AVAILABILITY_URLS.WAITING_LIST_BULK_NOTIFY)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Bulk notify waiting list users',
@@ -484,7 +486,7 @@ export class WaitingListController {
     return await this.waitingListService.bulkNotify(entryIds, message, user.id);
   }
 
-  @Post('process-expired')
+  @Post(AVAILABILITY_URLS.WAITING_LIST_PROCESS_EXPIRED)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Process expired notifications',
@@ -513,7 +515,7 @@ export class WaitingListController {
     return await this.waitingListService.processExpiredNotifications();
   }
 
-  @Get('analytics/performance')
+  @Get(AVAILABILITY_URLS.WAITING_LIST_ANALYTICS_PERFORMANCE)
   @ApiOperation({
     summary: 'Get waiting list performance analytics',
     description: 'Retrieves performance analytics across all waiting lists (admin only)'

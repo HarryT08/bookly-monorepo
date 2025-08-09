@@ -34,6 +34,19 @@ export const AVAILABILITY_URLS = {
   WAITING_LIST_POSITION: '/waiting-list/:id/position',
   WAITING_LIST_NOTIFICATIONS: '/waiting-list/:id/notifications',
   MY_WAITING_LIST: '/waiting-list/my-entries',
+  // Extended waiting list endpoints (align with current controllers)
+  WAITING_LIST_ENTRY_BY_ID: '/waiting-list/entries/:id',
+  WAITING_LIST_ENTRY_CONFIRM: '/waiting-list/entries/:id/confirm',
+  WAITING_LIST_ENTRY_ESCALATE: '/waiting-list/entries/:id/escalate',
+  WAITING_LIST_ENTRY_POSITION: '/waiting-list/entries/:id/position',
+  WAITING_LIST_LEAVE_ENTRY: '/waiting-list/entries/:id',
+  WAITING_LIST_FOR_RESOURCE: '/waiting-list/resource/:resourceId',
+  WAITING_LIST_PROCESS_AVAILABLE_SLOTS: '/waiting-list/process-available-slots',
+  WAITING_LIST_STATS_RESOURCE: '/waiting-list/stats/resource/:resourceId',
+  WAITING_LIST_VALIDATE_JOIN: '/waiting-list/validate-join',
+  WAITING_LIST_BULK_NOTIFY: '/waiting-list/bulk-notify',
+  WAITING_LIST_PROCESS_EXPIRED: '/waiting-list/process-expired',
+  WAITING_LIST_ANALYTICS_PERFORMANCE: '/waiting-list/analytics/performance',
   
   // Reassignment endpoints
   REASSIGNMENTS: '/reassignments',
