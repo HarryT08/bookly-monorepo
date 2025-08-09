@@ -8,7 +8,9 @@ import * as path from 'path';
     I18nModule.forRoot({
       fallbackLanguage: process.env.FALLBACK_LANGUAGE || 'en',
       loaderOptions: {
-        path: path.join(__dirname, '/libs/i18n/translations/'),
+        // Resolve to the translations folder next to this module
+        // Works in src (ts-node) and dist builds
+        path: path.join(__dirname, 'translations'),
         watch: true,
       },
       resolvers: [

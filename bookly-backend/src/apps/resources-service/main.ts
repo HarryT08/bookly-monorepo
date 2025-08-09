@@ -5,14 +5,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
-import { ResourcesModule } from './resources.module';
+import { ResourcesAloneModule } from './resources.alone.module';
 
 async function bootstrap() {
   const logger = new Logger('ResourcesService');
   
   try {
     // Create NestJS application
-    const app = await NestFactory.create(ResourcesModule, {
+    const app = await NestFactory.create(ResourcesAloneModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
 

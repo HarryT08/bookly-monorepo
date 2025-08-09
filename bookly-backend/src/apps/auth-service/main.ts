@@ -5,14 +5,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
-import { AuthModule } from './auth.module';
+import { AuthAloneModule } from './auth.alone.module';
 
 async function bootstrap() {
   const logger = new Logger('AuthService');
   
   try {
     // Create NestJS application
-    const app = await NestFactory.create(AuthModule, {
+    const app = await NestFactory.create(AuthAloneModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
 

@@ -5,14 +5,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
-import { AvailabilityModule } from './availability.module';
+import { AvailabilityAloneModule } from './availability.alone.module';
 
 async function bootstrap() {
   const logger = new Logger('AvailabilityService');
   
   try {
     // Create NestJS application
-    const app = await NestFactory.create(AvailabilityModule, {
+    const app = await NestFactory.create(AvailabilityAloneModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
 
