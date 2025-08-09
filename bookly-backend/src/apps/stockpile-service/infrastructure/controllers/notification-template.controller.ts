@@ -22,7 +22,6 @@ import { RolesGuard } from '@common/guards/roles.guard';
 import { Roles } from '@common/decorators/roles.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { NotificationTemplateService } from '../../application/services/notification-template.service';
-import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
 import {
   CreateNotificationChannelDto,
   CreateNotificationTemplateDto,
@@ -35,6 +34,7 @@ import {
   SentNotificationDto,
   NotificationEventType
 } from '@dto/stockpile/notification-template.dto';
+import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
 
 @ApiTags('Notification Templates')
 @ApiBearerAuth()

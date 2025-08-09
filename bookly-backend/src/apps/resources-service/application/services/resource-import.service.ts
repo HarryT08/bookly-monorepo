@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { ResourceImportRepository } from '../../domain/repositories/resource-import.repository';
-import { ResourceImportEntity, ImportStatus, ImportError } from '../../domain/entities/resource-import.entity';
+import { ResourceImportEntity, ImportError } from '../../domain/entities/resource-import.entity';
+import { ImportStatus } from '../../utils/import-status.enum';
+
 import { 
   ResourceImportResponseDto,
   ImportRowDto,

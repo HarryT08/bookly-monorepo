@@ -1,6 +1,7 @@
 import { ICommand } from '@nestjs/cqrs';
-import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
-import { NotificationEventType, DocumentDeliveryMethod } from '../../domain/entities/notification-template.entity';
+import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+import { NotificationEventType } from '@/apps/stockpile-service/utils/notification-event-type.enum';
+import { DocumentDeliveryMethod } from '@/apps/stockpile-service/utils/document-delivery-method.enum';
 
 // Create Notification Channel Command
 export class CreateNotificationChannelCommand implements ICommand {

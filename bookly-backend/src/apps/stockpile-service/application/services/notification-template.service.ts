@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { LoggingService } from '@logging/logging.service';
-import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
+import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
 import {
   CreateNotificationChannelCommand,
   CreateNotificationTemplateCommand,

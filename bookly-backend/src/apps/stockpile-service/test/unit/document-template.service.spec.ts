@@ -3,8 +3,10 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DocumentTemplateService } from '@apps/stockpile-service/application/services/document-template.service';
 import { DocumentTemplateRepository } from '@apps/stockpile-service/domain/repositories/document-template.repository';
 import { LoggingService } from '@libs/logging/logging.service';
-import { DocumentEventType, DocumentFormat, DocumentTemplateEntity, GeneratedDocumentEntity } from '@apps/stockpile-service/domain/entities/document-template.entity';
+import { DocumentTemplateEntity, GeneratedDocumentEntity } from '@apps/stockpile-service/domain/entities/document-template.entity';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { DocumentEventType } from '../../utils/document-event-type.enum';
+import { DocumentFormat } from '../../utils/document-format.enum';
 
 describe('DocumentTemplateService - Document Generation BDD Tests', () => {
   let service: DocumentTemplateService;

@@ -31,6 +31,10 @@ import { OutlookCalendarService } from './infrastructure/services/outlook-calend
 import { ICalService } from './infrastructure/services/ical.service';
 import { InternalCalendarService } from './infrastructure/services/internal-calendar.service';
 
+// Advanced booking modules
+import { NotificationModule } from './infrastructure/modules/notification.module';
+import { AuditModule } from './infrastructure/modules/audit.module';
+
 // Shared modules
 import { CommonModule } from '../../libs/common/common.module';
 import { EventBusModule } from '../../libs/event-bus/event-bus.module';
@@ -84,6 +88,8 @@ const infrastructureServices = [
     CommonModule,
     EventBusModule,
     LoggingModule,
+    NotificationModule,
+    AuditModule,
   ],
   controllers: [AvailabilityController],
   providers: [
@@ -97,6 +103,8 @@ const infrastructureServices = [
   exports: [
     AvailabilityService,
     CalendarIntegrationService,
+    NotificationModule,
+    AuditModule,
   ],
 })
 export class AvailabilityModule {}

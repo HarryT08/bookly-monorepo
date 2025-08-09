@@ -6,9 +6,7 @@ import {
   ApprovalFlowEntity, 
   ApprovalLevelEntity, 
   ApprovalRequestEntity, 
-  ApprovalActionEntity,
-  ApprovalRequestStatus,
-  ApprovalActionType
+  ApprovalActionEntity
 } from '../../../domain/entities/approval-flow.entity';
 import {
   CreateApprovalFlowCommand,
@@ -30,6 +28,7 @@ import {
   ApprovalReminderEvent
 } from '../../../domain/events/approval-flow.events';
 import { LoggingHelper } from '@logging/logging.helper';
+import { ApprovalActionType, ApprovalRequestStatus } from '@/apps/stockpile-service/utils';
 
 @Injectable()
 @CommandHandler(CreateApprovalFlowCommand)

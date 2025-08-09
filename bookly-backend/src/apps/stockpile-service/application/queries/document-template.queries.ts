@@ -1,5 +1,5 @@
 import { IQuery } from '@nestjs/cqrs';
-import { DocumentEventType } from '../../domain/entities/document-template.entity';
+import { DocumentEventType } from '../../utils/document-event-type.enum';
 
 // Get Document Templates Query
 export class GetDocumentTemplatesQuery implements IQuery {

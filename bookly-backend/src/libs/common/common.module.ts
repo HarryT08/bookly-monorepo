@@ -2,7 +2,7 @@ import { Module, Global } from '@nestjs/common';
 import { PrismaService } from './services/prisma.service';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { ValidationPipe } from './pipes/validation.pipe';
-import { AllExceptionsFilter } from './filters/exception.filter';
+import { ExceptionsFilter } from './filters/exception.filter';
 
 @Global()
 @Module({
@@ -10,13 +10,13 @@ import { AllExceptionsFilter } from './filters/exception.filter';
     PrismaService,
     ResponseInterceptor,
     ValidationPipe,
-    AllExceptionsFilter,
+    ExceptionsFilter,
   ],
   exports: [
     PrismaService,
     ResponseInterceptor,
     ValidationPipe,
-    AllExceptionsFilter,
+    ExceptionsFilter,
   ],
 })
 export class CommonModule {}

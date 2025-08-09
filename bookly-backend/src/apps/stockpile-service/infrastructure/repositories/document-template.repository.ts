@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggingService } from '@logging/logging.service';
 import { DocumentTemplateRepository } from '../../domain/repositories/document-template.repository';
-import { DocumentEventType, DocumentTemplateEntity, GeneratedDocumentEntity } from '../../domain/entities/document-template.entity';
+import { DocumentTemplateEntity, GeneratedDocumentEntity } from '../../domain/entities/document-template.entity';
 import { LoggingHelper } from '@logging/logging.helper';
+import { DocumentEventType } from '../../utils/document-event-type.enum';
 
 @Injectable()
 export class PrismaDocumentTemplateRepository implements DocumentTemplateRepository {

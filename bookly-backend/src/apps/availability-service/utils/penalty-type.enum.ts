@@ -1,0 +1,6 @@
+export enum PenaltyType {
+  WARNING = 'WARNING',
+  SUSPENSION = 'SUSPENSION',
+  RESTRICTION = 'RESTRICTION',
+  FINE = 'FINE'
+}

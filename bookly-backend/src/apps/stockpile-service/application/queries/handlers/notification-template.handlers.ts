@@ -25,7 +25,7 @@ import {
 } from '@dto/stockpile/notification-template.dto';
 import { LoggingHelper } from '@libs/logging/logging.helper';
 import { NotificationChannelEntity } from '@/apps/stockpile-service/domain/entities/notification-template.entity';
-import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
+import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
 
 @Injectable()
 @QueryHandler(GetNotificationChannelsQuery)

@@ -1,4 +1,5 @@
-import { ResourceImportEntity, ImportStatus } from '../entities/resource-import.entity';
+import { ResourceImportEntity } from '../entities/resource-import.entity';
+import { ImportStatus } from '../../utils/import-status.enum';
 
 /**
  * HITO 6 - RF-04: ResourceImport Repository Interface

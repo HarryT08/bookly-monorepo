@@ -1,11 +1,11 @@
-import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
 import { 
   NotificationChannelEntity, 
   NotificationTemplateEntity, 
   NotificationConfigEntity, 
-  SentNotificationEntity,
-  NotificationEventType
+  SentNotificationEntity
 } from '../entities/notification-template.entity';
+import { NotificationEventType } from '../../utils/notification-event-type.enum';
+import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
 
 export interface NotificationTemplateRepository {
   findNotificationTemplates(filters: { channelId: string; eventType: NotificationEventType; resourceType: string; categoryId: string; isActive: boolean; page: number; limit: number; }): Promise<{ templates: NotificationTemplateEntity[]; total: number }>;

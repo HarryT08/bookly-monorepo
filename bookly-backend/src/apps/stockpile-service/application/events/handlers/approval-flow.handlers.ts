@@ -18,7 +18,7 @@ import {
   SendNotificationCommand 
 } from '../../commands/notification-template.commands';
 import { LoggingHelper } from '@libs/logging/logging.helper';
-import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
+import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
 
 @Injectable()
 @EventsHandler(ReservationSubmittedEvent)

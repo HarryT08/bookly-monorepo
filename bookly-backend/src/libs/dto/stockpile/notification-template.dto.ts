@@ -1,14 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntityDto } from '../common/base-entity.dto';
 import { IsString, IsOptional, IsBoolean, IsObject, IsEnum, IsInt, Min } from 'class-validator';
-import { DocumentDeliveryMethod } from '@/apps/stockpile-service/domain/entities/notification-template.entity';
+import { NotificationChannelType } from '@/apps/availability-service/utils';
+import { DocumentDeliveryMethod } from '@/apps/stockpile-service/utils';
 
-export enum NotificationChannelType {
-  EMAIL = 'EMAIL',
-  IN_APP = 'IN_APP',
-  SMS = 'SMS',
-  WHATSAPP = 'WHATSAPP'
-}
 
 export enum NotificationEventType {
   RESERVATION_SUBMITTED = 'RESERVATION_SUBMITTED',

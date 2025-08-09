@@ -1,0 +1,128 @@
+/**
+ * Availability Service - URL Map
+ * Centralized mapping for all URLs and endpoints used in the availability service
+ */
+
+export const AVAILABILITY_URLS = {
+  // Base paths
+  BASE: '/availability',
+  API_VERSION: '/api/v1',
+  
+  // Reservation endpoints
+  RESERVATIONS: '/reservations',
+  RESERVATION_CREATE: '/reservations/create',
+  RESERVATION_UPDATE: '/reservations/:id',
+  RESERVATION_CANCEL: '/reservations/:id/cancel',
+  RESERVATION_CONFIRM: '/reservations/:id/confirm',
+  RESERVATION_COMPLETE: '/reservations/:id/complete',
+  RESERVATION_CHECK_AVAILABILITY: '/reservations/check-availability',
+  RESERVATION_CONFLICTS: '/reservations/conflicts',
+  
+  // Recurring Reservation endpoints
+  RECURRING_RESERVATIONS: '/recurring-reservations',
+  RECURRING_RESERVATION_CREATE: '/recurring-reservations/create',
+  RECURRING_RESERVATION_UPDATE: '/recurring-reservations/:id',
+  RECURRING_RESERVATION_CANCEL: '/recurring-reservations/:id/cancel',
+  RECURRING_INSTANCES: '/recurring-reservations/:id/instances',
+  RECURRING_INSTANCE_SKIP: '/recurring-reservations/:id/instances/:instanceId/skip',
+  RECURRING_INSTANCE_MODIFY: '/recurring-reservations/:id/instances/:instanceId/modify',
+  
+  // Waiting List endpoints
+  WAITING_LIST: '/waiting-list',
+  WAITING_LIST_JOIN: '/waiting-list/join',
+  WAITING_LIST_LEAVE: '/waiting-list/:id/leave',
+  WAITING_LIST_POSITION: '/waiting-list/:id/position',
+  WAITING_LIST_NOTIFICATIONS: '/waiting-list/:id/notifications',
+  MY_WAITING_LIST: '/waiting-list/my-entries',
+  
+  // Reassignment endpoints
+  REASSIGNMENTS: '/reassignments',
+  REASSIGNMENT_REQUEST: '/reassignments/request',
+  REASSIGNMENT_RESPOND: '/reassignments/:id/respond',
+  REASSIGNMENT_CANCEL: '/reassignments/:id/cancel',
+  MY_REASSIGNMENTS: '/reassignments/my-requests',
+  
+  // Schedule endpoints
+  SCHEDULES: '/schedules',
+  SCHEDULE_CREATE: '/schedules/create',
+  SCHEDULE_UPDATE: '/schedules/:id',
+  SCHEDULE_DELETE: '/schedules/:id',
+  SCHEDULE_EXCEPTIONS: '/schedules/:id/exceptions',
+  SCHEDULE_MAINTENANCE: '/schedules/:id/maintenance',
+  RESOURCE_SCHEDULES: '/resources/:resourceId/schedules',
+  
+  // Calendar Integration endpoints
+  CALENDAR_INTEGRATIONS: '/calendar-integrations',
+  CALENDAR_INTEGRATION_CREATE: '/calendar-integrations/create',
+  CALENDAR_INTEGRATION_UPDATE: '/calendar-integrations/:id',
+  CALENDAR_INTEGRATION_DELETE: '/calendar-integrations/:id',
+  CALENDAR_SYNC: '/calendar-integrations/:id/sync',
+  CALENDAR_EVENTS: '/calendar-integrations/:id/events',
+  
+  // Penalty endpoints
+  PENALTIES: '/penalties',
+  PENALTY_APPLY: '/penalties/apply',
+  PENALTY_REMOVE: '/penalties/:id/remove',
+  PENALTY_EVENTS: '/penalty-events',
+  USER_PENALTIES: '/users/:userId/penalties',
+  PENALTY_HISTORY: '/users/:userId/penalty-history',
+  
+  // Resource Equivalence endpoints
+  RESOURCE_EQUIVALENCES: '/resource-equivalences',
+  RESOURCE_EQUIVALENCE_CREATE: '/resource-equivalences/create',
+  RESOURCE_EQUIVALENCE_UPDATE: '/resource-equivalences/:id',
+  RESOURCE_EQUIVALENCE_DELETE: '/resource-equivalences/:id',
+  ALTERNATIVE_RESOURCES: '/resources/:resourceId/alternatives',
+  
+  // Limit endpoints
+  RESERVATION_LIMITS: '/reservation-limits',
+  RESERVATION_LIMIT_CREATE: '/reservation-limits/create',
+  RESERVATION_LIMIT_UPDATE: '/reservation-limits/:id',
+  RESERVATION_LIMIT_DELETE: '/reservation-limits/:id',
+  USER_LIMITS: '/users/:userId/limits',
+  RESOURCE_LIMITS: '/resources/:resourceId/limits',
+  
+  // Notification endpoints
+  NOTIFICATION: '/notifications',
+  NOTIFICATION_TEMPLATES: '/notifications/templates',
+  NOTIFICATION_TEMPLATES_CREATE: '/notifications/templates',
+  NOTIFICATION_TEMPLATES_UPDATE: '/notifications/templates/:id',
+  NOTIFICATION_TEMPLATES_DELETE: '/notifications/templates/:id',
+  NOTIFICATION_TEMPLATES_TEST: '/notifications/templates/:templateId/test',
+  NOTIFICATION_TEMPLATES_BY_EVENT_TYPE: '/notifications/templates/:eventType/:channel/:language',
+  NOTIFICATION_STATS: '/notifications/stats',
+  NOTIFICATION_SEND: '/notifications/send',
+  NOTIFICATION_PREFERENCES: '/preferences/:userId',
+  NOTIFICATION_PREFERENCES_UPDATE: '/preferences/:userId',
+  
+  // Audit endpoints
+  AUDIT_LOGS: '/audit-logs',
+  AUDIT_SEARCH: '/audit-logs/search',
+  USER_AUDIT: '/users/:userId/audit-logs',
+  RESOURCE_AUDIT: '/resources/:resourceId/audit-logs',
+  
+  // Analytics and Reports
+  ANALYTICS: '/analytics',
+  USAGE_STATS: '/analytics/usage-stats',
+  AVAILABILITY_STATS: '/analytics/availability-stats',
+  CONFLICT_REPORTS: '/analytics/conflict-reports',
+  UTILIZATION_REPORTS: '/analytics/utilization-reports',
+  
+  // Health and monitoring
+  HEALTH: '/health',
+  METRICS: '/metrics'
+} as const;
+
+export const getAvailabilityUrl = (endpoint: keyof typeof AVAILABILITY_URLS, params?: Record<string, string>): string => {
+  let url = AVAILABILITY_URLS.BASE + AVAILABILITY_URLS.API_VERSION + AVAILABILITY_URLS[endpoint];
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      url = url.replace(`:${key}`, value);
+    });
+  }
+  
+  return url;
+};
+
+export type AvailabilityUrlType = typeof AVAILABILITY_URLS[keyof typeof AVAILABILITY_URLS];

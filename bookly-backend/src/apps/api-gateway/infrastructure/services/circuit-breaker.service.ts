@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-export enum CircuitBreakerState {
-  CLOSED = 'CLOSED',
-  OPEN = 'OPEN',
-  HALF_OPEN = 'HALF_OPEN',
-}
+import { CircuitBreakerState } from '../../utils/circuit-breaker-state.enum';
 
 export interface CircuitBreakerConfig {
   enabled: boolean;

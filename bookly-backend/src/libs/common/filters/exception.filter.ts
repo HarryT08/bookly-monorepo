@@ -10,7 +10,7 @@ import { I18nService } from 'nestjs-i18n';
 import { LoggingService } from '@logging/logging.service';
 
 @Catch()
-export class AllExceptionsFilter implements ExceptionFilter {
+export class ExceptionsFilter implements ExceptionFilter {
   constructor(
     private readonly i18n: I18nService,
     private readonly loggingService: LoggingService,

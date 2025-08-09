@@ -17,10 +17,10 @@ export interface User {
   ssoId?: string;
   createdAt: Date;
   updatedAt: Date;
-  userRoles?: UserRole[];
+  userRoles?: UserRoleInterface[];
 }
 
-export interface UserRole {
+export interface UserRoleInterface {
   id: string;
   userId: string;
   roleId: string;
@@ -66,6 +66,10 @@ export interface RolePermission {
   permission?: Permission;
 }
 
+// Import and re-export UserRole enum for controllers
+import { UserRole } from '@libs/common';
+export { UserRole };
+
 export class UserEntity implements User {
   constructor(
     public id: string,
@@ -86,7 +90,7 @@ export class UserEntity implements User {
     public ssoId: string | undefined = undefined,
     public createdAt: Date = new Date(),
     public updatedAt: Date = new Date(),
-    public userRoles?: UserRole[],
+    public userRoles?: UserRoleInterface[],
   ) {}
 
   static create(

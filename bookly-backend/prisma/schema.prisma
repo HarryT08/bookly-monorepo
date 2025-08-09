@@ -57,6 +57,15 @@ model User {
   responsibleForResources   ResourceResponsible[] @relation("ResponsibleForResources")
   assignedResponsibles      ResourceResponsible[] @relation("AssignedResponsible")
   reportedMaintenances      Maintenance[]       @relation("ReportedMaintenance")
+  
+  // HITO 7: Advanced availability relations
+  recurringReservations     RecurringReservation[]
+  waitingLists             WaitingList[] // For existing WaitingList model
+  waitingListEntries        WaitingListEntry[]
+  userPenalties            UserPenalty[]
+  appliedPenalties         UserPenalty[] @relation("AppliedPenalties")
+  reassignmentRequests     ReassignmentRequest[]
+  createdResourceEquivalences ResourceEquivalence[]
 
   @@map("users")
 }
@@ -169,6 +178,13 @@ model Program {
   resources     Resource[]    // Resources assigned to this program
   userRoles     UserRole[]    // User roles in this program
   approvalFlows ApprovalFlow[] // Program-specific approval flows
+  
+  // HITO 7: Advanced availability relations
+  penaltyEvents PenaltyEvent[]
+  penalties     Penalty[]
+  userPenalties UserPenalty[]
+  resourceEquivalences ResourceEquivalence[]
+  reassignmentConfigurations ReassignmentConfiguration[]
 
   @@map("programs")
 }
@@ -207,6 +223,13 @@ model Resource {
   calendarIntegrations CalendarIntegration[]
   resourceCategories ResourceCategory[] // HITO 6: Multiple categories
   responsibles ResourceResponsible[]     // HITO 6: Resource responsibles
+  
+  // HITO 7: Advanced availability relations
+  recurringReservations RecurringReservation[]
+  reassignmentRequests  ReassignmentRequest[] @relation("SuggestedResource")
+  primaryEquivalences   ResourceEquivalence[] @relation("PrimaryResourceEquivalences")
+  equivalentEquivalences ResourceEquivalence[] @relation("EquivalentResourceEquivalences")
+  waitingLists         WaitingList[]
 
   @@map("resources")
 }
@@ -378,6 +401,10 @@ model Reservation {
   approvalRequests ApprovalRequest[]
   generatedDocuments GeneratedDocument[]
   sentNotifications SentNotification[]
+  
+  // HITO 7: Advanced availability relations
+  recurringInstances RecurringReservationInstance[]
+  reassignmentRequests ReassignmentRequest[]
 
   @@map("reservations")
 }
@@ -490,6 +517,10 @@ model WaitingList {
   status        String   @default("WAITING") // WAITING, NOTIFIED, EXPIRED
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  
+  // Relations
+  resource      Resource @relation(fields: [resourceId], references: [id])
+  user          User @relation(fields: [userId], references: [id])
 
   @@map("waiting_list")
 }
@@ -1052,3 +1083,374 @@ model ScheduledReport {
   @@index([createdBy])
   @@map("scheduled_reports")
 }
+
+// ========================================
+// HITO 7: ADVANCED AVAILABILITY MODELS
+// ========================================
+
+// RF-12: Recurring Reservations (Reservas Periódicas)
+model RecurringReservation {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  resourceId  String   @db.ObjectId
+  userId      String   @db.ObjectId
+  
+  // Date range for recurrence
+  startDate   DateTime
+  endDate     DateTime
+  
+  // Time for each instance
+  startTime   String   // HH:mm format
+  endTime     String   // HH:mm format
+  
+  // Recurrence configuration
+  frequency   String   // DAILY, WEEKLY, MONTHLY
+  interval    Int      @default(1) // Every N days/weeks/months
+  daysOfWeek  Int[]    // For weekly: [1,2,3,4,5] = Mon-Fri
+  dayOfMonth  Int?     // For monthly: day of month (1-31)
+  
+  // Status and lifecycle
+  status      String   @default("ACTIVE") // ACTIVE, CANCELLED, COMPLETED
+  totalInstances Int   @default(0) // Total instances generated
+  confirmedInstances Int @default(0) // Confirmed instances
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  instances   RecurringReservationInstance[]
+  
+  @@index([resourceId, startDate, endDate])
+  @@index([userId, status])
+  @@map("recurring_reservations")
+}
+
+model RecurringReservationInstance {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  recurringReservationId String   @db.ObjectId
+  reservationId         String?  @db.ObjectId // When confirmed, links to actual Reservation
+  
+  // Scheduled details
+  scheduledDate         DateTime
+  startTime             String   // HH:mm format
+  endTime               String   // HH:mm format
+  
+  // Status tracking
+  status                String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, SKIPPED
+  
+  // Timestamps
+  generatedAt           DateTime @default(now())
+  confirmedAt           DateTime?
+  cancelledAt           DateTime?
+  
+  // Relations
+  recurringReservation  RecurringReservation @relation(fields: [recurringReservationId], references: [id])
+  reservation           Reservation? @relation(fields: [reservationId], references: [id])
+  
+  @@index([recurringReservationId, scheduledDate])
+  @@index([scheduledDate, status])
+  @@map("recurring_reservation_instances")
+}
+
+// Configuration limits for reservations
+model ReservationLimit {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  
+  // Scope configuration
+  scope       String   // GLOBAL, PROGRAM, USER, RESOURCE
+  scopeId     String?  @db.ObjectId // programId, userId, resourceId based on scope
+  
+  // Limit configuration
+  limitType   String   // MAX_ACTIVE_RESERVATIONS, MAX_RESERVED_RESOURCES, MAX_RECURRING_INSTANCES, MAX_FUTURE_DAYS
+  limitValue  Int      // Numeric value of the limit
+  
+  // Status
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([scope, scopeId, limitType])
+  @@map("reservation_limits")
+}
+
+// RF-14: Enhanced Waiting List Entry (extends existing WaitingList)
+model WaitingListEntry {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  waitingListId         String   @db.ObjectId // References existing WaitingList
+  userId                String   @db.ObjectId
+  
+  // Position and priority
+  position              Int      // Position in the waiting list
+  priority              String   // ADMIN_GENERAL, DIRECTOR_PROGRAMA, DOCENTE, ESTUDIANTE, PARTICULAR
+  
+  // Notification configuration
+  confirmationTimeLimit Int      @default(10) // Minutes to confirm when notified
+  
+  // Status tracking
+  status                String   @default("WAITING") // WAITING, NOTIFIED, CONFIRMED, EXPIRED, CANCELLED
+  
+  // Timestamps
+  requestedAt           DateTime @default(now())
+  notifiedAt            DateTime?
+  confirmedAt           DateTime?
+  expiredAt             DateTime?
+  
+  // Relations
+  user                  User @relation(fields: [userId], references: [id])
+  
+  @@unique([waitingListId, userId])
+  @@index([waitingListId, position])
+  @@index([userId, status])
+  @@map("waiting_list_entries")
+}
+
+// Penalty system for user sanctions
+model PenaltyEvent {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId         String   @db.ObjectId
+  name              String
+  description       String?
+  
+  // Event configuration
+  eventType         String   // LATE_CANCELLATION, WAITLIST_REJECTION, NEGATIVE_FEEDBACK, MISSING_CHECKIN
+  isActive          Boolean  @default(true)
+  canBeCustomized   Boolean  @default(true)
+  
+  // Event parameters (JSON configuration)
+  configuration     Json     // e.g., {"daysInAdvance": 7, "feedbackThreshold": 3}
+  
+  // Lifecycle dates
+  activationDate    DateTime @default(now())
+  deactivationDate  DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  program           Program @relation(fields: [programId], references: [id])
+  penalties         PenaltyEventPenalty[] // Many-to-many with penalties
+  
+  @@index([programId, isActive])
+  @@index([eventType, isActive])
+  @@map("penalty_events")
+}
+
+model Penalty {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId     String   @db.ObjectId
+  name          String
+  description   String?
+  
+  // Penalty configuration
+  penaltyType   String   // NO_RESERVATIONS, NO_RECURRING, NO_PRIORITY_UPGRADE, FORCE_PARTICULAR_PRIORITY
+  isPartial     Boolean  @default(false) // Partial or total limitation
+  duration      Int?     // Duration in days, null for permanent
+  maxQuantity   Int?     // Maximum quantity if partial
+  
+  // Lifecycle
+  canBeDeleted  Boolean  @default(true) // Hard delete allowed
+  isDeleted     Boolean  @default(false) // Soft delete flag
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  program       Program @relation(fields: [programId], references: [id])
+  userPenalties UserPenalty[]
+  penaltyEvents PenaltyEventPenalty[] // Many-to-many with events
+  
+  @@index([programId, penaltyType])
+  @@map("penalties")
+}
+
+// Junction table for PenaltyEvent and Penalty many-to-many relationship
+model PenaltyEventPenalty {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  penaltyEventId String @db.ObjectId
+  penaltyId     String @db.ObjectId
+  
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  penaltyEvent  PenaltyEvent @relation(fields: [penaltyEventId], references: [id])
+  penalty       Penalty @relation(fields: [penaltyId], references: [id])
+  
+  @@unique([penaltyEventId, penaltyId])
+  @@map("penalty_event_penalties")
+}
+
+model UserPenalty {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  penaltyId   String   @db.ObjectId
+  programId   String   @db.ObjectId
+  
+  // Application details
+  appliedBy   String   @db.ObjectId // Director who applied the penalty
+  appliedAt   DateTime @default(now())
+  expiresAt   DateTime?
+  
+  // Status and metadata
+  isActive    Boolean  @default(true)
+  isManual    Boolean  @default(false) // Manually applied vs automatic
+  reason      String?
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User @relation(fields: [userId], references: [id])
+  penalty     Penalty @relation(fields: [penaltyId], references: [id])
+  program     Program @relation(fields: [programId], references: [id])
+  appliedByUser User @relation("AppliedPenalties", fields: [appliedBy], references: [id])
+  
+  @@index([userId, programId, isActive])
+  @@index([penaltyId, isActive])
+  @@map("user_penalties")
+}
+
+// RF-15: Reassignment system
+model ReassignmentRequest {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  originalReservationId String   @db.ObjectId
+  requestedBy           String   @db.ObjectId // User who requested reassignment
+  
+  // Reassignment details
+  reason                String   // MAINTENANCE, EMERGENCY, RESOURCE_UNAVAILABLE
+  suggestedResourceId   String?  @db.ObjectId
+  suggestedStartTime    String?  // HH:mm format
+  suggestedEndTime      String?  // HH:mm format
+  
+  // Status tracking
+  status                String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, CANCELLED
+  userResponse          String   @default("PENDING") // ACCEPTED, REJECTED, PENDING
+  rejectionCount        Int      @default(0) // How many times user rejected
+  
+  // Priority and timing
+  priority              String   // Inherited from original reservation
+  responseDeadline      DateTime?
+  respondedAt           DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  originalReservation   Reservation @relation(fields: [originalReservationId], references: [id])
+  requestedByUser       User @relation(fields: [requestedBy], references: [id])
+  suggestedResource     Resource? @relation("SuggestedResource", fields: [suggestedResourceId], references: [id])
+  
+  @@index([originalReservationId, status])
+  @@index([requestedBy, createdAt])
+  @@map("reassignment_requests")
+}
+
+model ResourceEquivalence {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  primaryResourceId   String   @db.ObjectId
+  equivalentResourceId String   @db.ObjectId
+  programId           String   @db.ObjectId
+  
+  // Configuration
+  priority            Int      @default(1) // Order in suggestion list
+  isActive            Boolean  @default(true)
+  
+  // Metadata
+  createdBy           String   @db.ObjectId
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Relations
+  primaryResource     Resource @relation("PrimaryResourceEquivalences", fields: [primaryResourceId], references: [id])
+  equivalentResource  Resource @relation("EquivalentResourceEquivalences", fields: [equivalentResourceId], references: [id])
+  program             Program @relation(fields: [programId], references: [id])
+  createdByUser       User @relation(fields: [createdBy], references: [id])
+  
+  @@unique([primaryResourceId, equivalentResourceId, programId])
+  @@index([primaryResourceId, programId])
+  @@map("resource_equivalences")
+}
+
+model ReassignmentConfiguration {
+  id                          String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId                   String   @unique @db.ObjectId
+  
+  // Configuration parameters
+  capacityTolerancePercentage Int      @default(5) // ±5% capacity tolerance
+  prioritizeSameType          Boolean  @default(true)
+  
+  // Status
+  isActive                    Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  
+  // Relations
+  program                     Program @relation(fields: [programId], references: [id])
+  
+  @@map("reassignment_configurations")
+}
+
+// ========================================
+// AUDIT AND LOGGING MODELS
+// ========================================
+
+// Comprehensive audit entry for all system operations
+model AuditEntry {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Event identification
+  eventType   String   // AuditEventType enum value
+  category    String   // AuditCategory enum value
+  action      String   // create, update, delete, etc.
+  resource    String   // recurring_reservation, waiting_list, etc.
+  resourceId  String?  // ID of the affected resource
+  
+  // Status and severity
+  status      String   // SUCCESS, FAILURE, PENDING, CANCELLED
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // User context
+  userId      String?  @db.ObjectId
+  userRole    String?
+  userProgram String?
+  sessionId   String?
+  ipAddress   String?
+  userAgent   String?
+  correlationId String?
+  requestId   String?
+  
+  // System metadata
+  timestamp   DateTime @default(now())
+  service     String   // availability-service, auth-service, etc.
+  version     String   // Service version
+  environment String   // development, staging, production
+  traceId     String?  // Distributed tracing ID
+  spanId      String?  // Span ID for tracing
+  
+  // Operation data
+  payload     String?  // JSON string of operation input
+  result      String?  // JSON string of operation result
+  error       String?  // JSON string of error details
+  duration    Int?     // Operation duration in milliseconds
+  tags        String[] // Tags for categorization and filtering
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Indexes for efficient querying
+  @@index([eventType, timestamp])
+  @@index([category, timestamp])
+  @@index([resource, resourceId])
+  @@index([userId, timestamp])
+  @@index([status, severity])
+  @@index([correlationId])
+  @@index([service, environment])
+  @@index([timestamp])
+  @@map("audit_entries")
+}
+

@@ -1,3 +1,6 @@
+import { ApprovalRequestStatus } from '../../utils/approval-request-status.enum';
+import { ApprovalActionType } from '../../utils/approval-action-type.enum';
+
 export class ApprovalFlowEntity {
   constructor(
     public readonly id: string,
@@ -172,13 +175,6 @@ export class ApprovalRequestEntity {
   }
 }
 
-export enum ApprovalRequestStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  TIMEOUT = 'TIMEOUT'
-}
-
 export class ApprovalActionEntity {
   constructor(
     public readonly id: string,
@@ -192,9 +188,4 @@ export class ApprovalActionEntity {
   ) {}
 }
 
-export enum ApprovalActionType {
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  COMMENTED = 'COMMENTED',
-  DELEGATED = 'DELEGATED'
-}
+

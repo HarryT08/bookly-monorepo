@@ -1,0 +1,6 @@
+export enum ScheduleType {
+  REGULAR = 'REGULAR',
+  EXCEPTION = 'EXCEPTION',
+  MAINTENANCE = 'MAINTENANCE',
+  HOLIDAY = 'HOLIDAY'
+}

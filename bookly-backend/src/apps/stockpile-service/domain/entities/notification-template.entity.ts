@@ -1,4 +1,7 @@
-import { NotificationChannelType } from "@/libs/dto/stockpile/notification-template.dto";
+import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+import { NotificationEventType } from '@/apps/stockpile-service/utils/notification-event-type.enum';
+import { DocumentDeliveryMethod } from '@/apps/stockpile-service/utils/document-delivery-method.enum';
+import { NotificationStatus } from '@/apps/stockpile-service/utils/notification-status.enum';
 
 export class NotificationChannelEntity {
   constructor(
@@ -114,18 +117,6 @@ export class NotificationTemplateEntity {
   }
 }
 
-export enum NotificationEventType {
-  RESERVATION_SUBMITTED = 'RESERVATION_SUBMITTED',
-  RESERVATION_APPROVED = 'RESERVATION_APPROVED',
-  RESERVATION_REJECTED = 'RESERVATION_REJECTED',
-  RESERVATION_CANCELLED = 'RESERVATION_CANCELLED',
-  APPROVAL_REMINDER = 'APPROVAL_REMINDER',
-  RESERVATION_REMINDER = 'RESERVATION_REMINDER',
-  AVAILABILITY_CONFIRMATION = 'AVAILABILITY_CONFIRMATION',
-  AVAILABILITY_UNAVAILABLE = 'AVAILABILITY_UNAVAILABLE',
-  ALTERNATIVE_SUGGESTIONS = 'ALTERNATIVE_SUGGESTIONS'
-}
-
 export class NotificationConfigEntity {
   constructor(
     public readonly id: string,
@@ -173,11 +164,6 @@ export class NotificationConfigEntity {
   public getBatchIntervalMs(): number {
     return (this.batchInterval || 30) * 60 * 1000; // Convert minutes to milliseconds
   }
-}
-
-export enum DocumentDeliveryMethod {
-  ATTACHMENT = 'ATTACHMENT',
-  LINK = 'LINK'
 }
 
 export class SentNotificationEntity {
@@ -302,9 +288,4 @@ export class SentNotificationEntity {
   }
 }
 
-export enum NotificationStatus {
-  PENDING = 'PENDING',
-  SENT = 'SENT',
-  DELIVERED = 'DELIVERED',
-  FAILED = 'FAILED'
-}
+

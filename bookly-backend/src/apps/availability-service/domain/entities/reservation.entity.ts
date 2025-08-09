@@ -3,6 +3,12 @@
  * Represents a reservation with business logic validation
  */
 export class ReservationEntity {
+  get startTime() {
+    return this.startDate.getTime();
+  }
+  get endTime() {
+    return this.endDate.getTime();
+  }
   constructor(
     public readonly id: string,
     public readonly title: string,

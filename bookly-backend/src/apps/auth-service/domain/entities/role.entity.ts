@@ -1,5 +1,11 @@
 import { Role, Permission, RolePermission } from '@prisma/client';
 import { PermissionEntity } from './permission.entity';
+import { 
+  UserRole, 
+  RoleCategory, 
+  DEFAULT_ROLE_PERMISSIONS,
+  ROLE_CATEGORY_MAP 
+} from '@libs/common';
 
 // Extended type for RolePermission with nested permission
 type RolePermissionWithPermission = RolePermission & {
@@ -42,16 +48,16 @@ export class RoleEntity implements Role {
   }
 
   /**
-   * Create predefined roles for the system
+   * Create predefined roles for the system using standardized role definitions
    */
   static createPredefinedRoles(): RoleEntity[] {
     return [
-      new RoleEntity('', 'Estudiante', 'Estudiante universitario', true, true, 'STUDENT'),
-      new RoleEntity('', 'Docente', 'Docente universitario', true, true, 'TEACHER'),
-      new RoleEntity('', 'Administrador General', 'Administrador con acceso completo', true, true, 'ADMIN'),
-      new RoleEntity('', 'Administrador de Programa', 'Administrador de programa académico', true, true, 'ADMIN'),
-      new RoleEntity('', 'Vigilante', 'Personal de vigilancia', true, true, 'GUARD'),
-      new RoleEntity('', 'Administrativo General', 'Personal administrativo general', true, true, 'ADMINISTRATIVE'),
+      new RoleEntity('', UserRole.STUDENT, 'Estudiante universitario', true, true, ROLE_CATEGORY_MAP[UserRole.STUDENT]),
+      new RoleEntity('', UserRole.TEACHER, 'Docente universitario', true, true, ROLE_CATEGORY_MAP[UserRole.TEACHER]),
+      new RoleEntity('', UserRole.GENERAL_ADMIN, 'Administrador con acceso completo', true, true, ROLE_CATEGORY_MAP[UserRole.GENERAL_ADMIN]),
+      new RoleEntity('', UserRole.PROGRAM_ADMIN, 'Administrador de programa académico', true, true, ROLE_CATEGORY_MAP[UserRole.PROGRAM_ADMIN]),
+      new RoleEntity('', UserRole.SECURITY, 'Personal de vigilancia', true, true, ROLE_CATEGORY_MAP[UserRole.SECURITY]),
+      new RoleEntity('', UserRole.GENERAL_STAFF, 'Personal administrativo general', true, true, ROLE_CATEGORY_MAP[UserRole.GENERAL_STAFF]),
     ];
   }
 
@@ -131,7 +137,7 @@ export class RoleEntity implements Role {
   }
 
   /**
-   * Get default predefined roles for the system
+   * Get default predefined roles for the system using standardized definitions
    */
   static getDefaultRoles(): Array<{
     name: string;
@@ -140,34 +146,34 @@ export class RoleEntity implements Role {
   }> {
     return [
       {
-        name: 'Estudiante',
-        description: 'Estudiante con permisos básicos para reservar recursos',
-        category: 'academic',
+        name: UserRole.STUDENT,
+        description: 'Estudiante universitario con permisos básicos',
+        category: ROLE_CATEGORY_MAP[UserRole.STUDENT],
       },
       {
-        name: 'Docente',
-        description: 'Docente con permisos para reservar y gestionar recursos académicos',
-        category: 'academic',
+        name: UserRole.TEACHER,
+        description: 'Docente universitario con permisos académicos',
+        category: ROLE_CATEGORY_MAP[UserRole.TEACHER],
       },
       {
-        name: 'Administrador General',
+        name: UserRole.GENERAL_ADMIN,
         description: 'Administrador con acceso completo al sistema',
-        category: 'administrative',
+        category: ROLE_CATEGORY_MAP[UserRole.GENERAL_ADMIN],
       },
       {
-        name: 'Administrador de Programa',
+        name: UserRole.PROGRAM_ADMIN,
         description: 'Administrador con permisos específicos para su programa académico',
-        category: 'administrative',
+        category: ROLE_CATEGORY_MAP[UserRole.PROGRAM_ADMIN],
       },
       {
-        name: 'Vigilante',
+        name: UserRole.SECURITY,
         description: 'Personal de vigilancia con permisos de control de acceso',
-        category: 'security',
+        category: ROLE_CATEGORY_MAP[UserRole.SECURITY],
       },
       {
-        name: 'Administrativo General',
+        name: UserRole.GENERAL_STAFF,
         description: 'Personal administrativo con permisos operativos',
-        category: 'administrative',
+        category: ROLE_CATEGORY_MAP[UserRole.GENERAL_STAFF],
       },
     ];
   }
@@ -209,82 +215,11 @@ export class RoleEntity implements Role {
   }
 
   /**
-   * Get default permissions for predefined roles
+   * Get default permissions for predefined roles using standardized system
    */
   static getDefaultPermissionsForRole(roleName: string): string[] {
-    const defaultPermissions: Record<string, string[]> = {
-      'Estudiante': [
-        'reservations:create:own',
-        'reservations:read:own',
-        'reservations:update:own',
-        'reservations:delete:own',
-        'resources:read:global',
-        'reports:read:own',
-      ],
-      'Docente': [
-        'reservations:create:own',
-        'reservations:read:own',
-        'reservations:update:own',
-        'reservations:delete:own',
-        'reservations:approve:program',
-        'resources:read:global',
-        'reports:read:program',
-        'users:read:program',
-      ],
-      'Administrador General': [
-        'users:create:global',
-        'users:read:global',
-        'users:update:global',
-        'users:delete:global',
-        'roles:create:global',
-        'roles:read:global',
-        'roles:update:global',
-        'roles:delete:global',
-        'permissions:create:global',
-        'permissions:read:global',
-        'permissions:update:global',
-        'permissions:delete:global',
-        'resources:create:global',
-        'resources:read:global',
-        'resources:update:global',
-        'resources:delete:global',
-        'reservations:create:global',
-        'reservations:read:global',
-        'reservations:update:global',
-        'reservations:delete:global',
-        'reservations:approve:global',
-        'reservations:reject:global',
-        'reports:read:global',
-        'reports:create:global',
-      ],
-      'Administrador de Programa': [
-        'users:read:program',
-        'users:update:program',
-        'roles:read:program',
-        'resources:read:program',
-        'resources:update:program',
-        'reservations:read:program',
-        'reservations:update:program',
-        'reservations:approve:program',
-        'reservations:reject:program',
-        'reports:read:program',
-        'reports:create:program',
-      ],
-      'Vigilante': [
-        'reservations:read:global',
-        'users:read:global',
-        'resources:read:global',
-      ],
-      'Administrativo General': [
-        'reservations:read:global',
-        'reservations:update:global',
-        'resources:read:global',
-        'resources:update:global',
-        'reports:read:global',
-        'reports:create:global',
-      ],
-    };
-
-    return defaultPermissions[roleName] || [];
+    // Use the standardized permission system
+    const roleKey = Object.values(UserRole).find(role => role === roleName) as UserRole;
+    return roleKey ? DEFAULT_ROLE_PERMISSIONS[roleKey] || [] : [];
   }
 }

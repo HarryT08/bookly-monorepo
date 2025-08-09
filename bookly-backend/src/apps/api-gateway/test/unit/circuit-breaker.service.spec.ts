@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { CircuitBreakerService, CircuitBreakerState } from '../../infrastructure/services/circuit-breaker.service';
+import { CircuitBreakerService } from '../../infrastructure/services/circuit-breaker.service';
+import { CircuitBreakerState } from '../../utils/circuit-breaker-state.enum';
 
 describe('CircuitBreakerService', () => {
   let service: CircuitBreakerService;

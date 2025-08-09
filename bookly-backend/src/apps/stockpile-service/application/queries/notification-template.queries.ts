@@ -1,6 +1,6 @@
 import { IQuery } from '@nestjs/cqrs';
-import { NotificationEventType } from '../../domain/entities/notification-template.entity';
-import { NotificationChannelType } from '@/libs/dto/stockpile/notification-template.dto';
+import { NotificationEventType } from '../../utils/notification-event-type.enum';
+import { NotificationChannelType } from '@/apps/availability-service/utils';
 
 // Get Notification Channels Query
 export class GetNotificationChannelsQuery implements IQuery {

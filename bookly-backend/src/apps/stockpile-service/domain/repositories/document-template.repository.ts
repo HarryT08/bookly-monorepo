@@ -1,4 +1,5 @@
-import { DocumentTemplateEntity, GeneratedDocumentEntity, DocumentEventType } from '../entities/document-template.entity';
+import { DocumentTemplateEntity, GeneratedDocumentEntity } from '../entities/document-template.entity';
+import { DocumentEventType } from '../../utils/document-event-type.enum';
 
 export interface DocumentTemplateRepository {
   findDocumentTemplates(filters: { resourceType: string; categoryId: string; eventType: DocumentEventType; isActive: boolean; page: number; limit: number; }): Promise<{ templates: DocumentTemplateEntity[]; total: number }>;

@@ -26,7 +26,7 @@ import {
   ResourceImportResponseDto,
   ImportPreviewDto,
 } from '../../application/dtos/resource-import.dto';
-import { ImportStatus } from '../../domain/entities/resource-import.entity';
+import { ImportStatus } from '../../utils/import-status.enum';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';

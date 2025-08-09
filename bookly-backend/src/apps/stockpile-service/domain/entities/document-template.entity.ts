@@ -1,3 +1,6 @@
+import { DocumentEventType } from '../../utils/document-event-type.enum';
+import { DocumentFormat } from '../../utils/document-format.enum';
+
 export class DocumentTemplateEntity {
   constructor(
     public readonly id: string,
@@ -70,20 +73,6 @@ export class DocumentTemplateEntity {
 
     return true;
   }
-}
-
-export enum DocumentEventType {
-  APPROVAL = 'APPROVAL',
-  REJECTION = 'REJECTION',
-  REMINDER = 'REMINDER',
-  CONFIRMATION = 'CONFIRMATION',
-  CANCELLATION = 'CANCELLATION'
-}
-
-export enum DocumentFormat {
-  PDF = 'PDF',
-  DOCX = 'DOCX',
-  HTML = 'HTML'
 }
 
 export class GeneratedDocumentEntity {

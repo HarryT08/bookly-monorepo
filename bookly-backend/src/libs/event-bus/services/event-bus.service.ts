@@ -12,6 +12,7 @@ export interface DomainEvent {
   eventData: any;
   timestamp: Date;
   version: number;
+  userId?: string;
 }
 
 @Injectable()

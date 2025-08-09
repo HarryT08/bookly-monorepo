@@ -17,10 +17,11 @@ import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { PermissionService } from '../../application/services/permission.service';
 import { CreatePermissionDto, UpdatePermissionDto, PermissionResponseDto } from '../../../../libs/dto/auth/permission.dto';
+import { AUTH_URLS } from '../../utils/maps';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()
-@Controller('permissions')
+@Controller(AUTH_URLS.PERMISSION)
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
@@ -71,7 +72,7 @@ export class PermissionController {
     return permissions.map(permission => this.mapToResponseDto(permission));
   }
 
-  @Get('active')
+  @Get(AUTH_URLS.PERMISSION_FIND_BY_ACTIVE)
   @Roles('Administrador General', 'Administrador de Programa')
   @ApiOperation({ summary: 'Get all active permissions' })
   @ApiResponse({
@@ -84,7 +85,7 @@ export class PermissionController {
     return permissions.map(permission => this.mapToResponseDto(permission));
   }
 
-  @Get('resource/:resource')
+  @Get(AUTH_URLS.PERMISSION_FIND_BY_RESOURCE)
   @Roles('Administrador General', 'Administrador de Programa')
   @ApiOperation({ summary: 'Get permissions by resource' })
   @ApiQuery({ name: 'action', required: false, description: 'Filter by action' })
@@ -103,7 +104,7 @@ export class PermissionController {
     return permissions.map(permission => this.mapToResponseDto(permission));
   }
 
-  @Get(':id')
+  @Get(AUTH_URLS.PERMISSION_FIND_BY_ID)
   @Roles('Administrador General', 'Administrador de Programa')
   @ApiOperation({ summary: 'Get permission by ID' })
   @ApiResponse({
@@ -117,7 +118,7 @@ export class PermissionController {
     return this.mapToResponseDto(permission);
   }
 
-  @Put(':id')
+  @Put(AUTH_URLS.PERMISSION_UPDATE)
   @Roles('Administrador General')
   @ApiOperation({ summary: 'Update permission' })
   @ApiResponse({
@@ -136,7 +137,7 @@ export class PermissionController {
     return this.mapToResponseDto(permission);
   }
 
-  @Put(':id/activate')
+  @Put(AUTH_URLS.PERMISSION_ACTIVATE)
   @Roles('Administrador General')
   @ApiOperation({ summary: 'Activate permission' })
   @ApiResponse({
@@ -151,7 +152,7 @@ export class PermissionController {
     return this.mapToResponseDto(permission);
   }
 
-  @Put(':id/deactivate')
+  @Put(AUTH_URLS.PERMISSION_DEACTIVATE)
   @Roles('Administrador General')
   @ApiOperation({ summary: 'Deactivate permission' })
   @ApiResponse({
@@ -166,7 +167,7 @@ export class PermissionController {
     return this.mapToResponseDto(permission);
   }
 
-  @Delete(':id')
+  @Delete(AUTH_URLS.PERMISSION_DELETE)
   @Roles('Administrador General')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete permission' })
@@ -177,7 +178,7 @@ export class PermissionController {
     await this.permissionService.deletePermission(id);
   }
 
-  @Post('seed-defaults')
+  @Post(AUTH_URLS.PERMISSIONS_SEED_DEFAULTS)
   @Roles('Administrador General')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create default system permissions' })
