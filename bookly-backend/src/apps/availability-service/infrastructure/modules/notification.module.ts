@@ -6,6 +6,8 @@
 
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { HttpModule } from '@nestjs/axios';
+import { ConfigModule } from '@nestjs/config';
 import { LoggingModule } from '@/libs/logging/logging.module';
 import { EventBusModule } from '@/libs/event-bus/event-bus.module';
 
@@ -22,6 +24,10 @@ import { NotificationEventHandler } from '../handlers/notification-event.handler
 import { UserNotificationRepositoryImpl } from '../repositories/user-notification.repository';
 import { ResourceNotificationRepositoryImpl } from '../repositories/resource-notification.repository';
 
+// HTTP clients to other services
+import { AuthServiceClient } from '../clients/auth-service.client';
+import { ResourcesServiceClient } from '../clients/resources-service.client';
+
 // Interfaces
 import { UserNotificationRepository } from '../handlers/notification-event.handler';
 import { ResourceNotificationRepository } from '../handlers/notification-event.handler';
@@ -29,6 +35,8 @@ import { ResourceNotificationRepository } from '../handlers/notification-event.h
 @Module({
   imports: [
     CqrsModule,
+    HttpModule,
+    ConfigModule,
     LoggingModule,
     EventBusModule
   ],
@@ -41,7 +49,11 @@ import { ResourceNotificationRepository } from '../handlers/notification-event.h
     
     // Event handler for automatic notifications
     NotificationEventHandler,
-    
+
+    // External service clients used by repositories
+    AuthServiceClient,
+    ResourcesServiceClient,
+
     // Repository implementations
     {
       provide: 'UserNotificationRepository',

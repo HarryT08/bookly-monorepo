@@ -28,7 +28,7 @@ import {
   ApiBody
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@apps/auth-service/infrastructure/guards/jwt-auth.guard';
-import { RolesGuard } from '@apps/auth-service/infrastructure/guards/roles.guard';
+import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@apps/auth-service/infrastructure/decorators/roles.decorator';
 import { UserRole, CurrentUser } from '@libs/common';
 
