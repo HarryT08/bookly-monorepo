@@ -6,6 +6,51 @@ import { Logger } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import { ApiGatewayModule } from './api-gateway.module';
+import axios from 'axios';
+
+type OpenAPIDoc = any;
+
+function mergeOpenApiDocs(base: OpenAPIDoc, others: OpenAPIDoc[]): OpenAPIDoc {
+  const merged: OpenAPIDoc = { ...base };
+  merged.paths = { ...(base.paths || {}) };
+  merged.tags = [...(base.tags || [])];
+  merged.components = {
+    ...(base.components || {}),
+    schemas: { ...(base.components?.schemas || {}) },
+    securitySchemes: { ...(base.components?.securitySchemes || {}) },
+    parameters: { ...(base.components?.parameters || {}) },
+    responses: { ...(base.components?.responses || {}) },
+    requestBodies: { ...(base.components?.requestBodies || {}) },
+  };
+
+  for (const doc of others) {
+    // merge paths
+    if (doc?.paths) {
+      merged.paths = { ...merged.paths, ...doc.paths };
+    }
+    // merge tags (avoid duplicates by name)
+    if (Array.isArray(doc?.tags)) {
+      const existing = new Set((merged.tags || []).map((t: any) => t.name));
+      for (const tag of doc.tags) {
+        if (tag?.name && !existing.has(tag.name)) {
+          merged.tags.push(tag);
+          existing.add(tag.name);
+        }
+      }
+    }
+    // merge components
+    if (doc?.components) {
+      const c = doc.components;
+      merged.components.schemas = { ...merged.components.schemas, ...(c.schemas || {}) };
+      merged.components.securitySchemes = { ...merged.components.securitySchemes, ...(c.securitySchemes || {}) };
+      merged.components.parameters = { ...merged.components.parameters, ...(c.parameters || {}) };
+      merged.components.responses = { ...merged.components.responses, ...(c.responses || {}) };
+      merged.components.requestBodies = { ...merged.components.requestBodies, ...(c.requestBodies || {}) };
+    }
+  }
+
+  return merged;
+}
 
 async function bootstrap() {
   const logger = new Logger('ApiGateway');
@@ -86,7 +131,34 @@ async function bootstrap() {
         .addTag('Monitoring', 'Monitoring and metrics endpoints')
         .build();
 
-      const document = SwaggerModule.createDocument(app, config);
+      let document = SwaggerModule.createDocument(app, config);
+
+      // Aggregate microservices OpenAPI docs
+      const microservices = configService.get('gateway.microservices') as Record<string, { url: string; docsPath?: string }>;
+      const aggregateEnabled = configService.get<boolean>('gateway.swagger.aggregate', true);
+      if (aggregateEnabled && microservices) {
+        const loggerAgg = new Logger('SwaggerAggregate');
+        const fetches: Promise<OpenAPIDoc | null>[] = Object.entries(microservices).map(async ([name, cfg]) => {
+          try {
+            const baseUrl = cfg?.url?.replace(/\/$/, '') || '';
+            const jsonPath = (cfg?.docsPath || 'api/docs-json').replace(/^\//, '');
+            const target = `${baseUrl}/${jsonPath}`;
+            const res = await axios.get(target, { timeout: 4000 });
+            loggerAgg.log(`Fetched OpenAPI from ${name}: ${target}`);
+            return res.data as OpenAPIDoc;
+          } catch (e) {
+            loggerAgg.warn(`Failed to fetch OpenAPI from ${name}: ${(e as Error).message}`);
+            return null;
+          }
+        });
+
+        const remoteDocs = (await Promise.all(fetches)).filter(Boolean) as OpenAPIDoc[];
+        if (remoteDocs.length) {
+          document = mergeOpenApiDocs(document, remoteDocs);
+        } else {
+          loggerAgg.warn('No remote OpenAPI documents aggregated');
+        }
+      }
       const swaggerPath = swaggerConfig?.path || 'api/docs';
       SwaggerModule.setup(swaggerPath, app, document, {
         swaggerOptions: {

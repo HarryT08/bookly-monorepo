@@ -34,16 +34,18 @@ export default registerAs('gateway', () => ({
   microservices: {
     auth: {
       url: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
+      docsPath: 'api/docs-json',
       timeout: parseInt(process.env.AUTH_SERVICE_TIMEOUT, 10) || 5000,
       retries: parseInt(process.env.AUTH_SERVICE_RETRIES, 10) || 3,
       circuitBreaker: {
         enabled: process.env.AUTH_CIRCUIT_BREAKER_ENABLED !== 'false',
         threshold: parseInt(process.env.AUTH_CIRCUIT_BREAKER_THRESHOLD, 10) || 5,
         timeout: parseInt(process.env.AUTH_CIRCUIT_BREAKER_TIMEOUT, 10) || 60000,
-      },
+      }
     },
     availability: {
       url: process.env.AVAILABILITY_SERVICE_URL || 'http://localhost:3002',
+      docsPath: 'api/docs-json',
       timeout: parseInt(process.env.AVAILABILITY_SERVICE_TIMEOUT, 10) || 5000,
       retries: parseInt(process.env.AVAILABILITY_SERVICE_RETRIES, 10) || 3,
       circuitBreaker: {
@@ -54,6 +56,7 @@ export default registerAs('gateway', () => ({
     },
     resources: {
       url: process.env.RESOURCES_SERVICE_URL || 'http://localhost:3003',
+      docsPath: 'api/docs-json',
       timeout: parseInt(process.env.RESOURCES_SERVICE_TIMEOUT, 10) || 5000,
       retries: parseInt(process.env.RESOURCES_SERVICE_RETRIES, 10) || 3,
       circuitBreaker: {
@@ -64,6 +67,7 @@ export default registerAs('gateway', () => ({
     },
     stockpile: {
       url: process.env.STOCKPILE_SERVICE_URL || 'http://localhost:3004',
+      docsPath: 'api/docs-json',
       timeout: parseInt(process.env.STOCKPILE_SERVICE_TIMEOUT, 10) || 5000,
       retries: parseInt(process.env.STOCKPILE_SERVICE_RETRIES, 10) || 3,
       circuitBreaker: {
@@ -74,6 +78,7 @@ export default registerAs('gateway', () => ({
     },
     reports: {
       url: process.env.REPORTS_SERVICE_URL || 'http://localhost:3005',
+      docsPath: 'api/docs-json',
       timeout: parseInt(process.env.REPORTS_SERVICE_TIMEOUT, 10) || 5000,
       retries: parseInt(process.env.REPORTS_SERVICE_RETRIES, 10) || 3,
       circuitBreaker: {
@@ -159,6 +164,7 @@ export default registerAs('gateway', () => ({
     description: process.env.SWAGGER_DESCRIPTION || 'API Gateway for Bookly reservation system',
     version: process.env.SWAGGER_VERSION || '1.0.0',
     path: process.env.SWAGGER_PATH || 'api/docs',
+    aggregate: process.env.SWAGGER_AGGREGATE || false
   },
 
   // Logging Configuration
