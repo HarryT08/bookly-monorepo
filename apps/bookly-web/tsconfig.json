@@ -1,0 +1,106 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@auth/*": [
+        "./src/@auth/*"
+      ],
+      "@i18n": [
+        "./i18n/index"
+      ],
+      "@i18n/*": [
+        "./i18n/*"
+      ],
+      "@fuse/*": [
+        "./lib/fuse/*"
+      ],
+      "@history*": [
+        "./src/@history"
+      ],
+      "@mock-utils/*": [
+        "./src/@mock-utils/*"
+      ],
+      "@schema": [
+        "./src/@schema"
+      ],
+      "@services/*": [
+        "./services/*"
+      ],
+      "@hooks/*": [
+        "./hooks/*"
+      ],
+      "@store/*": [
+        "./store/*"
+      ],
+      "@utils/*": [
+        "./utils/*"
+      ],
+      "@types/*": [
+        "./types/*"
+      ],
+      "@components/*": [
+        "./components/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
+    },
+    "declaration": true,
+    "target": "esnext",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2020",
+      "scripthost"
+    ],
+    "plugins": [
+      {
+        "name": "typescript-plugin-css-modules"
+      },
+      {
+        "name": "next"
+      }
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "incremental": true
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./src/global.d.ts",
+    "./services/**/*.ts",
+    "./hooks/**/*.ts",
+    "./store/**/*.ts",
+    "./utils/**/*.ts",
+    "./types/**/*.ts",
+    "./components/**/*.ts",
+    "./components/**/*.tsx",
+    "./i18n/**/*.ts",
+    "./lib/**/*.ts",
+    "./lib/**/*.tsx",
+    "./contexts/**/*.ts",
+    "./contexts/**/*.tsx",
+    "tailwind.config.ts",
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "next.config.mjs",
+    "next.config.ts",
+    "build/types/**/*.ts"
+  ]
+}
