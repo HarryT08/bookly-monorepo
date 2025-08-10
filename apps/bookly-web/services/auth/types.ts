@@ -53,3 +53,52 @@ export interface Permission {
 	scope?: string;
 	conditions?: Record<string, unknown>;
 }
+
+// API Response types (backend response structure)
+export interface ApiUserResponse {
+	id: string;
+	email: string;
+	firstName?: string;
+	lastName?: string;
+	first_name?: string;
+	last_name?: string;
+	avatar?: string;
+	profilePicture?: string;
+	roles?: ApiRoleResponse[];
+	permissions?: ApiPermissionResponse[];
+	isEmailVerified?: boolean;
+	email_verified?: boolean;
+	isActive?: boolean;
+	active?: boolean;
+	createdAt?: string;
+	created_at?: string;
+	updatedAt?: string;
+	updated_at?: string;
+}
+
+export interface ApiRoleResponse {
+	id: string;
+	name: string;
+	displayName?: string;
+	display_name?: string;
+	description?: string;
+	permissions?: ApiPermissionResponse[];
+}
+
+export interface ApiPermissionResponse {
+	id: string;
+	resource: string;
+	action: string;
+	scope?: string;
+	conditions?: Record<string, unknown>;
+}
+
+export interface ApiLoginResponse {
+	user: ApiUserResponse;
+	token?: string;
+	accessToken?: string;
+	refreshToken?: string;
+	refresh_token?: string;
+	expiresIn?: number;
+	expires_in?: number;
+}

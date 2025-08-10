@@ -11,8 +11,8 @@ export * from './molecules';
 // Organisms - Complex UI sections
 export * from './organisms';
 
-// Templates - Page layouts
+// Templates - Complete page layouts
 export * from './templates';
 
-// Pages - Complete page compositions
-export * from './pages';
+// Pages - Complete page layouts
+//export * from './pages';

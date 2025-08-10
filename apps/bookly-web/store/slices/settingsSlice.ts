@@ -4,7 +4,7 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface SettingsState {
+export interface SettingsState {
 	direction: 'ltr' | 'rtl';
 	layout: string;
 	scheme: 'light' | 'dark' | 'auto';

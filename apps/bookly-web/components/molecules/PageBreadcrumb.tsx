@@ -7,7 +7,7 @@ import usePathname from '@fuse/hooks/usePathname';
 import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
 import Link from '@fuse/core/Link';
-import useNavigationItems from './theme-layouts/components/navigation/hooks/useNavigationItems';
+import { useNavigationItems } from '../organisms/ThemeLayouts/components/navigation/hooks';
 
 type PageBreadcrumbProps = BreadcrumbsProps & {
 	className?: string;

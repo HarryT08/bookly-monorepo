@@ -4,7 +4,7 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface UiState {
+export interface UiState {
 	sidebarOpen: boolean;
 	theme: 'light' | 'dark' | 'auto';
 	language: string;
@@ -12,7 +12,7 @@ interface UiState {
 	notifications: Notification[];
 }
 
-interface Notification {
+export interface Notification {
 	id: string;
 	type: 'success' | 'error' | 'warning' | 'info';
 	message: string;

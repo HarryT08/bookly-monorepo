@@ -11,7 +11,7 @@ import NavigationSearch from '../../components/navigation/NavigationSearch';
 import UserMenu from '../../components/UserMenu';
 import QuickPanelToggleButton from '../../components/quickPanel/QuickPanelToggleButton';
 import Logo from '../../components/Logo';
-import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
+import useThemeMediaQuery from '../../../../../lib/fuse/hooks/useThemeMediaQuery';
 import ToolbarTheme from '@/contexts/ToolbarTheme';
 
 type ToolbarLayout3Props = {

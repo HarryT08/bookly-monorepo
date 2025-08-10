@@ -3,7 +3,7 @@
 import { FuseLayoutProps } from '@fuse/core/FuseLayout/FuseLayout';
 import FuseLayout from '@fuse/core/FuseLayout';
 import { useMemo } from 'react';
-import themeLayouts from './theme-layouts/themeLayouts';
+import themeLayouts from '../organisms/ThemeLayouts/themeLayouts';
 
 type MainLayoutProps = Omit<FuseLayoutProps, 'layouts'> & {
 	navbar?: boolean;

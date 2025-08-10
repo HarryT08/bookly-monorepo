@@ -13,7 +13,7 @@ import NavigationShortcuts from '../../components/navigation/NavigationShortcuts
 import NavigationSearch from '../../components/navigation/NavigationSearch';
 import QuickPanelToggleButton from '../../components/quickPanel/QuickPanelToggleButton';
 import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
-import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
+import useThemeMediaQuery from '../../../../../lib/fuse/hooks/useThemeMediaQuery';
 import { AppBar, Divider } from '@mui/material';
 import ToolbarTheme from 'src/contexts/ToolbarTheme';
 

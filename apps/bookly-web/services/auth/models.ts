@@ -1,4 +1,13 @@
-import type { User, LoginResponse, Role, Permission } from './types';
+import type {
+	User,
+	LoginResponse,
+	Role,
+	Permission,
+	ApiUserResponse,
+	ApiRoleResponse,
+	ApiPermissionResponse,
+	ApiLoginResponse
+} from './types';
 
 /**
  * Data transformation models for auth services
@@ -7,7 +16,7 @@ import type { User, LoginResponse, Role, Permission } from './types';
 /**
  * Transform API user response to frontend User model
  */
-export function transformUser(apiUser: any): User {
+export function transformUser(apiUser: ApiUserResponse): User {
 	return {
 		id: apiUser.id,
 		email: apiUser.email,
@@ -27,7 +36,7 @@ export function transformUser(apiUser: any): User {
 /**
  * Transform API role response to frontend Role model
  */
-export function transformRole(apiRole: any): Role {
+export function transformRole(apiRole: ApiRoleResponse): Role {
 	return {
 		id: apiRole.id,
 		name: apiRole.name,
@@ -40,7 +49,7 @@ export function transformRole(apiRole: any): Role {
 /**
  * Transform API permission response to frontend Permission model
  */
-export function transformPermission(apiPermission: any): Permission {
+export function transformPermission(apiPermission: ApiPermissionResponse): Permission {
 	return {
 		id: apiPermission.id,
 		resource: apiPermission.resource,
@@ -53,7 +62,7 @@ export function transformPermission(apiPermission: any): Permission {
 /**
  * Transform API login response to frontend LoginResponse model
  */
-export function transformLoginResponse(apiResponse: any): LoginResponse {
+export function transformLoginResponse(apiResponse: ApiLoginResponse): LoginResponse {
 	return {
 		user: transformUser(apiResponse.user),
 		token: apiResponse.token || apiResponse.accessToken,
