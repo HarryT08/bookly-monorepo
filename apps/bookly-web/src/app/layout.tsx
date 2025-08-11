@@ -56,6 +56,7 @@ export default async function RootLayout({
 			</head>
 			<body
 				id="root"
+				suppressHydrationWarning
 				className={clsx('loading')}
 			>
 				<SessionProvider

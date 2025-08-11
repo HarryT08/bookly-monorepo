@@ -3,7 +3,7 @@ import ky from 'ky';
 /**
  * Base HTTP client configuration for Bookly API
  */
-const baseURL = (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000') + '/api';
+const baseURL = (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000') + '/api/v1';
 
 export const httpClient = ky.create({
 	prefixUrl: baseURL,
