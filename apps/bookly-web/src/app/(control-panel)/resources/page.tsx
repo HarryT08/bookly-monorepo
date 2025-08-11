@@ -9,8 +9,10 @@ import type { ResourceResponseDto } from '@services/resources/types';
 import { mockDeleteResource, mockListResourcesPaginated } from '@services/resources/mocks/crud';
 import { useAppSelector } from 'store';
 import { ConfirmDialog } from '@components/molecules/confirm-dialog';
+import { useSnackbar } from 'notistack';
 
 export default function ResourcesPage() {
+	const { enqueueSnackbar } = useSnackbar();
 	const [items, setItems] = useState<ResourceResponseDto[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
@@ -83,6 +85,7 @@ export default function ResourcesPage() {
 				setRowCount(res.pagination.total);
 			} catch (_e) {
 				setError('No fue posible cargar los recursos');
+				enqueueSnackbar('No fue posible cargar los recursos.', { variant: 'error' });
 			} finally {
 				setLoading(false);
 			}
@@ -90,7 +93,7 @@ export default function ResourcesPage() {
 		return () => {
 			mounted = false;
 		};
-	}, [useMocks, pagination, sorting, globalFilter]);
+	}, [useMocks, pagination, sorting, globalFilter, enqueueSnackbar]);
 
 	function openDeleteDialog(resource: ResourceResponseDto, force = false) {
 		setTarget(resource);
@@ -108,23 +111,32 @@ export default function ResourcesPage() {
 
 				if (res && 'success' in res && res.success) {
 					setItems((prev) => prev.filter((r) => r.id !== target.id));
+					enqueueSnackbar('Recurso eliminado correctamente. Auditoría registrada.', { variant: 'success' });
 				} else if (res) {
 					setItems((prev) => prev.map((r) => (r.id === target.id ? (res as ResourceResponseDto) : r)));
+					enqueueSnackbar('Recurso deshabilitado correctamente. Auditoría registrada.', {
+						variant: 'success'
+					});
 				}
 			} else {
 				const res = await deleteResource(target.id, forceDelete);
 
 				if ('success' in res && res.success) {
 					setItems((prev) => prev.filter((r) => r.id !== target.id));
+					enqueueSnackbar('Recurso eliminado correctamente. Auditoría registrada.', { variant: 'success' });
 				} else {
 					const updated = res as ResourceResponseDto;
 					setItems((prev) => prev.map((r) => (r.id === target.id ? updated : r)));
+					enqueueSnackbar('Recurso deshabilitado correctamente. Auditoría registrada.', {
+						variant: 'success'
+					});
 				}
 			}
 		} catch (_e) {
 			// Surface specific error message if available
 			const msg = _e instanceof Error ? _e.message : null;
 			setError(msg ?? 'No fue posible eliminar/deshabilitar el recurso');
+			enqueueSnackbar(msg ?? 'No fue posible eliminar/deshabilitar el recurso.', { variant: 'error' });
 		} finally {
 			setConfirming(false);
 			setConfirmOpen(false);
