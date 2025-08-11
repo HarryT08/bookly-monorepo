@@ -1,20 +1,25 @@
 'use client';
 
-import Link from 'next/link';
 import { ResourceForm } from '@components/organisms/resources/resource-form';
+import { Button } from '@mui/material';
+import NextLink from 'next/link';
+import { PageFormHeader } from '@components/molecules/page-form-header';
 
 export default function CreateResourcePage() {
 	return (
 		<div className="space-y-4 p-6">
-			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-semibold">Crear recurso</h1>
-				<Link
-					href="/resources"
-					className="rounded border px-3 py-2"
-				>
-					Volver
-				</Link>
-			</div>
+			<PageFormHeader
+				title="Crear recurso"
+				actions={
+					<Button
+						component={NextLink}
+						href="/resources"
+						variant="outlined"
+					>
+						Volver
+					</Button>
+				}
+			/>
 
 			<div className="rounded border p-4">
 				<ResourceForm />

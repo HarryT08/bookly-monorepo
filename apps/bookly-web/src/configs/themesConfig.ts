@@ -81,11 +81,11 @@ export const themesConfig: FuseThemesType = {
 	default: {
 		palette: {
 			mode: 'light',
-			primary: { main: '#1F232B', light: '#363B44', dark: '#0F1115', contrastText: '#FFFFFF' },
-			secondary: { main: '#1565C0', light: '#3C83D6', dark: '#0E4B90', contrastText: '#FFFFFF' },
+			primary: { main: '#2563EB', light: '#3B82F6', dark: '#1D4ED8', contrastText: '#FFFFFF' },
+			secondary: { main: '#14B8A6', light: '#2DD4BF', dark: '#0D9488', contrastText: '#FFFFFF' },
 			...neutralsLightTheme,
-			text: { primary: '#1F232B', secondary: '#4B5563', disabled: '#9CA3AF' },
-			background: { default: '#F6F7F8', paper: '#FFFFFF' },
+			text: { primary: '#111827', secondary: '#6B7280', disabled: '#9CA3AF' },
+			background: { default: '#F9FAFB', paper: '#FFFFFF' },
 			divider: '#E5E7EB',
 			action: {
 				active: '#4B5563',
@@ -100,29 +100,12 @@ export const themesConfig: FuseThemesType = {
 	defaultDark: {
 		palette: {
 			mode: 'dark',
-			primary: {
-				main: '#2B2F38',
-				light: '#414652',
-				dark: '#16191E',
-				contrastText: '#FFFFFF'
-			},
-			secondary: {
-				main: '#3C83D6',
-				light: '#5A9AF0',
-				dark: '#1D5EB0',
-				contrastText: '#FFFFFF'
-			},
+			primary: { main: '#3B82F6', light: '#60A5FA', dark: '#1D4ED8', contrastText: '#FFFFFF' },
+			secondary: { main: '#2DD4BF', light: '#5EEAD4', dark: '#14B8A6', contrastText: '#0F1115' },
 			...neutralsDarkTheme,
-			text: {
-				primary: '#E5E7EB',
-				secondary: '#A5ABB5',
-				disabled: '#6B7280'
-			},
-			background: {
-				default: '#0F1115',
-				paper: '#1A1D22'
-			},
-			divider: '#2D3139',
+			text: { primary: '#F9FAFB', secondary: '#CBD5E1', disabled: '#6B7280' },
+			background: { default: '#1E293B', paper: '#0F172A' },
+			divider: '#334155',
 			action: {
 				active: '#CDD1D9',
 				hover: 'rgba(255,255,255,0.08)',
@@ -137,9 +120,9 @@ export const themesConfig: FuseThemesType = {
 		palette: {
 			mode: 'light',
 			...neutralsLightTheme,
-			primary: { main: '#1F232B', light: '#363B44', dark: '#0F1115', contrastText: '#FFFFFF' },
-			secondary: { main: '#1565C0', light: '#3C83D6', dark: '#0E4B90', contrastText: '#FFFFFF' },
-			text: { primary: '#1F232B', secondary: '#4B5563', disabled: '#9CA3AF' },
+			primary: { main: '#2563EB', light: '#3B82F6', dark: '#1D4ED8', contrastText: '#FFFFFF' },
+			secondary: { main: '#14B8A6', light: '#2DD4BF', dark: '#0D9488', contrastText: '#FFFFFF' },
+			text: { primary: '#111827', secondary: '#6B7280', disabled: '#9CA3AF' },
 			background: { default: '#E5E7EB', paper: '#FFFFFF' },
 			divider: '#E5E7EB',
 			action: {

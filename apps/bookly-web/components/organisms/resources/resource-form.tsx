@@ -20,6 +20,8 @@ import {
 } from '@services/resources/validation';
 import { createResource, getResourceById, updateResource } from '@services/resources/services';
 import { mockCreateResource, mockGetResourceById, mockUpdateResource } from '@services/resources/mocks/crud';
+import { Button, TextField, MenuItem } from '@mui/material';
+import { Controller } from 'react-hook-form';
 
 interface ResourceFormProps {
 	onCreated?: (resource: ResourceResponseDto) => void;
@@ -32,6 +34,7 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 	const {
 		register,
 		handleSubmit,
+		control,
 		formState: { errors, isSubmitting }
 	} = useForm<CreateResourceFormValues>({
 		resolver: zodResolver(createResourceSchema),
@@ -71,71 +74,80 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 			{apiError && <div className="text-sm text-red-600">{apiError}</div>}
 
 			<div>
-				<label className="block text-sm font-medium">Nombre</label>
-				<input
-					type="text"
-					{...register('name')}
-					className="mt-1 w-full rounded border p-2"
+				<TextField
+					label="Nombre"
+					fullWidth
 					placeholder="Laboratorio de Cómputo"
+					{...register('name')}
+					error={!!errors.name}
+					helperText={errors.name?.message}
 				/>
-				{errors.name?.message && <p className="text-xs text-red-600">{errors.name.message}</p>}
 			</div>
 
 			<div>
-				<label className="block text-sm font-medium">Tipo</label>
-				<select
-					{...register('type')}
-					className="mt-1 w-full rounded border p-2"
-				>
-					<option value="ROOM">Sala</option>
-					<option value="LABORATORY">Laboratorio</option>
-					<option value="AUDITORIUM">Auditorio</option>
-					<option value="EQUIPMENT">Equipo</option>
-				</select>
-				{errors.type?.message && <p className="text-xs text-red-600">{String(errors.type.message)}</p>}
+				<Controller
+					name="type"
+					control={control}
+					render={({ field }) => (
+						<TextField
+							label="Tipo"
+							select
+							fullWidth
+							value={field.value}
+							onChange={field.onChange}
+							onBlur={field.onBlur}
+							helperText={errors.type?.message as string}
+							error={!!errors.type}
+						>
+							<MenuItem value="ROOM">Sala</MenuItem>
+							<MenuItem value="LABORATORY">Laboratorio</MenuItem>
+							<MenuItem value="AUDITORIUM">Auditorio</MenuItem>
+							<MenuItem value="EQUIPMENT">Equipo</MenuItem>
+						</TextField>
+					)}
+				/>
 			</div>
 
 			<div>
-				<label className="block text-sm font-medium">Ubicación</label>
-				<input
-					type="text"
-					{...register('location.description')}
-					className="mt-1 w-full rounded border p-2"
+				<TextField
+					label="Ubicación"
+					fullWidth
 					placeholder="Bloque A, Piso 2, A-201"
+					{...register('location.description')}
+					error={!!errors.location?.description}
+					helperText={errors.location?.description?.message as string}
 				/>
-				{errors.location?.description?.message && (
-					<p className="text-xs text-red-600">{String(errors.location.description.message)}</p>
-				)}
 			</div>
 
 			<div>
-				<label className="block text-sm font-medium">Capacidad</label>
-				<input
+				<TextField
+					label="Capacidad"
 					type="number"
-					min={1}
+					fullWidth
+					inputProps={{ min: 1 }}
 					{...register('capacity', { valueAsNumber: true })}
-					className="mt-1 w-full rounded border p-2"
+					error={!!errors.capacity}
+					helperText={errors.capacity?.message as string}
 				/>
-				{errors.capacity?.message && (
-					<p className="text-xs text-red-600">{errors.capacity.message as string}</p>
-				)}
 			</div>
 
 			<div className="flex gap-3">
-				<button
+				<Button
 					type="submit"
 					disabled={isSubmitting}
-					className="bg-primary-600 hover:bg-primary-700 rounded px-4 py-2 text-white disabled:opacity-50"
+					variant="contained"
+					color="primary"
 				>
 					{isSubmitting ? 'Guardando...' : 'Guardar'}
-				</button>
-				<button
+				</Button>
+				<Button
 					type="button"
 					onClick={() => router.push('/resources')}
-					className="rounded border px-4 py-2"
+					variant="outlined"
+					color="secondary"
 				>
 					Cancelar
-				</button>
+				</Button>
 			</div>
 		</form>
 	);
@@ -156,6 +168,7 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 	const {
 		register,
 		handleSubmit,
+		control,
 		reset,
 		formState: { errors, isSubmitting }
 	} = useForm<UpdateResourceFormValues>({
@@ -222,69 +235,78 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 			{apiError && <div className="text-sm text-red-600">{apiError}</div>}
 
 			<div>
-				<label className="block text-sm font-medium">Nombre</label>
-				<input
-					type="text"
+				<TextField
+					label="Nombre"
+					fullWidth
 					{...register('name')}
-					className="mt-1 w-full rounded border p-2"
+					error={!!errors.name}
+					helperText={errors.name?.message}
 				/>
-				{errors.name?.message && <p className="text-xs text-red-600">{errors.name.message}</p>}
 			</div>
 
 			<div>
-				<label className="block text-sm font-medium">Tipo</label>
-				<select
-					{...register('type')}
-					className="mt-1 w-full rounded border p-2"
-				>
-					<option value="ROOM">Sala</option>
-					<option value="LABORATORY">Laboratorio</option>
-					<option value="AUDITORIUM">Auditorio</option>
-					<option value="EQUIPMENT">Equipo</option>
-				</select>
-				{errors.type?.message && <p className="text-xs text-red-600">{String(errors.type.message)}</p>}
+				<Controller
+					name="type"
+					control={control}
+					render={({ field }) => (
+						<TextField
+							label="Tipo"
+							select
+							fullWidth
+							value={field.value}
+							onChange={field.onChange}
+							onBlur={field.onBlur}
+							helperText={errors.type?.message as string}
+							error={!!errors.type}
+						>
+							<MenuItem value="ROOM">Sala</MenuItem>
+							<MenuItem value="LABORATORY">Laboratorio</MenuItem>
+							<MenuItem value="AUDITORIUM">Auditorio</MenuItem>
+							<MenuItem value="EQUIPMENT">Equipo</MenuItem>
+						</TextField>
+					)}
+				/>
 			</div>
 
 			<div>
-				<label className="block text-sm font-medium">Ubicación</label>
-				<input
-					type="text"
+				<TextField
+					label="Ubicación"
+					fullWidth
 					{...register('location.description')}
-					className="mt-1 w-full rounded border p-2"
+					error={!!errors.location?.description}
+					helperText={errors.location?.description?.message as string}
 				/>
-				{errors.location?.description?.message && (
-					<p className="text-xs text-red-600">{String(errors.location.description.message)}</p>
-				)}
 			</div>
 
 			<div>
-				<label className="block text-sm font-medium">Capacidad</label>
-				<input
+				<TextField
+					label="Capacidad"
 					type="number"
-					min={1}
+					fullWidth
+					inputProps={{ min: 1 }}
 					{...register('capacity', { valueAsNumber: true })}
-					className="mt-1 w-full rounded border p-2"
+					error={!!errors.capacity}
+					helperText={errors.capacity?.message as string}
 				/>
-				{errors.capacity?.message && (
-					<p className="text-xs text-red-600">{errors.capacity.message as string}</p>
-				)}
 			</div>
 
 			<div className="flex gap-3">
-				<button
+				<Button
 					type="submit"
 					disabled={isSubmitting}
-					className="bg-primary-600 hover:bg-primary-700 rounded px-4 py-2 text-white disabled:opacity-50"
+					variant="contained"
+					color="primary"
 				>
 					{isSubmitting ? 'Guardando...' : 'Guardar'}
-				</button>
-				<button
+				</Button>
+				<Button
 					type="button"
 					onClick={() => router.push('/resources')}
-					className="rounded border px-4 py-2"
+					variant="outlined"
+					color="secondary"
 				>
 					Cancelar
-				</button>
+				</Button>
 			</div>
 		</form>
 	);

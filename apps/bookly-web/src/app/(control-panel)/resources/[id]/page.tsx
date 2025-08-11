@@ -1,11 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
+import NextLink from 'next/link';
 import type { ResourceResponseDto } from '@services/resources/types';
 import { getResourceById } from '@services/resources/services';
 import { mockGetResourceById } from '@services/resources/mocks/crud';
 import { PageProps } from 'utils/page-props';
+import { Button } from '@mui/material';
+import { useSnackbar } from 'notistack';
+import { ResourceDeleteControls } from '@components/organisms/resources/resource-delete-controls';
 
 export default function ResourceDetailPage({ params }: PageProps) {
 	// Next.js (App Router) passes params as a Promise; unwrap with React.use()
@@ -15,6 +18,30 @@ export default function ResourceDetailPage({ params }: PageProps) {
 	const [data, setData] = useState<ResourceResponseDto | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+
+	const { enqueueSnackbar } = useSnackbar();
+
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				setLoading(true);
+				const res = useMocks ? mockGetResourceById(id) : await getResourceById(id);
+
+				if (!mounted) return;
+
+				setData(res);
+			} catch (_e) {
+				setError('No fue posible cargar los recursos');
+				enqueueSnackbar('No fue posible cargar los recursos.', { variant: 'error' });
+			} finally {
+				setLoading(false);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, [useMocks, id, enqueueSnackbar]);
 
 	useEffect(() => {
 		(async () => {
@@ -42,12 +69,13 @@ export default function ResourceDetailPage({ params }: PageProps) {
 		return (
 			<div className="space-y-4 p-6">
 				<div className="text-red-600">{error}</div>
-				<Link
+				<Button
+					component={NextLink}
 					href="/resources"
 					className="rounded border bg-gray-100 px-3 py-2 text-gray-800 hover:bg-gray-200"
 				>
 					Volver
-				</Link>
+				</Button>
 			</div>
 		);
 
@@ -55,24 +83,27 @@ export default function ResourceDetailPage({ params }: PageProps) {
 
 	return (
 		<div className="space-y-4 p-6">
-			<div className="flex items-center justify-between">
+			<div className="flex w-full items-center justify-between">
 				<h1 className="text-2xl font-semibold">Detalle del recurso</h1>
 				<div className="flex gap-2">
-					<Link
+					<Button
+						component={NextLink}
 						href={`/resources/${id}/edit`}
-						className="rounded border bg-gray-100 px-3 py-2 text-gray-800 hover:bg-gray-200"
+						variant="outlined"
+						color="primary"
 					>
 						Editar
-					</Link>
-					<Link
+					</Button>
+					<Button
+						component={NextLink}
 						href="/resources"
-						className="rounded border bg-gray-100 px-3 py-2 text-gray-800 hover:bg-gray-200"
+						color="secondary"
+						variant="contained"
 					>
 						Volver
-					</Link>
+					</Button>
 				</div>
 			</div>
-
 			<div className="space-y-2 rounded border p-4">
 				<div>
 					<span className="font-medium">Nombre:</span> {data.name}
@@ -104,6 +135,26 @@ export default function ResourceDetailPage({ params }: PageProps) {
 					</div>
 				)}
 			</div>
+			{data && (
+				<ResourceDeleteControls
+					resource={data}
+					useMocks={useMocks}
+					size="small"
+					className="flex w-full gap-2"
+					onDeleted={() => {
+						setData(null);
+						enqueueSnackbar('Recurso eliminado correctamente. Auditoría registrada.', {
+							variant: 'success'
+						});
+					}}
+					onDisabled={(updated) => {
+						setData(updated);
+						enqueueSnackbar('Recurso deshabilitado correctamente. Auditoría registrada.', {
+							variant: 'success'
+						});
+					}}
+				/>
+			)}
 		</div>
 	);
 }

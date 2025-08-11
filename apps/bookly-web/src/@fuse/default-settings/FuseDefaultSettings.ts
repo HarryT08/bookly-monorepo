@@ -183,6 +183,21 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 			defaultProps: {
 				enableColorOnDark: true,
 				elevation: 0
+			},
+			styleOverrides: {
+				root: {
+					backdropFilter: 'saturate(180%) blur(12px)',
+					WebkitBackdropFilter: 'saturate(180%) blur(12px)',
+					borderBottom: '1px solid var(--mui-palette-divider)'
+				},
+				colorDefault: {
+					backgroundColor: 'color-mix(in oklab, var(--mui-palette-background-paper) 86%, transparent)',
+					color: 'var(--mui-palette-text-primary)'
+				},
+				colorPrimary: {
+					backgroundColor: 'var(--mui-palette-background-paper)',
+					color: 'var(--mui-palette-text-primary)'
+				}
 			}
 		},
 		MuiToolbar: {
@@ -232,6 +247,29 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 				},
 				deleteIcon: {
 					fontSize: spacing(16)
+				}
+			}
+		},
+		MuiLink: {
+			defaultProps: {
+				underline: 'hover',
+				color: 'primary'
+			},
+			styleOverrides: {
+				root: {
+					cursor: 'pointer',
+					fontWeight: 500,
+					color: 'var(--mui-palette-primary-main)',
+					textDecorationColor: 'color-mix(in oklab, var(--mui-palette-primary-main) 40%, transparent)',
+					'&:hover': {
+						color: 'var(--mui-palette-primary-dark)'
+					},
+					'&:visited': {
+						color: 'var(--mui-palette-primary-dark)'
+					},
+					'&.Mui-disabled': {
+						color: 'var(--mui-palette-action-disabled)'
+					}
 				}
 			}
 		},
@@ -361,7 +399,8 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 			styleOverrides: {
 				root: {
 					textTransform: 'none',
-					fontWeight: 500,
+					fontWeight: 600,
+					borderRadius: 10,
 					lineHeight: 1,
 					transition:
 						'background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, padding 0.05s ease-out',
@@ -414,6 +453,13 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 					fontSize: spacing(16),
 					'& > *:nth-of-type(1)': {
 						fontSize: 'inherit'
+					}
+				},
+				outlined: {
+					borderColor: 'var(--mui-palette-divider)',
+					'&:hover': {
+						borderColor: 'var(--mui-palette-primary-main)',
+						backgroundColor: 'var(--mui-palette-action-hover)'
 					}
 				}
 			}
@@ -490,7 +536,10 @@ export const defaultThemeOptions: DefaultThemeOptions = {
 		MuiCard: {
 			styleOverrides: {
 				root: {
-					borderRadius: spacing(12)
+					borderRadius: spacing(12),
+					backgroundColor: 'var(--mui-palette-background-paper)',
+					border: '1px solid var(--mui-palette-divider)',
+					boxShadow: '0 1px 2px rgba(0,0,0,0.06)'
 				}
 			}
 		},
