@@ -9,9 +9,8 @@ import type { ResourceResponseDto } from '@services/resources/types';
 import { mockListResourcesPaginated } from '@services/resources/mocks/crud';
 import { useAppSelector } from 'store';
 import { useSnackbar } from 'notistack';
-import { Button, IconButton, Link } from '@mui/material';
-import { ResourceDeleteControls } from '@components/organisms/resources/resource-delete-controls';
-import { Edit } from '@mui/icons-material';
+import { Button, Link } from '@mui/material';
+import { ResourceRowActions } from '@components/molecules/resource-row-actions';
 
 export default function ResourcesPage() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -149,28 +148,14 @@ export default function ResourcesPage() {
 					enableRowActions={canManageResources}
 					renderRowActions={({ row }) =>
 						canManageResources ? (
-							<div className="flex items-center gap-2">
-								<IconButton
-									component={NextLink}
-									href={`/resources/${row.original.id}/edit`}
-									color="primary"
-									size="small"
-									aria-label="Editar"
-								>
-									<Edit />
-								</IconButton>
-								<ResourceDeleteControls
-									onlyIcon={true}
-									resource={row.original}
-									useMocks={useMocks}
-									size="small"
-									className="flex items-center gap-2"
-									onDeleted={(id) => setItems((prev) => prev.filter((r) => r.id !== id))}
-									onDisabled={(updated) =>
-										setItems((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
-									}
-								/>
-							</div>
+							<ResourceRowActions
+								resource={row.original}
+								useMocks={useMocks}
+								onDeleted={(id) => setItems((prev) => prev.filter((r) => r.id !== id))}
+								onDisabled={(updated) =>
+									setItems((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+								}
+							/>
 						) : null
 					}
 				/>

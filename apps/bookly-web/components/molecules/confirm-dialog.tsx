@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface ConfirmDialogProps {
 	open: boolean;
@@ -25,18 +26,18 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
 	if (!open) return null;
 
-	return (
+	return createPortal(
 		<div
 			role="dialog"
 			aria-modal="true"
-			className="fixed inset-0 z-50 flex items-center justify-center"
+			className="fixed inset-0 z-[1400] flex items-center justify-center"
 		>
 			<div
 				aria-hidden
-				className="absolute inset-0 bg-black/40"
+				className="absolute inset-0 z-[1399] bg-black/40"
 				onClick={onCancel}
 			/>
-			<div className="relative z-10 w-full max-w-md rounded bg-white p-6 shadow-lg">
+			<div className="relative z-[1400] w-full max-w-md rounded bg-white p-6 shadow-lg">
 				<h2 className="mb-2 text-lg font-semibold">{title}</h2>
 				{description && <div className="mb-4 text-sm text-gray-700">{description}</div>}
 				<div className="flex items-center justify-end gap-2">
@@ -58,6 +59,7 @@ export function ConfirmDialog({
 					</button>
 				</div>
 			</div>
-		</div>
+		</div>,
+		document.body
 	);
 }

@@ -9,6 +9,7 @@ import { PageProps } from 'utils/page-props';
 import { Button } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { ResourceDeleteControls } from '@components/organisms/resources/resource-delete-controls';
+import { PageFormHeader } from '@components/molecules/page-form-header';
 
 export default function ResourceDetailPage({ params }: PageProps) {
 	// Next.js (App Router) passes params as a Promise; unwrap with React.use()
@@ -83,27 +84,29 @@ export default function ResourceDetailPage({ params }: PageProps) {
 
 	return (
 		<div className="space-y-4 p-6">
-			<div className="flex w-full items-center justify-between">
-				<h1 className="text-2xl font-semibold">Detalle del recurso</h1>
-				<div className="flex gap-2">
-					<Button
-						component={NextLink}
-						href={`/resources/${id}/edit`}
-						variant="outlined"
-						color="primary"
-					>
-						Editar
-					</Button>
-					<Button
-						component={NextLink}
-						href="/resources"
-						color="secondary"
-						variant="contained"
-					>
-						Volver
-					</Button>
-				</div>
-			</div>
+			<PageFormHeader
+				title="Detalle del recurso"
+				actions={
+					<div className="flex gap-2">
+						<Button
+							component={NextLink}
+							href={`/resources/${id}/edit`}
+							variant="outlined"
+							color="primary"
+						>
+							Editar
+						</Button>
+						<Button
+							component={NextLink}
+							href="/resources"
+							color="secondary"
+							variant="contained"
+						>
+							Volver
+						</Button>
+					</div>
+				}
+			></PageFormHeader>
 			<div className="space-y-2 rounded border p-4">
 				<div>
 					<span className="font-medium">Nombre:</span> {data.name}

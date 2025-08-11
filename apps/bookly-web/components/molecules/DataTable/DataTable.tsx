@@ -55,7 +55,11 @@ function DataTable<TData>(props: MaterialReactTableProps<TData>) {
 				enableRowActions: true,
 				enableRowSelection: true,
 				muiBottomToolbarProps: {
-					className: 'flex items-center min-h-14 h-14'
+					className: 'flex items-center min-h-14 h-14',
+					sx: {
+						position: 'relative',
+						zIndex: 1
+					}
 				},
 				muiTablePaperProps: {
 					elevation: 0,
@@ -130,6 +134,7 @@ function DataTable<TData>(props: MaterialReactTableProps<TData>) {
 				},
 				muiTableHeadCellProps: ({ column }) => ({
 					sx: {
+						zIndex: 1,
 						'& .Mui-TableHeadCell-Content-Labels': {
 							flex: 1,
 							justifyContent: 'space-between'
