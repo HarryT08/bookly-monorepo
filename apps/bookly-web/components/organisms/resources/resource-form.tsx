@@ -22,12 +22,15 @@ import { createResource, getResourceById, updateResource } from '@services/resou
 import { mockCreateResource, mockGetResourceById, mockUpdateResource } from '@services/resources/mocks/crud';
 import { Button, TextField, MenuItem } from '@mui/material';
 import { Controller } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 
 interface ResourceFormProps {
 	onCreated?: (resource: ResourceResponseDto) => void;
 }
 
-export function ResourceForm({ onCreated }: ResourceFormProps) {
+export function ResourceForm(props: ResourceFormProps) {
+	const { t } = useTranslation('generic');
+	const { t: tResources } = useTranslation('resources');
 	const router = useRouter();
 	const { enqueueSnackbar } = useSnackbar();
 	const useMocks = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
@@ -55,14 +58,12 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 			const created = useMocks
 				? mockCreateResource(values as unknown as CreateResourceDto)
 				: await createResource(values as unknown as CreateResourceDto);
-			onCreated?.(created);
-			enqueueSnackbar('Recurso creado correctamente. Auditoría registrada.', { variant: 'success' });
+			props.onCreated?.(created);
+			enqueueSnackbar(tResources('RESOURCE_CREATE_SUCCESS'), { variant: 'success' });
 			router.push('/resources');
 		} catch (_err) {
-			setApiError('No fue posible crear el recurso. Intenta nuevamente.');
-			enqueueSnackbar('No fue posible crear el recurso. Revisa los datos e inténtalo de nuevo.', {
-				variant: 'error'
-			});
+			setApiError(tResources('RESOURCE_CREATE_FAILED'));
+			enqueueSnackbar(tResources('RESOURCE_CREATE_FAILED_DETAIL'), { variant: 'error' });
 		}
 	}
 
@@ -75,9 +76,9 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 
 			<div>
 				<TextField
-					label="Nombre"
+					label={tResources('NAME')}
 					fullWidth
-					placeholder="Laboratorio de Cómputo"
+					placeholder={tResources('RESOURCE_NAME_EXAMPLE')}
 					{...register('name')}
 					error={!!errors.name}
 					helperText={errors.name?.message}
@@ -90,7 +91,7 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 					control={control}
 					render={({ field }) => (
 						<TextField
-							label="Tipo"
+							label={tResources('TYPE')}
 							select
 							fullWidth
 							value={field.value}
@@ -99,10 +100,10 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 							helperText={errors.type?.message as string}
 							error={!!errors.type}
 						>
-							<MenuItem value="ROOM">Sala</MenuItem>
-							<MenuItem value="LABORATORY">Laboratorio</MenuItem>
-							<MenuItem value="AUDITORIUM">Auditorio</MenuItem>
-							<MenuItem value="EQUIPMENT">Equipo</MenuItem>
+							<MenuItem value="ROOM">{tResources('ROOM')}</MenuItem>
+							<MenuItem value="LABORATORY">{tResources('LABORATORY')}</MenuItem>
+							<MenuItem value="AUDITORIUM">{tResources('AUDITORIUM')}</MenuItem>
+							<MenuItem value="EQUIPMENT">{tResources('EQUIPMENT')}</MenuItem>
 						</TextField>
 					)}
 				/>
@@ -110,9 +111,9 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 
 			<div>
 				<TextField
-					label="Ubicación"
+					label={tResources('LOCATION')}
 					fullWidth
-					placeholder="Bloque A, Piso 2, A-201"
+					placeholder={tResources('LOCATION_EXAMPLE')}
 					{...register('location.description')}
 					error={!!errors.location?.description}
 					helperText={errors.location?.description?.message as string}
@@ -121,7 +122,7 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 
 			<div>
 				<TextField
-					label="Capacidad"
+					label={tResources('CAPACITY')}
 					type="number"
 					fullWidth
 					inputProps={{ min: 1 }}
@@ -138,7 +139,7 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 					variant="contained"
 					color="primary"
 				>
-					{isSubmitting ? 'Guardando...' : 'Guardar'}
+					{isSubmitting ? t('SAVING') : t('SAVE')}
 				</Button>
 				<Button
 					type="button"
@@ -146,7 +147,7 @@ export function ResourceForm({ onCreated }: ResourceFormProps) {
 					variant="outlined"
 					color="secondary"
 				>
-					Cancelar
+					{t('CANCEL')}
 				</Button>
 			</div>
 		</form>
@@ -159,6 +160,8 @@ interface ResourceEditFormProps {
 }
 
 export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
+	const { t } = useTranslation('generic');
+	const { t: tResources } = useTranslation('resources');
 	const router = useRouter();
 	const { enqueueSnackbar } = useSnackbar();
 	const useMocks = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
@@ -182,7 +185,7 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 				const res = useMocks ? mockGetResourceById(id) : await getResourceById(id);
 
 				if (!res) {
-					setApiError('Recurso no encontrado');
+					setApiError(tResources('RESOURCE_NOT_FOUND'));
 					return;
 				}
 
@@ -201,12 +204,12 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 				} as UpdateResourceDto;
 				reset(defaults);
 			} catch (_e) {
-				setApiError('No fue posible cargar el recurso.');
+				setApiError(tResources('RESOURCE_LOAD_FAILED'));
 			} finally {
 				setLoading(false);
 			}
 		})();
-	}, [id, reset, useMocks]);
+	}, [id, reset, useMocks, tResources]);
 
 	async function onSubmit(values: UpdateResourceFormValues) {
 		setApiError(null);
@@ -215,17 +218,15 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 				? mockUpdateResource(id, values as unknown as UpdateResourceDto)!
 				: await updateResource(id, values as unknown as UpdateResourceDto);
 			onUpdated?.(updated);
-			enqueueSnackbar('Recurso actualizado correctamente. Auditoría registrada.', { variant: 'success' });
+			enqueueSnackbar(tResources('RESOURCE_UPDATE_SUCCESS'), { variant: 'success' });
 			router.push('/resources');
 		} catch (_e) {
-			setApiError('No fue posible actualizar el recurso. Intenta nuevamente.');
-			enqueueSnackbar('No fue posible actualizar el recurso. Revisa los datos e inténtalo de nuevo.', {
-				variant: 'error'
-			});
+			setApiError(tResources('RESOURCE_UPDATE_FAILED'));
+			enqueueSnackbar(tResources('RESOURCE_UPDATE_FAILED_DETAIL'), { variant: 'error' });
 		}
 	}
 
-	if (loading) return <div>Cargando...</div>;
+	if (loading) return <div>{t('LOADING')}</div>;
 
 	return (
 		<form
@@ -236,7 +237,7 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 
 			<div>
 				<TextField
-					label="Nombre"
+					label={tResources('NAME')}
 					fullWidth
 					{...register('name')}
 					error={!!errors.name}
@@ -250,7 +251,7 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 					control={control}
 					render={({ field }) => (
 						<TextField
-							label="Tipo"
+							label={tResources('TYPE')}
 							select
 							fullWidth
 							value={field.value}
@@ -259,10 +260,10 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 							helperText={errors.type?.message as string}
 							error={!!errors.type}
 						>
-							<MenuItem value="ROOM">Sala</MenuItem>
-							<MenuItem value="LABORATORY">Laboratorio</MenuItem>
-							<MenuItem value="AUDITORIUM">Auditorio</MenuItem>
-							<MenuItem value="EQUIPMENT">Equipo</MenuItem>
+							<MenuItem value="ROOM">{tResources('ROOM')}</MenuItem>
+							<MenuItem value="LABORATORY">{tResources('LABORATORY')}</MenuItem>
+							<MenuItem value="AUDITORIUM">{tResources('AUDITORIUM')}</MenuItem>
+							<MenuItem value="EQUIPMENT">{tResources('EQUIPMENT')}</MenuItem>
 						</TextField>
 					)}
 				/>
@@ -270,7 +271,7 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 
 			<div>
 				<TextField
-					label="Ubicación"
+					label={tResources('LOCATION')}
 					fullWidth
 					{...register('location.description')}
 					error={!!errors.location?.description}
@@ -280,7 +281,7 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 
 			<div>
 				<TextField
-					label="Capacidad"
+					label={tResources('CAPACITY')}
 					type="number"
 					fullWidth
 					inputProps={{ min: 1 }}
@@ -297,7 +298,7 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 					variant="contained"
 					color="primary"
 				>
-					{isSubmitting ? 'Guardando...' : 'Guardar'}
+					{isSubmitting ? t('SAVING') : t('SAVE')}
 				</Button>
 				<Button
 					type="button"
@@ -305,11 +306,9 @@ export function ResourceEditForm({ id, onUpdated }: ResourceEditFormProps) {
 					variant="outlined"
 					color="secondary"
 				>
-					Cancelar
+					{t('CANCEL')}
 				</Button>
 			</div>
 		</form>
 	);
 }
-
-export default ResourceForm;

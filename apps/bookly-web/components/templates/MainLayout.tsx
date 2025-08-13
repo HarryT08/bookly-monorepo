@@ -1,9 +1,9 @@
 'use client';
 
-import { FuseLayoutProps } from '@fuse/core/FuseLayout/FuseLayout';
-import FuseLayout from '@fuse/core/FuseLayout';
 import { useMemo } from 'react';
-import themeLayouts from '../organisms/ThemeLayouts/themeLayouts';
+import { themeLayouts } from '@components/organisms';
+import FuseLayout from '@fuse/core/FuseLayout';
+import { FuseLayoutProps } from '@fuse/core/FuseLayout/FuseLayout';
 
 type MainLayoutProps = Omit<FuseLayoutProps, 'layouts'> & {
 	navbar?: boolean;

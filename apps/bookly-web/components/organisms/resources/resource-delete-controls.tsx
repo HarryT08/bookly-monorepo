@@ -40,23 +40,14 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 	} = props;
 
 	const { enqueueSnackbar } = useSnackbar();
-	const { t } = useTranslation('resources');
+	const { t } = useTranslation('generic');
+	const { t: tResources } = useTranslation('resources');
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirming, setConfirming] = useState(false);
 	const [forceDelete, setForceDelete] = useState(false);
 
-	const labelDelete =
-		ariaLabelDelete ??
-		t('actions.delete.aria', {
-			defaultValue: 'Eliminar recurso {{name}}',
-			name: resource.name
-		});
-	const labelDisable =
-		ariaLabelDisable ??
-		t('actions.disable.aria', {
-			defaultValue: 'Deshabilitar recurso {{name}}',
-			name: resource.name
-		});
+	const labelDelete = ariaLabelDelete ?? tResources('ACTIONS_DELETE_LABEL');
+	const labelDisable = ariaLabelDisable ?? tResources('ACTIONS_DISABLE_LABEL');
 
 	function open(force = false) {
 		setForceDelete(force);
@@ -70,51 +61,26 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 				const res = mockDeleteResource(resource.id, forceDelete);
 
 				if (res && 'success' in res && res.success) {
-					enqueueSnackbar(
-						t('messages.deleted', {
-							defaultValue: 'Recurso eliminado correctamente. Auditoría registrada.'
-						}),
-						{ variant: 'success' }
-					);
+					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DELETED'), { variant: 'success' });
 					onDeleted?.(resource.id);
 				} else if (res) {
-					enqueueSnackbar(
-						t('messages.disabled', {
-							defaultValue: 'Recurso deshabilitado correctamente. Auditoría registrada.'
-						}),
-						{ variant: 'success' }
-					);
+					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DISABLED'), { variant: 'success' });
 					onDisabled?.(res as ResourceResponseDto);
 				}
 			} else {
 				const res = await deleteResource(resource.id, forceDelete);
 
 				if ('success' in res && res.success) {
-					enqueueSnackbar(
-						t('messages.deleted', {
-							defaultValue: 'Recurso eliminado correctamente. Auditoría registrada.'
-						}),
-						{ variant: 'success' }
-					);
+					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DELETED'), { variant: 'success' });
 					onDeleted?.(resource.id);
 				} else {
 					const updated = res as ResourceResponseDto;
-					enqueueSnackbar(
-						t('messages.disabled', {
-							defaultValue: 'Recurso deshabilitado correctamente. Auditoría registrada.'
-						}),
-						{ variant: 'success' }
-					);
+					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DISABLED'), { variant: 'success' });
 					onDisabled?.(updated);
 				}
 			}
 		} catch (e) {
-			const msg =
-				e instanceof Error
-					? e.message
-					: t('errors.delete_or_disable_failed', {
-							defaultValue: 'No fue posible eliminar/deshabilitar el recurso'
-						});
+			const msg = e instanceof Error ? e.message : tResources('RESOURCE_MESSAGES_DELETE_FAILED');
 			enqueueSnackbar(msg, { variant: 'error' });
 		} finally {
 			setConfirming(false);
@@ -146,7 +112,7 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 						variant={variantDelete}
 						onClick={() => open(true)}
 					>
-						{t('actions.delete.label', { defaultValue: 'Eliminar' })}
+						{t('DELETE')}
 					</Button>
 				)}
 				{onlyIcon ? (
@@ -169,40 +135,17 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 						variant={variantDisable}
 						onClick={() => open(false)}
 					>
-						{t('actions.disable.label', { defaultValue: 'Deshabilitar' })}
+						{t('DISABLE')}
 					</Button>
 				)}
 			</div>
 			<ConfirmDialog
 				open={confirmOpen}
-				title={
-					forceDelete
-						? t('dialogs.delete.title', { defaultValue: 'Eliminar recurso' })
-						: t('dialogs.disable.title', {
-								defaultValue: 'Deshabilitar recurso'
-							})
-				}
-				description={
-					<p>
-						{forceDelete
-							? t('dialogs.delete.description', {
-									defaultValue:
-										'Esta acción eliminará permanentemente el recurso. Escribe políticas de seguridad antes de exponer en producción.'
-								})
-							: t('dialogs.disable.description', {
-									defaultValue:
-										'Esta acción deshabilitará el recurso sin eliminarlo, para preservar su historial.'
-								})}
-						<br />
-						<span className="font-medium">{resource.name}</span>
-					</p>
-				}
-				confirmText={
-					forceDelete
-						? t('dialogs.delete.confirm', { defaultValue: 'Eliminar' })
-						: t('dialogs.disable.confirm', { defaultValue: 'Deshabilitar' })
-				}
-				cancelText={t('common.cancel', { defaultValue: 'Cancelar' })}
+				title={forceDelete ? tResources('DIALOGS_DELETE_TITLE') : tResources('DIALOGS_DISABLE_TITLE')}
+				description={<p>{forceDelete ? tResources('DIALOGS_DELETE_DESCRIPTION') : tResources('DIALOGS_DISABLE_DESCRIPTION')}</p>}
+				confirmText={forceDelete ? tResources('DIALOGS_DELETE_CONFIRM') : tResources('DIALOGS_DISABLE_CONFIRM')}
+				cancelText={forceDelete ? tResources('DIALOGS_DELETE_CANCEL') : tResources('DIALOGS_DISABLE_CANCEL')}
+				processingText={tResources('PROCESSING', { defaultValue: 'Procesando…' })}
 				confirming={confirming}
 				onConfirm={handleConfirm}
 				onCancel={() => setConfirmOpen(false)}

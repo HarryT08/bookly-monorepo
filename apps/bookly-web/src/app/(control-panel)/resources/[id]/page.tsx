@@ -10,6 +10,7 @@ import { Button } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { ResourceDeleteControls } from '@components/organisms/resources/resource-delete-controls';
 import { PageFormHeader } from '@components/molecules/page-form-header';
+import { useTranslation } from 'react-i18next';
 
 export default function ResourceDetailPage({ params }: PageProps) {
 	// Next.js (App Router) passes params as a Promise; unwrap with React.use()
@@ -19,6 +20,9 @@ export default function ResourceDetailPage({ params }: PageProps) {
 	const [data, setData] = useState<ResourceResponseDto | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+
+	const { t } = useTranslation('generic');
+	const { t: tResources } = useTranslation('resources');
 
 	const { enqueueSnackbar } = useSnackbar();
 
@@ -75,7 +79,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
 					href="/resources"
 					className="rounded border bg-gray-100 px-3 py-2 text-gray-800 hover:bg-gray-200"
 				>
-					Volver
+					{t('BACK_TO_LIST')}
 				</Button>
 			</div>
 		);
@@ -85,7 +89,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
 	return (
 		<div className="space-y-4 p-6">
 			<PageFormHeader
-				title="Detalle del recurso"
+				title={tResources('RESOURCE_DETAILS')}
 				actions={
 					<div className="flex gap-2">
 						<Button
@@ -94,7 +98,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
 							variant="outlined"
 							color="primary"
 						>
-							Editar
+							{tResources('RESOURCE_EDIT')}
 						</Button>
 						<Button
 							component={NextLink}
@@ -102,39 +106,39 @@ export default function ResourceDetailPage({ params }: PageProps) {
 							color="secondary"
 							variant="contained"
 						>
-							Volver
+							{t('BACK_TO_LIST')}
 						</Button>
 					</div>
 				}
-			></PageFormHeader>
+			/>
 			<div className="space-y-2 rounded border p-4">
 				<div>
-					<span className="font-medium">Nombre:</span> {data.name}
+					<span className="font-medium">{tResources('NAME')}:</span> {data.name}
 				</div>
 				<div>
-					<span className="font-medium">Código:</span> {data.code}
+					<span className="font-medium">{tResources('CODE')}:</span> {data.code}
 				</div>
 				<div>
-					<span className="font-medium">Tipo:</span> {data.type}
+					<span className="font-medium">{tResources('TYPE')}:</span> {data.type}
 				</div>
 				<div>
-					<span className="font-medium">Capacidad:</span> {data.capacity}
+					<span className="font-medium">{tResources('CAPACITY')}:</span> {data.capacity}
 				</div>
 				<div>
-					<span className="font-medium">Ubicación:</span> {data.location?.description ?? '-'}{' '}
+					<span className="font-medium">{tResources('LOCATION')}:</span> {data.location?.description ?? '-'}{' '}
 				</div>
 				<div>
-					<span className="font-medium">Estado:</span> {data.status}
+					<span className="font-medium">{tResources('STATUS')}:</span> {data.status}
 				</div>
 				<div>
-					<span className="font-medium">Activo:</span> {data.isActive ? 'Sí' : 'No'}
+					<span className="font-medium">{tResources('ACTIVE')}:</span> {data.isActive ? 'Sí' : 'No'}
 				</div>
 				<div>
-					<span className="font-medium">Categoría:</span> {data.categoryId ?? '-'}
+					<span className="font-medium">{tResources('CATEGORY')}:</span> {data.categoryId ?? '-'}
 				</div>
 				{data.description && (
 					<div>
-						<span className="font-medium">Descripción:</span> {data.description}
+						<span className="font-medium">{tResources('DESCRIPTION')}:</span> {data.description}
 					</div>
 				)}
 			</div>
@@ -146,13 +150,13 @@ export default function ResourceDetailPage({ params }: PageProps) {
 					className="flex w-full gap-2"
 					onDeleted={() => {
 						setData(null);
-						enqueueSnackbar('Recurso eliminado correctamente. Auditoría registrada.', {
+						enqueueSnackbar(tResources('RESOURCE_MESSAGES_DELETED'), {
 							variant: 'success'
 						});
 					}}
 					onDisabled={(updated) => {
 						setData(updated);
-						enqueueSnackbar('Recurso deshabilitado correctamente. Auditoría registrada.', {
+						enqueueSnackbar(tResources('RESOURCE_MESSAGES_DISABLED'), {
 							variant: 'success'
 						});
 					}}

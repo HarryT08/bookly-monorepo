@@ -11,6 +11,7 @@ import { useAppSelector } from 'store';
 import { useSnackbar } from 'notistack';
 import { Button, Link } from '@mui/material';
 import { ResourceRowActions } from '@components/molecules/resource-row-actions';
+import { useTranslation } from 'react-i18next';
 
 export default function ResourcesPage() {
 	const { enqueueSnackbar } = useSnackbar();
@@ -27,7 +28,9 @@ export default function ResourcesPage() {
 	const [sorting, setSorting] = useState<MRT_SortingState>([]);
 	const [globalFilter, setGlobalFilter] = useState<string>('');
 
-	const user = useAppSelector((s) => s.auth.user);
+	const { t } = useTranslation('generic');
+	const { t: tResources } = useTranslation('resources');
+	const { user } = useAppSelector((s) => s.auth);
 
 	const canManageResources = useMemo(() => {
 		return true;
@@ -95,26 +98,26 @@ export default function ResourcesPage() {
 	return (
 		<div className="space-y-4 p-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-semibold">Recursos</h1>
+				<h1 className="text-2xl font-semibold">{tResources('RESOURCES')}</h1>
 				<Button
 					component={NextLink}
 					href="/resources/create"
 					variant="contained"
 					color="primary"
 				>
-					Crear recurso
+					{tResources('RESOURCE_CREATE')}
 				</Button>
 			</div>
 
-			{loading && <div>Cargando...</div>}
-			{error && <div className="text-red-600">{error}</div>}
+			{loading && <div>{t('LOADING')}</div>}
+			{error && <div className="text-red-600">{tResources('RESOURCE_LOAD_FAILED')}</div>}
 
 			{!loading && !error && (
 				<DataTable<ResourceResponseDto>
 					columns={[
 						{
 							accessorKey: 'name',
-							header: 'Nombre',
+							header: tResources('NAME'),
 							Cell: ({ row }) => (
 								<Link
 									component={NextLink}
@@ -126,10 +129,10 @@ export default function ResourcesPage() {
 								</Link>
 							)
 						},
-						{ accessorKey: 'code', header: 'Código' },
-						{ accessorKey: 'type', header: 'Tipo' },
-						{ accessorKey: 'status', header: 'Estado' },
-						{ accessorKey: 'capacity', header: 'Capacidad' }
+						{ accessorKey: 'code', header: tResources('CODE') },
+						{ accessorKey: 'type', header: tResources('TYPE') },
+						{ accessorKey: 'status', header: tResources('STATUS') },
+						{ accessorKey: 'capacity', header: tResources('CAPACITY') }
 					]}
 					data={items}
 					manualPagination

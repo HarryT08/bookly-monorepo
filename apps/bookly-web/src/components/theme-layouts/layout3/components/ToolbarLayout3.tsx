@@ -2,17 +2,19 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import clsx from 'clsx';
 import { memo } from 'react';
-import NavbarToggleButton from 'src/components/theme-layouts/components/navbar/NavbarToggleButton';
-import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
-import AdjustFontSize from '../../components/AdjustFontSize';
-import FullScreenToggle from '../../components/FullScreenToggle';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
-import NavigationSearch from '../../components/navigation/NavigationSearch';
-import UserMenu from '../../components/UserMenu';
-import QuickPanelToggleButton from '../../components/quickPanel/QuickPanelToggleButton';
-import Logo from '../../components/Logo';
-import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
+import NavbarToggleButton from '@/components/theme-layouts/components/navbar/NavbarToggleButton';
 import ToolbarTheme from '@/contexts/ToolbarTheme';
+import { useThemeMediaQuery } from '@fuse/hooks';
+import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
+import {
+	Logo,
+	NavigationSearch,
+	LanguageSwitcher,
+	AdjustFontSize,
+	FullScreenToggle,
+	QuickPanelToggleButton,
+	UserMenu
+} from '@components/organisms';
 
 type ToolbarLayout3Props = {
 	className?: string;

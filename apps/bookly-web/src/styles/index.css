@@ -29,7 +29,7 @@ Tailwind plugins
 */
 @plugin "@tailwindcss/typography";
 @plugin "@tailwindcss/aspect-ratio";
-@plugin "../@fuse/tailwind/plugins/icon-size.js";
+@plugin "../../lib/fuse/tailwind/plugins/icon-size.js";
 
 /**
 Custom variants

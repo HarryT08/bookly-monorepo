@@ -6,6 +6,7 @@ import { Edit } from '@mui/icons-material';
 import type { ResourceResponseDto } from '@services/resources/types';
 import { ResourceDeleteControls } from '@components/organisms/resources/resource-delete-controls';
 import { useTranslation } from 'react-i18next';
+import { getResourceActionI18n } from '@components/helpers/resources-i18n';
 
 export interface ResourceRowActionsProps {
 	resource: ResourceResponseDto;
@@ -16,26 +17,25 @@ export interface ResourceRowActionsProps {
 }
 
 export function ResourceRowActions({ resource, useMocks, className, onDeleted, onDisabled }: ResourceRowActionsProps) {
-	const { t } = useTranslation('resources');
-	const editLabel = t('actions.edit.label', { defaultValue: 'Editar' });
-	const editAria = t('actions.edit.aria', { defaultValue: 'Editar recurso {{name}}', name: resource.name });
+	const { t } = useTranslation('generic');
+	const i18n = getResourceActionI18n(t);
 
 	return (
 		<div className={className ?? 'flex items-center gap-2'}>
-			<Tooltip title={editLabel}>
+			<Tooltip title={i18n.editLabel}>
 				<IconButton
 					component={NextLink}
 					href={`/resources/${resource.id}/edit`}
 					color="primary"
 					size="small"
-					aria-label={editAria}
+					aria-label={i18n.editAria}
 				>
 					<Edit />
 				</IconButton>
 			</Tooltip>
 			<ResourceDeleteControls
-				ariaLabelDelete={t('actions.delete.label', { defaultValue: 'Eliminar' })}
-				ariaLabelDisable={t('actions.disable.label', { defaultValue: 'Deshabilitar' })}
+				ariaLabelDelete={i18n.deleteAria}
+				ariaLabelDisable={i18n.disableAria}
 				onlyIcon={true}
 				resource={resource}
 				useMocks={useMocks}

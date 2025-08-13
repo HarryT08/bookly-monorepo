@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@mui/material';
 import { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -9,6 +10,7 @@ export interface ConfirmDialogProps {
 	description?: ReactNode;
 	confirmText?: string;
 	cancelText?: string;
+	processingText?: string;
 	confirming?: boolean;
 	onConfirm: () => void | Promise<void>;
 	onCancel: () => void;
@@ -20,6 +22,7 @@ export function ConfirmDialog({
 	description,
 	confirmText = 'Confirmar',
 	cancelText = 'Cancelar',
+	processingText = 'Procesando…',
 	confirming = false,
 	onConfirm,
 	onCancel
@@ -41,22 +44,24 @@ export function ConfirmDialog({
 				<h2 className="mb-2 text-lg font-semibold">{title}</h2>
 				{description && <div className="mb-4 text-sm text-gray-700">{description}</div>}
 				<div className="flex items-center justify-end gap-2">
-					<button
+					<Button
 						type="button"
-						className="rounded border px-3 py-2 text-sm"
+						className="rounded px-3 py-2 text-sm"
+						variant="outlined"
 						onClick={onCancel}
 						disabled={confirming}
 					>
 						{cancelText}
-					</button>
-					<button
+					</Button>
+					<Button
 						type="button"
-						className="rounded bg-red-600 px-3 py-2 text-sm text-white disabled:opacity-60"
+						className="rounded px-3 py-2 text-sm"
+						variant="contained"
 						onClick={onConfirm}
 						disabled={confirming}
 					>
-						{confirming ? 'Procesando…' : confirmText}
-					</button>
+						{confirming ? processingText : confirmText}
+					</Button>
 				</div>
 			</div>
 		</div>,

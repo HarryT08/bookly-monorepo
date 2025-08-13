@@ -1,5 +1,5 @@
-import MainLayout from 'src/components/MainLayout';
 import AuthGuardRedirect from '@auth/AuthGuardRedirect';
+import { MainLayout } from '@components/templates';
 
 function Layout({ children }) {
 	return (
