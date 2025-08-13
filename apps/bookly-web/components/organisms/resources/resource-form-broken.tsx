@@ -75,10 +75,10 @@ export function ResourceForm(props: ResourceFormProps) {
 	// Load resource data for edit mode
 	useEffect(() => {
 		if (isEditMode && props.resourceId) {
+			setLoading(true);
 			const loadResource = async () => {
-				setLoading(true);
 				try {
-					const resource = useMocks
+					const resource = useMocks 
 						? mockGetResourceById(props.resourceId!)
 						: await getResourceById(props.resourceId!);
 					
@@ -125,11 +125,11 @@ export function ResourceForm(props: ResourceFormProps) {
 			} else {
 				// For create mode, use create DTO structure
 				const createData: CreateResourceDto = {
-					name: values.name!,
+					name: values.name,
 					type: values.type!,
-					location: values.location!,
-					capacity: values.capacity!,
-					description: values.description!,
+					location: values.location,
+					capacity: values.capacity,
+					description: values.description,
 					categoryId: values.categoryId!,
 					programId: values.programId!,
 					attributes: values.attributes,
@@ -178,133 +178,141 @@ export function ResourceForm(props: ResourceFormProps) {
 
 				{/* Resource Type (only for create mode) */}
 				{!isEditMode && (
-					<Controller
-						name="type"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								label={i18nResources.type}
-								select
-								fullWidth
-								error={!!errors.type}
-								helperText={errors.type?.message}
-								required
-							>
-								<MenuItem value="CLASSROOM">{i18nResources.classroom}</MenuItem>
-								<MenuItem value="AUDITORIUM">{i18nResources.auditorium}</MenuItem>
-								<MenuItem value="LABORATORY">{i18nResources.laboratory}</MenuItem>
-								<MenuItem value="OFFICE">{i18nResources.office}</MenuItem>
-								<MenuItem value="EQUIPMENT">{i18nResources.equipment}</MenuItem>
-								<MenuItem value="VEHICLE">{i18nResources.vehicle}</MenuItem>
-								<MenuItem value="OTHER">{i18nResources.other}</MenuItem>
-							</TextField>
-						)}
-					/>
+						<Controller
+							name="type"
+							control={control}
+							render={({ field }) => (
+								<TextField
+									{...field}
+									label={i18nResources.type}
+									select
+									fullWidth
+									error={!!errors.location}
+									helperText={errors.location?.message}
+									required
+								>
+									<MenuItem value="CLASSROOM">{i18nResources.classroom}</MenuItem>
+									<MenuItem value="AUDITORIUM">{i18nResources.auditorium}</MenuItem>
+									<MenuItem value="LABORATORY">{i18nResources.laboratory}</MenuItem>
+									<MenuItem value="OFFICE">{i18nResources.office}</MenuItem>
+									<MenuItem value="EQUIPMENT">{i18nResources.equipment}</MenuItem>
+									<MenuItem value="VEHICLE">{i18nResources.vehicle}</MenuItem>
+									<MenuItem value="OTHER">{i18nResources.other}</MenuItem>
+								</TextField>
+							)}
+						/>
 				)}
 
 				{/* Status Field (only for edit mode) */}
 				{isEditMode && (
 					<Controller
-						name="status"
-						control={control}
-						render={({ field }) => (
-							<TextField
-								{...field}
-								label={i18nResources.status}
-								select
-								fullWidth
-								error={!!errors.status}
-								helperText={errors.status?.message}
-							>
-								<MenuItem value="AVAILABLE">{i18nResources.available}</MenuItem>
-								<MenuItem value="OCCUPIED">{i18nResources.occupied}</MenuItem>
-								<MenuItem value="MAINTENANCE">{i18nResources.maintenance}</MenuItem>
-								<MenuItem value="OUT_OF_SERVICE">{i18nResources.outOfService}</MenuItem>
-								<MenuItem value="RESERVED">{i18nResources.reserved}</MenuItem>
-							</TextField>
-						)}
-					/>
+							name="status"
+							control={control}
+							render={({ field }) => (
+								<TextField
+									{...field}
+									label={i18nResources.status}
+									select
+									fullWidth
+									error={!!errors.status}
+									helperText={errors.status?.message}
+								>
+									<MenuItem value="AVAILABLE">{i18nResources.available}</MenuItem>
+									<MenuItem value="OCCUPIED">{i18nResources.occupied}</MenuItem>
+									<MenuItem value="MAINTENANCE">{i18nResources.maintenance}</MenuItem>
+									<MenuItem value="OUT_OF_SERVICE">{i18nResources.outOfService}</MenuItem>
+									<MenuItem value="RESERVED">{i18nResources.reserved}</MenuItem>
+								</TextField>
+							)}
+						/>
+					</Grid>
 				)}
 
 				{/* Location Field */}
-				<TextField
-					{...register('location')}
-					label={i18nResources.location}
-					fullWidth
-					error={!!errors.location}
-					helperText={errors.location?.message}
-					required
-				/>
+					<TextField
+						{...register('location')}
+						label={i18nResources.location}
+						fullWidth
+						error={!!errors.location}
+						helperText={errors.location?.message}
+						placeholder={i18nResources.locationExample}
+					/>
+				</Grid>
 
 				{/* Capacity Field */}
-				<TextField
-					{...register('capacity', { valueAsNumber: true })}
-					label={i18nResources.capacity}
-					type="number"
-					fullWidth
-					inputProps={{ min: 1 }}
-					error={!!errors.capacity}
-					helperText={errors.capacity?.message}
-					required
-				/>
+					<TextField
+						{...register('capacity', { valueAsNumber: true })}
+						label={i18nResources.capacity}
+						type="number"
+						inputProps={{ min: 1 }}
+						error={!!errors.capacity}
+						helperText={errors.capacity?.message}
+						required
+					/>
+				</Grid>
 
 				{/* Category ID (only for create mode) */}
 				{!isEditMode && (
 					<TextField
-						{...register('categoryId')}
-						label={i18nResources.category}
-						fullWidth
-						error={!!errors.categoryId}
-						helperText={errors.categoryId?.message}
-						required
-					/>
+							{...register('categoryId')}
+							label={i18nResources.category}
+							fullWidth
+							error={!!errors.categoryId}
+							helperText={errors.categoryId?.message}
+							placeholder={i18nResources.categoryExample}
+							required
+						/>
+					</Grid>
 				)}
 
 				{/* Program ID (only for create mode) */}
 				{!isEditMode && (
 					<TextField
-						{...register('programId')}
-						label={i18nResources.academicProgram}
-						fullWidth
-						error={!!errors.programId}
-						helperText={errors.programId?.message}
-						required
-					/>
+							{...register('programId')}
+							label={i18nResources.academicProgram}
+							fullWidth
+							error={!!errors.programId}
+							helperText={errors.programId?.message}
+							placeholder={i18nResources.academicProgramExample}
+							required
+						/>
+					</Grid>
 				)}
 
 				{/* Description Field */}
-				<TextField
-					{...register('description')}
-					label={i18nResources.description}
-					fullWidth
-					multiline
-					rows={3}
-					error={!!errors.description}
-					helperText={errors.description?.message}
-				/>
+					<TextField
+						{...register('description')}
+						label={i18nResources.description}
+						fullWidth
+						multiline
+						rows={3}
+						error={!!errors.description}
+						helperText={errors.description?.message}
+						placeholder={i18nResources.descriptionExample}
+					/>
+				</Grid>
 
 				{/* Submit Button */}
-				<Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-					<Button
-						variant="outlined"
-						onClick={() => router.push('/resources')}
-					>
-						{i18nResources.cancel}
-					</Button>
-					<Button
-						type="submit"
-						variant="contained"
-						disabled={isSubmitting}
-					>
-						{isSubmitting
-							? i18nResources.saving
-							: isEditMode
-								? i18nResources.updateResource
-								: i18nResources.createResource
-						}
-					</Button>
-				</Box>
+					<Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+						<Button
+							variant="outlined"
+							onClick={() => router.back()}
+						>
+							{i18nResources.cancel}
+						</Button>
+						<Button
+							type="submit"
+							variant="contained"
+							disabled={isSubmitting}
+						>
+							{isSubmitting 
+								? i18nResources.saving 
+								: isEditMode 
+									? i18nResources.updateResource 
+									: i18nResources.createResource
+							}
+						</Button>
+					</Box>
 			</Stack>
 		</Box>
 	);

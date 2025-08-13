@@ -1,7 +1,7 @@
 'use client';
 
 import { use } from 'react';
-import { ResourceEditForm } from '@components/organisms/resources/resource-form';
+import { ResourceForm } from '@components/organisms/resources/resource-form';
 import { PageProps } from 'utils/page-props';
 import { PageFormHeader } from '@components/molecules/page-form-header';
 import { Button } from '@mui/material';
@@ -28,7 +28,7 @@ export default function EditResourcePage({ params }: PageProps) {
 			/>
 
 			<div className="rounded border p-4">
-				<ResourceEditForm id={id} />
+				<ResourceForm mode="edit" resourceId={id} />
 			</div>
 		</div>
 	);

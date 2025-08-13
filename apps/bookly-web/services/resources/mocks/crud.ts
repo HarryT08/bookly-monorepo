@@ -41,7 +41,6 @@ export function mockListResourcesPaginated(
 
 		return (
 			r.name.toLowerCase().includes(normalized) ||
-			r.code.toLowerCase().includes(normalized) ||
 			String(r.type).toLowerCase().includes(normalized) ||
 			String(r.status).toLowerCase().includes(normalized) ||
 			String(r.location ?? '')
@@ -87,10 +86,6 @@ export function mockGetResourceById(id: string): ResourceResponseDto | undefined
 	return mockDb.find((r) => r.id === id);
 }
 
-export function mockGetResourceByCode(code: string): ResourceResponseDto | undefined {
-	return mockDb.find((r) => r.code === code);
-}
-
 function generateId(): string {
 	return 'res_' + Math.random().toString(36).slice(2, 10);
 }
@@ -99,16 +94,16 @@ export function mockCreateResource(dto: CreateResourceDto): ResourceResponseDto 
 	const now = new Date().toISOString();
 	const newItem: ResourceResponseDto = {
 		id: generateId(),
-		code: (dto as unknown as { code?: string }).code ?? dto.name.toUpperCase().replace(/\s+/g, '-').slice(0, 12),
 		name: dto.name,
-		description: dto.description,
 		type: dto.type,
-		capacity: dto.capacity,
+		description: dto.description,
 		location: dto.location,
-		status: 'AVAILABLE',
-		attributes: dto.attributes,
-		availableSchedules: dto.availableSchedules,
+		capacity: dto.capacity,
+		status: 'AVAILABLE' as ResourceStatus,
 		categoryId: dto.categoryId,
+		programId: dto.programId,
+		attributes: dto.attributes,
+		availabilityRules: dto.availabilityRules,
 		isActive: true,
 		createdAt: now,
 		updatedAt: now

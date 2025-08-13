@@ -24,10 +24,29 @@ export interface ResourceI18n {
 	category: string;
 	description: string;
 	locationExample: string;
-	room: string;
-	laboratory: string;
+	classroom: string;
 	auditorium: string;
+	laboratory: string;
+	office: string;
 	equipment: string;
+	vehicle: string;
+	other: string;
+	locationDescription: string;
+	locationDescriptionExample: string;
+	available: string;
+	occupied: string;
+	maintenance: string;
+	outOfService: string;
+	reserved: string;
+	categoryExample: string;
+	academicProgram: string;
+	academicProgramExample: string;
+	cancel: string;
+	saving: string;
+	createResource: string;
+	updateResource: string;
+	editResource: string;
+	descriptionExample: string;
 	resourceLoadFailed: string;
 	resourceMessagesCreated: string;
 	resourceMessagesCreateFailed: string;
@@ -79,13 +98,24 @@ export function getResourceI18n(t: TFunction<'resources'>): ResourceI18n {
 		active: t('ACTIVE', { defaultValue: 'ACTIVE' }),
 		category: t('CATEGORY', { defaultValue: 'CATEGORY' }),
 		description: t('DESCRIPTION', { defaultValue: 'DESCRIPTION' }),
-		locationExample: t('LOCATION_EXAMPLE', {
-			defaultValue: 'LOCATION_EXAMPLE'
-		}),
-		room: t('ROOM', { defaultValue: 'ROOM' }),
+		classroom: t('CLASSROOM', { defaultValue: 'CLASSROOM' }),
 		laboratory: t('LABORATORY', { defaultValue: 'LABORATORY' }),
 		auditorium: t('AUDITORIUM', { defaultValue: 'AUDITORIUM' }),
 		equipment: t('EQUIPMENT', { defaultValue: 'EQUIPMENT' }),
+		// Location fields
+		locationExample: t('LOCATION_EXAMPLE', { defaultValue: 'e.g., Piso 2' }),
+		locationDescription: t('LOCATION_DESCRIPTION', { defaultValue: 'LOCATION_DESCRIPTION' }),
+		locationDescriptionExample: t('LOCATION_DESCRIPTION_EXAMPLE', {
+			defaultValue: 'e.g., Cerca del laboratorio de química'
+		}),
+		// Category and program fields
+		categoryExample: t('CATEGORY_EXAMPLE', { defaultValue: 'e.g., Salón, Laboratorio' }),
+		academicProgram: t('ACADEMIC_PROGRAM', { defaultValue: 'ACADEMIC_PROGRAM' }),
+		academicProgramExample: t('ACADEMIC_PROGRAM_EXAMPLE', { defaultValue: 'e.g., Ingeniería de Sistemas' }),
+		// Description field
+		descriptionExample: t('DESCRIPTION_EXAMPLE', {
+			defaultValue: 'e.g., Sala equipada con proyector y aire acondicionado'
+		}),
 		resourceLoadFailed: t('RESOURCE_LOAD_FAILED', {
 			defaultValue: 'RESOURCE_LOAD_FAILED'
 		}),
@@ -148,6 +178,19 @@ export function getResourceI18n(t: TFunction<'resources'>): ResourceI18n {
 		}),
 		actionsDisableAria: t('ACTIONS_DISABLE_ARIA', {
 			defaultValue: 'ACTIONS_DISABLE_ARIA'
-		})
+		}),
+		office: t('OFFICE', { defaultValue: 'OFFICE' }),
+		vehicle: t('VEHICLE', { defaultValue: 'VEHICLE' }),
+		other: t('OTHER', { defaultValue: 'OTHER' }),
+		available: t('AVAILABLE', { defaultValue: 'AVAILABLE' }),
+		occupied: t('OCCUPIED', { defaultValue: 'OCCUPIED' }),
+		maintenance: t('MAINTENANCE', { defaultValue: 'MAINTENANCE' }),
+		outOfService: t('OUT_OF_SERVICE', { defaultValue: 'OUT_OF_SERVICE' }),
+		reserved: t('RESERVED', { defaultValue: 'RESERVED' }),
+		cancel: t('CANCEL', { defaultValue: 'CANCEL' }),
+		saving: t('SAVING', { defaultValue: 'SAVING' }),
+		createResource: t('CREATE_RESOURCE', { defaultValue: 'CREATE_RESOURCE' }),
+		updateResource: t('UPDATE_RESOURCE', { defaultValue: 'UPDATE_RESOURCE' }),
+		editResource: t('EDIT_RESOURCE', { defaultValue: 'EDIT_RESOURCE' })
 	};
 }

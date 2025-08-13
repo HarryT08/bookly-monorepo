@@ -4,11 +4,14 @@
 // - bookly-backend/src/libs/dto/resources/update-resource.dto.ts
 // - bookly-backend/src/libs/dto/resources/resource-response.dto.ts
 
-export type ResourceType = 'ROOM' | 'EQUIPMENT' | 'AUDITORIUM' | 'LABORATORY' | 'COMPUTER';
-export type ResourceStatus = 'AVAILABLE' | 'MAINTENANCE' | 'OUT_OF_SERVICE' | 'RESERVED';
+export type ResourceType = 'CLASSROOM' | 'AUDITORIUM' | 'LABORATORY' | 'OFFICE' | 'EQUIPMENT' | 'VEHICLE' | 'OTHER';
+export type ResourceStatus = 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE' | 'OUT_OF_SERVICE' | 'RESERVED';
+export type UserPriority = 'STUDENT' | 'TEACHER' | 'RESEARCHER' | 'ADMIN' | 'GENERAL';
+export type NotificationChannel = 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH';
 
+// Backend uses location as a simple string, not an object
+// Keeping this interface for potential future use, but backend expects string
 export interface ResourceLocation {
-	// Adjust once backend location exact shape is confirmed
 	building?: string;
 	floor?: string;
 	room?: string;
@@ -22,13 +25,74 @@ export interface WeeklySlot {
 	end: string; // HH:mm
 }
 
+export interface UsageRules {
+	// Time restrictions
+	minReservationTime?: number; // minutes
+	maxReservationTime?: number; // minutes
+	advanceBookingMin?: number; // hours
+	advanceBookingMax?: number; // hours
+
+	// User restrictions
+	userPriorities?: UserPriority[];
+	requiredTraining?: string[];
+	maxReservationsPerUser?: number;
+	maxReservationsPerWeek?: number;
+
+	// Cancellation rules
+	cancellationDeadline?: number; // hours before reservation
+	noShowPenalty?: boolean;
+	penaltyDuration?: number; // days of restriction
+
+	// Special conditions
+	requiresApproval?: boolean;
+	allowRecurring?: boolean;
+	specialRequirements?: string[];
+}
+
+export interface TechnicalSpecifications {
+	// General specs
+	specifications?: Record<string, string>;
+	associatedEquipment?: string[];
+	softwareInstalled?: string[];
+
+	// Maintenance
+	maintenanceFrequency?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+	maintenanceNotes?: string;
+	estimatedLifespan?: number; // months
+
+	// Capacity details
+	physicalCapacity?: number;
+	optimalCapacity?: number;
+	accessibilityFeatures?: string[];
+}
+
+export interface CostConfiguration {
+	costPerHour?: number;
+	costPerDay?: number;
+	costPerReservation?: number;
+
+	// Discounts
+	studentDiscount?: number; // percentage
+	facultyDiscount?: number; // percentage
+	programDiscounts?: Record<string, number>; // program ID -> discount percentage
+
+	// Payment
+	paymentMethods?: ('ONLINE' | 'INVOICE' | 'CASH' | 'INTERNAL')[];
+	requiresDeposit?: boolean;
+	depositAmount?: number;
+	refundPolicy?: string;
+}
+
 export interface AvailableSchedules {
 	operatingHours?: {
 		weekly?: WeeklySlot[];
 		[key: string]: unknown;
 	};
+	weekly?: WeeklySlot[];
 	restrictions?: Record<string, unknown>[];
 	priorities?: Record<string, unknown>[];
+	blockedDates?: string[]; // ISO date strings
+	preparationTime?: number; // minutes between reservations
 	[key: string]: unknown;
 }
 
@@ -36,39 +100,69 @@ export interface CreateResourceDto {
 	name: string;
 	description?: string;
 	type: ResourceType;
+	categoryId: string; // Required in backend
+	programId: string; // Required in backend (not academicProgramId)
+	location?: string; // Backend expects string, not object
 	capacity?: number; // >= 1 when provided
-	location?: ResourceLocation;
-	attributes?: Record<string, unknown>;
-	availableSchedules?: AvailableSchedules;
-	categoryId?: string;
+	attributes?: Record<string, unknown>; // Key-value pairs for resource-specific attributes
+	availabilityRules?: Record<string, unknown>; // Rules defining when resource is available
+	isActive?: boolean; // Default true
 }
 
 export interface UpdateResourceDto {
 	name?: string;
 	description?: string;
-	type?: ResourceType;
+	location?: string; // Backend expects string, not object
 	capacity?: number;
-	location?: ResourceLocation;
 	status?: ResourceStatus;
 	attributes?: Record<string, unknown>;
-	availableSchedules?: AvailableSchedules;
-	categoryId?: string;
+	availabilityRules?: Record<string, unknown>;
 	isActive?: boolean;
 }
 
 export interface ResourceResponseDto {
 	id: string;
 	name: string;
-	code: string;
 	description?: string;
 	type: ResourceType;
-	capacity?: number;
-	location?: ResourceLocation;
-	status: ResourceStatus;
-	attributes?: Record<string, unknown>;
-	availableSchedules?: AvailableSchedules;
 	categoryId?: string;
+	programId?: string;
+	location?: string; // Backend uses string, not object
+	capacity?: number;
+	status: ResourceStatus;
+	attributes?: Record<string, unknown>; // Key-value pairs for resource-specific attributes
+	availabilityRules?: Record<string, unknown>; // Rules defining when resource is available
 	isActive: boolean;
+	createdBy?: string;
+	createdAt: string;
+	updatedAt: string;
+	// Related entities from backend
+	category?: CategoryDto;
+	program?: ProgramDto;
+}
+
+// Backend category structure
+export interface CategoryDto {
+	id: string;
+	name: string;
+	description?: string;
+	color?: string; // Color code for UI display
+	icon?: string; // Icon identifier for UI display
+	isActive: boolean;
+	createdBy?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+// Backend program structure
+export interface ProgramDto {
+	id: string;
+	name: string;
+	description?: string;
+	code: string; // Program code (e.g., "ING-SIS")
+	coordinatorId?: string;
+	isActive: boolean;
+	createdBy?: string;
 	createdAt: string;
 	updatedAt: string;
 }
