@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import NavbarStyle1Content from './NavbarStyle1Content';
-import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
-import { useNavbarContext } from '@/components/theme-layouts/components/navbar/contexts/NavbarContext/useNavbarContext';
+import { Layout1ConfigDefaultsType } from '@components/organisms/ThemeLayouts/layout1/Layout1Config';
+import { useNavbarContext } from '@components/organisms/ThemeLayouts/components/navbar/contexts/NavbarContext/useNavbarContext';
 
 const navbarWidth = 280;
 

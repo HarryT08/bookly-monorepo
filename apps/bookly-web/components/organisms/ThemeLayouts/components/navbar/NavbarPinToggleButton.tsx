@@ -1,8 +1,7 @@
 import clsx from 'clsx';
-import NavbarToggleButton, {
-	NavbarToggleButtonProps
-} from 'src/components/theme-layouts/components/navbar/NavbarToggleButton';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
+import { NavbarToggleButton } from '@components/organisms';
+import { NavbarToggleButtonProps } from './NavbarToggleButton';
 
 type NavbarPinToggleButtonProps = NavbarToggleButtonProps & {
 	className?: string;

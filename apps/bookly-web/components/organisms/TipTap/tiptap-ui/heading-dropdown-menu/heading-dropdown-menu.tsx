@@ -5,29 +5,24 @@ import { isNodeSelection, type Editor } from '@tiptap/react';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
 // --- Icons ---
-import { ChevronDownIcon } from '@/components/tiptap/tiptap-icons/chevron-down-icon';
-import { HeadingIcon } from '@/components/tiptap/tiptap-icons/heading-icon';
+import { ChevronDownIcon } from '@components/organisms/TipTap/tiptap-icons/chevron-down-icon';
+import { HeadingIcon } from '@components/organisms/TipTap/tiptap-icons/heading-icon';
 
 // --- Lib ---
 import { isNodeInSchema } from '@/utils/tiptap-utils';
 
 // --- Tiptap UI ---
-import {
-	HeadingButton,
-	headingIcons,
-	type Level,
-	getFormattedHeadingName
-} from '@/components/tiptap/tiptap-ui/heading-button/heading-button';
+import { ButtonProps, getFormattedHeadingName, HeadingButton, headingIcons, Level } from '@components/organisms';
 
 // --- UI Primitives ---
-import { Button, ButtonProps } from '@/components/tiptap/tiptap-ui-primitive/button';
+import { Button } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
 import {
 	DropdownMenu,
 	DropdownMenuTrigger,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuGroup
-} from '@/components/tiptap/tiptap-ui-primitive/dropdown-menu';
+} from '@components/organisms/TipTap/tiptap-ui-primitive/dropdown-menu';
 
 export interface HeadingDropdownMenuProps extends Omit<ButtonProps, 'type'> {
 	editor?: Editor | null;

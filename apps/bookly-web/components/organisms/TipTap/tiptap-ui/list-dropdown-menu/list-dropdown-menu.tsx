@@ -5,30 +5,30 @@ import { isNodeSelection, type Editor } from '@tiptap/react';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
 // --- Icons ---
-import { ChevronDownIcon } from '@/components/tiptap/tiptap-icons/chevron-down-icon';
-import { ListIcon } from '@/components/tiptap/tiptap-icons/list-icon';
+import { ChevronDownIcon } from '@components/organisms/TipTap/tiptap-icons/chevron-down-icon';
+import { ListIcon } from '@components/organisms/TipTap/tiptap-icons/list-icon';
 
 // --- Lib ---
 import { isNodeInSchema } from '@/utils/tiptap-utils';
 
 // --- Tiptap UI ---
+import { ListType } from '@components/organisms/TipTap/tiptap-ui/list-button/list-button';
 import {
-	ListButton,
 	canToggleList,
 	isListActive,
-	listOptions,
-	type ListType
-} from '@/components/tiptap/tiptap-ui/list-button/list-button';
+	listOptions
+} from '@components/organisms/TipTap/tiptap-ui/list-button/list-button';
+import { ListButton } from '@components/organisms/TipTap/tiptap-ui/list-button/list-button';
 
 // --- UI Primitives ---
-import { Button, ButtonProps } from '@/components/tiptap/tiptap-ui-primitive/button';
+import { Button, ButtonProps } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
 import {
 	DropdownMenu,
 	DropdownMenuTrigger,
 	DropdownMenuContent,
 	DropdownMenuGroup,
 	DropdownMenuItem
-} from '@/components/tiptap/tiptap-ui-primitive/dropdown-menu';
+} from '@components/organisms/TipTap/tiptap-ui-primitive/dropdown-menu';
 
 export interface ListDropdownMenuProps extends Omit<ButtonProps, 'type'> {
 	/**

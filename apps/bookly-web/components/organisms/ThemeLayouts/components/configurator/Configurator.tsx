@@ -5,9 +5,8 @@ import { red } from '@mui/material/colors';
 import { memo, useState } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import SettingsPanel from 'src/components/theme-layouts/components/configurator/SettingsPanel';
-import ThemesPanel from 'src/components/theme-layouts/components/configurator/ThemesPanel';
 import useUser from '@auth/useUser';
+import { SettingsPanel, ThemesPanel } from '@components/organisms';
 
 const Root = styled('div')(({ theme }) => ({
 	position: 'absolute',

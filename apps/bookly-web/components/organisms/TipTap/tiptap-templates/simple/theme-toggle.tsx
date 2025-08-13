@@ -3,11 +3,11 @@
 import * as React from 'react';
 
 // --- UI Primitives ---
-import { Button } from '@/components/tiptap/tiptap-ui-primitive/button';
+import { Button } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
 
 // --- Icons ---
-import { MoonStarIcon } from '@/components/tiptap/tiptap-icons/moon-star-icon';
-import { SunIcon } from '@/components/tiptap/tiptap-icons/sun-icon';
+import { MoonStarIcon } from '@components/organisms/TipTap/tiptap-icons/moon-star-icon';
+import { SunIcon } from '@components/organisms/TipTap/tiptap-icons/sun-icon';
 
 export function ThemeToggle() {
 	const [isDarkMode, setIsDarkMode] = React.useState<boolean>(false);

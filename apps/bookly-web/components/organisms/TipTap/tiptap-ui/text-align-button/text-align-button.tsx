@@ -5,13 +5,13 @@ import { type Editor, type ChainedCommands } from '@tiptap/react';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
 // --- Icons ---
-import { AlignCenterIcon } from '@/components/tiptap/tiptap-icons/align-center-icon';
-import { AlignJustifyIcon } from '@/components/tiptap/tiptap-icons/align-justify-icon';
-import { AlignLeftIcon } from '@/components/tiptap/tiptap-icons/align-left-icon';
-import { AlignRightIcon } from '@/components/tiptap/tiptap-icons/align-right-icon';
+import { AlignCenterIcon } from '@components/organisms/TipTap/tiptap-icons/align-center-icon';
+import { AlignJustifyIcon } from '@components/organisms/TipTap/tiptap-icons/align-justify-icon';
+import { AlignLeftIcon } from '@components/organisms/TipTap/tiptap-icons/align-left-icon';
+import { AlignRightIcon } from '@components/organisms/TipTap/tiptap-icons/align-right-icon';
 
 // --- UI Primitives ---
-import { Button, ButtonProps } from '@/components/tiptap/tiptap-ui-primitive/button';
+import { Button, ButtonProps } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify';
 
@@ -68,7 +68,7 @@ export function checkTextAlignExtension(editor: Editor | null): boolean {
 	const hasExtension = editor.extensionManager.extensions.some((extension) => extension.name === 'textAlign');
 
 	if (!hasExtension) {
-		console.warn(
+		console.error(
 			'TextAlign extension is not available. ' + 'Make sure it is included in your editor configuration.'
 		);
 	}

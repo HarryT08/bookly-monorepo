@@ -15,7 +15,7 @@ import {
 	limitShift,
 	FloatingPortal
 } from '@floating-ui/react';
-import '@/components/tiptap/tiptap-ui-primitive/popover/popover.scss';
+import '@components/organisms/TipTap/tiptap-ui-primitive/popover/popover.scss';
 
 type PopoverContextValue = ReturnType<typeof usePopover> & {
 	setLabelId: (id: string | undefined) => void;
@@ -132,8 +132,8 @@ const PopoverTrigger = React.forwardRef<HTMLElement, TriggerElementProps>(functi
 	const context = usePopoverContext();
 	const childrenRef = React.isValidElement(children)
 		? parseInt(React.version, 10) >= 19
-			? (children.props as any).ref
-			: (children as any).ref
+			? (children.props as React.RefAttributes<HTMLElement>).ref
+			: (children as React.RefAttributes<HTMLElement>).ref
 		: undefined;
 	const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 

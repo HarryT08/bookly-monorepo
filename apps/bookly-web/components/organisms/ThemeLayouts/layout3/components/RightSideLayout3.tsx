@@ -1,6 +1,6 @@
 import { lazy, memo, Suspense } from 'react';
 
-const QuickPanel = lazy(() => import('@/components/theme-layouts/components/quickPanel/QuickPanel'));
+const QuickPanel = lazy(() => import('@components/organisms/ThemeLayouts/components/quickPanel/QuickPanel'));
 
 /**
  * The right side layout 3.

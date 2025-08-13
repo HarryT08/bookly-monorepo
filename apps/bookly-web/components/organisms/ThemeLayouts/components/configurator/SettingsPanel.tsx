@@ -3,12 +3,12 @@ import IconButton from '@mui/material/IconButton';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Typography from '@mui/material/Typography';
 import FuseSettings, { FuseSettingsConfigType } from '@fuse/core/FuseSettings/FuseSettings';
-import FuseSettingsViewerDialog from 'src/components/theme-layouts/components/FuseSettingsViewerDialog';
 import { styled, useTheme } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import Slide from '@mui/material/Slide';
 import { SwipeableHandlers } from 'react-swipeable';
 import useFuseSettings from '@fuse/core/FuseSettings/hooks/useFuseSettings';
+import FuseSettingsViewerDialog from '@components/organisms/ThemeLayouts/components/FuseSettingsViewerDialog';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
 	'& .MuiDialog-paper': {

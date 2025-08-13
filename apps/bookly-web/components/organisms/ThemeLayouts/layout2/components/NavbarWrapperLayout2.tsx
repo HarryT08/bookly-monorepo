@@ -1,14 +1,14 @@
 import { styled } from '@mui/material/styles';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import { useEffect } from 'react';
-import NavbarToggleFabLayout2 from 'src/components/theme-layouts/layout2/components/NavbarToggleFabLayout2';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import usePathname from '@fuse/hooks/usePathname';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
 import NavbarLayout2 from './NavbarLayout2';
 import NavbarMobileLayout2 from './NavbarMobileLayout2';
-import { useNavbarContext } from '../../components/navbar/contexts/NavbarContext/useNavbarContext';
 import NavbarTheme from '@/contexts/NavbarTheme';
+import NavbarToggleFabLayout2 from './NavbarToggleFabLayout2';
+import { useNavbarContext } from '@components/organisms';
 
 const StyledSwipeableDrawer = styled(SwipeableDrawer)(({ theme }) => ({
 	'& > .MuiDrawer-paper': {

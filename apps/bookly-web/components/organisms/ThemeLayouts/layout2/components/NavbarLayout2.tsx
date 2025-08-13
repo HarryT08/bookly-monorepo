@@ -1,9 +1,8 @@
+import { Logo, Navigation } from '@components/organisms';
 import FuseScrollbars from '@fuse/core/FuseScrollbars';
 import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo } from 'react';
-import Navigation from 'src/components/theme-layouts/components/navigation/Navigation';
-import Logo from '../../components/Logo';
 
 const Root = styled('div')(({ theme }) => ({
 	backgroundColor: theme.vars.palette.background.default,

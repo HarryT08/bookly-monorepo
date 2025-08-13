@@ -14,37 +14,41 @@ import { Superscript } from '@tiptap/extension-superscript';
 import { Underline } from '@tiptap/extension-underline';
 
 // --- Custom Extensions ---
-import { Link } from '@/components/tiptap/tiptap-extension/link-extension';
-import { Selection } from '@/components/tiptap/tiptap-extension/selection-extension';
-import { TrailingNode } from '@/components/tiptap/tiptap-extension/trailing-node-extension';
+import { Link } from '@components/organisms/TipTap/tiptap-extension/link-extension';
+import { Selection } from '@components/organisms/TipTap/tiptap-extension/selection-extension';
+import { TrailingNode } from '@components/organisms/TipTap/tiptap-extension/trailing-node-extension';
 
 // --- UI Primitives ---
-import { Button } from '@/components/tiptap/tiptap-ui-primitive/button';
-import { Spacer } from '@/components/tiptap/tiptap-ui-primitive/spacer';
-import { Toolbar, ToolbarGroup, ToolbarSeparator } from '@/components/tiptap/tiptap-ui-primitive/toolbar';
+import { Toolbar, ToolbarGroup, ToolbarSeparator } from '@components/organisms/TipTap/tiptap-ui-primitive/toolbar';
+import { Button } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
+import { Spacer } from '@components/organisms/TipTap/tiptap-ui-primitive/spacer';
 
 // --- Tiptap Node ---
-import { ImageUploadNode } from '@/components/tiptap/tiptap-node/image-upload-node/image-upload-node-extension';
-import '@/components/tiptap/tiptap-node/code-block-node/code-block-node.scss';
-import '@/components/tiptap/tiptap-node/list-node/list-node.scss';
-import '@/components/tiptap/tiptap-node/image-node/image-node.scss';
-import '@/components/tiptap/tiptap-node/paragraph-node/paragraph-node.scss';
+import { ImageUploadNode } from '@components/organisms/TipTap/tiptap-node/image-upload-node/image-upload-node-extension';
+import '@components/organisms/TipTap/tiptap-node/code-block-node/code-block-node.scss';
+import '@components/organisms/TipTap/tiptap-node/list-node/list-node.scss';
+import '@components/organisms/TipTap/tiptap-node/image-node/image-node.scss';
+import '@components/organisms/TipTap/tiptap-node/paragraph-node/paragraph-node.scss';
 
 // --- Tiptap UI ---
-import { HeadingDropdownMenu } from '@/components/tiptap/tiptap-ui/heading-dropdown-menu';
-import { ImageUploadButton } from '@/components/tiptap/tiptap-ui/image-upload-button';
-import { ListDropdownMenu } from '@/components/tiptap/tiptap-ui/list-dropdown-menu';
-import { NodeButton } from '@/components/tiptap/tiptap-ui/node-button';
-import { HighlightPopover, HighlightContent, HighlighterButton } from '@/components/tiptap/tiptap-ui/highlight-popover';
-import { LinkPopover, LinkContent, LinkButton } from '@/components/tiptap/tiptap-ui/link-popover';
-import { MarkButton } from '@/components/tiptap/tiptap-ui/mark-button';
-import { TextAlignButton } from '@/components/tiptap/tiptap-ui/text-align-button';
-import { UndoRedoButton } from '@/components/tiptap/tiptap-ui/undo-redo-button';
+import { UndoRedoButton } from '@components/organisms/TipTap/tiptap-ui/undo-redo-button';
+import { HeadingDropdownMenu } from '@components/organisms/TipTap/tiptap-ui/heading-dropdown-menu';
+import { ImageUploadButton } from '@components/organisms/TipTap/tiptap-ui/image-upload-button';
+import { ListDropdownMenu } from '@components/organisms/TipTap/tiptap-ui/list-dropdown-menu';
+import { NodeButton } from '@components/organisms/TipTap/tiptap-ui/node-button';
+import {
+	HighlightPopover,
+	HighlightContent,
+	HighlighterButton
+} from '@components/organisms/TipTap/tiptap-ui/highlight-popover';
+import { LinkPopover, LinkContent, LinkButton } from '@components/organisms/TipTap/tiptap-ui/link-popover';
+import { MarkButton } from '@components/organisms/TipTap/tiptap-ui/mark-button';
+import { TextAlignButton } from '@components/organisms/TipTap/tiptap-ui/text-align-button';
 
 // --- Icons ---
-import { ArrowLeftIcon } from '@/components/tiptap/tiptap-icons/arrow-left-icon';
-import { HighlighterIcon } from '@/components/tiptap/tiptap-icons/highlighter-icon';
-import { LinkIcon } from '@/components/tiptap/tiptap-icons/link-icon';
+import { ArrowLeftIcon } from '@components/organisms/TipTap/tiptap-icons/arrow-left-icon';
+import { HighlighterIcon } from '@components/organisms/TipTap/tiptap-icons/highlighter-icon';
+import { LinkIcon } from '@components/organisms/TipTap/tiptap-icons/link-icon';
 
 // --- Hooks ---
 import { useMobile } from '@/hooks/useMobile';
@@ -54,7 +58,7 @@ import { useWindowSize } from '@/hooks/useWindowSize';
 import { handleImageUpload, MAX_FILE_SIZE } from '@/utils/tiptap-utils';
 
 // --- Styles ---
-import '@/components/tiptap/tiptap-templates/simple/simple-editor.scss';
+import '@components/organisms/TipTap/tiptap-templates/simple/simple-editor.scss';
 
 interface SimpleEditorProps {
 	className?: string;

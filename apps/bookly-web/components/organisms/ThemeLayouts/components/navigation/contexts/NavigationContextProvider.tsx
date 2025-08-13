@@ -5,7 +5,7 @@ import FuseNavigationHelper from '@fuse/utils/FuseNavigationHelper';
 import navigationConfig from '@/configs/navigationConfig';
 import FuseNavItemModel from '@fuse/core/FuseNavigation/models/FuseNavItemModel';
 import { PartialDeep } from 'type-fest';
-import { NavigationContext } from '@/components/theme-layouts/components/navigation/contexts/NavigationContext';
+import { NavigationContext } from '@components/organisms/ThemeLayouts/components/navigation/contexts/NavigationContext';
 
 export function NavigationContextProvider({ children }: { children: ReactNode }) {
 	const [navigationItems, setNavigationItems] = useState<FuseFlatNavItemType[]>(

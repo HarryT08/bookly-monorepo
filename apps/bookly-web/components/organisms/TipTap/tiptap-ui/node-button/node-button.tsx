@@ -5,14 +5,14 @@ import { isNodeSelection, type Editor } from '@tiptap/react';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
 // --- Icons ---
-import { BlockQuoteIcon } from '@/components/tiptap/tiptap-icons/block-quote-icon';
-import { CodeBlockIcon } from '@/components/tiptap/tiptap-icons/code-block-icon';
+import { BlockQuoteIcon } from '@components/organisms/TipTap/tiptap-icons/block-quote-icon';
+import { CodeBlockIcon } from '@components/organisms/TipTap/tiptap-icons/code-block-icon';
 
 // --- Lib ---
 import { isNodeInSchema } from '@/utils/tiptap-utils';
 
 // --- UI Primitives ---
-import { Button, ButtonProps } from '@/components/tiptap/tiptap-ui-primitive/button';
+import { Button, ButtonProps } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
 
 export type NodeType = 'codeBlock' | 'blockquote';
 

@@ -6,19 +6,19 @@ import { useMenuNavigation } from '@/hooks/useMenuNavigation';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
 // --- Icons ---
-import { BanIcon } from '@/components/tiptap/tiptap-icons/ban-icon';
-import { HighlighterIcon } from '@/components/tiptap/tiptap-icons/highlighter-icon';
+import { HighlighterIcon } from '@components/organisms/TipTap/tiptap-icons/highlighter-icon';
+import { BanIcon } from '@components/organisms/TipTap/tiptap-icons/ban-icon';
 
 // --- Lib ---
 import { isMarkInSchema } from '@/utils/tiptap-utils';
 
 // --- UI Primitives ---
-import { Button, ButtonProps } from '@/components/tiptap/tiptap-ui-primitive/button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/tiptap/tiptap-ui-primitive/popover';
-import { Separator } from '@/components/tiptap/tiptap-ui-primitive/separator';
+import { Button, ButtonProps } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@components/organisms/TipTap/tiptap-ui-primitive/popover';
+import { Separator } from '@components/organisms/TipTap/tiptap-ui-primitive/separator';
 
 // --- Styles ---
-import '@/components/tiptap/tiptap-ui/highlight-popover/highlight-popover.scss';
+import '@components/organisms/TipTap/tiptap-ui/highlight-popover/highlight-popover.scss';
 
 export interface HighlightColor {
 	label: string;

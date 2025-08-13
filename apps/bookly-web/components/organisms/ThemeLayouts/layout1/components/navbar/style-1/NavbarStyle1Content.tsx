@@ -2,9 +2,8 @@ import FuseScrollbars from '@fuse/core/FuseScrollbars';
 import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo } from 'react';
-import Navigation from 'src/components/theme-layouts/components/navigation/Navigation';
-import UserMenu from 'src/components/theme-layouts/components/UserMenu';
 import Logo from '../../../../components/Logo';
+import { Navigation, UserMenu } from '@components/organisms/ThemeLayouts';
 
 const Root = styled('div')(({ theme }) => ({
 	backgroundColor: theme.vars.palette.background.default,

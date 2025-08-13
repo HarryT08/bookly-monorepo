@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/tiptap/tiptap-ui-primitive/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@components/organisms/TipTap/tiptap-ui-primitive/tooltip';
 
-import '@/components/tiptap/tiptap-ui-primitive/button/button-colors.scss';
-import '@/components/tiptap/tiptap-ui-primitive/button/button-group.scss';
-import '@/components/tiptap/tiptap-ui-primitive/button/button.scss';
+import '@components/organisms/TipTap/tiptap-ui-primitive/button/button-colors.scss';
+import '@components/organisms/TipTap/tiptap-ui-primitive/button/button-group.scss';
+import '@components/organisms/TipTap/tiptap-ui-primitive/button/button.scss';
 
 type PlatformShortcuts = Record<string, string>;
 

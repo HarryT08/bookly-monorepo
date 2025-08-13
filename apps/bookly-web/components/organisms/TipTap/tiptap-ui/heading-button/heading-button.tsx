@@ -5,18 +5,18 @@ import { isNodeSelection, type Editor } from '@tiptap/react';
 import { useTiptapEditor } from '@/hooks/useTiptapEditor';
 
 // --- Icons ---
-import { HeadingOneIcon } from '@/components/tiptap/tiptap-icons/heading-one-icon';
-import { HeadingTwoIcon } from '@/components/tiptap/tiptap-icons/heading-two-icon';
-import { HeadingThreeIcon } from '@/components/tiptap/tiptap-icons/heading-three-icon';
-import { HeadingFourIcon } from '@/components/tiptap/tiptap-icons/heading-four-icon';
-import { HeadingFiveIcon } from '@/components/tiptap/tiptap-icons/heading-five-icon';
-import { HeadingSixIcon } from '@/components/tiptap/tiptap-icons/heading-six-icon';
+import { HeadingOneIcon } from '@components/organisms/TipTap/tiptap-icons/heading-one-icon';
+import { HeadingTwoIcon } from '@components/organisms/TipTap/tiptap-icons/heading-two-icon';
+import { HeadingThreeIcon } from '@components/organisms/TipTap/tiptap-icons/heading-three-icon';
+import { HeadingFourIcon } from '@components/organisms/TipTap/tiptap-icons/heading-four-icon';
+import { HeadingFiveIcon } from '@components/organisms/TipTap/tiptap-icons/heading-five-icon';
+import { HeadingSixIcon } from '@components/organisms/TipTap/tiptap-icons/heading-six-icon';
 
 // --- Lib ---
 import { isNodeInSchema } from '@/utils/tiptap-utils';
 
 // --- UI Primitives ---
-import { Button, ButtonProps } from '@/components/tiptap/tiptap-ui-primitive/button';
+import { Button, ButtonProps } from '@components/organisms/TipTap/tiptap-ui-primitive/button';
 
 export type Level = 1 | 2 | 3 | 4 | 5 | 6;
 

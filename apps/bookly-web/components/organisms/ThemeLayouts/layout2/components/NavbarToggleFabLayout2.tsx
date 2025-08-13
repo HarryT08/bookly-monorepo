@@ -1,5 +1,5 @@
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
-import NavbarToggleFab from 'src/components/theme-layouts/components/navbar/NavbarToggleFab';
+import { NavbarToggleFab } from '@components/organisms';
 import { useNavbarContext } from '../../components/navbar/contexts/NavbarContext/useNavbarContext';
 
 type NavbarToggleFabLayout2Props = {

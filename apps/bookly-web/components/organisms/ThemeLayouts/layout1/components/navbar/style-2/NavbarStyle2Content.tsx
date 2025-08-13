@@ -8,10 +8,8 @@ import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import isUrlInChildren from '@fuse/core/FuseNavigation/isUrlInChildren';
 import { Theme } from '@mui/system';
 import { FuseNavItemType } from '@fuse/core/FuseNavigation/types/FuseNavItemType';
-import UserMenu from 'src/components/theme-layouts/components/UserMenu';
 import usePathname from '@fuse/hooks/usePathname';
-import useNavigationItems from '@/components/theme-layouts/components/navigation/hooks/useNavigationItems';
-import { useNavbarContext } from '@/components/theme-layouts/components/navbar/contexts/NavbarContext/useNavbarContext';
+import { useNavbarContext, useNavigationItems, UserMenu } from '@components/organisms';
 
 const Root = styled('div')(({ theme }) => ({
 	backgroundColor: theme.vars.palette.background.default,

@@ -12,10 +12,10 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import MainThemeProvider from '../contexts/MainThemeProvider';
 import AppContext from '@/contexts/AppContext';
 import { FuseDialogContextProvider } from '@fuse/core/FuseDialog/contexts/FuseDialogContext/FuseDialogContextProvider';
-import { NavbarContextProvider } from '@/components/theme-layouts/components/navbar/contexts/NavbarContext/NavbarContextProvider';
-import { QuickPanelProvider } from '@/components/theme-layouts/components/quickPanel/contexts/QuickPanelContext/QuickPanelContextProvider';
+import { NavbarContextProvider } from '@components/organisms/ThemeLayouts/components/navbar/contexts/NavbarContext/NavbarContextProvider';
+import { QuickPanelProvider } from '@components/organisms/ThemeLayouts/components/quickPanel/contexts/QuickPanelContext/QuickPanelContextProvider';
 import RootThemeProvider from '@/contexts/RootThemeProvider';
-import { NavigationContextProvider } from '@/components/theme-layouts/components/navigation/contexts/NavigationContextProvider';
+import { NavigationContextProvider } from '@components/organisms/ThemeLayouts/components/navigation/contexts/NavigationContextProvider';
 import { Provider } from 'react-redux';
 import { store } from 'store';
 

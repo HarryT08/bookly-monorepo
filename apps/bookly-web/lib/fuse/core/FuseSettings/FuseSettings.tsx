@@ -1,6 +1,6 @@
 import { styled, Palette } from '@mui/material/styles';
 import { Controller, useForm } from 'react-hook-form';
-import themeLayoutConfigs, { themeLayoutDefaultsProps } from 'src/components/theme-layouts/themeLayoutConfigs';
+import themeLayoutConfigs, { themeLayoutDefaultsProps } from '@components/organisms/ThemeLayouts/themeLayoutConfigs';
 import _ from 'lodash';
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Switch, Typography } from '@mui/material';
 import { memo, useEffect, useMemo } from 'react';

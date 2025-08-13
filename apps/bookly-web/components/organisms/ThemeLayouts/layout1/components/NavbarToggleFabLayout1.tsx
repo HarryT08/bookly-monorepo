@@ -1,8 +1,8 @@
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
-import NavbarToggleFab from 'src/components/theme-layouts/components/navbar/NavbarToggleFab';
+import { NavbarToggleFab } from '@components/organisms';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
-import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
 import { useNavbarContext } from '../../components/navbar/contexts/NavbarContext/useNavbarContext';
+import { Layout1ConfigDefaultsType } from '../Layout1Config';
 
 type NavbarToggleFabLayout1Props = {
 	className?: string;
