@@ -6,7 +6,7 @@ import { Edit } from '@mui/icons-material';
 import type { ResourceResponseDto } from '@services/resources/types';
 import { ResourceDeleteControls } from '@components/organisms/resources/resource-delete-controls';
 import { useTranslation } from 'react-i18next';
-import { getResourceActionI18n } from '@components/helpers/resources-i18n';
+import { getResourceI18n } from '@components/helpers/resources-i18n';
 
 export interface ResourceRowActionsProps {
 	resource: ResourceResponseDto;
@@ -17,8 +17,8 @@ export interface ResourceRowActionsProps {
 }
 
 export function ResourceRowActions({ resource, useMocks, className, onDeleted, onDisabled }: ResourceRowActionsProps) {
-	const { t } = useTranslation('generic');
-	const i18n = getResourceActionI18n(t);
+	const { t } = useTranslation('resources');
+	const i18n = getResourceI18n(t);
 
 	return (
 		<div className={className ?? 'flex items-center gap-2'}>
