@@ -13,8 +13,7 @@ export interface ResourceI18n {
 	resourceEdit: string;
 	resourceDelete: string;
 	resourceDisable: string;
-	processing: string;
-	loading: string;
+	resourceNotFound: string;
 	name: string;
 	code: string;
 	type: string;
@@ -30,9 +29,13 @@ export interface ResourceI18n {
 	auditorium: string;
 	equipment: string;
 	resourceLoadFailed: string;
+	resourceMessagesCreated: string;
+	resourceMessagesCreateFailed: string;
+	resourceMessagesUpdated: string;
+	resourceMessagesUpdateFailed: string;
 	resourceMessagesDeleted: string;
-	resourceMessagesDisabled: string;
 	resourceMessagesDeleteFailed: string;
+	resourceMessagesDisabled: string;
 	resourceMessagesDisableFailed: string;
 	dialogsDeleteTitle: string;
 	dialogsDeleteDescription: string;
@@ -61,13 +64,12 @@ export function getResourceI18n(t: TFunction<'resources'>): ResourceI18n {
 		resourceDetails: t('RESOURCE_DETAILS', {
 			defaultValue: 'RESOURCE_DETAILS'
 		}),
+		resourceNotFound: t('RESOURCE_NOT_FOUND', { defaultValue: 'RESOURCE_NOT_FOUND' }),
 		resourceEdit: t('RESOURCE_EDIT', { defaultValue: 'RESOURCE_EDIT' }),
 		resourceDelete: t('RESOURCE_DELETE', { defaultValue: 'RESOURCE_DELETE' }),
 		resourceDisable: t('RESOURCE_DISABLE', {
 			defaultValue: 'RESOURCE_DISABLE'
 		}),
-		processing: t('PROCESSING', { defaultValue: 'PROCESSING' }),
-		loading: t('LOADING', { defaultValue: 'LOADING' }),
 		name: t('NAME', { defaultValue: 'NAME' }),
 		code: t('CODE', { defaultValue: 'CODE' }),
 		type: t('TYPE', { defaultValue: 'TYPE' }),
@@ -87,14 +89,26 @@ export function getResourceI18n(t: TFunction<'resources'>): ResourceI18n {
 		resourceLoadFailed: t('RESOURCE_LOAD_FAILED', {
 			defaultValue: 'RESOURCE_LOAD_FAILED'
 		}),
+		resourceMessagesCreated: t('RESOURCE_MESSAGES_CREATED', {
+			defaultValue: 'RESOURCE_MESSAGES_CREATED'
+		}),
+		resourceMessagesCreateFailed: t('RESOURCE_MESSAGES_CREATE_FAILED', {
+			defaultValue: 'RESOURCE_MESSAGES_CREATE_FAILED'
+		}),
+		resourceMessagesUpdated: t('RESOURCE_MESSAGES_UPDATED', {
+			defaultValue: 'RESOURCE_MESSAGES_UPDATED'
+		}),
+		resourceMessagesUpdateFailed: t('RESOURCE_MESSAGES_UPDATE_FAILED', {
+			defaultValue: 'RESOURCE_MESSAGES_UPDATE_FAILED'
+		}),
 		resourceMessagesDeleted: t('RESOURCE_MESSAGES_DELETED', {
 			defaultValue: 'RESOURCE_MESSAGES_DELETED'
 		}),
-		resourceMessagesDisabled: t('RESOURCE_MESSAGES_DISABLED', {
-			defaultValue: 'RESOURCE_MESSAGES_DISABLED'
-		}),
 		resourceMessagesDeleteFailed: t('RESOURCE_MESSAGES_DELETE_FAILED', {
 			defaultValue: 'RESOURCE_MESSAGES_DELETE_FAILED'
+		}),
+		resourceMessagesDisabled: t('RESOURCE_MESSAGES_DISABLED', {
+			defaultValue: 'RESOURCE_MESSAGES_DISABLED'
 		}),
 		resourceMessagesDisableFailed: t('RESOURCE_MESSAGES_DISABLE_FAILED', {
 			defaultValue: 'RESOURCE_MESSAGES_DISABLE_FAILED'

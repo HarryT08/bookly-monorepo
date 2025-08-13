@@ -8,8 +8,7 @@ const locale = {
 	DELETE: 'Delete',
 	DISABLE: 'Disable',
 	CANCEL: 'Cancel',
-	CONFIRM: 'Confirm',
-	RESOURCE_CREATE: 'Create Resource'
+	CONFIRM: 'Confirm'
 };
 
 export default locale;

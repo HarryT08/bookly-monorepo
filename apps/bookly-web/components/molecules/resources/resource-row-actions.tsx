@@ -6,7 +6,7 @@ import { Edit } from '@mui/icons-material';
 import type { ResourceResponseDto } from '@services/resources/types';
 import { ResourceDeleteControls } from '@components/organisms/resources/resource-delete-controls';
 import { useTranslation } from 'react-i18next';
-import { getResourceI18n } from '@components/helpers/resources-i18n';
+import { getGenericI18n } from '@components/helpers/generic-i18n';
 
 export interface ResourceRowActionsProps {
 	resource: ResourceResponseDto;
@@ -17,25 +17,22 @@ export interface ResourceRowActionsProps {
 }
 
 export function ResourceRowActions({ resource, useMocks, className, onDeleted, onDisabled }: ResourceRowActionsProps) {
-	const { t } = useTranslation('resources');
-	const i18n = getResourceI18n(t);
+	const i18nGeneric = getGenericI18n(useTranslation('generic').t);
 
 	return (
 		<div className={className ?? 'flex items-center gap-2'}>
-			<Tooltip title={i18n.editLabel}>
+			<Tooltip title={i18nGeneric.edit}>
 				<IconButton
 					component={NextLink}
 					href={`/resources/${resource.id}/edit`}
 					color="primary"
 					size="small"
-					aria-label={i18n.editAria}
+					aria-label={i18nGeneric.edit}
 				>
 					<Edit />
 				</IconButton>
 			</Tooltip>
 			<ResourceDeleteControls
-				ariaLabelDelete={i18n.deleteAria}
-				ariaLabelDisable={i18n.disableAria}
 				onlyIcon={true}
 				resource={resource}
 				useMocks={useMocks}

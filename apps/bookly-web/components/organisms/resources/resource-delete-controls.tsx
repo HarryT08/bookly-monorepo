@@ -9,10 +9,10 @@ import { mockDeleteResource } from '@services/resources/mocks/crud';
 import type { ResourceResponseDto } from '@services/resources/types';
 import { DeleteForeverOutlined, LockOutline } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { getResourceI18n } from '@components/helpers/resources-i18n';
+import { getGenericI18n } from '@components/helpers/generic-i18n';
 
 export interface ResourceDeleteControlsProps {
-	ariaLabelDelete?: string;
-	ariaLabelDisable?: string;
 	onlyIcon?: boolean;
 	resource: ResourceResponseDto;
 	useMocks: boolean;
@@ -28,8 +28,6 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 	const {
 		resource,
 		useMocks,
-		ariaLabelDelete,
-		ariaLabelDisable,
 		onlyIcon = false,
 		size = 'small',
 		variantDisable = 'outlined',
@@ -40,14 +38,11 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 	} = props;
 
 	const { enqueueSnackbar } = useSnackbar();
-	const { t } = useTranslation('generic');
-	const { t: tResources } = useTranslation('resources');
+	const i18nGeneric = getGenericI18n(useTranslation('generic').t);
+	const i18nResources = getResourceI18n(useTranslation('resources').t);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirming, setConfirming] = useState(false);
 	const [forceDelete, setForceDelete] = useState(false);
-
-	const labelDelete = ariaLabelDelete ?? tResources('ACTIONS_DELETE_LABEL');
-	const labelDisable = ariaLabelDisable ?? tResources('ACTIONS_DISABLE_LABEL');
 
 	function open(force = false) {
 		setForceDelete(force);
@@ -61,26 +56,29 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 				const res = mockDeleteResource(resource.id, forceDelete);
 
 				if (res && 'success' in res && res.success) {
-					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DELETED'), { variant: 'success' });
-					onDeleted?.(resource.id);
-				} else if (res) {
-					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DISABLED'), { variant: 'success' });
-					onDisabled?.(res as ResourceResponseDto);
+					if (forceDelete) {
+						enqueueSnackbar(i18nResources.resourceMessagesDeleted, { variant: 'success' });
+						onDeleted?.(resource.id);
+					} else {
+						enqueueSnackbar(i18nResources.resourceMessagesDisabled, { variant: 'success' });
+						onDisabled?.(res as unknown as ResourceResponseDto);
+					}
 				}
 			} else {
 				const res = await deleteResource(resource.id, forceDelete);
 
 				if ('success' in res && res.success) {
-					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DELETED'), { variant: 'success' });
-					onDeleted?.(resource.id);
-				} else {
-					const updated = res as ResourceResponseDto;
-					enqueueSnackbar(tResources('RESOURCE_MESSAGES_DISABLED'), { variant: 'success' });
-					onDisabled?.(updated);
+					if (forceDelete) {
+						enqueueSnackbar(i18nResources.resourceMessagesDeleted, { variant: 'success' });
+						onDeleted?.(resource.id);
+					} else {
+						enqueueSnackbar(i18nResources.resourceMessagesDisabled, { variant: 'success' });
+						onDisabled?.(res as unknown as ResourceResponseDto);
+					}
 				}
 			}
 		} catch (e) {
-			const msg = e instanceof Error ? e.message : tResources('RESOURCE_MESSAGES_DELETE_FAILED');
+			const msg = e instanceof Error ? e.message : i18nResources.resourceMessagesDeleteFailed;
 			enqueueSnackbar(msg, { variant: 'error' });
 		} finally {
 			setConfirming(false);
@@ -93,9 +91,9 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 		<div className={className}>
 			<div className="flex w-full justify-between gap-2">
 				{onlyIcon ? (
-					<Tooltip title={labelDelete}>
+					<Tooltip title={i18nGeneric.delete}>
 						<IconButton
-							aria-label={labelDelete}
+							aria-label={i18nGeneric.delete}
 							color="error"
 							size={size}
 							onClick={() => open(true)}
@@ -106,19 +104,19 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 				) : (
 					<Button
 						startIcon={<DeleteForeverOutlined />}
-						aria-label={labelDelete}
+						aria-label={i18nGeneric.delete}
 						color="error"
 						size={size}
 						variant={variantDelete}
 						onClick={() => open(true)}
 					>
-						{t('DELETE')}
+						{i18nGeneric.delete}
 					</Button>
 				)}
 				{onlyIcon ? (
-					<Tooltip title={labelDisable}>
+					<Tooltip title={i18nGeneric.disable}>
 						<IconButton
-							aria-label={labelDisable}
+							aria-label={i18nGeneric.disable}
 							color="warning"
 							size={size}
 							onClick={() => open(false)}
@@ -129,23 +127,27 @@ export function ResourceDeleteControls(props: ResourceDeleteControlsProps) {
 				) : (
 					<Button
 						startIcon={<LockOutline />}
-						aria-label={labelDisable}
+						aria-label={i18nGeneric.disable}
 						color="warning"
 						size={size}
 						variant={variantDisable}
 						onClick={() => open(false)}
 					>
-						{t('DISABLE')}
+						{i18nGeneric.disable}
 					</Button>
 				)}
 			</div>
 			<ConfirmDialog
 				open={confirmOpen}
-				title={forceDelete ? tResources('DIALOGS_DELETE_TITLE') : tResources('DIALOGS_DISABLE_TITLE')}
-				description={<p>{forceDelete ? tResources('DIALOGS_DELETE_DESCRIPTION') : tResources('DIALOGS_DISABLE_DESCRIPTION')}</p>}
-				confirmText={forceDelete ? tResources('DIALOGS_DELETE_CONFIRM') : tResources('DIALOGS_DISABLE_CONFIRM')}
-				cancelText={forceDelete ? tResources('DIALOGS_DELETE_CANCEL') : tResources('DIALOGS_DISABLE_CANCEL')}
-				processingText={tResources('PROCESSING', { defaultValue: 'Procesando…' })}
+				title={forceDelete ? i18nResources.dialogsDeleteTitle : i18nResources.dialogsDisableTitle}
+				description={
+					<p>
+						{forceDelete ? i18nResources.dialogsDeleteDescription : i18nResources.dialogsDisableDescription}
+					</p>
+				}
+				confirmText={forceDelete ? i18nResources.dialogsDeleteConfirm : i18nResources.dialogsDisableConfirm}
+				cancelText={forceDelete ? i18nResources.dialogsDeleteCancel : i18nResources.dialogsDisableCancel}
+				processingText={i18nGeneric.processing}
 				confirming={confirming}
 				onConfirm={handleConfirm}
 				onCancel={() => setConfirmOpen(false)}

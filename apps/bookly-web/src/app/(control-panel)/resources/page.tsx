@@ -10,7 +10,7 @@ import { mockListResourcesPaginated } from '@services/resources/mocks/crud';
 import { useAppSelector } from 'store';
 import { useSnackbar } from 'notistack';
 import { Button, Link } from '@mui/material';
-import { ResourceRowActions } from '@components/molecules/resource-row-actions';
+import { ResourceRowActions } from '@components/molecules/resources/resource-row-actions';
 import { useTranslation } from 'react-i18next';
 
 export default function ResourcesPage() {
