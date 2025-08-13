@@ -1,8 +1,4 @@
 import { z } from 'zod';
-import type {
-	CreateResourceDto,
-	UpdateResourceDto,
-} from './types';
 
 export interface ValidationIssue {
 	path: string;
