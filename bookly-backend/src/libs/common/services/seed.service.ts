@@ -1,0 +1,497 @@
+import { Injectable, Logger } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from './prisma.service';
+
+@Injectable()
+export class SeedService {
+  private readonly logger = new Logger(SeedService.name);
+
+  constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Check if database needs seeding
+   */
+  async needsSeeding(): Promise<boolean> {
+    try {
+      const userCount = await this.prisma.user.count();
+      return userCount === 0;
+    } catch (error) {
+      this.logger.error('Error checking if database needs seeding:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Run database seeding
+   */
+  async runSeeding(): Promise<{
+    success: boolean;
+    message: string;
+    summary?: {
+      programs: number;
+      roles: number;
+      users: number;
+      categories: number;
+      maintenanceTypes: number;
+      resources: number;
+    };
+  }> {
+    try {
+      this.logger.log('🌱 Starting database seeding...');
+
+      // Check if database is already seeded
+      const needsSeeding = await this.needsSeeding();
+      if (!needsSeeding) {
+        this.logger.log('📊 Database already contains data. Skipping seeding.');
+        return {
+          success: true,
+          message: 'Database already contains data. Skipping seeding.'
+        };
+      }
+
+      this.logger.log('🔄 Database is empty. Starting seeding process...');
+
+      // Run seeding process
+      const programs = await this.seedPrograms();
+      const { roles, permissions } = await this.seedRolesAndPermissions();
+      const users = await this.seedUsers(roles, programs);
+      const { categories, maintenanceTypes } = await this.seedCategoriesAndMaintenanceTypes();
+      const resources = await this.seedResources(programs, categories, users);
+      await this.seedBasicAvailability(resources);
+
+      const summary = {
+        programs: programs.length,
+        roles: roles.length,
+        users: users.length,
+        categories: categories.length,
+        maintenanceTypes: maintenanceTypes.length,
+        resources: resources.length
+      };
+
+      this.logger.log('✅ Database seeding completed successfully!');
+      this.logger.log(`📋 Summary: ${JSON.stringify(summary, null, 2)}`);
+
+      return {
+        success: true,
+        message: 'Database seeding completed successfully!',
+        summary
+      };
+    } catch (error) {
+      this.logger.error('❌ Error during seeding:', error);
+      return {
+        success: false,
+        message: `Error during seeding: ${error.message}`
+      };
+    }
+  }
+
+  private async seedPrograms() {
+    this.logger.log('📚 Seeding Programs...');
+    
+    const programsData = [
+      {
+        name: 'Ingeniería de Sistemas',
+        code: 'ING-SIS',
+        description: 'Programa de Ingeniería de Sistemas',
+        facultyName: 'Facultad de Ingeniería'
+      },
+      {
+        name: 'Medicina',
+        code: 'MED-GEN',
+        description: 'Programa de Medicina General',
+        facultyName: 'Facultad de Ciencias de la Salud'
+      },
+      {
+        name: 'Derecho',
+        code: 'DER-GEN',
+        description: 'Programa de Derecho',
+        facultyName: 'Facultad de Humanidades'
+      },
+      {
+        name: 'Administración de Empresas',
+        code: 'ADM-EMP',
+        description: 'Programa de Administración de Empresas',
+        facultyName: 'Facultad de Ciencias Empresariales'
+      }
+    ];
+
+    const programs = [];
+    for (const programData of programsData) {
+      const program = await this.prisma.program.create({
+        data: programData
+      });
+      programs.push(program);
+    }
+
+    return programs;
+  }
+
+  private async seedRolesAndPermissions() {
+    this.logger.log('👥 Seeding Roles and Permissions...');
+
+    // Create permissions first
+    const permissionsData = [
+      // Auth permissions
+      { name: 'auth:login', resource: 'auth', action: 'login', scope: 'global' },
+      { name: 'auth:logout', resource: 'auth', action: 'logout', scope: 'own' },
+      { name: 'users:create', resource: 'users', action: 'create', scope: 'global' },
+      { name: 'users:read', resource: 'users', action: 'read', scope: 'global' },
+      { name: 'users:update', resource: 'users', action: 'update', scope: 'own' },
+      { name: 'users:delete', resource: 'users', action: 'delete', scope: 'global' },
+      
+      // Resource permissions
+      { name: 'resources:create', resource: 'resources', action: 'create', scope: 'program' },
+      { name: 'resources:read', resource: 'resources', action: 'read', scope: 'global' },
+      { name: 'resources:update', resource: 'resources', action: 'update', scope: 'program' },
+      { name: 'resources:delete', resource: 'resources', action: 'delete', scope: 'program' },
+      
+      // Reservation permissions
+      { name: 'reservations:create', resource: 'reservations', action: 'create', scope: 'own' },
+      { name: 'reservations:read', resource: 'reservations', action: 'read', scope: 'program' },
+      { name: 'reservations:update', resource: 'reservations', action: 'update', scope: 'own' },
+      { name: 'reservations:delete', resource: 'reservations', action: 'delete', scope: 'own' },
+      { name: 'reservations:approve', resource: 'reservations', action: 'approve', scope: 'program' },
+      
+      // Reports permissions
+      { name: 'reports:generate', resource: 'reports', action: 'generate', scope: 'program' },
+      { name: 'reports:export', resource: 'reports', action: 'export', scope: 'program' },
+      
+      // Maintenance permissions
+      { name: 'maintenance:create', resource: 'maintenance', action: 'create', scope: 'global' },
+      { name: 'maintenance:read', resource: 'maintenance', action: 'read', scope: 'global' },
+      { name: 'maintenance:update', resource: 'maintenance', action: 'update', scope: 'program' }
+    ];
+
+    const permissions = [];
+    for (const permissionData of permissionsData) {
+      const permission = await this.prisma.permission.create({
+        data: permissionData
+      });
+      permissions.push(permission);
+    }
+
+    // Create predefined roles
+    const rolesData = [
+      {
+        name: 'Estudiante',
+        description: 'Estudiante de la universidad',
+        isPredefined: true,
+        category: 'STUDENT',
+        permissions: ['auth:login', 'auth:logout', 'users:update', 'reservations:create', 'reservations:read', 'reservations:update', 'reservations:delete', 'resources:read', 'maintenance:create']
+      },
+      {
+        name: 'Docente',
+        description: 'Docente de la universidad',
+        isPredefined: true,
+        category: 'TEACHER',
+        permissions: ['auth:login', 'auth:logout', 'users:update', 'reservations:create', 'reservations:read', 'reservations:update', 'reservations:delete', 'resources:read', 'maintenance:create', 'reports:generate']
+      },
+      {
+        name: 'Administrador General',
+        description: 'Administrador general del sistema',
+        isPredefined: true,
+        category: 'ADMIN',
+        permissions: permissionsData.map(p => p.name) // All permissions
+      },
+      {
+        name: 'Administrador de Programa',
+        description: 'Administrador de programa académico',
+        isPredefined: true,
+        category: 'ADMIN',
+        permissions: ['auth:login', 'auth:logout', 'users:read', 'users:update', 'resources:create', 'resources:read', 'resources:update', 'resources:delete', 'reservations:read', 'reservations:approve', 'reports:generate', 'reports:export', 'maintenance:read', 'maintenance:update']
+      },
+      {
+        name: 'Vigilante',
+        description: 'Personal de vigilancia',
+        isPredefined: true,
+        category: 'GUARD',
+        permissions: ['auth:login', 'auth:logout', 'reservations:read', 'resources:read']
+      },
+      {
+        name: 'Administrativo General',
+        description: 'Personal administrativo general',
+        isPredefined: true,
+        category: 'ADMINISTRATIVE',
+        permissions: ['auth:login', 'auth:logout', 'users:read', 'reservations:read', 'resources:read', 'reports:generate', 'maintenance:create', 'maintenance:read']
+      }
+    ];
+
+    const roles = [];
+    for (const roleData of rolesData) {
+      const { permissions: rolePermissions, ...role } = roleData;
+      const createdRole = await this.prisma.role.create({
+        data: role
+      });
+
+      // Assign permissions to role
+      for (const permissionName of rolePermissions) {
+        const permission = permissions.find(p => p.name === permissionName);
+        if (permission) {
+          await this.prisma.rolePermission.create({
+            data: {
+              roleId: createdRole.id,
+              permissionId: permission.id
+            }
+          });
+        }
+      }
+
+      roles.push(createdRole);
+    }
+
+    return { roles, permissions };
+  }
+
+  private async seedUsers(roles: any[], programs: any[]) {
+    this.logger.log('👤 Seeding Users...');
+    
+    const hashedPassword = await bcrypt.hash('123456', 10);
+    
+    const usersData = [
+      {
+        email: 'admin@ufps.edu.co',
+        username: 'admin',
+        password: hashedPassword,
+        firstName: 'Administrador',
+        lastName: 'General',
+        isActive: true,
+        isEmailVerified: true,
+        roleName: 'Administrador General'
+      },
+      {
+        email: 'admin.sistemas@ufps.edu.co',
+        username: 'admin.sistemas',
+        password: hashedPassword,
+        firstName: 'Administrador',
+        lastName: 'Sistemas',
+        isActive: true,
+        isEmailVerified: true,
+        roleName: 'Administrador de Programa',
+        programCode: 'ING-SIS'
+      },
+      {
+        email: 'docente@ufps.edu.co',
+        username: 'docente',
+        password: hashedPassword,
+        firstName: 'Juan Carlos',
+        lastName: 'Pérez',
+        isActive: true,
+        isEmailVerified: true,
+        roleName: 'Docente'
+      },
+      {
+        email: 'estudiante@ufps.edu.co',
+        username: 'estudiante',
+        password: hashedPassword,
+        firstName: 'María',
+        lastName: 'González',
+        isActive: true,
+        isEmailVerified: true,
+        roleName: 'Estudiante'
+      },
+      {
+        email: 'vigilante@ufps.edu.co',
+        username: 'vigilante',
+        password: hashedPassword,
+        firstName: 'Carlos',
+        lastName: 'Ramírez',
+        isActive: true,
+        isEmailVerified: true,
+        roleName: 'Vigilante'
+      }
+    ];
+
+    const users = [];
+    for (const userData of usersData) {
+      const { roleName, programCode, ...user } = userData;
+      const createdUser = await this.prisma.user.create({
+        data: user
+      });
+
+      // Assign role to user
+      const role = roles.find(r => r.name === roleName);
+      const program = programCode ? programs.find(p => p.code === programCode) : null;
+
+      if (role) {
+        await this.prisma.userRole.create({
+          data: {
+            userId: createdUser.id,
+            roleId: role.id,
+            programId: program?.id || null
+          }
+        });
+      }
+
+      users.push(createdUser);
+    }
+
+    return users;
+  }
+
+  private async seedCategoriesAndMaintenanceTypes() {
+    this.logger.log('🏷️ Seeding Categories and Maintenance Types...');
+
+    // Seed Categories (RF-02: minimum non-deletable categories)
+    const categoriesData = [
+      { name: 'Salón', description: 'Salones de clase', color: '#3B82F6', isDefault: true, priority: 1 },
+      { name: 'Laboratorio', description: 'Laboratorios especializados', color: '#10B981', isDefault: true, priority: 2 },
+      { name: 'Auditorio', description: 'Auditorios y salas de conferencias', color: '#8B5CF6', isDefault: true, priority: 3 },
+      { name: 'Equipo Multimedia', description: 'Equipos audiovisuales', color: '#F59E0B', isDefault: true, priority: 4 },
+      { name: 'Biblioteca', description: 'Espacios de biblioteca', color: '#EF4444', isDefault: false, priority: 5 },
+      { name: 'Oficina', description: 'Oficinas administrativas', color: '#6B7280', isDefault: false, priority: 6 }
+    ];
+
+    const categories = [];
+    for (const categoryData of categoriesData) {
+      const category = await this.prisma.category.create({
+        data: categoryData
+      });
+      categories.push(category);
+    }
+
+    // Seed Maintenance Types (RF-06: minimum maintenance types)
+    const maintenanceTypesData = [
+      { name: 'PREVENTIVO', description: 'Mantenimiento preventivo programado', color: '#10B981', priority: 1, isDefault: true },
+      { name: 'CORRECTIVO', description: 'Mantenimiento correctivo por fallas', color: '#F59E0B', priority: 2, isDefault: true },
+      { name: 'EMERGENCIA', description: 'Mantenimiento de emergencia', color: '#EF4444', priority: 3, isDefault: true },
+      { name: 'LIMPIEZA', description: 'Limpieza y aseo', color: '#3B82F6', priority: 4, isDefault: true }
+    ];
+
+    const maintenanceTypes = [];
+    for (const maintenanceTypeData of maintenanceTypesData) {
+      const maintenanceType = await this.prisma.maintenanceType.create({
+        data: maintenanceTypeData
+      });
+      maintenanceTypes.push(maintenanceType);
+    }
+
+    return { categories, maintenanceTypes };
+  }
+
+  private async seedResources(programs: any[], categories: any[], users: any[]) {
+    this.logger.log('🏢 Seeding Resources...');
+    
+    const adminUser = users.find(u => u.username === 'admin');
+    
+    const resourcesData = [
+      {
+        name: 'Aula 101',
+        code: 'AULA-101',
+        description: 'Salón de clases con capacidad para 40 estudiantes',
+        type: 'ROOM',
+        capacity: 40,
+        location: 'Edificio A - Piso 1',
+        status: 'AVAILABLE',
+        programCode: 'ING-SIS',
+        categoryName: 'Salón',
+        attributes: {
+          hasProjector: true,
+          hasAirConditioning: true,
+          hasWhiteboard: true
+        }
+      },
+      {
+        name: 'Laboratorio de Sistemas',
+        code: 'LAB-SIS-01',
+        description: 'Laboratorio de sistemas con 30 computadores',
+        type: 'LABORATORY',
+        capacity: 30,
+        location: 'Edificio B - Piso 2',
+        status: 'AVAILABLE',
+        programCode: 'ING-SIS',
+        categoryName: 'Laboratorio',
+        attributes: {
+          computers: 30,
+          hasProjector: true,
+          hasAirConditioning: true,
+          software: ['Visual Studio', 'IntelliJ', 'MySQL']
+        }
+      },
+      {
+        name: 'Auditorio Principal',
+        code: 'AUD-PRIN',
+        description: 'Auditorio principal con capacidad para 200 personas',
+        type: 'AUDITORIUM',
+        capacity: 200,
+        location: 'Edificio Central',
+        status: 'AVAILABLE',
+        programCode: null,
+        categoryName: 'Auditorio',
+        attributes: {
+          hasSound: true,
+          hasLighting: true,
+          hasProjector: true,
+          hasStage: true
+        }
+      },
+      {
+        name: 'Proyector Epson',
+        code: 'PROJ-EPS-01',
+        description: 'Proyector portátil Epson',
+        type: 'EQUIPMENT',
+        location: 'Almacén de equipos',
+        status: 'AVAILABLE',
+        programCode: null,
+        categoryName: 'Equipo Multimedia',
+        attributes: {
+          brand: 'Epson',
+          model: 'PowerLite',
+          resolution: '1920x1080',
+          portable: true
+        }
+      }
+    ];
+
+    const resources = [];
+    for (const resourceData of resourcesData) {
+      const { programCode, categoryName, ...resource } = resourceData;
+      const program = programCode ? programs.find(p => p.code === programCode) : null;
+      const category = categories.find(c => c.name === categoryName);
+
+      const createdResource = await this.prisma.resource.create({
+        data: {
+          ...resource,
+          programId: program?.id || null,
+          categoryId: category?.id || null
+        }
+      });
+
+      // Create resource-category relationship
+      if (category && adminUser) {
+        await this.prisma.resourceCategory.create({
+          data: {
+            resourceId: createdResource.id,
+            categoryId: category.id,
+            assignedBy: adminUser.id
+          }
+        });
+      }
+
+      resources.push(createdResource);
+    }
+
+    return resources;
+  }
+
+  private async seedBasicAvailability(resources: any[]) {
+    this.logger.log('📅 Seeding Basic Availability...');
+    
+    // Create basic availability for all resources
+    const daysOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const getDay = {'MONDAY': 1, 'TUESDAY': 2, 'WEDNESDAY': 3, 'THURSDAY': 4, 'FRIDAY': 5, 'SATURDAY': 6};
+    
+    for (const resource of resources) {
+      for (const day of daysOfWeek) {
+        await this.prisma.availability.create({
+          data: {
+            resourceId: resource.id,
+            dayOfWeek: getDay[day],
+            startTime: '06:00:00',
+            endTime: day === 'SATURDAY' ? '18:00:00' : '22:00:00',
+            isActive: true
+          }
+        });
+      }
+    }
+  }
+}

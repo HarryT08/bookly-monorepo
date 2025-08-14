@@ -24,6 +24,8 @@ import { UserController } from '@apps/auth-service/infrastructure/controllers/us
 import { RoleController } from '@apps/auth-service/infrastructure/controllers/role.controller';
 import { PermissionController } from '@apps/auth-service/infrastructure/controllers/permission.controller';
 import { OAuthController } from '@apps/auth-service/infrastructure/controllers/oauth.controller';
+import { SeedController } from '@apps/auth-service/infrastructure/controllers/seed.controller';
+import { SeedService } from '@/libs/common/services/seed.service';
 import { SSOConfigGuard } from './infrastructure/guards/sso-config.guard';
 import { ResourceModificationGuard } from './infrastructure/guards/resource-modification.guard';
 import { DoubleConfirmationGuard } from './infrastructure/guards/double-confirmation.guard';
@@ -60,6 +62,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     UserController,
     RoleController,
     PermissionController,
+    SeedController,
     // Conditionally include OAuthController only if SSO is configured
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [OAuthController] : []),
   ],
@@ -69,6 +72,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     UserService,
     RoleService,
     PermissionService,
+    SeedService,
 
     // Strategies
     JwtStrategy,

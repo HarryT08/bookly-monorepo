@@ -37,6 +37,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
     "prisma:db:push": "prisma db push",
+    "prisma:db:seed": "ts-node prisma/seed-simple.ts",
     "prisma:studio": "prisma studio",
     "docker:build": "docker build -t bookly-backend .",
     "docker:run": "docker run -p 3000:3000 bookly-backend"
