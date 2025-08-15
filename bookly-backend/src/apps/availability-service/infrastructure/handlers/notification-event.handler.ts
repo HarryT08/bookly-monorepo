@@ -209,27 +209,46 @@ export class NotificationEventHandler implements IEventHandler {
         break;
     }
   }
-    handleRecurringReservationUpdated(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleRecurringReservationCancelled(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleRecurringReservationInstancesGenerated(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleRecurringReservationInstanceConfirmed(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleRecurringReservationInstanceCancelled(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleRecurringReservationCompleted(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleRecurringReservationValidationFailed(event: any) {
-        throw new Error('Method not implemented.');
-    }
+  private async handleRecurringReservationUpdated(event: any): Promise<void> {
+    // Mock implementation - would send notification about reservation update
+    // TODO: Implement notification logic
+    this.logger.log('Handling recurring reservation updated event', { eventId: event.eventId });
+  }
+
+  private async handleRecurringReservationCancelled(event: any): Promise<void> {
+    // Mock implementation - would send notification about reservation cancellation
+    // TODO: Implement notification logic
+    this.logger.log('Handling recurring reservation cancelled event', { eventId: event.eventId });
+  }
+
+  private async handleRecurringReservationInstancesGenerated(event: any): Promise<void> {
+    // Mock implementation - would send notification about generated instances
+    // TODO: Implement notification logic
+    this.logger.log('Handling recurring reservation instances generated event', { eventId: event.eventId });
+  }
+  private async handleRecurringReservationInstanceConfirmed(event: any): Promise<void> {
+    // Mock implementation - would send notification about confirmed instance
+    // TODO: Implement notification logic
+    this.logger.log('Handling recurring reservation instance confirmed event', { eventId: event.eventId });
+  }
+
+  private async handleRecurringReservationInstanceCancelled(event: any): Promise<void> {
+    // Mock implementation - would send notification about cancelled instance
+    // TODO: Implement notification logic
+    this.logger.log('Handling recurring reservation instance cancelled event', { eventId: event.eventId });
+  }
+
+  private async handleRecurringReservationCompleted(event: any): Promise<void> {
+    // Mock implementation - would send notification about completed recurring reservation
+    // TODO: Implement notification logic
+    this.logger.log('Handling recurring reservation completed event', { eventId: event.eventId });
+  }
+
+  private async handleRecurringReservationValidationFailed(event: any): Promise<void> {
+    // Mock implementation - would send notification about validation failure
+    // TODO: Implement notification logic
+    this.logger.log('Handling recurring reservation validation failed event', { eventId: event.eventId });
+  }
 
   /**
    * Handle waiting list events
@@ -262,27 +281,46 @@ export class NotificationEventHandler implements IEventHandler {
         break;
     }
   }
-    handleUserJoinedWaitingList(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleUserLeftWaitingList(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleUserConfirmedWaitingListSlot(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleWaitingListSlotExpired(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleWaitingListPositionsReordered(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleWaitingListPriorityEscalated(event: any) {
-        throw new Error('Method not implemented.');
-    }
-    handleWaitingListOptimized(event: any) {
-        throw new Error('Method not implemented.');
-    }
+  private async handleUserJoinedWaitingList(event: any): Promise<void> {
+    // Mock implementation - would send notification about user joining waiting list
+    // TODO: Implement notification logic
+    this.logger.log('Handling user joined waiting list event', { eventId: event.eventId });
+  }
+
+  private async handleUserLeftWaitingList(event: any): Promise<void> {
+    // Mock implementation - would send notification about user leaving waiting list
+    // TODO: Implement notification logic
+    this.logger.log('Handling user left waiting list event', { eventId: event.eventId });
+  }
+
+  private async handleUserConfirmedWaitingListSlot(event: any): Promise<void> {
+    // Mock implementation - would send notification about user confirming waiting list slot
+    // TODO: Implement notification logic
+    this.logger.log('Handling user confirmed waiting list slot event', { eventId: event.eventId });
+  }
+
+  private async handleWaitingListSlotExpired(event: any): Promise<void> {
+    // Mock implementation - would send notification about waiting list slot expiration
+    // TODO: Implement notification logic
+    this.logger.log('Handling waiting list slot expired event', { eventId: event.eventId });
+  }
+
+  private async handleWaitingListPositionsReordered(event: any): Promise<void> {
+    // Mock implementation - would send notification about waiting list positions reordered
+    // TODO: Implement notification logic
+    this.logger.log('Handling waiting list positions reordered event', { eventId: event.eventId });
+  }
+  private async handleWaitingListPriorityEscalated(event: any): Promise<void> {
+    // Mock implementation - would send notification about waiting list priority escalation
+    // TODO: Implement notification logic
+    this.logger.log('Handling waiting list priority escalated event', { eventId: event.eventId });
+  }
+
+  private async handleWaitingListOptimized(event: any): Promise<void> {
+    // Mock implementation - would send notification about waiting list optimization
+    // TODO: Implement notification logic
+    this.logger.log('Handling waiting list optimized event', { eventId: event.eventId });
+  }
 
   /**
    * Handle reassignment events

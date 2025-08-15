@@ -3,6 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RabbitMQService } from './rabbitmq.service';
 import { RedisService } from './redis.service';
 import { LoggingService } from '@logging/logging.service';
+import { getCorrelationContext, getTracingHeaders } from '@libs/common/middleware/correlation-id.middleware';
 
 export interface DomainEvent {
   eventId: string;
@@ -13,6 +14,10 @@ export interface DomainEvent {
   timestamp: Date;
   version: number;
   userId?: string;
+  correlationId?: string;
+  traceId?: string;
+  spanId?: string;
+  parentSpanId?: string;
 }
 
 @Injectable()
@@ -26,18 +31,34 @@ export class EventBusService {
 
   async publishEvent(event: DomainEvent): Promise<void> {
     try {
+      // Enrich event with correlation context
+      const context = getCorrelationContext();
+      const enrichedEvent = {
+        ...event,
+        correlationId: context?.correlationId,
+        traceId: context?.traceId,
+        spanId: context?.spanId,
+        parentSpanId: context?.parentSpanId,
+      };
+
       // Emit locally for immediate handlers
-      this.eventEmitter.emit(event.eventType, event);
+      this.eventEmitter.emit(enrichedEvent.eventType, enrichedEvent);
 
       // Publish to RabbitMQ for distributed processing
-      await this.rabbitMQService.publish(event.eventType, event);
+      await this.rabbitMQService.publish(enrichedEvent.eventType, enrichedEvent);
 
       // Cache event in Redis for replay capabilities
-      await this.redisService.cacheEvent(event);
+      await this.redisService.cacheEvent(enrichedEvent);
 
       this.loggingService.log(
-        `Event published: ${event.eventType}`,
-        { eventId: event.eventId, aggregateId: event.aggregateId },
+        `Event published: ${enrichedEvent.eventType}`,
+        { 
+          eventId: enrichedEvent.eventId, 
+          aggregateId: enrichedEvent.aggregateId,
+          correlationId: enrichedEvent.correlationId,
+          traceId: enrichedEvent.traceId,
+          spanId: enrichedEvent.spanId
+        },
         'EventBusService',
       );
     } catch (error) {
@@ -61,5 +82,50 @@ export class EventBusService {
 
   async subscribeToQueue(queueName: string, handler: (event: DomainEvent) => Promise<void>): Promise<void> {
     await this.rabbitMQService.subscribe(queueName, handler);
+  }
+
+  /**
+   * Get event history for an aggregate
+   */
+  async getEventHistory(aggregateId: string): Promise<DomainEvent[]> {
+    try {
+      return await this.redisService.getEventHistory(aggregateId);
+    } catch (error) {
+      this.loggingService.error(
+        `Failed to get event history for aggregate: ${aggregateId}`,
+        error,
+        'EventBusService',
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Replay events for an aggregate
+   */
+  async replayEvents(aggregateId: string, fromVersion?: number): Promise<void> {
+    try {
+      const events = await this.getEventHistory(aggregateId);
+      const filteredEvents = fromVersion 
+        ? events.filter(event => event.version >= fromVersion)
+        : events;
+
+      for (const event of filteredEvents) {
+        await this.publishEvent(event);
+      }
+
+      this.loggingService.log(
+        `Replayed ${filteredEvents.length} events for aggregate: ${aggregateId}`,
+        { aggregateId, fromVersion, totalEvents: filteredEvents.length },
+        'EventBusService',
+      );
+    } catch (error) {
+      this.loggingService.error(
+        `Failed to replay events for aggregate: ${aggregateId}`,
+        error,
+        'EventBusService',
+      );
+      throw error;
+    }
   }
 }

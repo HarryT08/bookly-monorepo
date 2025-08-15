@@ -4,6 +4,8 @@ import { LoginCommand } from '../commands/login.command';
 import { AuthService } from '../services/auth.service';
 import { LoggingService } from '@logging/logging.service';
 import { MonitoringService } from '@monitoring/monitoring.service';
+import { EventBusService } from '@libs/event-bus/services/event-bus.service';
+import { UserLoggedInEvent } from '../../domain/events';
 
 @CommandHandler(LoginCommand)
 export class LoginHandler implements ICommandHandler<LoginCommand> {
@@ -11,6 +13,7 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
     private readonly authService: AuthService,
     private readonly loggingService: LoggingService,
     private readonly monitoringService: MonitoringService,
+    private readonly eventBusService: EventBusService,
   ) {}
 
   async execute(command: LoginCommand): Promise<{ access_token: string; user: any }> {
@@ -30,6 +33,23 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
       
       this.loggingService.log(`Successful login for user: ${user.id}`, 'LoginHandler');
       this.monitoringService.setUser({ id: user.id, email: user.email, username: user.username });
+      
+      // Publish UserLoggedInEvent
+      const loginEvent = new UserLoggedInEvent(
+        user.id,
+        {
+          userId: user.id,
+          email: user.email,
+          username: user.username,
+          timestamp: new Date(),
+          roles: user.userRoles?.map(ur => ur.role?.name || '') || [],
+          permissions: user.getAllPermissions().map(p => p.name),
+          loginMethod: 'traditional',
+        },
+        user.id
+      );
+      
+      await this.eventBusService.publishEvent(loginEvent);
       
       return token;
     } catch (error) {

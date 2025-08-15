@@ -195,7 +195,8 @@ export class RecurringReservationsController {
   ): Promise<RecurringReservationResponseDto> {
     return await this.recurringReservationService.update(
       id,
-      updateDto
+      updateDto,
+      user.id
     );
   }
 
@@ -236,8 +237,9 @@ export class RecurringReservationsController {
   ): Promise<void> {
     await this.recurringReservationService.cancel(
       id,
-      user.id,
-      "Cancelled by user"
+      "Cancelled by user",
+      'FUTURE_ONLY',
+      user.id
     );
   }
 
@@ -570,6 +572,7 @@ export class RecurringReservationsController {
     return await this.recurringReservationService.bulkCancel(
       reservationIds,
       reason,
+      'FUTURE_ONLY',
       user.id
     );
   }

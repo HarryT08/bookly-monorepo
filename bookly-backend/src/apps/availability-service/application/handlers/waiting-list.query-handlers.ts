@@ -436,11 +436,15 @@ export class ValidateWaitingListEntryQueryHandler implements IQueryHandler<Valid
 
       this.logger.log('Waiting list entry validation query completed', {
         isValid: validation.isValid,
-        errorsCount: validation.errors.length,
+        errorsCount: validation.violations.length,
         warningsCount: validation.warnings.length
       });
 
-      return validation;
+      return {
+        isValid: validation.isValid,
+        errors: validation.violations,
+        warnings: validation.warnings
+      };
 
     } catch (error) {
       this.logger.error('Failed to validate waiting list entry query', error, LoggingHelper.logParams({
@@ -483,10 +487,10 @@ export class GetWaitingListAlternativesHandler implements IQueryHandler<GetWaiti
 
       this.logger.log('Waiting list alternatives retrieved successfully', {
         resourceId: query.resourceId,
-        alternativesCount: alternatives.length
+        alternativesCount: alternatives.alternatives.length
       });
 
-      return alternatives;
+      return alternatives.alternatives;
 
     } catch (error) {
       this.logger.error('Failed to get waiting list alternatives', error, LoggingHelper.logParams({
