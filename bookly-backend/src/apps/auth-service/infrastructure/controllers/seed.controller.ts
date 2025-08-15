@@ -69,4 +69,40 @@ export class SeedController {
   async runSeeding() {
     return await this.seedService.runSeeding();
   }
+
+  @Post('run-full')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Run full database seeding (force mode)',
+    description: 'Clears all existing data and reinitializes the database with fresh data. WARNING: This will delete all existing data including users, roles, resources, etc.'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Full seeding completed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+        summary: {
+          type: 'object',
+          properties: {
+            programs: { type: 'number' },
+            roles: { type: 'number' },
+            users: { type: 'number' },
+            categories: { type: 'number' },
+            maintenanceTypes: { type: 'number' },
+            resources: { type: 'number' }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: 'Full seeding failed' 
+  })
+  async runFullSeeding() {
+    return await this.seedService.runFullSeeding();
+  }
 }

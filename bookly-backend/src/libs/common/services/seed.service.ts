@@ -22,7 +22,7 @@ export class SeedService {
   }
 
   /**
-   * Run database seeding
+   * Run database seeding (only if empty)
    */
   async runSeeding(): Promise<{
     success: boolean;
@@ -82,6 +82,98 @@ export class SeedService {
         success: false,
         message: `Error during seeding: ${error.message}`
       };
+    }
+  }
+
+  /**
+   * Run full database seeding (force seeding even if data exists)
+   */
+  async runFullSeeding(): Promise<{
+    success: boolean;
+    message: string;
+    summary?: {
+      programs: number;
+      roles: number;
+      users: number;
+      categories: number;
+      maintenanceTypes: number;
+      resources: number;
+    };
+  }> {
+    try {
+      this.logger.log('🌱 Starting FULL database seeding (force mode)...');
+
+      const needsSeeding = await this.needsSeeding();
+      if (!needsSeeding) {
+        this.logger.log('📊 Database already contains data. Skipping seeding.');
+        return {
+          success: true,
+          message: 'Database already contains data. Skipping seeding.'
+        };
+      }
+      
+      // Clear existing data first
+      await this.clearDatabase();
+
+      this.logger.log('🔄 Starting fresh seeding process...');
+
+      // Run seeding process
+      const programs = await this.seedPrograms();
+      const { roles, permissions } = await this.seedRolesAndPermissions();
+      const users = await this.seedUsers(roles, programs);
+      const { categories, maintenanceTypes } = await this.seedCategoriesAndMaintenanceTypes();
+      const resources = await this.seedResources(programs, categories, users);
+      await this.seedBasicAvailability(resources);
+
+      const summary = {
+        programs: programs.length,
+        roles: roles.length,
+        users: users.length,
+        categories: categories.length,
+        maintenanceTypes: maintenanceTypes.length,
+        resources: resources.length
+      };
+
+      this.logger.log('✅ Full database seeding completed successfully!');
+      this.logger.log(`📋 Summary: ${JSON.stringify(summary, null, 2)}`);
+
+      return {
+        success: true,
+        message: 'Full database seeding completed successfully!',
+        summary
+      };
+    } catch (error) {
+      this.logger.error('❌ Error during full seeding:', error);
+      return {
+        success: false,
+        message: `Error during full seeding: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Clear all data from database (for full seeding)
+   */
+  private async clearDatabase(): Promise<void> {
+    this.logger.log('🗑️ Clearing existing database data...');
+    
+    try {
+      // Delete in correct order to avoid foreign key constraints
+      await this.prisma.availability.deleteMany();
+      await this.prisma.resourceCategory.deleteMany();
+      await this.prisma.resource.deleteMany();
+      await this.prisma.userRole.deleteMany();
+      await this.prisma.rolePermission.deleteMany();
+      await this.prisma.category.deleteMany();
+      await this.prisma.role.deleteMany();
+      await this.prisma.permission.deleteMany();
+      await this.prisma.user.deleteMany();
+      await this.prisma.program.deleteMany();
+      
+      this.logger.log('✅ Database cleared successfully');
+    } catch (error) {
+      this.logger.error('❌ Error clearing database:', error);
+      throw error;
     }
   }
 
@@ -176,14 +268,14 @@ export class SeedService {
         name: 'Estudiante',
         description: 'Estudiante de la universidad',
         isPredefined: true,
-        category: 'STUDENT',
+        category: 'ACADEMIC',
         permissions: ['auth:login', 'auth:logout', 'users:update', 'reservations:create', 'reservations:read', 'reservations:update', 'reservations:delete', 'resources:read', 'maintenance:create']
       },
       {
         name: 'Docente',
         description: 'Docente de la universidad',
         isPredefined: true,
-        category: 'TEACHER',
+        category: 'ACADEMIC',
         permissions: ['auth:login', 'auth:logout', 'users:update', 'reservations:create', 'reservations:read', 'reservations:update', 'reservations:delete', 'resources:read', 'maintenance:create', 'reports:generate']
       },
       {
@@ -204,14 +296,14 @@ export class SeedService {
         name: 'Vigilante',
         description: 'Personal de vigilancia',
         isPredefined: true,
-        category: 'GUARD',
+        category: 'SECURITY',
         permissions: ['auth:login', 'auth:logout', 'reservations:read', 'resources:read']
       },
       {
         name: 'Administrativo General',
         description: 'Personal administrativo general',
         isPredefined: true,
-        category: 'ADMINISTRATIVE',
+        category: 'OPERATIONAL',
         permissions: ['auth:login', 'auth:logout', 'users:read', 'reservations:read', 'resources:read', 'reports:generate', 'maintenance:create', 'maintenance:read']
       }
     ];
@@ -480,18 +572,18 @@ export class SeedService {
       },
       {
         name: 'Administrativo',
-        description: 'Roles administrativos (administradores, personal)',
+        description: 'Roles administrativos y de gestión',
         sortOrder: 2,
         isActive: true,
         type: 'AUTH',
         subtype: 'ROLE',
-        code: 'ADMINISTRATIVE',
+        code: 'ADMIN',
         service: 'auth-service',
-        metadata: { isDefault: true, color: '#10B981' }
+        metadata: { isDefault: true, color: '#EF4444' }
       },
       {
         name: 'Seguridad',
-        description: 'Roles de seguridad (vigilantes)',
+        description: 'Roles de seguridad y vigilancia',
         sortOrder: 3,
         isActive: true,
         type: 'AUTH',
@@ -499,6 +591,17 @@ export class SeedService {
         code: 'SECURITY',
         service: 'auth-service',
         metadata: { isDefault: true, color: '#F59E0B' }
+      },
+      {
+        name: 'Operativo',
+        description: 'Roles operativos y de soporte',
+        sortOrder: 4,
+        isActive: true,
+        type: 'AUTH',
+        subtype: 'ROLE',
+        code: 'OPERATIONAL',
+        service: 'auth-service',
+        metadata: { isDefault: false, color: '#10B981' }
       }
     ];
 

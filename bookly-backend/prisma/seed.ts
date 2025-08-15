@@ -147,14 +147,14 @@ async function seedRolesAndPermissions() {
       name: 'Estudiante',
       description: 'Estudiante de la universidad',
       isPredefined: true,
-      category: 'STUDENT',
+      category: 'ACADEMIC',
       permissions: ['auth:login', 'auth:logout', 'users:update', 'reservations:create', 'reservations:read', 'reservations:update', 'reservations:delete', 'resources:read', 'maintenance:create']
     },
     {
       name: 'Docente',
       description: 'Docente de la universidad',
       isPredefined: true,
-      category: 'TEACHER',
+      category: 'ACADEMIC',
       permissions: ['auth:login', 'auth:logout', 'users:update', 'reservations:create', 'reservations:read', 'reservations:update', 'reservations:delete', 'resources:read', 'maintenance:create', 'reports:generate']
     },
     {
@@ -175,14 +175,14 @@ async function seedRolesAndPermissions() {
       name: 'Vigilante',
       description: 'Personal de vigilancia',
       isPredefined: true,
-      category: 'GUARD',
+      category: 'SECURITY',
       permissions: ['auth:login', 'auth:logout', 'reservations:read', 'resources:read']
     },
     {
       name: 'Administrativo General',
       description: 'Personal administrativo general',
       isPredefined: true,
-      category: 'ADMINISTRATIVE',
+      category: 'OPERATIONAL',
       permissions: ['auth:login', 'auth:logout', 'users:read', 'reservations:read', 'resources:read', 'reports:generate', 'maintenance:create', 'maintenance:read']
     }
   ];
@@ -365,6 +365,51 @@ async function seedCategoriesAndMaintenanceTypes() {
       isDefault: false, 
       sortOrder: 6,
       service: 'resources-service'
+    },
+    // AUTH/ROLE Categories for role management
+    {
+      type: 'AUTH',
+      subtype: 'ROLE',
+      name: 'Académico',
+      code: 'ACADEMIC',
+      description: 'Roles académicos (estudiantes, docentes)',
+      color: '#3B82F6',
+      isDefault: true,
+      sortOrder: 1,
+      service: 'auth-service'
+    },
+    {
+      type: 'AUTH',
+      subtype: 'ROLE',
+      name: 'Administrativo',
+      code: 'ADMIN',
+      description: 'Roles administrativos y de gestión',
+      color: '#EF4444',
+      isDefault: true,
+      sortOrder: 2,
+      service: 'auth-service'
+    },
+    {
+      type: 'AUTH',
+      subtype: 'ROLE',
+      name: 'Seguridad',
+      code: 'SECURITY',
+      description: 'Roles de seguridad y vigilancia',
+      color: '#F59E0B',
+      isDefault: true,
+      sortOrder: 3,
+      service: 'auth-service'
+    },
+    {
+      type: 'AUTH',
+      subtype: 'ROLE',
+      name: 'Operativo',
+      code: 'OPERATIONAL',
+      description: 'Roles operativos y de soporte',
+      color: '#10B981',
+      isDefault: false,
+      sortOrder: 4,
+      service: 'auth-service'
     }
   ];
 
