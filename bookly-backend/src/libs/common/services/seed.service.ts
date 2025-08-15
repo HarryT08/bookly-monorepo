@@ -331,14 +331,74 @@ export class SeedService {
   private async seedCategoriesAndMaintenanceTypes() {
     this.logger.log('🏷️ Seeding Categories and Maintenance Types...');
 
-    // Seed Categories (RF-02: minimum non-deletable categories)
+    // Seed Categories (RF-02: minimum categories that cannot be deleted)
     const categoriesData = [
-      { name: 'Salón', description: 'Salones de clase', color: '#3B82F6', isDefault: true, priority: 1 },
-      { name: 'Laboratorio', description: 'Laboratorios especializados', color: '#10B981', isDefault: true, priority: 2 },
-      { name: 'Auditorio', description: 'Auditorios y salas de conferencias', color: '#8B5CF6', isDefault: true, priority: 3 },
-      { name: 'Equipo Multimedia', description: 'Equipos audiovisuales', color: '#F59E0B', isDefault: true, priority: 4 },
-      { name: 'Biblioteca', description: 'Espacios de biblioteca', color: '#EF4444', isDefault: false, priority: 5 },
-      { name: 'Oficina', description: 'Oficinas administrativas', color: '#6B7280', isDefault: false, priority: 6 }
+      { 
+        name: 'Salón', 
+        description: 'Salones de clase tradicionales', 
+        color: '#3B82F6', 
+        isDefault: true, 
+        sortOrder: 1,
+        type: 'RESOURCE_TYPE',
+        subtype: 'ROOM',
+        code: 'SALON',
+        service: 'resources-service'
+      },
+      { 
+        name: 'Laboratorio', 
+        description: 'Laboratorios especializados', 
+        color: '#10B981', 
+        isDefault: true, 
+        sortOrder: 2,
+        type: 'RESOURCE_TYPE',
+        subtype: 'ROOM',
+        code: 'LAB',
+        service: 'resources-service'
+      },
+      { 
+        name: 'Auditorio', 
+        description: 'Auditorios y espacios grandes', 
+        color: '#8B5CF6', 
+        isDefault: true, 
+        sortOrder: 3,
+        type: 'RESOURCE_TYPE',
+        subtype: 'ROOM',
+        code: 'AUDIT',
+        service: 'resources-service'
+      },
+      { 
+        name: 'Equipo Multimedia', 
+        description: 'Equipos audiovisuales', 
+        color: '#F59E0B', 
+        isDefault: true, 
+        sortOrder: 4,
+        type: 'RESOURCE_TYPE',
+        subtype: 'EQUIPMENT',
+        code: 'MULTIMEDIA',
+        service: 'resources-service'
+      },
+      { 
+        name: 'Biblioteca', 
+        description: 'Espacios de biblioteca', 
+        color: '#EF4444', 
+        isDefault: false, 
+        sortOrder: 5,
+        type: 'RESOURCE_TYPE',
+        subtype: 'ROOM',
+        code: 'LIBRARY',
+        service: 'resources-service'
+      },
+      { 
+        name: 'Oficina', 
+        description: 'Oficinas administrativas', 
+        color: '#6B7280', 
+        isDefault: false, 
+        sortOrder: 6,
+        type: 'RESOURCE_TYPE',
+        subtype: 'ROOM',
+        code: 'OFFICE',
+        service: 'resources-service'
+      }
     ];
 
     const categories = [];
@@ -349,17 +409,57 @@ export class SeedService {
       categories.push(category);
     }
 
-    // Seed Maintenance Types (RF-06: minimum maintenance types)
+    // Seed Maintenance Types (RF-06: minimum maintenance types) as Categories
     const maintenanceTypesData = [
-      { name: 'PREVENTIVO', description: 'Mantenimiento preventivo programado', color: '#10B981', priority: 1, isDefault: true },
-      { name: 'CORRECTIVO', description: 'Mantenimiento correctivo por fallas', color: '#F59E0B', priority: 2, isDefault: true },
-      { name: 'EMERGENCIA', description: 'Mantenimiento de emergencia', color: '#EF4444', priority: 3, isDefault: true },
-      { name: 'LIMPIEZA', description: 'Limpieza y aseo', color: '#3B82F6', priority: 4, isDefault: true }
+      { 
+        name: 'PREVENTIVO', 
+        description: 'Mantenimiento preventivo programado', 
+        color: '#10B981', 
+        sortOrder: 1, 
+        isDefault: true,
+        type: 'MAINTENANCE_TYPE',
+        subtype: 'SCHEDULED',
+        code: 'PREV',
+        service: 'resources-service'
+      },
+      { 
+        name: 'CORRECTIVO', 
+        description: 'Mantenimiento correctivo por fallas', 
+        color: '#F59E0B', 
+        sortOrder: 2, 
+        isDefault: true,
+        type: 'MAINTENANCE_TYPE',
+        subtype: 'REACTIVE',
+        code: 'CORR',
+        service: 'resources-service'
+      },
+      { 
+        name: 'EMERGENCIA', 
+        description: 'Mantenimiento de emergencia', 
+        color: '#EF4444', 
+        sortOrder: 3, 
+        isDefault: true,
+        type: 'MAINTENANCE_TYPE',
+        subtype: 'EMERGENCY',
+        code: 'EMER',
+        service: 'resources-service'
+      },
+      { 
+        name: 'LIMPIEZA', 
+        description: 'Limpieza y aseo', 
+        color: '#3B82F6', 
+        sortOrder: 4, 
+        isDefault: true,
+        type: 'MAINTENANCE_TYPE',
+        subtype: 'CLEANING',
+        code: 'CLEAN',
+        service: 'resources-service'
+      }
     ];
 
     const maintenanceTypes = [];
     for (const maintenanceTypeData of maintenanceTypesData) {
-      const maintenanceType = await this.prisma.maintenanceType.create({
+      const maintenanceType = await this.prisma.category.create({
         data: maintenanceTypeData
       });
       maintenanceTypes.push(maintenanceType);

@@ -278,7 +278,7 @@ export class ResourceEntity {
   /**
    * Validate resource data
    */
-  validate(): { valid: boolean; errors: string[] } {
+  async validate(categoryRepository?: any): Promise<{ valid: boolean; errors: string[] }> {
     const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
@@ -293,9 +293,36 @@ export class ResourceEntity {
       errors.push('Capacity cannot be negative');
     }
 
-    const validTypes = ['ROOM', 'EQUIPMENT', 'AUDITORIUM', 'LABORATORY', 'COMPUTER'];
-    if (this.type && !validTypes.includes(this.type.toUpperCase())) {
-      errors.push(`Invalid type. Valid types are: ${validTypes.join(', ')}`);
+    // Validate type against Category model if repository is provided
+    if (this.type && categoryRepository) {
+      const isValidType = await categoryRepository.validateResourceType(this.type.toUpperCase());
+      if (!isValidType) {
+        errors.push(`Invalid resource type: ${this.type}. Please use a valid resource type from the system categories.`);
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Validate resource data synchronously (for backward compatibility)
+   */
+  validateSync(): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!this.name || this.name.trim().length === 0) {
+      errors.push('Name is required');
+    }
+
+    if (!this.type || this.type.trim().length === 0) {
+      errors.push('Type is required');
+    }
+
+    if (this.capacity !== null && this.capacity < 0) {
+      errors.push('Capacity cannot be negative');
     }
 
     return {

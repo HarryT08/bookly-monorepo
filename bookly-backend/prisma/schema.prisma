@@ -236,15 +236,26 @@ model Resource {
 
 model Category {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
+  type        String   // RESOURCE, USER, RESERVATION, APPROVAL, REPORT
+  subtype     String   // VALID_TYPE, ROLE, STATUS, WORKFLOW_TYPE, etc.
+  name        String
+  code        String   // Unique code within type-subtype combination
   description String?
   color       String? // For UI purposes
+  metadata    Json?    // Flexible metadata for service-specific data
   isActive    Boolean  @default(true)
-  // HITO 6: Enhanced category management
   isDefault   Boolean  @default(false) // Default categories cannot be deleted
-  priority    Int      @default(0) // Display order
+  sortOrder   Int      @default(0) // Display order (renamed from priority)
+  parentId    String?  @db.ObjectId // For hierarchical categories
+  service     String   // Which microservice owns this category
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId
+  updatedBy   String?  @db.ObjectId
+
+  // Self-referential relation for hierarchical categories
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children Category[] @relation("CategoryHierarchy")
 
   // Relations
   resources           Resource[]
@@ -254,6 +265,12 @@ model Category {
   notificationTemplates NotificationTemplate[] // Notification templates for this category
   notificationConfigs NotificationConfig[] // Notification configs for this category
 
+  // Indexes for efficient querying
+  @@index([type, subtype, service])
+  @@index([code, type, subtype])
+  @@index([service, isActive])
+  @@index([parentId])
+  @@unique([type, subtype, code, service])
   @@map("categories")
 }
 
@@ -1453,4 +1470,5 @@ model AuditEntry {
   @@index([timestamp])
   @@map("audit_entries")
 }
+
 

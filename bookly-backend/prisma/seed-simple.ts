@@ -428,46 +428,70 @@ async function seedCategoriesAndMaintenanceTypes() {
   // Seed Categories (RF-02: minimum non-deletable categories)
   const categoriesData = [
     {
+      type: "RESOURCE_TYPE",
+      subtype: "ROOM",
       name: "Salón",
+      code: "SALON",
       description: "Salones de clase",
       color: "#3B82F6",
       isDefault: true,
-      priority: 1,
+      sortOrder: 1,
+      service: "resources-service",
     },
     {
+      type: "RESOURCE_TYPE",
+      subtype: "ROOM",
       name: "Laboratorio",
+      code: "LABORATORIO",
       description: "Laboratorios especializados",
       color: "#10B981",
       isDefault: true,
-      priority: 2,
+      sortOrder: 2,
+      service: "resources-service",
     },
     {
+      type: "RESOURCE_TYPE",
+      subtype: "ROOM",
       name: "Auditorio",
+      code: "AUDITORIO",
       description: "Auditorios y salas de conferencias",
       color: "#8B5CF6",
       isDefault: true,
-      priority: 3,
+      sortOrder: 3,
+      service: "resources-service",
     },
     {
+      type: "RESOURCE_TYPE",
+      subtype: "EQUIPMENT",
       name: "Equipo Multimedia",
+      code: "MULTIMEDIA",
       description: "Equipos audiovisuales",
       color: "#F59E0B",
       isDefault: true,
-      priority: 4,
+      sortOrder: 4,
+      service: "resources-service",
     },
     {
+      type: "RESOURCE_TYPE",
+      subtype: "ROOM",
       name: "Biblioteca",
+      code: "BIBLIOTECA",
       description: "Espacios de biblioteca",
       color: "#EF4444",
       isDefault: false,
-      priority: 5,
+      sortOrder: 5,
+      service: "resources-service",
     },
     {
+      type: "RESOURCE_TYPE",
+      subtype: "ROOM",
       name: "Oficina",
+      code: "OFICINA",
       description: "Oficinas administrativas",
       color: "#6B7280",
       isDefault: false,
-      priority: 6,
+      sortOrder: 6,
+      service: "resources-service",
     },
   ];
 
@@ -479,41 +503,57 @@ async function seedCategoriesAndMaintenanceTypes() {
     categories.push(category);
   }
 
-  // Seed Maintenance Types (RF-06: minimum maintenance types)
+  // Seed Maintenance Types (RF-06: minimum maintenance types) as Categories
   const maintenanceTypesData = [
     {
+      type: "MAINTENANCE_TYPE",
+      subtype: "SCHEDULED",
       name: "PREVENTIVO",
+      code: "PREVENTIVO",
       description: "Mantenimiento preventivo programado",
       color: "#10B981",
-      priority: 1,
+      sortOrder: 1,
       isDefault: true,
+      service: "resources-service",
     },
     {
+      type: "MAINTENANCE_TYPE",
+      subtype: "REACTIVE",
       name: "CORRECTIVO",
+      code: "CORRECTIVO",
       description: "Mantenimiento correctivo por fallas",
       color: "#F59E0B",
-      priority: 2,
+      sortOrder: 2,
       isDefault: true,
+      service: "resources-service",
     },
     {
+      type: "MAINTENANCE_TYPE",
+      subtype: "EMERGENCY",
       name: "EMERGENCIA",
+      code: "EMERGENCIA",
       description: "Mantenimiento de emergencia",
       color: "#EF4444",
-      priority: 3,
+      sortOrder: 3,
       isDefault: true,
+      service: "resources-service",
     },
     {
+      type: "MAINTENANCE_TYPE",
+      subtype: "CLEANING",
       name: "LIMPIEZA",
+      code: "LIMPIEZA",
       description: "Limpieza y aseo",
       color: "#3B82F6",
-      priority: 4,
+      sortOrder: 4,
       isDefault: true,
+      service: "resources-service",
     },
   ];
 
   const maintenanceTypes = [];
   for (const maintenanceTypeData of maintenanceTypesData) {
-    const maintenanceType = await prisma.maintenanceType.create({
+    const maintenanceType = await prisma.category.create({
       data: maintenanceTypeData,
     });
     maintenanceTypes.push(maintenanceType);

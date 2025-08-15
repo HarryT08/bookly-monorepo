@@ -48,8 +48,15 @@ export interface HealthAlert {
   service: string;
   message: string;
   timestamp: Date;
-  resolved: boolean;
+  resolved?: boolean;
   acknowledgedBy?: string;
+}
+
+export interface UptimeData {
+  startTime: Date;
+  totalDowntime: number;
+  lastStatusChange: Date;
+  previousStatus: string;
 }
 
 @Injectable()
@@ -90,7 +97,7 @@ export class HealthDashboardService {
 
       // Update service uptime
       const uptimeKey = `health:uptime:${serviceName}`;
-      const uptimeData = await this.redisService.get(uptimeKey) || {
+      const uptimeData = await this.redisService.get(uptimeKey) as UptimeData | null || {
         serviceName,
         startTime: new Date(),
         totalDowntime: 0,
@@ -149,13 +156,13 @@ export class HealthDashboardService {
       }
 
       const uptime = uptimeData 
-        ? Date.now() - new Date(uptimeData.startTime).getTime() - uptimeData.totalDowntime
+        ? Date.now() - new Date((uptimeData as any).startTime).getTime() - (uptimeData as any).totalDowntime
         : 0;
 
       return {
-        ...heartbeat,
+        ...(heartbeat as any),
         uptime: Math.max(0, uptime),
-        lastHeartbeat: new Date(heartbeat.timestamp),
+        lastHeartbeat: new Date((heartbeat as any).timestamp),
       };
     } catch (error) {
       this.loggingService.error(
@@ -322,8 +329,8 @@ export class HealthDashboardService {
       const alert = await this.redisService.get(alertKey);
 
       if (alert) {
-        alert.resolved = true;
-        alert.acknowledgedBy = acknowledgedBy;
+        (alert as any).resolved = true;
+        (alert as any).acknowledgedBy = acknowledgedBy;
         await this.redisService.set(alertKey, alert, this.ALERT_TTL);
 
         this.loggingService.log(
@@ -352,7 +359,7 @@ export class HealthDashboardService {
       const alerts: HealthAlert[] = [];
       for (const alertId of alertIds) {
         const alertKey = `health:alert:${alertId}`;
-        const alert = await this.redisService.get(alertKey);
+        const alert = await this.redisService.get(alertKey) as HealthAlert | null;
         if (alert && !alert.resolved) {
           alerts.push(alert);
         }
@@ -382,7 +389,7 @@ export class HealthDashboardService {
         const alertKey = `health:alert:${alertId}`;
         const alert = await this.redisService.get(alertKey);
         if (alert) {
-          alerts.push(alert);
+          alerts.push(alert as HealthAlert);
         }
       }
 
@@ -471,7 +478,7 @@ export class HealthDashboardService {
 
       for (const alertId of alertIds) {
         const alertKey = `health:alert:${alertId}`;
-        const alert = await this.redisService.get(alertKey);
+        const alert = await this.redisService.get(alertKey) as HealthAlert | null;
         
         if (alert && alert.resolved && new Date(alert.timestamp).getTime() < cutoffTime) {
           await this.redisService.del(alertKey);

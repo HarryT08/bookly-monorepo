@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ResourcesController } from './infrastructure/controllers/resources.controller';
 import { PrismaResourceRepository } from './infrastructure/repositories/prisma-resource.repository';
+import { PrismaCategoryRepository } from './infrastructure/repositories/prisma-category.repository';
 import { LoggingModule } from '../../libs/logging/logging.module';
 import { CommonModule } from '../../libs/common/common.module';
 
@@ -47,10 +48,14 @@ const QueryHandlers = [
   ],
   controllers: [ResourcesController],
   providers: [
-    // Repository
+    // Repositories
     {
       provide: 'ResourceRepository',
       useClass: PrismaResourceRepository,
+    },
+    {
+      provide: 'CategoryRepository',
+      useClass: PrismaCategoryRepository,
     },
     // Command Handlers
     ...CommandHandlers,
@@ -59,6 +64,7 @@ const QueryHandlers = [
   ],
   exports: [
     'ResourceRepository',
+    'CategoryRepository',
     ...CommandHandlers,
     ...QueryHandlers,
   ],
