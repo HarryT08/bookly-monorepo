@@ -369,13 +369,17 @@ export class PrismaRoleRepository implements RoleRepository {
     return new RoleEntity(
       role.id,
       role.name,
+      role.code || role.name.toUpperCase().replace(/\s+/g, '_'),
       role.description,
+      role.category,
       role.isActive,
       role.isPredefined,
-      role.category,
       role.createdAt,
       role.updatedAt,
       role.createdBy,
+      [], // permissions array - will be populated separately if needed
+      role.programId,
+      role.metadata,
     );
   }
 
@@ -383,13 +387,17 @@ export class PrismaRoleRepository implements RoleRepository {
     const roleEntity = new RoleEntity(
       role.id,
       role.name,
+      role.code || role.name.toUpperCase().replace(/\s+/g, '_'),
       role.description,
+      role.category,
       role.isActive,
       role.isPredefined,
-      role.category,
       role.createdAt,
       role.updatedAt,
       role.createdBy,
+      [], // permissions array - will be set below
+      role.programId,
+      role.metadata,
     );
     
     // Set role permissions

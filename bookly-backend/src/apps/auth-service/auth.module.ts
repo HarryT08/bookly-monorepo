@@ -17,14 +17,15 @@ import { AuthService } from '@apps/auth-service/application/services/auth.servic
 import { UserService } from '@apps/auth-service/application/services/user.service';
 import { RoleService } from '@apps/auth-service/application/services/role.service';
 import { PermissionService } from '@apps/auth-service/application/services/permission.service';
+import { AuthCategoryService } from '@apps/auth-service/application/services/category.service';
 
 // Infrastructure
-import { AuthController } from '@apps/auth-service/infrastructure/controllers/auth.controller';
-import { UserController } from '@apps/auth-service/infrastructure/controllers/user.controller';
-import { RoleController } from '@apps/auth-service/infrastructure/controllers/role.controller';
-import { PermissionController } from '@apps/auth-service/infrastructure/controllers/permission.controller';
+import { AuthController } from './infrastructure/controllers/auth.controller';
+import { UserController } from './infrastructure/controllers/user.controller';
+import { RoleController } from './infrastructure/controllers/role.controller';
+import { SeedController } from './infrastructure/controllers/seed.controller';
+import { AuthCategoryController } from './infrastructure/controllers/category.controller';
 import { OAuthController } from '@apps/auth-service/infrastructure/controllers/oauth.controller';
-import { SeedController } from '@apps/auth-service/infrastructure/controllers/seed.controller';
 import { SeedService } from '@/libs/common/services/seed.service';
 import { SSOConfigGuard } from './infrastructure/guards/sso-config.guard';
 import { ResourceModificationGuard } from './infrastructure/guards/resource-modification.guard';
@@ -34,6 +35,7 @@ import { RegisterHandler } from './application/handlers/register.handler';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
 import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
+import { ResourcesModule } from '../resources-service/resources.module';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
@@ -46,6 +48,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     ConfigModule,
     CqrsModule,
     PassportModule,
+    ResourcesModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -61,9 +64,9 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     AuthController,
     UserController,
     RoleController,
-    PermissionController,
+    OAuthController,
     SeedController,
-    // Conditionally include OAuthController only if SSO is configured
+    AuthCategoryController,
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [OAuthController] : []),
   ],
   providers: [
@@ -72,6 +75,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     UserService,
     RoleService,
     PermissionService,
+    AuthCategoryService,
     SeedService,
 
     // Strategies

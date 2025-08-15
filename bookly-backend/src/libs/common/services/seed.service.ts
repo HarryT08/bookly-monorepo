@@ -414,46 +414,46 @@ export class SeedService {
       { 
         name: 'PREVENTIVO', 
         description: 'Mantenimiento preventivo programado', 
-        color: '#10B981', 
         sortOrder: 1, 
-        isDefault: true,
+        isActive: true,
         type: 'MAINTENANCE_TYPE',
         subtype: 'SCHEDULED',
         code: 'PREV',
-        service: 'resources-service'
+        service: 'resources-service',
+        metadata: { isDefault: true, color: '#10B981' }
       },
       { 
         name: 'CORRECTIVO', 
         description: 'Mantenimiento correctivo por fallas', 
-        color: '#F59E0B', 
         sortOrder: 2, 
-        isDefault: true,
+        isActive: true,
         type: 'MAINTENANCE_TYPE',
         subtype: 'REACTIVE',
         code: 'CORR',
-        service: 'resources-service'
+        service: 'resources-service',
+        metadata: { isDefault: true, color: '#F59E0B' }
       },
       { 
         name: 'EMERGENCIA', 
         description: 'Mantenimiento de emergencia', 
-        color: '#EF4444', 
         sortOrder: 3, 
-        isDefault: true,
+        isActive: true,
         type: 'MAINTENANCE_TYPE',
         subtype: 'EMERGENCY',
         code: 'EMER',
-        service: 'resources-service'
+        service: 'resources-service',
+        metadata: { isDefault: true, color: '#EF4444' }
       },
       { 
         name: 'LIMPIEZA', 
         description: 'Limpieza y aseo', 
-        color: '#3B82F6', 
         sortOrder: 4, 
-        isDefault: true,
+        isActive: true,
         type: 'MAINTENANCE_TYPE',
         subtype: 'CLEANING',
         code: 'CLEAN',
-        service: 'resources-service'
+        service: 'resources-service',
+        metadata: { isDefault: true, color: '#3B82F6' }
       }
     ];
 
@@ -465,7 +465,52 @@ export class SeedService {
       maintenanceTypes.push(maintenanceType);
     }
 
-    return { categories, maintenanceTypes };
+    // Seed Role Categories (AUTH/ROLE) for auth-service
+    const roleCategoriesData = [
+      {
+        name: 'Académico',
+        description: 'Roles académicos (estudiantes, docentes)',
+        sortOrder: 1,
+        isActive: true,
+        type: 'AUTH',
+        subtype: 'ROLE',
+        code: 'ACADEMIC',
+        service: 'auth-service',
+        metadata: { isDefault: true, color: '#3B82F6' }
+      },
+      {
+        name: 'Administrativo',
+        description: 'Roles administrativos (administradores, personal)',
+        sortOrder: 2,
+        isActive: true,
+        type: 'AUTH',
+        subtype: 'ROLE',
+        code: 'ADMINISTRATIVE',
+        service: 'auth-service',
+        metadata: { isDefault: true, color: '#10B981' }
+      },
+      {
+        name: 'Seguridad',
+        description: 'Roles de seguridad (vigilantes)',
+        sortOrder: 3,
+        isActive: true,
+        type: 'AUTH',
+        subtype: 'ROLE',
+        code: 'SECURITY',
+        service: 'auth-service',
+        metadata: { isDefault: true, color: '#F59E0B' }
+      }
+    ];
+
+    const roleCategories = [];
+    for (const roleCategoryData of roleCategoriesData) {
+      const roleCategory = await this.prisma.category.create({
+        data: roleCategoryData
+      });
+      roleCategories.push(roleCategory);
+    }
+
+    return { categories, maintenanceTypes, roleCategories };
   }
 
   private async seedResources(programs: any[], categories: any[], users: any[]) {

@@ -16,15 +16,47 @@ export class RoleEntity implements Role {
   constructor(
     public id: string,
     public name: string,
-    public description: string | undefined = undefined,
+    public code: string,
+    public description: string,
+    public category: string, // Keep as category for Prisma compatibility
     public isActive: boolean = true,
     public isPredefined: boolean = false,
-    public category: string | undefined = undefined,
     public createdAt: Date = new Date(),
     public updatedAt: Date = new Date(),
-    public createdBy: string | undefined = undefined,
+    public createdBy: string,
+    public permissions: string[] = [],
+    public programId: string | undefined = undefined,
+    public metadata: Record<string, any> | undefined = undefined,
     public rolePermissions?: RolePermissionWithPermission[],
   ) {}
+
+  // Getter for categoryCode to maintain backward compatibility
+  get categoryCode(): string {
+    return this.category;
+  }
+
+  // Setter for categoryCode to maintain backward compatibility
+  set categoryCode(value: string) {
+    this.category = value;
+  }
+
+  // Getter for isDefault to maintain backward compatibility
+  get isDefault(): boolean {
+    return this.isPredefined;
+  }
+
+  // Setter for isDefault to maintain backward compatibility
+  set isDefault(value: boolean) {
+    this.isPredefined = value;
+  }
+
+  // Predefined roles using category codes from unified Category model
+  static readonly ADMIN_GENERAL = new RoleEntity('1', 'Administrador General', 'ADMIN_GENERAL', 'Administrador con acceso completo al sistema', 'ADMINISTRATIVO', true, true, new Date(), new Date(), 'system');
+  static readonly ADMIN_PROGRAMA = new RoleEntity('2', 'Administrador de Programa', 'ADMIN_PROGRAMA', 'Administrador de programa académico específico', 'ADMINISTRATIVO', true, true, new Date(), new Date(), 'system');
+  static readonly DOCENTE = new RoleEntity('3', 'Docente', 'DOCENTE', 'Profesor con permisos de reserva y consulta', 'ACADEMICO', true, true, new Date(), new Date(), 'system');
+  static readonly ESTUDIANTE = new RoleEntity('4', 'Estudiante', 'ESTUDIANTE', 'Estudiante con permisos básicos de consulta', 'ACADEMICO', true, true, new Date(), new Date(), 'system');
+  static readonly VIGILANTE = new RoleEntity('5', 'Vigilante', 'VIGILANTE', 'Personal de seguridad con acceso a control de reservas', 'SEGURIDAD', true, true, new Date(), new Date(), 'system');
+  static readonly INVITADO = new RoleEntity('6', 'Invitado', 'INVITADO', 'Usuario externo con permisos limitados', 'ACADEMICO', true, true, new Date(), new Date(), 'system');
 
   static create(
     name: string,
@@ -36,14 +68,14 @@ export class RoleEntity implements Role {
     return new RoleEntity(
       '', // ID will be set by database
       name,
-      description,
-      true,
+      name.toUpperCase().replace(/\s+/g, '_'), // Generate code from name
+      description || '',
+      category || 'ACADEMICO', // Use category code instead of enum
+      true, // isActive
       isPredefined,
-      category,
       new Date(),
       new Date(),
-      createdBy,
-      [],
+      createdBy || 'system',
     );
   }
 
@@ -52,12 +84,12 @@ export class RoleEntity implements Role {
    */
   static createPredefinedRoles(): RoleEntity[] {
     return [
-      new RoleEntity('', UserRole.STUDENT, 'Estudiante universitario', true, true, ROLE_CATEGORY_MAP[UserRole.STUDENT]),
-      new RoleEntity('', UserRole.TEACHER, 'Docente universitario', true, true, ROLE_CATEGORY_MAP[UserRole.TEACHER]),
-      new RoleEntity('', UserRole.GENERAL_ADMIN, 'Administrador con acceso completo', true, true, ROLE_CATEGORY_MAP[UserRole.GENERAL_ADMIN]),
-      new RoleEntity('', UserRole.PROGRAM_ADMIN, 'Administrador de programa académico', true, true, ROLE_CATEGORY_MAP[UserRole.PROGRAM_ADMIN]),
-      new RoleEntity('', UserRole.SECURITY, 'Personal de vigilancia', true, true, ROLE_CATEGORY_MAP[UserRole.SECURITY]),
-      new RoleEntity('', UserRole.GENERAL_STAFF, 'Personal administrativo general', true, true, ROLE_CATEGORY_MAP[UserRole.GENERAL_STAFF]),
+      RoleEntity.ADMIN_GENERAL,
+      RoleEntity.ADMIN_PROGRAMA,
+      RoleEntity.DOCENTE,
+      RoleEntity.ESTUDIANTE,
+      RoleEntity.VIGILANTE,
+      RoleEntity.INVITADO,
     ];
   }
 

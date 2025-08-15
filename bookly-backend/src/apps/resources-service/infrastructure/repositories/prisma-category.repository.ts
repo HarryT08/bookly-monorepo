@@ -70,6 +70,22 @@ export class PrismaCategoryRepository extends ResourcesCategoryRepository {
     return categories.map(category => this.toDomain(category));
   }
 
+  async findByTypeAndSubtype(type: string, subtype: string): Promise<CategoryEntity[]> {
+    const categories = await this.prisma.category.findMany({
+      where: {
+        type: type.toUpperCase(),
+        subtype: subtype.toUpperCase(),
+        isActive: true,
+      },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { name: 'asc' },
+      ],
+    });
+
+    return categories.map(category => this.toDomain(category));
+  }
+
   async save(category: CategoryEntity): Promise<void> {
     const props = category.toProps();
     
