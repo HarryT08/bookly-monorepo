@@ -1,3 +1,4 @@
+
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -42,7 +43,7 @@ async function main() {
 
     // 7. Seed Document and Notification Templates
     console.log('📄 Seeding Templates...');
-    await seedTemplates(categories);
+    await seedTemplates(categories, users);
 
     // 8. Seed Notification System
     console.log('📢 Seeding Notification System...');
@@ -452,8 +453,8 @@ async function seedApprovalFlows(programs: any[], categories: any[]) {
           level: 1,
           name: 'Revisión Administrativa',
           description: 'Revisión por personal administrativo',
-          requiredApprovals: 1,
-          autoApprove: false,
+          approverRoles: ['Administrador General', 'Administrativo General'],
+          requiresAll: false,
           timeoutHours: 24
         }
       ]
@@ -469,16 +470,16 @@ async function seedApprovalFlows(programs: any[], categories: any[]) {
           level: 1,
           name: 'Revisión Técnica',
           description: 'Revisión por responsable técnico',
-          requiredApprovals: 1,
-          autoApprove: false,
+          approverRoles: ['Administrador de Programa'],
+          requiresAll: false,
           timeoutHours: 48
         },
         {
           level: 2,
           name: 'Aprobación Administrativa',
           description: 'Aprobación final administrativa',
-          requiredApprovals: 1,
-          autoApprove: false,
+          approverRoles: ['Administrador General'],
+          requiresAll: false,
           timeoutHours: 24
         }
       ]
@@ -490,14 +491,16 @@ async function seedApprovalFlows(programs: any[], categories: any[]) {
     const { categoryName, programCode, levels, ...flow } = flowData;
     const category = categories.find(c => c.name === categoryName);
     const program = programCode ? programs.find(p => p.code === programCode) : null;
+    const adminUser = await prisma.user.findFirst({ where: { username: 'admin' } });
 
     const createdFlow = await prisma.approvalFlow.create({
       data: {
+        createdBy: adminUser.id,
         name: flow.name,
         description: flow.description,
         isActive: flow.isActive,
-        category: category ? { connect: { id: category.id } } : undefined,
-        program: program ? { connect: { id: program.id } } : undefined
+        categoryId: category?.id || null,
+        programId: program?.id || null
       }
     });
 
@@ -505,13 +508,15 @@ async function seedApprovalFlows(programs: any[], categories: any[]) {
     for (const levelData of levels) {
       await prisma.approvalLevel.create({
         data: {
+          flowId: createdFlow.id,
           level: levelData.level,
           name: levelData.name,
           description: levelData.description,
-          requiredApprovals: levelData.requiredApprovals,
-          autoApprove: levelData.autoApprove,
+          approverRoles: levelData.approverRoles,
+          approverUsers: [],
+          requiresAll: levelData.requiresAll,
           timeoutHours: levelData.timeoutHours,
-          approvalFlow: { connect: { id: createdFlow.id } }
+          isActive: true
         }
       });
     }
@@ -522,16 +527,21 @@ async function seedApprovalFlows(programs: any[], categories: any[]) {
   return approvalFlows;
 }
 
-async function seedTemplates(categories: any[]) {
+async function seedTemplates(categories: any[], users: any[]) {
+  // Get admin user for createdBy field
+  const adminUser = users.find(u => u.email === 'admin@ufps.edu.co');
+  
   // Document Templates
   const documentTemplatesData = [
     {
       name: 'Carta de Aprobación de Reserva',
       description: 'Plantilla para cartas de aprobación de reservas',
       categoryName: 'Salón',
-      templateType: 'APPROVAL_LETTER',
+      eventType: 'APPROVAL',
+      format: 'HTML',
       content: `<h1>UNIVERSIDAD FRANCISCO DE PAULA SANTANDER</h1><h2>CARTA DE APROBACIÓN DE RESERVA</h2><p>Fecha: {{currentDate}}</p><p>Estimado/a {{userName}},</p><p>Su solicitud de reserva ha sido <strong>APROBADA</strong>:</p><ul><li><strong>Recurso:</strong> {{resourceName}}</li><li><strong>Fecha:</strong> {{reservationDate}}</li><li><strong>Hora:</strong> {{reservationTime}}</li></ul><p>Atentamente,</p><p>Administración UFPS</p>`,
-      variables: ['userName', 'resourceName', 'reservationDate', 'reservationTime', 'currentDate']
+      variables: ['userName', 'resourceName', 'reservationDate', 'reservationTime', 'currentDate'],
+      createdBy: adminUser?.id
     }
   ];
 
@@ -547,13 +557,35 @@ async function seedTemplates(categories: any[]) {
     });
   }
 
+  // First create notification channels if they don't exist
+  let emailChannel = await prisma.notificationChannel.findFirst({
+    where: { name: 'EMAIL' }
+  });
+
+  if (!emailChannel) {
+    emailChannel = await prisma.notificationChannel.create({
+      data: {
+        name: 'EMAIL',
+        displayName: 'Email',
+        supportsAttachments: true,
+        supportsLinks: true,
+        isActive: true,
+        settings: {
+          smtpHost: 'smtp.ufps.edu.co',
+          smtpPort: 587,
+          secure: false
+        }
+      }
+    });
+  }
+
   // Notification Templates
   const notificationTemplatesData = [
     {
       name: 'Reserva Aprobada',
-      description: 'Notificación de reserva aprobada',
+      channelId: emailChannel.id,
       categoryName: 'Salón',
-      templateType: 'APPROVAL_NOTIFICATION',
+      eventType: 'APPROVAL_NOTIFICATION',
       subject: 'Reserva Aprobada - {{resourceName}}',
       content: 'Su reserva para {{resourceName}} el {{reservationDate}} ha sido aprobada.',
       variables: ['resourceName', 'reservationDate']
@@ -566,58 +598,70 @@ async function seedTemplates(categories: any[]) {
 
     await prisma.notificationTemplate.create({
       data: {
-        ...template,
-        categoryId: category?.id || null
+        name: template.name,
+        channelId: template.channelId,
+        categoryId: category?.id || null,
+        eventType: template.eventType,
+        subject: template.subject,
+        content: template.content,
+        variables: template.variables,
+        createdBy: adminUser?.id
       }
     });
   }
 }
 
 async function seedNotificationSystem(categories: any[]) {
-  // Notification Channels
-  const channelsData = [
-    {
-      name: 'Email',
-      type: 'EMAIL',
-      description: 'Notificaciones por correo electrónico',
-      isActive: true,
-      config: {
-        smtpHost: 'smtp.ufps.edu.co',
-        smtpPort: 587,
-        secure: false
-      }
-    },
-    {
-      name: 'Push',
-      type: 'PUSH',
-      description: 'Notificaciones push en la aplicación',
-      isActive: true,
-      config: {}
-    }
-  ];
+  // Get or create notification channels
+  let emailChannel = await prisma.notificationChannel.findFirst({
+    where: { name: 'EMAIL' }
+  });
 
-  const channels = [];
-  for (const channelData of channelsData) {
-    const channel = await prisma.notificationChannel.create({
-      data: channelData
+  if (!emailChannel) {
+    emailChannel = await prisma.notificationChannel.create({
+      data: {
+        name: 'EMAIL',
+        displayName: 'Email',
+        supportsAttachments: true,
+        supportsLinks: true,
+        isActive: true,
+        settings: {
+          smtpHost: 'smtp.ufps.edu.co',
+          smtpPort: 587,
+          secure: false
+        }
+      }
     });
-    channels.push(channel);
+  }
+
+  let pushChannel = await prisma.notificationChannel.findFirst({
+    where: { name: 'PUSH' }
+  });
+
+  if (!pushChannel) {
+    pushChannel = await prisma.notificationChannel.create({
+      data: {
+        name: 'PUSH',
+        displayName: 'Push Notifications',
+        supportsAttachments: false,
+        supportsLinks: true,
+        maxMessageLength: 256,
+        isActive: true,
+        settings: {}
+      }
+    });
   }
 
   // Notification Configs
-  const emailChannel = channels.find(c => c.type === 'EMAIL');
-
   if (emailChannel) {
+    const adminUser = await prisma.user.findFirst({ where: { username: 'admin' } });
     const configsData = [
       {
-        eventType: 'RESERVATION_APPROVED',
         categoryName: 'Salón',
         channelId: emailChannel.id,
-        isActive: true,
-        config: {
-          sendImmediately: true,
-          template: 'approval_notification'
-        }
+        isEnabled: true,
+        isImmediate: true,
+        sendDocuments: false
       }
     ];
 
@@ -627,8 +671,12 @@ async function seedNotificationSystem(categories: any[]) {
 
       await prisma.notificationConfig.create({
         data: {
-          ...config,
-          categoryId: category?.id || null
+          channelId: config.channelId,
+          categoryId: category?.id || null,
+          isEnabled: config.isEnabled,
+          isImmediate: config.isImmediate,
+          sendDocuments: config.sendDocuments,
+          createdBy: adminUser?.id
         }
       });
     }
@@ -638,7 +686,8 @@ async function seedNotificationSystem(categories: any[]) {
 async function seedSampleData(resources: any[], users: any[]) {
   // Create sample availability for resources
   for (const resource of resources) {
-    const daysOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    // Use numeric values for dayOfWeek (1=Monday, 2=Tuesday, etc.)
+    const daysOfWeek = [1, 2, 3, 4, 5, 6];
     
     for (const day of daysOfWeek) {
       await prisma.availability.create({
@@ -646,8 +695,8 @@ async function seedSampleData(resources: any[], users: any[]) {
           resourceId: resource.id,
           dayOfWeek: day,
           startTime: '06:00:00',
-          endTime: day === 'SATURDAY' ? '18:00:00' : '22:00:00',
-          isAvailable: true
+          endTime: day === 6 ? '18:00:00' : '22:00:00',
+          isActive: true
         }
       });
     }
@@ -662,17 +711,14 @@ async function seedSampleData(resources: any[], users: any[]) {
     await prisma.schedule.create({
       data: {
         resourceId: resources[0].id,
-        title: 'Limpieza Programada',
-        description: 'Limpieza y aseo del recurso',
-        scheduleType: 'MAINTENANCE',
-        startTime: '12:00:00',
-        endTime: '12:30:00',
-        dayOfWeek: 'MONDAY',
-        isRecurring: true,
-        recurrencePattern: {
-          type: 'weekly',
-          interval: 1,
-          daysOfWeek: ['MONDAY', 'WEDNESDAY', 'FRIDAY']
+        name: 'Limpieza Programada',
+        type: 'MAINTENANCE',
+        startDate: new Date('2024-01-01T12:00:00Z'),
+        endDate: new Date('2024-01-01T12:30:00Z'),
+        recurrenceRule: {
+          freq: 'WEEKLY',
+          byday: 'MO',
+          interval: 2
         }
       }
     });
