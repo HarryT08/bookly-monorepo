@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaCategoryRepository } from '../../../resources-service/infrastructure/repositories/prisma-category.repository';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { CategoryRepository } from '@libs/common/repositories/category.repository';
 import { CategoryEntity } from '@libs/common/entities/category.entity';
 import { LoggingService } from '@libs/logging/logging.service';
 
@@ -15,7 +15,8 @@ export class AuthCategoryService {
   private readonly ROLE_SUBTYPE = 'ROLE';
 
   constructor(
-    private readonly categoryRepository: PrismaCategoryRepository,
+    @Inject('CategoryRepository')
+    private readonly categoryRepository: CategoryRepository,
     private readonly loggingService: LoggingService,
   ) {}
 
