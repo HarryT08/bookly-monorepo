@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   HealthCheckService,
@@ -16,6 +17,7 @@ export class HealthController {
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
     private readonly healthService: HealthService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Get()
@@ -23,9 +25,12 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Health check successful' })
   @HealthCheck()
   check() {
+    const heapThresholdMB = this.configService.get<number>('MEMORY_HEAP_THRESHOLD_MB', 1536);
+    const rssThresholdMB = this.configService.get<number>('MEMORY_RSS_THRESHOLD_MB', 1536);
+    
     return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-      () => this.memory.checkRSS('memory_rss', 150 * 1024 * 1024),
+      () => this.memory.checkHeap('memory_heap', heapThresholdMB * 1024 * 1024),
+      () => this.memory.checkRSS('memory_rss', rssThresholdMB * 1024 * 1024),
       () => this.disk.checkStorage('storage', { path: '/', threshold: 250 * 1024 * 1024 * 1024 }),
       () => this.healthService.checkDatabase('database'),
       () => this.healthService.checkRedis('redis'),
