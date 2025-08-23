@@ -1,0 +1,397 @@
+{
+  "info": {
+    "name": "Bookly Categories Management",
+    "description": "Postman collection for Bookly Resources Service - Category Management endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resource_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resource_id_2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id_2",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Assign Category to Resource",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories/{{category_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resource-categories",
+            "{{resource_id}}",
+            "categories",
+            "{{category_id}}"
+          ]
+        }
+      },
+      "description": "Assigns a single category to a resource",
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response has assignment data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('resourceId');",
+              "    pm.expect(jsonData).to.have.property('categoryId');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assign Multiple Categories to Resource",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryIds\": [\n    \"64f1a2b3c4d5e6f7g8h9i0j1\",\n    \"64f1a2b3c4d5e6f7g8h9i0j2\",\n    \"64f1a2b3c4d5e6f7g8h9i0j3\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resource-categories",
+            "{{resource_id}}",
+            "categories"
+          ]
+        }
+      },
+      "description": "Assigns multiple categories to a resource",
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response has assignments data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "    if (jsonData.length > 0) {",
+              "        pm.expect(jsonData[0]).to.have.property('resourceId');",
+              "        pm.expect(jsonData[0]).to.have.property('categoryId');",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Resource Categories",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resource-categories",
+            "{{resource_id}}",
+            "categories"
+          ]
+        }
+      },
+      "description": "Gets all categories assigned to a resource",
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is an array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Resources by Category",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/resource-categories/categories/{{category_id}}/resources?page=1&limit=10",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resource-categories",
+            "categories",
+            "{{category_id}}",
+            "resources"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "description": "Gets all resources assigned to a specific category",
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response has pagination structure', function () {",
+              "    const responseJson = pm.response.json();",
+              "    pm.expect(responseJson).to.have.property('associations');",
+              "    pm.expect(responseJson).to.have.property('total');",
+              "    pm.expect(responseJson).to.have.property('page');",
+              "    pm.expect(responseJson).to.have.property('limit');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Resource Categories",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryIds\": [\n    \"64f1a2b3c4d5e6f7g8h9i0j1\",\n    \"64f1a2b3c4d5e6f7g8h9i0j4\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resource-categories",
+            "{{resource_id}}",
+            "categories"
+          ]
+        }
+      },
+      "description": "Updates all categories for a resource (replaces existing assignments)",
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has updated assignments\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Remove Category from Resource",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories/{{category_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resource-categories",
+            "{{resource_id}}",
+            "categories",
+            "{{category_id}}"
+          ]
+        }
+      },
+      "description": "Removes a specific category assignment from a resource",
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Remove All Categories from Resource",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "resource-categories",
+            "{{resource_id}}",
+            "categories"
+          ]
+        }
+      },
+      "description": "Removes all category assignments from a resource",
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}

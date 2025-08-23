@@ -1,0 +1,744 @@
+{
+  "info": {
+    "name": "Bookly Availability Service - Comprehensive Waiting List",
+    "description": "Complete Postman collection for all Waiting List Management endpoints\n\nThis collection covers all waiting list functionality:\n- Join/Leave waiting list with validation\n- Priority escalation and position tracking\n- Bulk notifications and expired processing\n- Statistics and performance analytics\n- Administrative operations\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the availability service (e.g., http://localhost:3000/availability)\n- {{authToken}} - JWT Bearer token for authentication\n- {{adminToken}} - JWT Bearer token for admin operations\n- {{testResourceId}} - Resource ID for testing\n- {{testUserId}} - User ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "waiting-list-comprehensive",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "// Generate test data if not set",
+          "if (!pm.environment.get('testResourceId')) {",
+          "  pm.environment.set('testResourceId', 'resource-test-' + Date.now());",
+          "}",
+          "if (!pm.environment.get('testUserId')) {",
+          "  pm.environment.set('testUserId', 'user-test-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/availability",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Core Waiting List Operations",
+      "item": [
+        {
+          "name": "Join Waiting List",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"desiredStartTime\": \"2024-01-16T09:00:00Z\",\n  \"desiredEndTime\": \"2024-01-16T10:00:00Z\",\n  \"maxWaitTime\": 1440,\n  \"autoAccept\": true,\n  \"priority\": \"NORMAL\",\n  \"notes\": \"Need this room for important presentation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list"]
+            },
+            "description": "Adds user to waiting list for a specific resource and time slot"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Waiting list entry created', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('position');",
+                  "  pm.expect(responseJson).to.have.property('estimatedWaitTime');",
+                  "  pm.expect(responseJson).to.have.property('status');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('waitlistEntryId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My Waiting List Entries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/my-entries?status=ACTIVE&resourceId={{testResourceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "my-entries"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "resourceId",
+                  "value": "{{testResourceId}}",
+                  "description": "Filter by resource"
+                }
+              ]
+            },
+            "description": "Retrieves current user's waiting list entries with optional filters"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each entry has required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.length > 0) {",
+                  "    responseJson.forEach(entry => {",
+                  "      pm.expect(entry).to.have.property('id');",
+                  "      pm.expect(entry).to.have.property('resourceId');",
+                  "      pm.expect(entry).to.have.property('position');",
+                  "      pm.expect(entry).to.have.property('status');",
+                  "    });",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Waiting List Entry by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/{{waitlistEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "{{waitlistEntryId}}"]
+            },
+            "description": "Retrieves a specific waiting list entry by ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Entry has all required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('userId');",
+                  "  pm.expect(responseJson).to.have.property('resourceId');",
+                  "  pm.expect(responseJson).to.have.property('position');",
+                  "  pm.expect(responseJson).to.have.property('status');",
+                  "  pm.expect(responseJson).to.have.property('createdAt');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm Waiting List Notification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accept\": true,\n  \"responseTime\": \"2024-01-16T10:30:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/{{waitlistEntryId}}/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "{{waitlistEntryId}}", "confirm"]
+            },
+            "description": "Confirms or rejects a waiting list slot notification"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Confirmation processed', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('confirmed');",
+                  "  pm.expect(responseJson).to.have.property('reservationId');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Leave Waiting List",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Found alternative resource\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/{{waitlistEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "{{waitlistEntryId}}"]
+            },
+            "description": "Removes user from waiting list with optional reason"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Resource Waiting List Management",
+      "item": [
+        {
+          "name": "Get Waiting List for Resource",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/resource/{{testResourceId}}?page=1&limit=20&sortBy=position&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "resource", "{{testResourceId}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "position",
+                  "description": "Sort field"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Sort order"
+                }
+              ]
+            },
+            "description": "Retrieves waiting list entries for a specific resource with pagination and sorting"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination info', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('entries');",
+                  "  pm.expect(responseJson).to.have.property('total');",
+                  "  pm.expect(responseJson).to.have.property('page');",
+                  "  pm.expect(responseJson).to.have.property('limit');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Process Available Slots",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"availableSlots\": [\n    {\n      \"startTime\": \"2024-01-16T09:00:00Z\",\n      \"endTime\": \"2024-01-16T10:00:00Z\"\n    },\n    {\n      \"startTime\": \"2024-01-16T14:00:00Z\",\n      \"endTime\": \"2024-01-16T15:00:00Z\"\n    }\n  ],\n  \"notificationDeadline\": \"2024-01-16T08:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/process-slots",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "process-slots"]
+            },
+            "description": "Processes available slots and notifies waiting list users (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Processing results returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('notifiedUsers');",
+                  "  pm.expect(responseJson).to.have.property('processedSlots');",
+                  "  pm.expect(responseJson.notifiedUsers).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Priority and Position Management",
+      "item": [
+        {
+          "name": "Escalate User Priority",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{testUserId}}\",\n  \"resourceId\": \"{{testResourceId}}\",\n  \"newPriority\": \"HIGH\",\n  \"reason\": \"Urgent academic requirement\",\n  \"escalatedBy\": \"admin-user-id\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/escalate-priority",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "escalate-priority"]
+            },
+            "description": "Escalates user priority in waiting list (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Priority escalation successful', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('success');",
+                  "  pm.expect(responseJson).to.have.property('newPosition');",
+                  "  pm.expect(responseJson).to.have.property('previousPosition');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Waiting List Entry Position",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/{{waitlistEntryId}}/position",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "{{waitlistEntryId}}", "position"]
+            },
+            "description": "Gets current position and estimated wait time for a waiting list entry"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Position info returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('position');",
+                  "  pm.expect(responseJson).to.have.property('estimatedWaitTime');",
+                  "  pm.expect(responseJson).to.have.property('totalInQueue');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation and Statistics",
+      "item": [
+        {
+          "name": "Validate Joining Waiting List",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"desiredStartTime\": \"2024-01-16T09:00:00Z\",\n  \"desiredEndTime\": \"2024-01-16T10:00:00Z\",\n  \"userId\": \"{{testUserId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/validate-join",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "validate-join"]
+            },
+            "description": "Validates if user can join waiting list for specified resource and time"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Validation result returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('canJoin');",
+                  "  pm.expect(responseJson).to.have.property('reasons');",
+                  "  pm.expect(responseJson).to.have.property('estimatedPosition');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Waiting List Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/statistics?resourceId={{testResourceId}}&startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "statistics"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{testResourceId}}",
+                  "description": "Filter by resource"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "description": "Start date for statistics"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31",
+                  "description": "End date for statistics"
+                }
+              ]
+            },
+            "description": "Retrieves waiting list statistics for analysis (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Statistics data returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('totalEntries');",
+                  "  pm.expect(responseJson).to.have.property('averageWaitTime');",
+                  "  pm.expect(responseJson).to.have.property('successfulConversions');",
+                  "  pm.expect(responseJson).to.have.property('abandonmentRate');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Performance Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/analytics?period=monthly&resourceType=CLASSROOM&includeComparisons=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "monthly",
+                  "description": "Analysis period"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Filter by resource type"
+                },
+                {
+                  "key": "includeComparisons",
+                  "value": "true",
+                  "description": "Include period comparisons"
+                }
+              ]
+            },
+            "description": "Retrieves comprehensive waiting list performance analytics (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Analytics data returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('metrics');",
+                  "  pm.expect(responseJson).to.have.property('trends');",
+                  "  pm.expect(responseJson).to.have.property('recommendations');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Notify Waiting List Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"notificationType\": \"SLOT_AVAILABLE\",\n  \"message\": \"A slot has become available for your requested time\",\n  \"userIds\": [\"{{testUserId}}\"],\n  \"priority\": \"HIGH\",\n  \"expirationTime\": \"2024-01-16T12:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/bulk-notify",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "bulk-notify"]
+            },
+            "description": "Sends bulk notifications to waiting list users (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Bulk notification results', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('notificationsSent');",
+                  "  pm.expect(responseJson).to.have.property('failedNotifications');",
+                  "  pm.expect(responseJson).to.have.property('totalProcessed');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Process Expired Notifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"cutoffTime\": \"2024-01-16T08:00:00Z\",\n  \"actionType\": \"REMOVE_FROM_QUEUE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waiting-list/process-expired",
+              "host": ["{{baseUrl}}"],
+              "path": ["waiting-list", "process-expired"]
+            },
+            "description": "Processes expired waiting list notifications and takes appropriate actions (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Expired processing results', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('processedEntries');",
+                  "  pm.expect(responseJson).to.have.property('removedEntries');",
+                  "  pm.expect(responseJson).to.have.property('notifiedUsers');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

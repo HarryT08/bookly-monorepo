@@ -1,0 +1,353 @@
+{
+  "info": {
+    "name": "Bookly Programs Management",
+    "description": "Postman collection for Bookly Resources Service - Academic Programs Management endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "program_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Program",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ingeniería de Sistemas\",\n  \"code\": \"INGSIST\",\n  \"description\": \"Programa de Ingeniería de Sistemas y Computación\",\n  \"faculty\": \"Facultad de Ingenierías\",\n  \"level\": \"UNDERGRADUATE\",\n  \"isActive\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/programs",
+          "host": ["{{base_url}}"],
+          "path": ["programs"]
+        },
+        "description": "Creates a new academic program"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response has program data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('name');",
+              "    pm.expect(jsonData).to.have.property('code');",
+              "    pm.expect(jsonData.name).to.eql('Ingeniería de Sistemas');",
+              "});",
+              "",
+              "// Store program ID for other requests",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.collectionVariables.set('program_id', jsonData.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Programs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/programs",
+          "host": ["{{base_url}}"],
+          "path": ["programs"]
+        },
+        "description": "Retrieves all academic programs"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is an array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Programs with Filters",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/programs?faculty=Facultad de Ingenierías&level=UNDERGRADUATE&isActive=true",
+          "host": ["{{base_url}}"],
+          "path": ["programs"],
+          "query": [
+            {
+              "key": "faculty",
+              "value": "Facultad de Ingenierías"
+            },
+            {
+              "key": "level",
+              "value": "UNDERGRADUATE"
+            },
+            {
+              "key": "isActive",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "Get programs with filtering by faculty, level, and status"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Filtered results match criteria\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        jsonData.forEach(function(program) {",
+              "            pm.expect(program.faculty).to.eql('Facultad de Ingenierías');",
+              "            pm.expect(program.level).to.eql('UNDERGRADUATE');",
+              "            pm.expect(program.isActive).to.be.true;",
+              "        });",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Program by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/programs/{{program_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["programs", "{{program_id}}"]
+        },
+        "description": "Get a specific program by ID"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has program data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('program_id'));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Program by Code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/programs/code/INGSIST",
+          "host": ["{{base_url}}"],
+          "path": ["programs", "code", "INGSIST"]
+        },
+        "description": "Get a program by its unique code"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 or 404\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+              "});",
+              "",
+              "if (pm.response.code === 200) {",
+              "    pm.test(\"Response has program data\", function () {",
+              "        var jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.property('code');",
+              "        pm.expect(jsonData.code).to.eql('INGSIST');",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Program",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ingeniería de Sistemas y Computación\",\n  \"description\": \"Programa actualizado de Ingeniería de Sistemas y Computación\",\n  \"faculty\": \"Facultad de Ingenierías y Arquitectura\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/programs/{{program_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["programs", "{{program_id}}"]
+        },
+        "description": "Update an existing program"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Program was updated\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.name).to.eql('Ingeniería de Sistemas y Computación');",
+              "    pm.expect(jsonData.faculty).to.eql('Facultad de Ingenierías y Arquitectura');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deactivate Program",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"isActive\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/programs/{{program_id}}/status",
+          "host": ["{{base_url}}"],
+          "path": ["programs", "{{program_id}}", "status"]
+        },
+        "description": "Activate or deactivate a program"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Status was updated\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.isActive).to.be.false;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Program",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/programs/{{program_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["programs", "{{program_id}}"]
+        },
+        "description": "Delete a program (only if not associated with resources)"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204 or 400\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([204, 400]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,561 @@
+{
+  "info": {
+    "name": "Bookly Availability Service - RF-11 Reservation History",
+    "description": "Postman collection for Reservation History endpoints (RF-11)\n\nThis collection covers:\n- Creating reservation history entries for audit trail\n- Retrieving reservation history with filtering and pagination\n- Advanced history queries with detailed analytics\n- Exporting history data to CSV format\n\nHistory Actions:\n- CREATED, UPDATED, CANCELLED, CONFIRMED, CHECKED_IN, CHECKED_OUT, RESCHEDULED\n\nHistory Sources:\n- WEB, MOBILE, API, SYSTEM, ADMIN\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the availability service\n- {{authToken}} - JWT Bearer token for authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "rf11-reservation-history",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "// Generate sample IDs if not set",
+          "if (!pm.environment.get('sampleReservationId')) {",
+          "  pm.environment.set('sampleReservationId', 'reservation-' + Date.now());",
+          "}",
+          "if (!pm.environment.get('sampleUserId')) {",
+          "  pm.environment.set('sampleUserId', 'user-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/availability",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "History Management",
+      "item": [
+        {
+          "name": "Create History Entry - Reservation Created",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationId\": \"{{sampleReservationId}}\",\n  \"userId\": \"{{sampleUserId}}\",\n  \"action\": \"CREATED\",\n  \"source\": \"WEB\",\n  \"previousData\": null,\n  \"newData\": {\n    \"resourceId\": \"resource-123\",\n    \"startTime\": \"2024-01-15T09:00:00Z\",\n    \"endTime\": \"2024-01-15T10:00:00Z\",\n    \"purpose\": \"Team Meeting\",\n    \"attendees\": 5\n  },\n  \"details\": \"New reservation created via web interface\",\n  \"ipAddress\": \"192.168.1.100\",\n  \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history"]
+            },
+            "description": "Creates a history entry when a reservation is created"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('History entry created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson.action).to.equal('CREATED');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('historyEntryId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create History Entry - Reservation Updated",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationId\": \"{{sampleReservationId}}\",\n  \"userId\": \"{{sampleUserId}}\",\n  \"action\": \"UPDATED\",\n  \"source\": \"MOBILE\",\n  \"previousData\": {\n    \"startTime\": \"2024-01-15T09:00:00Z\",\n    \"endTime\": \"2024-01-15T10:00:00Z\",\n    \"attendees\": 5\n  },\n  \"newData\": {\n    \"startTime\": \"2024-01-15T10:00:00Z\",\n    \"endTime\": \"2024-01-15T11:00:00Z\",\n    \"attendees\": 8\n  },\n  \"details\": \"Updated time and attendee count via mobile app\",\n  \"ipAddress\": \"10.0.0.50\",\n  \"userAgent\": \"BooklyMobile/1.2.0 (iOS 17.0)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history"]
+            },
+            "description": "Creates a history entry when a reservation is updated"
+          },
+          "response": []
+        },
+        {
+          "name": "Create History Entry - Reservation Cancelled",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationId\": \"{{sampleReservationId}}\",\n  \"userId\": \"{{sampleUserId}}\",\n  \"action\": \"CANCELLED\",\n  \"source\": \"ADMIN\",\n  \"previousData\": {\n    \"status\": \"CONFIRMED\",\n    \"startTime\": \"2024-01-15T10:00:00Z\",\n    \"endTime\": \"2024-01-15T11:00:00Z\"\n  },\n  \"newData\": {\n    \"status\": \"CANCELLED\",\n    \"cancelledAt\": \"2024-01-14T15:30:00Z\",\n    \"cancelReason\": \"Resource maintenance required\"\n  },\n  \"details\": \"Cancelled by admin due to emergency maintenance\",\n  \"ipAddress\": \"192.168.1.10\",\n  \"userAgent\": \"BooklyAdmin/2.1.0\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history"]
+            },
+            "description": "Creates a history entry when a reservation is cancelled"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Basic History Queries",
+      "item": [
+        {
+          "name": "Get All History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/history?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number for pagination"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves all reservation history with pagination"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains history entries', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('entries');",
+                  "  pm.expect(responseJson.entries).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Response contains pagination info', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('pagination');",
+                  "  pm.expect(responseJson.pagination).to.have.property('page');",
+                  "  pm.expect(responseJson.pagination).to.have.property('limit');",
+                  "  pm.expect(responseJson.pagination).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get History by Reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/history?reservationId={{sampleReservationId}}&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["history"],
+              "query": [
+                {
+                  "key": "reservationId",
+                  "value": "{{sampleReservationId}}",
+                  "description": "Filter by reservation ID"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retrieves history for a specific reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get History by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/history?userId={{sampleUserId}}&startDate=2024-01-01T00:00:00Z&endDate=2024-01-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["history"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{sampleUserId}}",
+                  "description": "Filter by user ID"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z",
+                  "description": "Filter from date"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31T23:59:59Z",
+                  "description": "Filter to date"
+                }
+              ]
+            },
+            "description": "Retrieves history for a specific user within date range"
+          },
+          "response": []
+        },
+        {
+          "name": "Get History by Action Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/history?action=CANCELLED&page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["history"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "CANCELLED",
+                  "description": "Filter by action type"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Retrieves all cancellation history entries"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Advanced History Queries",
+      "item": [
+        {
+          "name": "Get Detailed History with All Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history/detailed?actions=CREATED&actions=UPDATED&sources=WEB&sources=MOBILE&startDate=2024-01-01T00:00:00Z&endDate=2024-01-31T23:59:59Z&page=1&limit=25&sortBy=createdAt&sortOrder=desc&includeReservationData=true&includeUserData=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history", "detailed"],
+              "query": [
+                {
+                  "key": "actions",
+                  "value": "CREATED",
+                  "description": "Filter by actions"
+                },
+                {
+                  "key": "actions",
+                  "value": "UPDATED",
+                  "description": "Filter by actions"
+                },
+                {
+                  "key": "sources",
+                  "value": "WEB",
+                  "description": "Filter by sources"
+                },
+                {
+                  "key": "sources",
+                  "value": "MOBILE",
+                  "description": "Filter by sources"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z",
+                  "description": "Start date filter"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31T23:59:59Z",
+                  "description": "End date filter"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "25"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Sort field"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Sort order"
+                },
+                {
+                  "key": "includeReservationData",
+                  "value": "true",
+                  "description": "Include reservation details"
+                },
+                {
+                  "key": "includeUserData",
+                  "value": "true",
+                  "description": "Include user information"
+                }
+              ]
+            },
+            "description": "Advanced history query with comprehensive filtering and data inclusion"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response includes detailed data', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('entries');",
+                  "  if (responseJson.entries.length > 0) {",
+                  "    const entry = responseJson.entries[0];",
+                  "    pm.expect(['CREATED', 'UPDATED']).to.include(entry.action);",
+                  "    pm.expect(['WEB', 'MOBILE']).to.include(entry.source);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get History for Audit Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history/detailed?resourceId={{resourceId}}&actions=CANCELLED&actions=RESCHEDULED&startDate=2024-01-01T00:00:00Z&endDate=2024-12-31T23:59:59Z&sortBy=createdAt&sortOrder=asc&includeReservationData=true&includeUserData=false&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history", "detailed"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}",
+                  "description": "Filter by resource ID"
+                },
+                {
+                  "key": "actions",
+                  "value": "CANCELLED"
+                },
+                {
+                  "key": "actions",
+                  "value": "RESCHEDULED"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31T23:59:59Z"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc"
+                },
+                {
+                  "key": "includeReservationData",
+                  "value": "true"
+                },
+                {
+                  "key": "includeUserData",
+                  "value": "false"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": "Query for audit report focusing on cancellations and rescheduling"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "History Export",
+      "item": [
+        {
+          "name": "Export All History to CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history", "export"]
+            },
+            "description": "Exports all reservation history to CSV format"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is CSV format', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                  "});",
+                  "",
+                  "pm.test('CSV contains headers', function () {",
+                  "  const csvContent = pm.response.text();",
+                  "  pm.expect(csvContent).to.include('ID');",
+                  "  pm.expect(csvContent).to.include('Reservation ID');",
+                  "  pm.expect(csvContent).to.include('Action');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Export Filtered History to CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history/export?userId={{sampleUserId}}&startDate=2024-01-01T00:00:00Z&endDate=2024-01-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history", "export"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{sampleUserId}}",
+                  "description": "Filter by user ID"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z",
+                  "description": "Start date filter"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31T23:59:59Z",
+                  "description": "End date filter"
+                }
+              ]
+            },
+            "description": "Exports filtered history data for a specific user and date range"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Resource History to CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation-history/export?resourceId={{resourceId}}&startDate=2024-01-01T00:00:00Z&endDate=2024-12-31T23:59:59Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation-history", "export"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}",
+                  "description": "Filter by resource ID"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31T23:59:59Z"
+                }
+              ]
+            },
+            "description": "Exports annual history for a specific resource"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

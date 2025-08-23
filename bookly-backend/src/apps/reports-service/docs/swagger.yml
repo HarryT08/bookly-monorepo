@@ -1,0 +1,1080 @@
+openapi: 3.0.3
+info:
+  title: Bookly Reports Service API
+  description: |
+    REST API specification for the Bookly Reports Service.
+    
+    This service provides endpoints for:
+    - Usage reports by resource/program/period (RF-31)
+    - User reports by professor/student (RF-32)
+    - CSV export functionality (RF-33)
+    - Dashboard data and analytics (RF-36)
+    - Feedback collection and management (RF-34)
+    - Audit logs and system tracking (RF-44)
+    - Demand analysis and unsatisfied demand reports (RF-37)
+    
+    All endpoints require JWT authentication and role-based authorization.
+  version: 1.0.0
+  contact:
+    name: Bookly Development Team
+    email: dev@bookly.ufps.edu.co
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3004
+    description: Development server
+  - url: https://api.bookly.ufps.edu.co/reports
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /reports/usage:
+    get:
+      tags:
+        - Usage Reports
+      summary: Generate usage report (RF-31)
+      description: Generate detailed usage report filtered by program, period, and resource type
+      operationId: generateUsageReport
+      parameters:
+        - name: programId
+          in: query
+          description: Filter by academic program
+          schema:
+            type: string
+            example: "ING-SIS"
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+            example: "SALON"
+        - name: startDate
+          in: query
+          description: Start date for the report period
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+        - name: endDate
+          in: query
+          description: End date for the report period
+          schema:
+            type: string
+            format: date
+            example: "2024-01-31"
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Usage report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageReportResponse'
+        '400':
+          description: Invalid filters provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /reports/users:
+    get:
+      tags:
+        - User Reports
+      summary: Generate user reservations report (RF-32)
+      description: Generate detailed report about reservations made by users/professors
+      operationId: generateUserReport
+      parameters:
+        - name: userIds
+          in: query
+          description: Filter by specific user IDs
+          schema:
+            type: array
+            items:
+              type: string
+        - name: userType
+          in: query
+          description: Filter by user type
+          schema:
+            type: string
+            enum: [STUDENT, TEACHER, ADMINISTRATIVE]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: User report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReportResponse'
+      security:
+        - BearerAuth: []
+
+  /reports/users/summary:
+    get:
+      tags:
+        - User Reports
+      summary: Get user report summary
+      description: Get summary statistics for user report with given filters
+      operationId: getUserReportSummary
+      parameters:
+        - name: userIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: userType
+          in: query
+          schema:
+            type: string
+            enum: [STUDENT, TEACHER, ADMINISTRATIVE]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: User report summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalUsers:
+                    type: number
+                    example: 25
+                  totalReservations:
+                    type: number
+                    example: 375
+                  averageReservationsPerUser:
+                    type: number
+                    example: 15
+                  topUser:
+                    type: string
+                    example: "profesor@ufps.edu.co"
+                  averageUtilization:
+                    type: number
+                    example: 82.5
+      security:
+        - BearerAuth: []
+
+  /reports/users/history:
+    get:
+      tags:
+        - User Reports
+      summary: Get user report history
+      description: Get history of reports generated by the current user
+      operationId: getReportHistory
+      parameters:
+        - name: reportType
+          in: query
+          description: Filter by report type
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of reports to return
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Report history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    reportType:
+                      type: string
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    metadata:
+                      type: object
+                    summary:
+                      type: object
+                    accessCount:
+                      type: number
+                    lastAccessed:
+                      type: string
+                      format: date-time
+                    status:
+                      type: string
+      security:
+        - BearerAuth: []
+
+  /reports/users/my-stats:
+    get:
+      tags:
+        - User Reports
+      summary: Get my reservation statistics
+      description: Get reservation statistics for the current user
+      operationId: getMyStats
+      responses:
+        '200':
+          description: User statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalReservations:
+                    type: number
+                  confirmedReservations:
+                    type: number
+                  cancelledReservations:
+                    type: number
+                  noShowReservations:
+                    type: number
+                  utilizationRate:
+                    type: number
+                  cancellationRate:
+                    type: number
+                  totalHours:
+                    type: number
+                  frequentResources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        resourceName:
+                          type: string
+                        count:
+                          type: number
+      security:
+        - BearerAuth: []
+
+  /reports/export/csv:
+    post:
+      tags:
+        - Export Reports
+      summary: Export report to CSV (RF-33)
+      description: Export usage or user report data to CSV format
+      operationId: exportReportToCSV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reportType:
+                  type: string
+                  enum: [USAGE, USER, DEMAND]
+                  example: "USAGE"
+                filters:
+                  type: object
+                  description: Report filters (same as report generation endpoints)
+                  example:
+                    programId: "ING-SIS"
+                    startDate: "2024-01-01"
+                    endDate: "2024-01-31"
+                filename:
+                  type: string
+                  description: Custom filename for the export
+                  example: "usage_report_january_2024"
+              required:
+                - reportType
+                - filters
+      responses:
+        '202':
+          description: Export request accepted, processing in background
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exportId:
+                    type: string
+                    example: "exp_123456789"
+                  message:
+                    type: string
+                    example: "Export request accepted. You will be notified when ready."
+                  estimatedTime:
+                    type: string
+                    example: "2-5 minutes"
+        '400':
+          description: Invalid export request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /reports/export/download/{exportId}:
+    get:
+      tags:
+        - Export Reports
+      summary: Download exported file (RF-33)
+      description: Download a previously exported report file
+      operationId: downloadExport
+      parameters:
+        - name: exportId
+          in: path
+          required: true
+          description: ID of the export to download
+          schema:
+            type: string
+            example: "exp_123456789"
+      responses:
+        '200':
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: Attachment filename
+              schema:
+                type: string
+                example: "attachment; filename=usage_report_january_2024.csv"
+        '404':
+          description: Export not found or not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - BearerAuth: []
+
+  /reports/export/history:
+    get:
+      tags:
+        - Export Reports
+      summary: Get export history
+      description: Get history of CSV exports for the current user
+      operationId: getExportHistory
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Export history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        filename:
+                          type: string
+                        reportType:
+                          type: string
+                        status:
+                          type: string
+                          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+                        createdAt:
+                          type: string
+                          format: date-time
+                        completedAt:
+                          type: string
+                          format: date-time
+                        fileSize:
+                          type: number
+                        recordCount:
+                          type: number
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+      security:
+        - BearerAuth: []
+
+  /reports/export/status/{exportId}:
+    get:
+      tags:
+        - Export Reports
+      summary: Get export status
+      description: Check the status of a CSV export request
+      operationId: getExportStatus
+      parameters:
+        - name: exportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Export status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+                  progress:
+                    type: number
+                    minimum: 0
+                    maximum: 100
+                  message:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  estimatedCompletion:
+                    type: string
+                    format: date-time
+      security:
+        - BearerAuth: []
+
+  /reports/dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: Get dashboard data (RF-36)
+      description: Get real-time dashboard data and analytics
+      operationId: getDashboardData
+      parameters:
+        - name: period
+          in: query
+          description: Time period for dashboard data
+          schema:
+            type: string
+            enum: [TODAY, WEEK, MONTH, QUARTER, YEAR]
+            default: MONTH
+        - name: programId
+          in: query
+          description: Filter by academic program
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                    properties:
+                      totalReservations:
+                        type: number
+                      activeReservations:
+                        type: number
+                      utilizationRate:
+                        type: number
+                      topResources:
+                        type: array
+                        items:
+                          type: object
+                  charts:
+                    type: object
+                    properties:
+                      reservationTrends:
+                        type: array
+                      resourceUtilization:
+                        type: array
+                      userActivity:
+                        type: array
+                  alerts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        message:
+                          type: string
+                        severity:
+                          type: string
+      security:
+        - BearerAuth: []
+
+  /reports/feedback:
+    post:
+      tags:
+        - Feedback
+      summary: Create feedback (RF-34)
+      description: Submit feedback about the reservation system
+      operationId: createFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reservationId:
+                  type: string
+                  description: Related reservation ID (optional)
+                resourceId:
+                  type: string
+                  description: Related resource ID (optional)
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  example: 4
+                category:
+                  type: string
+                  enum: [SYSTEM, RESOURCE, SERVICE, SUGGESTION]
+                  example: "RESOURCE"
+                title:
+                  type: string
+                  example: "Great audio quality"
+                comment:
+                  type: string
+                  example: "The sound system worked perfectly during my presentation"
+                anonymous:
+                  type: boolean
+                  default: false
+              required:
+                - rating
+                - category
+                - comment
+      responses:
+        '201':
+          description: Feedback created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  message:
+                    type: string
+                    example: "Thank you for your feedback!"
+      security:
+        - BearerAuth: []
+
+    get:
+      tags:
+        - Feedback
+      summary: Get feedback list
+      description: Get list of feedback submissions (admin only)
+      operationId: getFeedback
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [SYSTEM, RESOURCE, SERVICE, SUGGESTION]
+        - name: rating
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Feedback list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  feedback:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        rating:
+                          type: integer
+                        category:
+                          type: string
+                        title:
+                          type: string
+                        comment:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        userName:
+                          type: string
+                        resourceName:
+                          type: string
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+      security:
+        - BearerAuth: []
+
+  /reports/audit:
+    get:
+      tags:
+        - Audit
+      summary: Get audit logs (RF-44)
+      description: Get system audit logs (admin only)
+      operationId: getAuditLogs
+      parameters:
+        - name: action
+          in: query
+          description: Filter by action type
+          schema:
+            type: string
+            enum: [CREATE, UPDATE, DELETE, LOGIN, LOGOUT, EXPORT]
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Audit logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        action:
+                          type: string
+                        resourceType:
+                          type: string
+                        resourceId:
+                          type: string
+                        userId:
+                          type: string
+                        userName:
+                          type: string
+                        ipAddress:
+                          type: string
+                        userAgent:
+                          type: string
+                        details:
+                          type: object
+                        timestamp:
+                          type: string
+                          format: date-time
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+      security:
+        - BearerAuth: []
+
+  /reports/demand:
+    get:
+      tags:
+        - Demand Analysis
+      summary: Generate demand analysis report (RF-37)
+      description: Generate report about unsatisfied demand and resource utilization
+      operationId: generateDemandReport
+      parameters:
+        - name: programId
+          in: query
+          description: Filter by academic program
+          schema:
+            type: string
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: includeWaitlist
+          in: query
+          description: Include waitlist data in analysis
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Demand analysis report generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: object
+                    properties:
+                      totalDemand:
+                        type: number
+                      satisfiedDemand:
+                        type: number
+                      unsatisfiedDemand:
+                        type: number
+                      satisfactionRate:
+                        type: number
+                  resourceAnalysis:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        resourceId:
+                          type: string
+                        resourceName:
+                          type: string
+                        resourceType:
+                          type: string
+                        utilizationRate:
+                          type: number
+                        demandScore:
+                          type: number
+                        recommendedActions:
+                          type: array
+                          items:
+                            type: string
+                  timeAnalysis:
+                    type: object
+                    properties:
+                      peakHours:
+                        type: array
+                      lowDemandPeriods:
+                        type: array
+                      recommendations:
+                        type: array
+                        items:
+                          type: string
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "RPRT-0401"
+        message:
+          type: string
+          example: "Invalid filters provided"
+        type:
+          type: string
+          example: "error"
+        exception_code:
+          type: string
+          example: "R-40"
+        http_code:
+          type: integer
+          example: 400
+        http_exception:
+          type: string
+          example: "BadRequestException"
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+          example: "/reports/usage"
+
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 150
+        totalPages:
+          type: integer
+          example: 15
+        hasNext:
+          type: boolean
+          example: true
+        hasPrev:
+          type: boolean
+          example: false
+
+    UsageReportResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              resourceId:
+                type: string
+                example: "res_001"
+              resourceName:
+                type: string
+                example: "Aula Magna"
+              resourceType:
+                type: string
+                example: "AUDITORIO"
+              programId:
+                type: string
+                example: "ING-SIS"
+              programName:
+                type: string
+                example: "Ingeniería de Sistemas"
+              totalReservations:
+                type: number
+                example: 45
+              totalHours:
+                type: number
+                example: 180
+              utilizationRate:
+                type: number
+                example: 75.5
+              peakUsageHours:
+                type: array
+                items:
+                  type: string
+                example: ["08:00-10:00", "14:00-16:00"]
+              averageSessionDuration:
+                type: number
+                example: 4
+              noShowRate:
+                type: number
+                example: 8.2
+        summary:
+          type: object
+          properties:
+            totalResources:
+              type: number
+              example: 12
+            totalReservations:
+              type: number
+              example: 540
+            averageUtilization:
+              type: number
+              example: 68.3
+            topPerformingResource:
+              type: string
+              example: "Aula Magna"
+            underutilizedResources:
+              type: array
+              items:
+                type: string
+              example: ["Lab 301", "Sala de Juntas B"]
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    UserReportResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+                example: "usr_001"
+              userName:
+                type: string
+                example: "Dr. Juan Pérez"
+              userEmail:
+                type: string
+                example: "juan.perez@ufps.edu.co"
+              userType:
+                type: string
+                example: "TEACHER"
+              programId:
+                type: string
+                example: "ING-SIS"
+              totalReservations:
+                type: number
+                example: 25
+              confirmedReservations:
+                type: number
+                example: 23
+              cancelledReservations:
+                type: number
+                example: 2
+              noShowReservations:
+                type: number
+                example: 1
+              totalHours:
+                type: number
+                example: 100
+              utilizationRate:
+                type: number
+                example: 92.0
+              cancellationRate:
+                type: number
+                example: 8.0
+              favoriteResources:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    resourceName:
+                      type: string
+                    usageCount:
+                      type: number
+                example:
+                  - resourceName: "Aula 201"
+                    usageCount: 15
+              lastReservationDate:
+                type: string
+                format: date-time
+        summary:
+          type: object
+          properties:
+            totalUsers:
+              type: number
+              example: 150
+            totalReservations:
+              type: number
+              example: 3750
+            averageReservationsPerUser:
+              type: number
+              example: 25
+            topUser:
+              type: string
+              example: "Dr. Juan Pérez"
+            averageUtilization:
+              type: number
+              example: 85.2
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'

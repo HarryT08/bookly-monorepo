@@ -1,0 +1,677 @@
+{
+  "info": {
+    "name": "Bookly Stockpile Service - Approval Flows",
+    "description": "Postman collection for Approval Flow Management endpoints\n\nThis collection covers:\n- Creating and managing approval flows\n- Configuring approval levels and hierarchies\n- Processing approval requests\n- Reservation status tracking\n- Multi-level approval workflows\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the stockpile service (e.g., http://localhost:3000/stockpile)\n- {{authToken}} - JWT Bearer token for authentication\n- {{adminToken}} - JWT Bearer token for admin operations\n- {{testProgramId}} - Program ID for testing\n- {{testResourceId}} - Resource ID for testing\n- {{testUserId}} - User ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "stockpile-approval-flows",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "// Generate test data if not set",
+          "if (!pm.environment.get('testProgramId')) {",
+          "  pm.environment.set('testProgramId', 'program-test-' + Date.now());",
+          "}",
+          "if (!pm.environment.get('testResourceId')) {",
+          "  pm.environment.set('testResourceId', 'resource-test-' + Date.now());",
+          "}",
+          "if (!pm.environment.get('testUserId')) {",
+          "  pm.environment.set('testUserId', 'user-test-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/stockpile",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Approval Flow Configuration",
+      "item": [
+        {
+          "name": "Create Approval Flow",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Standard Classroom Approval\",\n  \"description\": \"Standard approval flow for classroom reservations\",\n  \"programId\": \"{{testProgramId}}\",\n  \"resourceType\": \"CLASSROOM\",\n  \"categoryId\": \"classroom-standard\",\n  \"isDefault\": true,\n  \"requiresAllApprovals\": false,\n  \"isActive\": true,\n  \"levels\": [\n    {\n      \"name\": \"Department Head Approval\",\n      \"description\": \"Approval by department head\",\n      \"order\": 1,\n      \"approverRoles\": [\"DEPARTMENT_HEAD\"],\n      \"isRequired\": true,\n      \"timeoutHours\": 24\n    },\n    {\n      \"name\": \"Administrative Approval\",\n      \"description\": \"Final administrative approval\",\n      \"order\": 2,\n      \"approverRoles\": [\"ADMIN\"],\n      \"isRequired\": false,\n      \"timeoutHours\": 48\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows"]
+            },
+            "description": "Creates a new approval flow configuration with multiple levels"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Approval flow created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('levels');",
+                  "  pm.expect(responseJson.levels).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('approvalFlowId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Approval Flows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows?programId={{testProgramId}}&resourceType=CLASSROOM&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows"],
+              "query": [
+                {
+                  "key": "programId",
+                  "value": "{{testProgramId}}",
+                  "description": "Filter by program"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Filter by resource type"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter active flows only"
+                }
+              ]
+            },
+            "description": "Retrieves approval flows with filtering options"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each flow has required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.length > 0) {",
+                  "    responseJson.forEach(flow => {",
+                  "      pm.expect(flow).to.have.property('id');",
+                  "      pm.expect(flow).to.have.property('name');",
+                  "      pm.expect(flow).to.have.property('programId');",
+                  "    });",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Approval Flow by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/{{approvalFlowId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "{{approvalFlowId}}"]
+            },
+            "description": "Retrieves a specific approval flow by ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Flow has all required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('description');",
+                  "  pm.expect(responseJson).to.have.property('levels');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Approval Flow",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Classroom Approval Flow\",\n  \"description\": \"Updated description for classroom approval process\",\n  \"requiresAllApprovals\": true,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/{{approvalFlowId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "{{approvalFlowId}}"]
+            },
+            "description": "Updates an existing approval flow configuration"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Flow updated successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.name).to.equal('Updated Classroom Approval Flow');",
+                  "  pm.expect(responseJson.requiresAllApprovals).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Default Approval Flow",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/default/search?programId={{testProgramId}}&resourceType=CLASSROOM",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "default", "search"],
+              "query": [
+                {
+                  "key": "programId",
+                  "value": "{{testProgramId}}",
+                  "description": "Program ID"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Resource type"
+                }
+              ]
+            },
+            "description": "Retrieves the default approval flow for a specific scope"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Default flow returned or null', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson) {",
+                  "    pm.expect(responseJson).to.have.property('isDefault');",
+                  "    pm.expect(responseJson.isDefault).to.be.true;",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Approval Levels Management",
+      "item": [
+        {
+          "name": "Create Approval Level",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Security Approval\",\n  \"description\": \"Security department approval for special events\",\n  \"order\": 3,\n  \"approverRoles\": [\"SECURITY_OFFICER\"],\n  \"approverUserIds\": [],\n  \"isRequired\": false,\n  \"timeoutHours\": 12,\n  \"escalationRules\": {\n    \"escalateAfterHours\": 8,\n    \"escalateToRoles\": [\"SECURITY_MANAGER\"]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/{{approvalFlowId}}/levels",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "{{approvalFlowId}}", "levels"]
+            },
+            "description": "Creates a new approval level for an existing flow"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Approval level created', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('order');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('approvalLevelId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Approval Levels by Flow",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/{{approvalFlowId}}/levels",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "{{approvalFlowId}}", "levels"]
+            },
+            "description": "Retrieves all approval levels for a specific flow"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Levels array returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Levels are ordered correctly', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.length > 1) {",
+                  "    for (let i = 1; i < responseJson.length; i++) {",
+                  "      pm.expect(responseJson[i].order).to.be.greaterThan(responseJson[i-1].order);",
+                  "    }",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reservation Approval Process",
+      "item": [
+        {
+          "name": "Submit Reservation for Approval",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"resourceType\": \"CLASSROOM\",\n  \"programId\": \"{{testProgramId}}\",\n  \"categoryId\": \"classroom-standard\",\n  \"requestDetails\": {\n    \"purpose\": \"Weekly department meeting\",\n    \"expectedAttendees\": 15,\n    \"specialRequirements\": [\"PROJECTOR\", \"WHITEBOARD\"]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/reservations/{{testReservationId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "reservations", "{{testReservationId}}", "submit"]
+            },
+            "description": "Submits a reservation for approval through the configured flow"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('testReservationId')) {",
+                  "  pm.environment.set('testReservationId', 'reservation-test-' + Date.now());",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Approval process initiated', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('success');",
+                  "  pm.expect(responseJson.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Pending Approval Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/requests/pending?programId={{testProgramId}}&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "requests", "pending"],
+              "query": [
+                {
+                  "key": "programId",
+                  "value": "{{testProgramId}}",
+                  "description": "Filter by program"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves pending approval requests with pagination"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Pending requests returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('requests');",
+                  "  pm.expect(responseJson).to.have.property('total');",
+                  "  pm.expect(responseJson.requests).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.json().requests.length > 0) {",
+                  "  const firstRequest = pm.response.json().requests[0];",
+                  "  pm.environment.set('pendingRequestId', firstRequest.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Process Approval Request - Approve",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"APPROVE\",\n  \"comments\": \"Request approved - all requirements met\",\n  \"conditions\": [\n    \"Resource must be returned in same condition\",\n    \"No food or drinks allowed\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/requests/{{pendingRequestId}}/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "requests", "{{pendingRequestId}}", "process"]
+            },
+            "description": "Processes an approval request with approval action"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Request processed successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('success');",
+                  "  pm.expect(responseJson.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Process Approval Request - Reject",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"REJECT\",\n  \"reason\": \"INSUFFICIENT_JUSTIFICATION\",\n  \"comments\": \"Request lacks proper justification for resource usage\",\n  \"suggestions\": [\n    \"Provide detailed agenda for the meeting\",\n    \"Consider using a smaller room for 15 attendees\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/requests/{{pendingRequestId}}/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "requests", "{{pendingRequestId}}", "process"]
+            },
+            "description": "Processes an approval request with rejection action"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservation Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/reservations/{{testReservationId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "reservations", "{{testReservationId}}", "status"]
+            },
+            "description": "Gets the current approval status of a reservation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Status information returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('reservationId');",
+                  "  pm.expect(responseJson).to.have.property('status');",
+                  "  pm.expect(responseJson).to.have.property('pendingRequests');",
+                  "  pm.expect(responseJson).to.have.property('completedRequests');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Approval Requests by Reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/reservations/{{testReservationId}}/requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "reservations", "{{testReservationId}}", "requests"]
+            },
+            "description": "Retrieves all approval requests for a specific reservation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Requests array returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Meeting cancelled due to schedule conflict\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/approval-flows/reservations/{{testReservationId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["approval-flows", "reservations", "{{testReservationId}}", "cancel"]
+            },
+            "description": "Cancels a reservation and its associated approval requests"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cancellation processed', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('success');",
+                  "  pm.expect(responseJson.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
