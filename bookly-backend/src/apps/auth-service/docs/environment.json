@@ -1,0 +1,121 @@
+{
+  "id": "auth-service-environment",
+  "name": "Bookly Auth Service Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "description": "Base URL for the auth service API",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "description": "JWT Bearer token for authenticated requests",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "description": "JWT Bearer token for admin operations (Administrador General)",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "coordinatorToken",
+      "value": "",
+      "description": "JWT Bearer token for coordinator operations (Administrador de Programa)",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "testUserId",
+      "value": "user-test-123",
+      "description": "Test user ID for user management operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testRoleId",
+      "value": "",
+      "description": "Generated role ID from create operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testPermissionId",
+      "value": "",
+      "description": "Generated permission ID from create operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testCategoryId",
+      "value": "",
+      "description": "Generated category ID from create operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testEmail",
+      "value": "test.user@ufps.edu.co",
+      "description": "Test email for authentication operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testPassword",
+      "value": "TestPassword123!",
+      "description": "Test password for authentication operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testUsername",
+      "value": "testuser",
+      "description": "Test username for registration operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testFirstName",
+      "value": "Test",
+      "description": "Test first name for user operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testLastName",
+      "value": "User",
+      "description": "Test last name for user operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "googleClientId",
+      "value": "",
+      "description": "Google OAuth2 Client ID for SSO testing",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "googleClientSecret",
+      "value": "",
+      "description": "Google OAuth2 Client Secret for SSO testing",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "frontendUrl",
+      "value": "http://localhost:3001",
+      "description": "Frontend URL for OAuth redirects",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2024-08-24T14:39:27.000Z",
+  "_postman_exported_using": "Postman/10.20.0"
+}

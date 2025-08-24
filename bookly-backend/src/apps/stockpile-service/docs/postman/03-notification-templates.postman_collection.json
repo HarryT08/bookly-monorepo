@@ -394,20 +394,15 @@
           ]
         },
         {
-          "name": "Get Sent Notifications",
+          "name": "Get Sent Notifications by Recipient",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/notification-templates/sent?recipientId=user-123&status=SENT&page=1&limit=20",
+              "raw": "{{baseUrl}}/notification-templates/sent/recipient/user-123?status=SENT&page=1&limit=20",
               "host": ["{{baseUrl}}"],
-              "path": ["notification-templates", "sent"],
+              "path": ["notification-templates", "sent", "recipient", "user-123"],
               "query": [
-                {
-                  "key": "recipientId",
-                  "value": "user-123",
-                  "description": "Filter by recipient"
-                },
                 {
                   "key": "status",
                   "value": "SENT",
@@ -425,7 +420,62 @@
                 }
               ]
             },
-            "description": "Retrieves sent notifications with filtering"
+            "description": "Retrieves sent notifications by recipient with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sent Notifications by Reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/sent/reservation/{{testReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "sent", "reservation", "{{testReservationId}}"]
+            },
+            "description": "Retrieves sent notifications for a specific reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/pending?channelId={{testChannelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "pending"],
+              "query": [
+                {
+                  "key": "channelId",
+                  "value": "{{testChannelId}}",
+                  "description": "Filter by channel"
+                }
+              ]
+            },
+            "description": "Retrieves pending notifications (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/sent/{{sentNotificationId}}/mark-read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "sent", "{{sentNotificationId}}", "mark-read"]
+            },
+            "description": "Marks a notification as read by the current user"
           },
           "response": []
         },
@@ -441,18 +491,47 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/notification-templates/batch/{{testChannelId}}?batchIntervalMs=300000",
+              "raw": "{{baseUrl}}/notification-templates/batch/{{testChannelId}}?batchInterval=300000",
               "host": ["{{baseUrl}}"],
               "path": ["notification-templates", "batch", "{{testChannelId}}"],
               "query": [
                 {
-                  "key": "batchIntervalMs",
+                  "key": "batchInterval",
                   "value": "300000",
                   "description": "Batch interval in milliseconds (5 minutes)"
                 }
               ]
             },
             "description": "Retrieves notifications ready for batch processing (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Batch Notifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channelId\": \"{{testChannelId}}\",\n  \"notificationIds\": [\n    \"notification-1\",\n    \"notification-2\",\n    \"notification-3\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/send-batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "send-batch"]
+            },
+            "description": "Sends multiple notifications in batch (Admin only)"
           },
           "response": []
         }
@@ -547,7 +626,21 @@
           "response": []
         },
         {
-          "name": "Update Notification Configuration",
+          "name": "Get Notification Configuration by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/configs/{{notificationConfigId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "configs", "{{notificationConfigId}}"]
+            },
+            "description": "Retrieves a specific notification configuration by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Notification Channel",
           "request": {
             "method": "PUT",
             "header": [
@@ -559,7 +652,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"settings\": {\n    \"enableDigest\": true,\n    \"digestFrequency\": \"WEEKLY\",\n    \"digestTime\": \"08:00\",\n    \"digestDay\": \"MONDAY\",\n    \"enableRealTime\": true,\n    \"quietHours\": {\n      \"start\": \"21:00\",\n      \"end\": \"08:00\"\n    },\n    \"retryPolicy\": {\n      \"maxRetries\": 5,\n      \"retryIntervalMs\": 30000,\n      \"backoffMultiplier\": 1.5\n    },\n    \"rateLimits\": {\n      \"maxPerUser\": 10,\n      \"maxPerHour\": 100\n    }\n  },\n  \"isEnabled\": true\n}",
+              "raw": "{\n  \"name\": \"Updated Email Notifications\",\n  \"description\": \"Enhanced email notification channel with new configuration\",\n  \"configuration\": {\n    \"smtpHost\": \"smtp.ufps.edu.co\",\n    \"smtpPort\": 587,\n    \"username\": \"notifications@ufps.edu.co\",\n    \"fromName\": \"UFPS Bookly System\",\n    \"fromEmail\": \"bookly@ufps.edu.co\",\n    \"encryption\": \"TLS\",\n    \"enableBounceTracking\": true\n  },\n  \"isActive\": true,\n  \"priority\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -567,11 +660,11 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/notification-templates/configs/{{notificationConfigId}}",
+              "raw": "{{baseUrl}}/notification-templates/channels/{{testChannelId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["notification-templates", "configs", "{{notificationConfigId}}"]
+              "path": ["notification-templates", "channels", "{{testChannelId}}"]
             },
-            "description": "Updates a notification configuration (Admin only)"
+            "description": "Updates an existing notification channel (Admin only)"
           },
           "response": []
         },
