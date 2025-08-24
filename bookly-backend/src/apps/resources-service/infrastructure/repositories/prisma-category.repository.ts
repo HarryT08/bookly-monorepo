@@ -1,278 +1,186 @@
+/**
+ * Prisma Category Repository Implementation
+ * Implements the CategoryRepository interface using Prisma ORM
+ */
+
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@libs/common/services/prisma.service';
-import { CategoryRepository } from '../../domain/repositories/category.repository';
-import { CategoryEntity } from '../../domain/entities/category.entity';
+import { ResourcesCategoryRepository, CategoryFilter } from '@libs/common/repositories/category.repository';
+import { CategoryEntity, CategoryProps } from '@libs/common/entities/category.entity';
+import { EventBusService } from '@libs/event-bus/services/event-bus.service';
 
 @Injectable()
-export class PrismaCategoryRepository implements CategoryRepository {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async create(category: CategoryEntity): Promise<CategoryEntity> {
-    const created = await this.prisma.category.create({
-      data: {
-        name: category.name,
-        description: category.description,
-        color: category.color,
-        isActive: category.isActive,
-        isDefault: category.isDefault,
-        priority: category.priority,
-      },
-    });
-
-    return new CategoryEntity(
-      created.id,
-      created.name,
-      created.description,
-      created.color,
-      created.isActive,
-      created.isDefault,
-      created.priority,
-      created.createdAt,
-      created.updatedAt,
-    );
-  }
-
-  async update(category: CategoryEntity): Promise<CategoryEntity> {
-    const updated = await this.prisma.category.update({
-      where: { id: category.id },
-      data: {
-        name: category.name,
-        description: category.description,
-        color: category.color,
-        isActive: category.isActive,
-        priority: category.priority,
-        updatedAt: new Date(),
-      },
-    });
-
-    return new CategoryEntity(
-      updated.id,
-      updated.name,
-      updated.description,
-      updated.color,
-      updated.isActive,
-      updated.isDefault,
-      updated.priority,
-      updated.createdAt,
-      updated.updatedAt,
-    );
+export class PrismaCategoryRepository extends ResourcesCategoryRepository {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventBus: EventBusService,
+  ) {
+    super();
   }
 
   async findById(id: string): Promise<CategoryEntity | null> {
-    const category = await this.prisma.category.findUnique({
-      where: { id },
-    });
-
-    if (!category) return null;
-
-    return new CategoryEntity(
-      category.id,
-      category.name,
-      category.description,
-      category.color,
-      category.isActive,
-      category.isDefault,
-      category.priority,
-      category.createdAt,
-      category.updatedAt,
-    );
-  }
-
-  async findByName(name: string): Promise<CategoryEntity | null> {
-    const category = await this.prisma.category.findUnique({
-      where: { name },
-    });
-
-    if (!category) return null;
-
-    return new CategoryEntity(
-      category.id,
-      category.name,
-      category.description,
-      category.color,
-      category.isActive,
-      category.isDefault,
-      category.priority,
-      category.createdAt,
-      category.updatedAt,
-    );
-  }
-
-  async findAll(): Promise<CategoryEntity[]> {
-    const categories = await this.prisma.category.findMany({
-      orderBy: [
-        { priority: 'asc' },
-        { name: 'asc' },
-      ],
-    });
-
-    return categories.map(category => new CategoryEntity(
-      category.id,
-      category.name,
-      category.description,
-      category.color,
-      category.isActive,
-      category.isDefault,
-      category.priority,
-      category.createdAt,
-      category.updatedAt,
-    ));
-  }
-
-  async findActive(): Promise<CategoryEntity[]> {
-    const categories = await this.prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: [
-        { priority: 'asc' },
-        { name: 'asc' },
-      ],
-    });
-
-    return categories.map(category => new CategoryEntity(
-      category.id,
-      category.name,
-      category.description,
-      category.color,
-      category.isActive,
-      category.isDefault,
-      category.priority,
-      category.createdAt,
-      category.updatedAt,
-    ));
-  }
-
-  async findDefaults(): Promise<CategoryEntity[]> {
-    const categories = await this.prisma.category.findMany({
-      where: { isDefault: true },
-      orderBy: [
-        { priority: 'asc' },
-        { name: 'asc' },
-      ],
-    });
-
-    return categories.map(category => new CategoryEntity(
-      category.id,
-      category.name,
-      category.description,
-      category.color,
-      category.isActive,
-      category.isDefault,
-      category.priority,
-      category.createdAt,
-      category.updatedAt,
-    ));
-  }
-
-  async findCustom(): Promise<CategoryEntity[]> {
-    const categories = await this.prisma.category.findMany({
-      where: { isDefault: false },
-      orderBy: [
-        { priority: 'asc' },
-        { name: 'asc' },
-      ],
-    });
-
-    return categories.map(category => new CategoryEntity(
-      category.id,
-      category.name,
-      category.description,
-      category.color,
-      category.isActive,
-      category.isDefault,
-      category.priority,
-      category.createdAt,
-      category.updatedAt,
-    ));
-  }
-
-  async deactivate(id: string): Promise<void> {
-    await this.prisma.category.update({
-      where: { id },
-      data: {
-        isActive: false,
-        updatedAt: new Date(),
+    const category = await this.prisma.category.findFirst({
+      where: {
+        id,
+        service: this.serviceName,
       },
     });
+
+    return category ? this.toDomain(category) : null;
   }
 
-  async reactivate(id: string): Promise<void> {
-    await this.prisma.category.update({
-      where: { id },
-      data: {
-        isActive: true,
-        updatedAt: new Date(),
+  async findByCode(type: string, subtype: string, code: string): Promise<CategoryEntity | null> {
+    const category = await this.prisma.category.findFirst({
+      where: {
+        type: type.toUpperCase(),
+        subtype: subtype.toUpperCase(),
+        code: code.toUpperCase(),
+        service: this.serviceName,
       },
     });
+
+    return category ? this.toDomain(category) : null;
   }
 
-  async existsByName(name: string): Promise<boolean> {
-    const count = await this.prisma.category.count({
-      where: { name },
-    });
-    return count > 0;
-  }
+  async findAll(filter?: CategoryFilter): Promise<CategoryEntity[]> {
+    const where: any = {
+      service: this.serviceName,
+      ...(filter?.type && { type: filter.type.toUpperCase() }),
+      ...(filter?.subtype && { subtype: filter.subtype.toUpperCase() }),
+      ...(filter?.isActive !== undefined && { isActive: filter.isActive }),
+      ...(filter?.parentId && { parentId: filter.parentId }),
+    };
 
-  async findWithPagination(
-    page: number,
-    limit: number,
-    filters?: {
-      isActive?: boolean;
-      isDefault?: boolean;
-      search?: string;
-    }
-  ): Promise<{
-    categories: CategoryEntity[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    const where: any = {};
-
-    if (filters?.isActive !== undefined) {
-      where.isActive = filters.isActive;
-    }
-
-    if (filters?.isDefault !== undefined) {
-      where.isDefault = filters.isDefault;
-    }
-
-    if (filters?.search) {
+    if (filter?.search) {
       where.OR = [
-        { name: { contains: filters.search, mode: 'insensitive' } },
-        { description: { contains: filters.search, mode: 'insensitive' } },
+        { name: { contains: filter.search, mode: 'insensitive' } },
+        { code: { contains: filter.search, mode: 'insensitive' } },
+        { description: { contains: filter.search, mode: 'insensitive' } },
       ];
     }
 
-    const [categories, total] = await Promise.all([
-      this.prisma.category.findMany({
-        where,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: [
-          { priority: 'asc' },
-          { name: 'asc' },
-        ],
-      }),
-      this.prisma.category.count({ where }),
-    ]);
+    const categories = await this.prisma.category.findMany({
+      where,
+      orderBy: [
+        { sortOrder: 'asc' },
+        { name: 'asc' },
+      ],
+    });
 
-    return {
-      categories: categories.map(category => new CategoryEntity(
-        category.id,
-        category.name,
-        category.description,
-        category.color,
-        category.isActive,
-        category.isDefault,
-        category.priority,
-        category.createdAt,
-        category.updatedAt,
-      )),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return categories.map(category => this.toDomain(category));
+  }
+
+  async findByTypeAndSubtype(type: string, subtype: string): Promise<CategoryEntity[]> {
+    const categories = await this.prisma.category.findMany({
+      where: {
+        type: type.toUpperCase(),
+        subtype: subtype.toUpperCase(),
+        isActive: true,
+      },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { name: 'asc' },
+      ],
+    });
+
+    return categories.map(category => this.toDomain(category));
+  }
+
+  async save(category: CategoryEntity): Promise<void> {
+    const props = category.toProps();
+    
+    await this.prisma.category.create({
+      data: {
+        id: props.id!,
+        type: props.type,
+        subtype: props.subtype,
+        name: props.name,
+        code: props.code,
+        description: props.description,
+        metadata: props.metadata,
+        isActive: props.isActive,
+        sortOrder: props.sortOrder,
+        parentId: props.parentId,
+        service: props.service,
+        createdAt: props.createdAt,
+        updatedAt: props.updatedAt,
+        createdBy: props.createdBy,
+        updatedBy: props.updatedBy,
+      },
+    });
+
+    // Publish domain events
+    const events = category.domainEvents;
+    for (const event of events) {
+      await this.eventBus.publishEvent(event);
+    }
+    category.clearDomainEvents();
+  }
+
+  async update(category: CategoryEntity): Promise<void> {
+    const props = category.toProps();
+    
+    await this.prisma.category.update({
+      where: { id: props.id! },
+      data: {
+        name: props.name,
+        description: props.description,
+        metadata: props.metadata,
+        isActive: props.isActive,
+        sortOrder: props.sortOrder,
+        parentId: props.parentId,
+        updatedAt: props.updatedAt,
+        updatedBy: props.updatedBy,
+      },
+    });
+
+    // Publish domain events
+    const events = category.domainEvents;
+    for (const event of events) {
+      await this.eventBus.publishEvent(event);
+    }
+    category.clearDomainEvents();
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.category.delete({
+      where: { id },
+    });
+  }
+
+  async exists(type: string, subtype: string, code: string): Promise<boolean> {
+    const count = await this.prisma.category.count({
+      where: {
+        type: type.toUpperCase(),
+        subtype: subtype.toUpperCase(),
+        code: code.toUpperCase(),
+        service: this.serviceName,
+      },
+    });
+
+    return count > 0;
+  }
+
+  /**
+   * Convert database record to domain entity
+   */
+  private toDomain(data: any): CategoryEntity {
+    return new CategoryEntity({
+      id: data.id,
+      type: data.type,
+      subtype: data.subtype,
+      name: data.name,
+      code: data.code,
+      description: data.description,
+      metadata: data.metadata || {},
+      isActive: data.isActive,
+      sortOrder: data.sortOrder,
+      parentId: data.parentId,
+      service: data.service,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+      createdBy: data.createdBy,
+      updatedBy: data.updatedBy,
+    });
   }
 }

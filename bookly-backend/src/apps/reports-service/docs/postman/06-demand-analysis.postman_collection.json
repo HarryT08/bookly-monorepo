@@ -1,0 +1,649 @@
+{
+	"info": {
+		"_postman_id": "demand-analysis-collection",
+		"name": "Reports Service - Demand Analysis",
+		"description": "Collection for testing Demand Analysis endpoints (RF-37)\n\nThis collection covers:\n- Generate demand analysis reports\n- Analyze unsatisfied demand patterns\n- Resource utilization analysis\n- Time-based demand patterns\n- Waitlist data integration\n\nAll endpoints require JWT authentication with appropriate permissions.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"if (!pm.environment.get('base_url')) {",
+					"    pm.environment.set('base_url', 'http://localhost:3004');",
+					"}",
+					"",
+					"if (!pm.environment.get('jwt_token')) {",
+					"    console.warn('JWT token not set. Please set jwt_token in environment variables.');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test('Response time is less than 8000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(8000);",
+					"});",
+					"",
+					"pm.test('Content-Type is application/json', function () {",
+					"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3004",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Generate Comprehensive Demand Report",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Demand report has summary section', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('summary');",
+							"    pm.expect(jsonData.summary).to.be.an('object');",
+							"});",
+							"",
+							"pm.test('Summary contains demand metrics', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.have.property('totalDemand');",
+							"    pm.expect(jsonData.summary).to.have.property('satisfiedDemand');",
+							"    pm.expect(jsonData.summary).to.have.property('unsatisfiedDemand');",
+							"    pm.expect(jsonData.summary).to.have.property('satisfactionRate');",
+							"});",
+							"",
+							"pm.test('Report has resource analysis', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('resourceAnalysis');",
+							"    pm.expect(jsonData.resourceAnalysis).to.be.an('array');",
+							"});",
+							"",
+							"pm.test('Report has time analysis', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('timeAnalysis');",
+							"    pm.expect(jsonData.timeAnalysis).to.be.an('object');",
+							"});",
+							"",
+							"pm.test('Resource analysis items have required fields', function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.resourceAnalysis.length > 0) {",
+							"        const resource = jsonData.resourceAnalysis[0];",
+							"        pm.expect(resource).to.have.property('resourceId');",
+							"        pm.expect(resource).to.have.property('resourceName');",
+							"        pm.expect(resource).to.have.property('utilizationRate');",
+							"        pm.expect(resource).to.have.property('demandScore');",
+							"        pm.expect(resource).to.have.property('recommendedActions');",
+							"    }",
+							"});",
+							"",
+							"pm.test('Time analysis has peak hours and recommendations', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.timeAnalysis).to.have.property('peakHours');",
+							"    pm.expect(jsonData.timeAnalysis).to.have.property('lowDemandPeriods');",
+							"    pm.expect(jsonData.timeAnalysis).to.have.property('recommendations');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand?startDate=2024-01-01&endDate=2024-01-31&includeWaitlist=true",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2024-01-01",
+							"description": "Start date for demand analysis"
+						},
+						{
+							"key": "endDate",
+							"value": "2024-01-31",
+							"description": "End date for demand analysis"
+						},
+						{
+							"key": "includeWaitlist",
+							"value": "true",
+							"description": "Include waitlist data in analysis"
+						}
+					]
+				},
+				"description": "Generate comprehensive demand analysis report including waitlist data"
+			}
+		},
+		{
+			"name": "Demand Analysis - Engineering Program",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Program-specific demand analysis', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.have.property('satisfactionRate');",
+							"    pm.expect(jsonData.resourceAnalysis).to.be.an('array');",
+							"});",
+							"",
+							"pm.test('Resources are relevant to engineering program', function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.resourceAnalysis.length > 0) {",
+							"        // Verify that resources are appropriate for engineering",
+							"        jsonData.resourceAnalysis.forEach(resource => {",
+							"            pm.expect(resource.resourceType).to.be.oneOf(['LABORATORIO', 'SALON', 'AUDITORIO']);",
+							"        });",
+							"    }",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand?programId=ING-SIS&startDate=2024-02-01&endDate=2024-02-29&includeWaitlist=true",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					],
+					"query": [
+						{
+							"key": "programId",
+							"value": "ING-SIS",
+							"description": "Filter by Systems Engineering program"
+						},
+						{
+							"key": "startDate",
+							"value": "2024-02-01",
+							"description": "Start date for February analysis"
+						},
+						{
+							"key": "endDate",
+							"value": "2024-02-29",
+							"description": "End date for February analysis"
+						},
+						{
+							"key": "includeWaitlist",
+							"value": "true",
+							"description": "Include waitlist data"
+						}
+					]
+				},
+				"description": "Generate demand analysis specifically for Systems Engineering program"
+			}
+		},
+		{
+			"name": "Demand Analysis - Laboratory Resources",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('All analyzed resources are laboratories', function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.resourceAnalysis && jsonData.resourceAnalysis.length > 0) {",
+							"        jsonData.resourceAnalysis.forEach(resource => {",
+							"            pm.expect(resource.resourceType).to.equal('LABORATORIO');",
+							"        });",
+							"    }",
+							"});",
+							"",
+							"pm.test('Laboratory-specific recommendations', function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.resourceAnalysis.length > 0) {",
+							"        const lab = jsonData.resourceAnalysis[0];",
+							"        pm.expect(lab.recommendedActions).to.be.an('array');",
+							"    }",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand?resourceType=LABORATORIO&startDate=2024-01-01&endDate=2024-03-31&includeWaitlist=true",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					],
+					"query": [
+						{
+							"key": "resourceType",
+							"value": "LABORATORIO",
+							"description": "Filter by laboratory resources"
+						},
+						{
+							"key": "startDate",
+							"value": "2024-01-01",
+							"description": "Q1 start date"
+						},
+						{
+							"key": "endDate",
+							"value": "2024-03-31",
+							"description": "Q1 end date"
+						},
+						{
+							"key": "includeWaitlist",
+							"value": "true",
+							"description": "Include waitlist data"
+						}
+					]
+				},
+				"description": "Analyze demand patterns specifically for laboratory resources"
+			}
+		},
+		{
+			"name": "Demand Analysis - Auditorium Resources",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('All analyzed resources are auditoriums', function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.resourceAnalysis && jsonData.resourceAnalysis.length > 0) {",
+							"        jsonData.resourceAnalysis.forEach(resource => {",
+							"            pm.expect(resource.resourceType).to.equal('AUDITORIO');",
+							"        });",
+							"    }",
+							"});",
+							"",
+							"pm.test('Auditorium utilization metrics', function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.resourceAnalysis.length > 0) {",
+							"        const auditorium = jsonData.resourceAnalysis[0];",
+							"        pm.expect(auditorium.utilizationRate).to.be.a('number');",
+							"        pm.expect(auditorium.demandScore).to.be.a('number');",
+							"    }",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand?resourceType=AUDITORIO&startDate=2024-01-01&endDate=2024-01-31",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					],
+					"query": [
+						{
+							"key": "resourceType",
+							"value": "AUDITORIO",
+							"description": "Filter by auditorium resources"
+						},
+						{
+							"key": "startDate",
+							"value": "2024-01-01",
+							"description": "January start date"
+						},
+						{
+							"key": "endDate",
+							"value": "2024-01-31",
+							"description": "January end date"
+						}
+					]
+				},
+				"description": "Analyze demand patterns for auditorium resources"
+			}
+		},
+		{
+			"name": "Demand Analysis - Without Waitlist Data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Analysis excludes waitlist data', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.have.property('satisfactionRate');",
+							"    // When waitlist is excluded, satisfaction rate calculation differs",
+							"    pm.expect(jsonData.summary.satisfactionRate).to.be.a('number');",
+							"});",
+							"",
+							"pm.test('Resource analysis without waitlist influence', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.resourceAnalysis).to.be.an('array');",
+							"    if (jsonData.resourceAnalysis.length > 0) {",
+							"        const resource = jsonData.resourceAnalysis[0];",
+							"        pm.expect(resource.demandScore).to.be.a('number');",
+							"    }",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand?startDate=2024-01-01&endDate=2024-01-31&includeWaitlist=false",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2024-01-01",
+							"description": "Start date for analysis"
+						},
+						{
+							"key": "endDate",
+							"value": "2024-01-31",
+							"description": "End date for analysis"
+						},
+						{
+							"key": "includeWaitlist",
+							"value": "false",
+							"description": "Exclude waitlist data from analysis"
+						}
+					]
+				},
+				"description": "Generate demand analysis without including waitlist data"
+			}
+		},
+		{
+			"name": "Demand Analysis - Medicine Program",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Medicine program demand analysis', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary.totalDemand).to.be.a('number');",
+							"    pm.expect(jsonData.summary.unsatisfiedDemand).to.be.a('number');",
+							"});",
+							"",
+							"pm.test('Medical resources analysis', function () {",
+							"    const jsonData = pm.response.json();",
+							"    if (jsonData.resourceAnalysis.length > 0) {",
+							"        // Medical programs typically use specialized labs and auditoriums",
+							"        jsonData.resourceAnalysis.forEach(resource => {",
+							"            pm.expect(resource).to.have.property('resourceName');",
+							"            pm.expect(resource).to.have.property('utilizationRate');",
+							"        });",
+							"    }",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand?programId=MED-GEN&startDate=2024-02-01&endDate=2024-02-29&includeWaitlist=true",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					],
+					"query": [
+						{
+							"key": "programId",
+							"value": "MED-GEN",
+							"description": "Filter by General Medicine program"
+						},
+						{
+							"key": "startDate",
+							"value": "2024-02-01",
+							"description": "February start date"
+						},
+						{
+							"key": "endDate",
+							"value": "2024-02-29",
+							"description": "February end date"
+						},
+						{
+							"key": "includeWaitlist",
+							"value": "true",
+							"description": "Include waitlist data"
+						}
+					]
+				},
+				"description": "Analyze demand patterns for Medicine program resources"
+			}
+		},
+		{
+			"name": "Demand Analysis - Quarterly Report",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Quarterly demand trends', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.timeAnalysis).to.have.property('peakHours');",
+							"    pm.expect(jsonData.timeAnalysis).to.have.property('lowDemandPeriods');",
+							"    pm.expect(jsonData.timeAnalysis.recommendations).to.be.an('array');",
+							"});",
+							"",
+							"pm.test('Comprehensive resource analysis', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.resourceAnalysis).to.be.an('array');",
+							"    // Quarterly reports should have more comprehensive data",
+							"    if (jsonData.resourceAnalysis.length > 0) {",
+							"        const resource = jsonData.resourceAnalysis[0];",
+							"        pm.expect(resource.recommendedActions).to.be.an('array');",
+							"        pm.expect(resource.recommendedActions.length).to.be.greaterThan(0);",
+							"    }",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand?startDate=2024-01-01&endDate=2024-03-31&includeWaitlist=true",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					],
+					"query": [
+						{
+							"key": "startDate",
+							"value": "2024-01-01",
+							"description": "Q1 start date"
+						},
+						{
+							"key": "endDate",
+							"value": "2024-03-31",
+							"description": "Q1 end date"
+						},
+						{
+							"key": "includeWaitlist",
+							"value": "true",
+							"description": "Include waitlist data for comprehensive analysis"
+						}
+					]
+				},
+				"description": "Generate comprehensive quarterly demand analysis report"
+			}
+		},
+		{
+			"name": "Demand Analysis - Default Parameters",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Default analysis includes all programs and resources', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.have.property('totalDemand');",
+							"    pm.expect(jsonData.resourceAnalysis).to.be.an('array');",
+							"    pm.expect(jsonData.timeAnalysis).to.be.an('object');",
+							"});",
+							"",
+							"pm.test('Waitlist included by default', function () {",
+							"    const jsonData = pm.response.json();",
+							"    // When waitlist is included, unsatisfied demand should be tracked",
+							"    pm.expect(jsonData.summary).to.have.property('unsatisfiedDemand');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/demand",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"demand"
+					]
+				},
+				"description": "Generate demand analysis with default parameters (all resources, current period, waitlist included)"
+			}
+		}
+	]
+}

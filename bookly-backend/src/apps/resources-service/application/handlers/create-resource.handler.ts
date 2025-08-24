@@ -38,7 +38,7 @@ export class CreateResourceHandler implements ICommandHandler<CreateResourceComm
       );
 
       // Validate resource
-      const validation = resource.validate();
+      const validation = await resource.validate();
       if (!validation.valid) {
         throw new BadRequestException(`Resource validation failed: ${validation.errors.join(', ')}`);
       }

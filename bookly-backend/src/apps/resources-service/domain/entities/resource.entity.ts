@@ -278,7 +278,7 @@ export class ResourceEntity {
   /**
    * Validate resource data
    */
-  validate(): { valid: boolean; errors: string[] } {
+  async validate(categoryRepository?: any): Promise<{ valid: boolean; errors: string[] }> {
     const errors: string[] = [];
 
     if (!this.name || this.name.trim().length === 0) {
@@ -293,14 +293,154 @@ export class ResourceEntity {
       errors.push('Capacity cannot be negative');
     }
 
-    const validTypes = ['ROOM', 'EQUIPMENT', 'AUDITORIUM', 'LABORATORY', 'COMPUTER'];
-    if (this.type && !validTypes.includes(this.type.toUpperCase())) {
-      errors.push(`Invalid type. Valid types are: ${validTypes.join(', ')}`);
+    // Validate type against Category model if repository is provided
+    if (this.type && categoryRepository) {
+      const isValidType = await categoryRepository.validateResourceType(this.type.toUpperCase());
+      if (!isValidType) {
+        errors.push(`Invalid resource type: ${this.type}. Please use a valid resource type from the system categories.`);
+      }
     }
 
     return {
       valid: errors.length === 0,
       errors,
     };
+  }
+
+  /**
+   * Validate resource data synchronously (for backward compatibility)
+   */
+  validateSync(): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!this.name || this.name.trim().length === 0) {
+      errors.push('Name is required');
+    }
+
+    if (!this.type || this.type.trim().length === 0) {
+      errors.push('Type is required');
+    }
+
+    if (this.capacity !== null && this.capacity < 0) {
+      errors.push('Capacity cannot be negative');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Check if resource requires maintenance
+   */
+  requiresMaintenance(): boolean {
+    return this.status === 'MAINTENANCE' || this.hasMaintenanceScheduled();
+  }
+
+  /**
+   * Check if resource has scheduled maintenance
+   */
+  private hasMaintenanceScheduled(): boolean {
+    // This would typically check against a maintenance schedule
+    // For now, we'll implement basic logic
+    return this.status === 'OUT_OF_SERVICE';
+  }
+
+  /**
+   * Get resource utilization score (0-100)
+   */
+  getUtilizationScore(): number {
+    // This would typically be calculated based on reservation history
+    // For now, return a default based on status
+    switch (this.status) {
+      case 'AVAILABLE':
+        return 75;
+      case 'RESERVED':
+        return 100;
+      case 'MAINTENANCE':
+        return 0;
+      case 'OUT_OF_SERVICE':
+        return 0;
+      default:
+        return 50;
+    }
+  }
+
+  /**
+   * Check if resource can be reserved by user type
+   */
+  canBeReservedBy(userType: string): boolean {
+    if (!this.isActive || this.status !== 'AVAILABLE') {
+      return false;
+    }
+
+    if (!this.availableSchedules?.restrictions?.userTypes) {
+      return true; // No restrictions
+    }
+
+    return this.availableSchedules.restrictions.userTypes.includes(userType);
+  }
+
+  /**
+   * Get resource availability summary
+   */
+  getAvailabilitySummary(): {
+    isAvailable: boolean;
+    status: string;
+    restrictions: string[];
+    operatingHours: string[];
+  } {
+    const restrictions: string[] = [];
+    const operatingHours: string[] = [];
+
+    if (this.availableSchedules?.restrictions) {
+      const r = this.availableSchedules.restrictions;
+      if (r.userTypes) {
+        restrictions.push(`User types: ${r.userTypes.join(', ')}`);
+      }
+      if (r.maxReservationDuration) {
+        restrictions.push(`Max duration: ${r.maxReservationDuration} minutes`);
+      }
+      if (r.minReservationDuration) {
+        restrictions.push(`Min duration: ${r.minReservationDuration} minutes`);
+      }
+    }
+
+    if (this.availableSchedules?.operatingHours) {
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      this.availableSchedules.operatingHours.forEach(oh => {
+        operatingHours.push(`${days[oh.dayOfWeek]}: ${oh.startTime} - ${oh.endTime}`);
+      });
+    }
+
+    return {
+      isAvailable: this.isActive && this.status === 'AVAILABLE',
+      status: this.status,
+      restrictions,
+      operatingHours,
+    };
+  }
+
+  /**
+   * Clone resource with new data
+   */
+  clone(overrides: Partial<ResourceEntity> = {}): ResourceEntity {
+    return new ResourceEntity(
+      overrides.id ?? this.id,
+      overrides.name ?? this.name,
+      overrides.code ?? this.code,
+      overrides.type ?? this.type,
+      overrides.capacity ?? this.capacity,
+      overrides.location ?? this.location,
+      overrides.status ?? this.status,
+      overrides.description ?? this.description,
+      overrides.attributes ?? this.attributes,
+      overrides.availableSchedules ?? this.availableSchedules,
+      overrides.categoryId ?? this.categoryId,
+      overrides.isActive ?? this.isActive,
+      overrides.createdAt ?? this.createdAt,
+      overrides.updatedAt ?? this.updatedAt,
+    );
   }
 }

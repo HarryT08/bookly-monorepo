@@ -1,0 +1,427 @@
+{
+  "info": {
+    "name": "Bookly Availability Service - RF-08 Calendar Integration",
+    "description": "Postman collection for Calendar Integration endpoints (RF-08)\n\nThis collection covers:\n- Creating calendar integrations with external providers\n- Managing calendar synchronization\n- Checking availability with external calendar conflicts\n\nSupported Providers:\n- Google Calendar\n- Microsoft Outlook\n- iCal\n- Internal Calendar\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the availability service\n- {{authToken}} - JWT Bearer token for authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "rf08-calendar-integration",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "if (!pm.environment.get('authToken')) {",
+          "  console.warn('⚠️ authToken not set in environment variables');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/availability",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Calendar Integration Management",
+      "item": [
+        {
+          "name": "Create Google Calendar Integration",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-123\",\n  \"provider\": \"GOOGLE\",\n  \"name\": \"Main Conference Room - Google Calendar\",\n  \"credentials\": {\n    \"clientId\": \"google-client-id\",\n    \"clientSecret\": \"google-client-secret\",\n    \"refreshToken\": \"google-refresh-token\",\n    \"accessToken\": \"google-access-token\"\n  },\n  \"calendarId\": \"primary\",\n  \"syncInterval\": 15,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/calendar-integrations",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-integrations"]
+            },
+            "description": "Creates integration with Google Calendar for external event synchronization"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Integration created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson.provider).to.equal('GOOGLE');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('googleIntegrationId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Outlook Calendar Integration",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-456\",\n  \"provider\": \"OUTLOOK\",\n  \"name\": \"Meeting Room B - Outlook Calendar\",\n  \"credentials\": {\n    \"tenantId\": \"outlook-tenant-id\",\n    \"clientId\": \"outlook-client-id\",\n    \"clientSecret\": \"outlook-client-secret\",\n    \"refreshToken\": \"outlook-refresh-token\"\n  },\n  \"calendarId\": \"calendar-id-outlook\",\n  \"syncInterval\": 30,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/calendar-integrations",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-integrations"]
+            },
+            "description": "Creates integration with Microsoft Outlook Calendar"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Outlook integration created', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.provider).to.equal('OUTLOOK');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('outlookIntegrationId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Calendar Integrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-integrations",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-integrations"]
+            },
+            "description": "Retrieves all calendar integrations"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Integrations by Resource",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-integrations?resourceId={{resourceId}}&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-integrations"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}",
+                  "description": "Filter by resource ID"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status"
+                }
+              ]
+            },
+            "description": "Retrieves calendar integrations filtered by resource and active status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Integrations by Provider",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-integrations?provider=GOOGLE",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-integrations"],
+              "query": [
+                {
+                  "key": "provider",
+                  "value": "GOOGLE",
+                  "description": "Filter by calendar provider"
+                }
+              ]
+            },
+            "description": "Retrieves calendar integrations filtered by provider type"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Calendar Synchronization",
+      "item": [
+        {
+          "name": "Manual Sync Google Calendar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/calendar-integrations/{{googleIntegrationId}}/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-integrations", "{{googleIntegrationId}}", "sync"]
+            },
+            "description": "Manually triggers synchronization of events from Google Calendar"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Sync completed successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('syncStatus');",
+                  "  pm.expect(responseJson).to.have.property('eventsProcessed');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manual Sync Outlook Calendar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/calendar-integrations/{{outlookIntegrationId}}/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-integrations", "{{outlookIntegrationId}}", "sync"]
+            },
+            "description": "Manually triggers synchronization of events from Outlook Calendar"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Outlook sync completed', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('syncStatus');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Availability with Conflicts",
+      "item": [
+        {
+          "name": "Check Availability with External Conflicts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/availability-with-conflicts?resourceId={{resourceId}}&startDate=2024-01-15T08:00:00Z&endDate=2024-01-15T18:00:00Z&includeConflicts=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["availability-with-conflicts"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}",
+                  "description": "Resource ID to check availability for"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-15T08:00:00Z",
+                  "description": "Start date (ISO format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-15T18:00:00Z",
+                  "description": "End date (ISO format)"
+                },
+                {
+                  "key": "includeConflicts",
+                  "value": "true",
+                  "description": "Include external calendar conflicts"
+                }
+              ]
+            },
+            "description": "Checks resource availability considering external calendar conflicts from integrated calendars"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains availability data', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('resourceId');",
+                  "  pm.expect(responseJson).to.have.property('availableSlots');",
+                  "  pm.expect(responseJson).to.have.property('conflicts');",
+                  "  pm.expect(responseJson).to.have.property('externalEvents');",
+                  "});",
+                  "",
+                  "pm.test('Available slots is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.availableSlots).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Conflicts is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.conflicts).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('External events is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.externalEvents).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Availability without Conflicts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/availability-with-conflicts?resourceId={{resourceId}}&startDate=2024-01-16T08:00:00Z&endDate=2024-01-16T18:00:00Z&includeConflicts=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["availability-with-conflicts"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}",
+                  "description": "Resource ID to check availability for"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-16T08:00:00Z",
+                  "description": "Start date (ISO format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-16T18:00:00Z",
+                  "description": "End date (ISO format)"
+                },
+                {
+                  "key": "includeConflicts",
+                  "value": "false",
+                  "description": "Exclude external calendar conflicts"
+                }
+              ]
+            },
+            "description": "Checks resource availability without considering external calendar conflicts"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

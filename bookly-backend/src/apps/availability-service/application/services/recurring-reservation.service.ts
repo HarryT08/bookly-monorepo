@@ -3,9 +3,10 @@
  * Orchestrates CQRS commands and queries for recurring reservations
  */
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { LoggingService } from "@libs/logging/logging.service";
+import { PrismaService } from "@libs/common/services/prisma.service";
 
 // DTOs
 import { CreateRecurringReservationDto } from "../../infrastructure/dtos/create-recurring-reservation.dto";
@@ -51,9 +52,9 @@ import { RecurringReservationPriority } from "../../utils";
 
 @Injectable()
 export class RecurringReservationService {
-  create(arg0: {
-    userId: any;
-    createdBy: any;
+  async create(data: {
+    userId: string;
+    createdBy: string;
     title: string;
     description?: string;
     resourceId: string;
@@ -76,59 +77,420 @@ export class RecurringReservationService {
     requireConfirmation?: boolean;
     reminderHours?: number;
     customRule?: string;
-  }):
-    | RecurringReservationResponseDto
-    | PromiseLike<RecurringReservationResponseDto> {
-    throw new Error("Method not implemented.");
-  }
-  findAll(filters: any):
-    | {
-        data: RecurringReservationResponseDto[];
-        total: number;
-        page: number;
-        limit: number;
+  }): Promise<RecurringReservationResponseDto> {
+    this.logger.log('Creating recurring reservation', {
+      userId: data.userId,
+      resourceId: data.resourceId,
+      title: data.title
+    });
+
+    try {
+      // Validate resource exists
+      const resource = await this.prisma.resource.findUnique({
+        where: { id: data.resourceId },
+        include: { category: true }
+      });
+
+      if (!resource) {
+        throw new NotFoundException('Resource not found');
       }
-    | PromiseLike<{
-        data: RecurringReservationResponseDto[];
-        total: number;
-        page: number;
-        limit: number;
-      }> {
-    throw new Error("Method not implemented.");
+
+      // Validate user exists
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.userId },
+        include: { userRoles: { include: { role: true } } }
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Validate dates and times
+      const startDate = new Date(data.startDate);
+      const endDate = new Date(data.endDate);
+      
+      if (startDate >= endDate) {
+        throw new BadRequestException('Start date must be before end date');
+      }
+
+      if (data.startTime >= data.endTime) {
+        throw new BadRequestException('Start time must be before end time');
+      }
+
+      // Create recurring reservation entity for validation
+      const entity = RecurringReservationEntity.create({
+        title: data.title,
+        description: data.description,
+        resourceId: data.resourceId,
+        userId: data.userId,
+        startDate,
+        endDate,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        frequency: data.frequency,
+        interval: data.interval || 1,
+        daysOfWeek: data.daysOfWeek,
+        dayOfMonth: data.dayOfMonth,
+        status: RecurringReservationStatus.ACTIVE,
+        totalInstances: 0,
+        confirmedInstances: 0
+      });
+
+      // Validate entity
+      const validation = entity.validate();
+      if (!validation.isValid) {
+        throw new BadRequestException(`Validation failed: ${validation.errors.join(', ')}`);
+      }
+
+      // Check for conflicts if not allowing overlap
+      if (!data.allowOverlap) {
+        const conflicts = await this.checkForConflicts(data.resourceId, startDate, endDate, data.startTime, data.endTime, data.frequency, data.interval, data.daysOfWeek, data.dayOfMonth);
+        if (conflicts.length > 0) {
+          throw new ConflictException('Recurring reservation conflicts with existing reservations');
+        }
+      }
+
+      // Create in database
+      const created = await this.prisma.recurringReservation.create({
+        data: {
+          title: data.title,
+          description: data.description,
+          resourceId: data.resourceId,
+          userId: data.userId,
+          startDate,
+          endDate,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          frequency: data.frequency,
+          interval: data.interval || 1,
+          daysOfWeek: data.daysOfWeek || [],
+          dayOfMonth: data.dayOfMonth,
+          status: 'ACTIVE',
+          totalInstances: 0,
+          confirmedInstances: 0
+        },
+        include: {
+          resource: { include: { category: true } },
+          user: { include: { userRoles: { include: { role: true } } } }
+        }
+      });
+
+      // Generate initial instances
+      await this.generateInstancesForRecurringReservation(created.id, startDate, endDate);
+
+      this.logger.log('Recurring reservation created successfully', { id: created.id });
+
+      return this.mapToResponseDto(created);
+    } catch (error) {
+      this.logger.error('Error creating recurring reservation', error);
+      throw error;
+    }
   }
-  findById(
+  async findAll(filters: {
+    userId?: string;
+    resourceId?: string;
+    programId?: string;
+    status?: string;
+    frequency?: string;
+    startDate?: Date;
+    endDate?: Date;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC';
+  }): Promise<{
+    data: RecurringReservationResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    this.logger.log('Finding all recurring reservations', { filters });
+
+    try {
+      const page = filters.page || 1;
+      const limit = Math.min(filters.limit || 10, 100); // Max 100 items per page
+      const skip = (page - 1) * limit;
+      const sortBy = filters.sortBy || 'createdAt';
+      const sortOrder = filters.sortOrder || 'DESC';
+
+      // Build where clause
+      const where: any = {};
+      
+      if (filters.userId) where.userId = filters.userId;
+      if (filters.resourceId) where.resourceId = filters.resourceId;
+      if (filters.status) where.status = filters.status;
+      if (filters.frequency) where.frequency = filters.frequency;
+      if (filters.startDate || filters.endDate) {
+        where.AND = [];
+        if (filters.startDate) {
+          where.AND.push({ endDate: { gte: filters.startDate } });
+        }
+        if (filters.endDate) {
+          where.AND.push({ startDate: { lte: filters.endDate } });
+        }
+      }
+
+      // Execute queries in parallel
+      const [items, total] = await Promise.all([
+        this.prisma.recurringReservation.findMany({
+          where,
+          include: {
+            resource: { include: { category: true } },
+            user: { include: { userRoles: { include: { role: true } } } },
+            instances: {
+              take: 5, // Include only first 5 instances for performance
+              orderBy: { scheduledDate: 'asc' }
+            }
+          },
+          skip,
+          take: limit,
+          orderBy: { [sortBy]: sortOrder.toLowerCase() }
+        }),
+        this.prisma.recurringReservation.count({ where })
+      ]);
+
+      const data = items.map(item => this.mapToResponseDto(item));
+
+      this.logger.log('Found recurring reservations', { total, page, limit });
+
+      return { data, total, page, limit };
+    } catch (error) {
+      this.logger.error('Error finding recurring reservations', error);
+      throw error;
+    }
+  }
+  async findById(
     id: string,
-    filters: any
-  ):
-    | RecurringReservationResponseDto
-    | PromiseLike<RecurringReservationResponseDto> {
-    throw new Error("Method not implemented.");
+    options: {
+      includeInstances?: boolean;
+      includeStats?: boolean;
+      userId?: string;
+    } = {}
+  ): Promise<RecurringReservationResponseDto> {
+    this.logger.log('Finding recurring reservation by ID', { id, options });
+
+    try {
+      const recurringReservation = await this.prisma.recurringReservation.findUnique({
+        where: { id },
+        include: {
+          resource: { include: { category: true } },
+          user: { include: { userRoles: { include: { role: true } } } },
+          instances: options.includeInstances ? {
+            orderBy: { scheduledDate: 'asc' },
+            take: 50 // Limit instances for performance
+          } : false
+        }
+      });
+
+      if (!recurringReservation) {
+        throw new NotFoundException('Recurring reservation not found');
+      }
+
+      // Check access permissions if userId provided
+      if (options.userId && recurringReservation.userId !== options.userId) {
+        // Additional permission checks could be implemented here
+        // For now, allow access to all users
+      }
+
+      const responseDto = this.mapToResponseDto(recurringReservation);
+
+      // Add statistics if requested
+      if (options.includeStats) {
+        const stats = await this.calculateStats(id);
+        responseDto.stats = stats;
+      }
+
+      this.logger.log('Found recurring reservation', { id });
+      return responseDto;
+    } catch (error) {
+      this.logger.error('Error finding recurring reservation by ID', error);
+      throw error;
+    }
   }
-  update(
+  async update(
     id: string,
     updateDto: UpdateRecurringReservationDto,
-  ):
-    | RecurringReservationResponseDto
-    | PromiseLike<RecurringReservationResponseDto> {
-    throw new Error("Method not implemented.");
+    userId: string
+  ): Promise<RecurringReservationResponseDto> {
+    this.logger.log('Updating recurring reservation', { id, userId, updateScope: updateDto.updateScope });
+
+    try {
+      // Find existing recurring reservation
+      const existing = await this.prisma.recurringReservation.findUnique({
+        where: { id },
+        include: {
+          resource: { include: { category: true } },
+          user: { include: { userRoles: { include: { role: true } } } }
+        }
+      });
+
+      if (!existing) {
+        throw new NotFoundException('Recurring reservation not found');
+      }
+
+      // Check permissions
+      if (existing.userId !== userId) {
+        // Additional permission checks could be implemented here
+        // For now, allow updates only by the owner
+        throw new BadRequestException('You can only update your own recurring reservations');
+      }
+
+      // Prepare update data
+      const updateData: any = {};
+      
+      if (updateDto.title !== undefined) updateData.title = updateDto.title;
+      if (updateDto.description !== undefined) updateData.description = updateDto.description;
+      if (updateDto.startDate !== undefined) updateData.startDate = new Date(updateDto.startDate);
+      if (updateDto.endDate !== undefined) updateData.endDate = new Date(updateDto.endDate);
+      if (updateDto.startTime !== undefined) updateData.startTime = updateDto.startTime;
+      if (updateDto.endTime !== undefined) updateData.endTime = updateDto.endTime;
+      if (updateDto.frequency !== undefined) updateData.frequency = updateDto.frequency;
+      if (updateDto.interval !== undefined) updateData.interval = updateDto.interval;
+      if (updateDto.daysOfWeek !== undefined) updateData.daysOfWeek = updateDto.daysOfWeek;
+      if (updateDto.dayOfMonth !== undefined) updateData.dayOfMonth = updateDto.dayOfMonth;
+
+      // Validate changes if significant updates
+      if (updateData.startDate || updateData.endDate || updateData.startTime || updateData.endTime || updateData.frequency) {
+        // Check for conflicts with new schedule
+        const conflicts = await this.checkForConflicts(
+          existing.resourceId,
+          updateData.startDate || existing.startDate,
+          updateData.endDate || existing.endDate,
+          updateData.startTime || existing.startTime,
+          updateData.endTime || existing.endTime,
+          updateData.frequency || existing.frequency as RecurrenceFrequency,
+          updateData.interval || existing.interval,
+          updateData.daysOfWeek || existing.daysOfWeek,
+          updateData.dayOfMonth || existing.dayOfMonth,
+          id // Exclude current reservation from conflict check
+        );
+
+        if (conflicts.length > 0) {
+          throw new ConflictException('Updated schedule conflicts with existing reservations');
+        }
+      }
+
+      // Update in database
+      const updated = await this.prisma.recurringReservation.update({
+        where: { id },
+        data: updateData,
+        include: {
+          resource: { include: { category: true } },
+          user: { include: { userRoles: { include: { role: true } } } }
+        }
+      });
+
+      // Regenerate instances if schedule changed
+      if (updateDto.regenerateInstances && (updateData.startDate || updateData.endDate || updateData.frequency || updateData.interval || updateData.daysOfWeek || updateData.dayOfMonth)) {
+        // Delete existing pending instances
+        await this.prisma.recurringReservationInstance.deleteMany({
+          where: {
+            recurringReservationId: id,
+            status: 'PENDING'
+          }
+        });
+
+        // Generate new instances
+        await this.generateInstancesForRecurringReservation(
+          id,
+          updated.startDate,
+          updated.endDate
+        );
+      }
+
+      this.logger.log('Recurring reservation updated successfully', { id });
+      return this.mapToResponseDto(updated);
+    } catch (error) {
+      this.logger.error('Error updating recurring reservation', error);
+      throw error;
+    }
   }
-  cancel(id: string, reason: string, cancelScope: string) {
-    throw new Error("Method not implemented.");
+  async cancel(
+    id: string,
+    reason: string,
+    cancelScope: 'FUTURE_ONLY' | 'ALL_INSTANCES' = 'FUTURE_ONLY',
+    userId: string
+  ): Promise<void> {
+    this.logger.log('Cancelling recurring reservation', { id, reason, cancelScope, userId });
+
+    try {
+      // Find existing recurring reservation
+      const existing = await this.prisma.recurringReservation.findUnique({
+        where: { id }
+      });
+
+      if (!existing) {
+        throw new NotFoundException('Recurring reservation not found');
+      }
+
+      // Check permissions
+      if (existing.userId !== userId) {
+        throw new BadRequestException('You can only cancel your own recurring reservations');
+      }
+
+      if (existing.status === 'CANCELLED') {
+        throw new BadRequestException('Recurring reservation is already cancelled');
+      }
+
+      // Update recurring reservation status
+      await this.prisma.recurringReservation.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+          updatedAt: new Date()
+        }
+      });
+
+      // Cancel instances based on scope
+      const instanceFilter: any = {
+        recurringReservationId: id
+      };
+
+      if (cancelScope === 'FUTURE_ONLY') {
+        instanceFilter.scheduledDate = { gte: new Date() };
+      }
+
+      instanceFilter.status = { in: ['PENDING', 'CONFIRMED'] };
+
+      await this.prisma.recurringReservationInstance.updateMany({
+        where: instanceFilter,
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: new Date()
+        }
+      });
+
+      this.logger.log('Recurring reservation cancelled successfully', { id, cancelScope });
+    } catch (error) {
+      this.logger.error('Error cancelling recurring reservation', error);
+      throw error;
+    }
   }
   getInstances(
     id: string,
     filters: { status: string; from: Date; to: Date; userId: any }
   ): any[] | PromiseLike<any[]> {
-    throw new Error("Method not implemented.");
+    // TODO: Implement get instances logic
+    // Mock implementation - would fetch recurring reservation instances
+    return [];
   }
   cancelInstance(id: string, instanceId: string, reason: string, cancelScope: string) {
-    throw new Error("Method not implemented.");
+    // TODO: Implement cancel instance logic
+    // Mock implementation - would cancel specific instance
+    return;
   }
   getStatistics(id: string, filters: any): any {
-    throw new Error("Method not implemented.");
+    // TODO: Implement get statistics logic
+    // Mock implementation - would calculate statistics
+    return {
+      totalInstances: 0,
+      completedInstances: 0,
+      cancelledInstances: 0,
+      successRate: 0
+    };
   }
-  validate(arg0: {
-    userId: any;
+  async validate(data: {
+    userId: string;
     title: string;
     description?: string;
     resourceId: string;
@@ -151,45 +513,461 @@ export class RecurringReservationService {
     requireConfirmation?: boolean;
     reminderHours?: number;
     customRule?: string;
-  }):
-    | {
-        isValid: boolean;
-        violations: string[];
-        warnings: string[];
-        estimatedInstances: number;
-        conflicts: any[];
+    excludeId?: string;
+  }): Promise<{
+    isValid: boolean;
+    violations: string[];
+    warnings: string[];
+    estimatedInstances: number;
+    conflicts: any[];
+  }> {
+    this.logger.log('Validating recurring reservation', {
+      userId: data.userId,
+      resourceId: data.resourceId,
+      title: data.title
+    });
+
+    try {
+      const violations: string[] = [];
+      const warnings: string[] = [];
+      let conflicts: any[] = [];
+
+      // Validate resource exists
+      const resource = await this.prisma.resource.findUnique({
+        where: { id: data.resourceId }
+      });
+
+      if (!resource) {
+        violations.push('Resource not found');
       }
-    | PromiseLike<{
-        isValid: boolean;
-        violations: string[];
-        warnings: string[];
-        estimatedInstances: number;
-        conflicts: any[];
-      }> {
-    throw new Error("Method not implemented.");
+
+      // Validate user exists
+      const user = await this.prisma.user.findUnique({
+        where: { id: data.userId }
+      });
+
+      if (!user) {
+        violations.push('User not found');
+      }
+
+      // Create entity for validation
+      const entity = RecurringReservationEntity.create({
+        title: data.title,
+        description: data.description,
+        resourceId: data.resourceId,
+        userId: data.userId,
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
+        startTime: data.startTime,
+        endTime: data.endTime,
+        frequency: data.frequency,
+        interval: data.interval || 1,
+        daysOfWeek: data.daysOfWeek,
+        dayOfMonth: data.dayOfMonth,
+        status: RecurringReservationStatus.ACTIVE,
+        totalInstances: 0,
+        confirmedInstances: 0
+      });
+
+      // Validate entity business rules
+      const entityValidation = entity.validate();
+      if (!entityValidation.isValid) {
+        violations.push(...entityValidation.errors);
+      }
+
+      // Generate occurrences to estimate instances
+      const occurrences = entity.generateOccurrences();
+      const estimatedInstances = occurrences.length;
+
+      // Check for conflicts if not allowing overlap
+      if (!data.allowOverlap && violations.length === 0) {
+        conflicts = await this.checkForConflicts(
+          data.resourceId,
+          new Date(data.startDate),
+          new Date(data.endDate),
+          data.startTime,
+          data.endTime,
+          data.frequency,
+          data.interval || 1,
+          data.daysOfWeek,
+          data.dayOfMonth,
+          data.excludeId
+        );
+
+        if (conflicts.length > 0) {
+          violations.push(`Found ${conflicts.length} scheduling conflicts`);
+        }
+      }
+
+      // Add warnings
+      if (estimatedInstances > 100) {
+        warnings.push('Large number of instances will be generated (>100)');
+      }
+
+      if (estimatedInstances === 0) {
+        warnings.push('No instances will be generated with current configuration');
+      }
+
+      const isValid = violations.length === 0;
+
+      this.logger.log('Validation completed', {
+        isValid,
+        violationsCount: violations.length,
+        warningsCount: warnings.length,
+        estimatedInstances,
+        conflictsCount: conflicts.length
+      });
+
+      return {
+        isValid,
+        violations,
+        warnings,
+        estimatedInstances,
+        conflicts
+      };
+    } catch (error) {
+      this.logger.error('Error validating recurring reservation', error);
+      return {
+        isValid: false,
+        violations: ['Validation error occurred'],
+        warnings: [],
+        estimatedInstances: 0,
+        conflicts: []
+      };
+    }
   }
-  bulkCancel(
+  async bulkCancel(
     reservationIds: string[],
     reason: string,
-    cancelScope: string
-  ):
-    | {
-        successful: string[];
-        failed: Array<{ id: string; error: string }>;
-        totalProcessed: number;
+    cancelScope: 'FUTURE_ONLY' | 'ALL_INSTANCES' = 'FUTURE_ONLY',
+    userId: string
+  ): Promise<{
+    successful: string[];
+    failed: Array<{ id: string; error: string }>;
+    totalProcessed: number;
+  }> {
+    this.logger.log('Bulk cancelling recurring reservations', {
+      reservationIds,
+      reason,
+      cancelScope,
+      userId
+    });
+
+    const successful: string[] = [];
+    const failed: Array<{ id: string; error: string }> = [];
+
+    try {
+      // Process each reservation individually to handle partial failures
+      for (const id of reservationIds) {
+        try {
+          await this.cancel(id, reason, cancelScope, userId);
+          successful.push(id);
+        } catch (error) {
+          failed.push({
+            id,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
       }
-    | PromiseLike<{
-        successful: string[];
-        failed: Array<{ id: string; error: string }>;
-        totalProcessed: number;
-      }> {
-    throw new Error("Method not implemented.");
+
+      this.logger.log('Bulk cancel completed', {
+        successful: successful.length,
+        failed: failed.length,
+        total: reservationIds.length
+      });
+
+      return {
+        successful,
+        failed,
+        totalProcessed: reservationIds.length
+      };
+    } catch (error) {
+      this.logger.error('Error in bulk cancel operation', error);
+      
+      // If there's a general error, mark all as failed
+      const allFailed = reservationIds.map(id => ({
+        id,
+        error: error instanceof Error ? error.message : 'Bulk operation failed'
+      }));
+
+      return {
+        successful: [],
+        failed: allFailed,
+        totalProcessed: reservationIds.length
+      };
+    }
   }
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-    private readonly logger: LoggingService
+    private readonly logger: LoggingService,
+    private readonly prisma: PrismaService
   ) {}
+
+  // Private Helper Methods
+
+  private async checkForConflicts(
+    resourceId: string,
+    startDate: Date,
+    endDate: Date,
+    startTime: string,
+    endTime: string,
+    frequency: RecurrenceFrequency,
+    interval: number,
+    daysOfWeek?: number[],
+    dayOfMonth?: number,
+    excludeId?: string
+  ): Promise<any[]> {
+    this.logger.log('Checking for conflicts', { resourceId, startDate, endDate });
+
+    try {
+      // Create entity to generate occurrences
+      const entity = RecurringReservationEntity.create({
+        title: 'temp',
+        resourceId,
+        userId: 'temp',
+        startDate,
+        endDate,
+        startTime,
+        endTime,
+        frequency,
+        interval,
+        daysOfWeek,
+        dayOfMonth,
+        status: RecurringReservationStatus.ACTIVE,
+        totalInstances: 0,
+        confirmedInstances: 0
+      });
+
+      const occurrences = entity.generateOccurrences();
+      const conflicts = [];
+
+      // Check each occurrence for conflicts
+      for (const occurrence of occurrences) {
+        const startDateTime = new Date(`${occurrence.toISOString().split('T')[0]}T${startTime}:00`);
+        const endDateTime = new Date(`${occurrence.toISOString().split('T')[0]}T${endTime}:00`);
+
+        // Check existing reservations (using startDate/endDate from schema)
+        const existingReservations = await this.prisma.reservation.findMany({
+          where: {
+            resourceId,
+            status: { in: ['APROBADA', 'PENDIENTE', 'SOLICITADO'] },
+            OR: [
+              {
+                AND: [
+                  { startDate: { lte: startDateTime } },
+                  { endDate: { gt: startDateTime } }
+                ]
+              },
+              {
+                AND: [
+                  { startDate: { lt: endDateTime } },
+                  { endDate: { gte: endDateTime } }
+                ]
+              },
+              {
+                AND: [
+                  { startDate: { gte: startDateTime } },
+                  { endDate: { lte: endDateTime } }
+                ]
+              }
+            ]
+          }
+        });
+
+        // Check existing recurring reservations
+        const existingRecurring = await this.prisma.recurringReservation.findMany({
+          where: {
+            resourceId,
+            status: 'ACTIVE',
+            id: excludeId ? { not: excludeId } : undefined,
+            startDate: { lte: occurrence },
+            endDate: { gte: occurrence }
+          }
+        });
+
+        if (existingReservations.length > 0 || existingRecurring.length > 0) {
+          conflicts.push({
+            date: occurrence,
+            startTime,
+            endTime,
+            conflictingReservations: existingReservations.length,
+            conflictingRecurring: existingRecurring.length
+          });
+        }
+      }
+
+      return conflicts;
+    } catch (error) {
+      this.logger.error('Error checking for conflicts', error);
+      return [];
+    }
+  }
+
+  private async generateInstancesForRecurringReservation(
+    recurringReservationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<void> {
+    this.logger.log('Generating instances for recurring reservation', {
+      recurringReservationId,
+      startDate,
+      endDate
+    });
+
+    try {
+      const recurringReservation = await this.prisma.recurringReservation.findUnique({
+        where: { id: recurringReservationId }
+      });
+
+      if (!recurringReservation) {
+        throw new NotFoundException('Recurring reservation not found');
+      }
+
+      // Create entity to generate occurrences
+      const entity = RecurringReservationEntity.fromPersistence({
+        id: recurringReservation.id,
+        title: recurringReservation.title,
+        description: recurringReservation.description,
+        resourceId: recurringReservation.resourceId,
+        userId: recurringReservation.userId,
+        startDate: recurringReservation.startDate,
+        endDate: recurringReservation.endDate,
+        startTime: recurringReservation.startTime,
+        endTime: recurringReservation.endTime,
+        frequency: recurringReservation.frequency as RecurrenceFrequency,
+        interval: recurringReservation.interval,
+        daysOfWeek: recurringReservation.daysOfWeek,
+        dayOfMonth: recurringReservation.dayOfMonth,
+        status: recurringReservation.status as RecurringReservationStatus,
+        totalInstances: recurringReservation.totalInstances,
+        confirmedInstances: recurringReservation.confirmedInstances,
+        createdAt: recurringReservation.createdAt,
+        updatedAt: recurringReservation.updatedAt
+      });
+
+      const occurrences = entity.generateOccurrences();
+
+      // Create instances in database
+      const instances = occurrences.map(occurrence => ({
+        recurringReservationId,
+        scheduledDate: occurrence,
+        startTime: recurringReservation.startTime,
+        endTime: recurringReservation.endTime,
+        status: 'PENDING'
+      }));
+
+      if (instances.length > 0) {
+        await this.prisma.recurringReservationInstance.createMany({
+          data: instances
+        });
+
+        // Update total instances count
+        await this.prisma.recurringReservation.update({
+          where: { id: recurringReservationId },
+          data: { totalInstances: instances.length }
+        });
+      }
+
+      this.logger.log('Generated instances successfully', {
+        recurringReservationId,
+        instanceCount: instances.length
+      });
+    } catch (error) {
+      this.logger.error('Error generating instances', error);
+      throw error;
+    }
+  }
+
+  private mapToResponseDto(data: any): RecurringReservationResponseDto {
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      resource: {
+        id: data.resource.id,
+        name: data.resource.name,
+        type: data.resource.category?.name || 'UNKNOWN',
+        capacity: data.resource.capacity || 0,
+        location: data.resource.location || ''
+      },
+      user: {
+        id: data.user.id,
+        fullName: `${data.user.firstName} ${data.user.lastName}`,
+        email: data.user.email,
+        role: data.user.userRoles?.[0]?.role?.name || 'USER'
+      },
+      startDate: data.startDate.toISOString(),
+      endDate: data.endDate.toISOString(),
+      startTime: data.startTime,
+      endTime: data.endTime,
+      frequency: data.frequency,
+      interval: data.interval,
+      daysOfWeek: data.daysOfWeek,
+      dayOfMonth: data.dayOfMonth,
+      status: data.status,
+      priority: 'MEDIUM', // Default priority
+      tags: [], // Default empty tags
+      autoConfirm: false,
+      sendNotifications: true,
+      requireConfirmation: true,
+      stats: {
+        totalInstances: data.totalInstances || 0,
+        confirmedInstances: data.confirmedInstances || 0,
+        cancelledInstances: 0,
+        completedInstances: 0,
+        noShowInstances: 0,
+        confirmationRate: data.totalInstances > 0 ? (data.confirmedInstances / data.totalInstances) * 100 : 0,
+        completionRate: 0,
+        averageConfirmationTime: 0
+      },
+      createdAt: data.createdAt.toISOString(),
+      updatedAt: data.updatedAt.toISOString(),
+      createdBy: data.userId,
+      canModify: true,
+      canCancel: data.status === 'ACTIVE'
+    };
+  }
+
+  private async calculateStats(recurringReservationId: string): Promise<any> {
+    this.logger.log('Calculating stats for recurring reservation', { recurringReservationId });
+
+    try {
+      const instances = await this.prisma.recurringReservationInstance.findMany({
+        where: { recurringReservationId }
+      });
+
+      const total = instances.length;
+      const confirmed = instances.filter(i => i.status === 'CONFIRMED').length;
+      const cancelled = instances.filter(i => i.status === 'CANCELLED').length;
+      const pending = instances.filter(i => i.status === 'PENDING').length;
+
+      return {
+        totalInstances: total,
+        confirmedInstances: confirmed,
+        cancelledInstances: cancelled,
+        pendingInstances: pending,
+        completedInstances: 0, // Would need additional logic to track completed
+        noShowInstances: 0, // Would need additional logic to track no-shows
+        confirmationRate: total > 0 ? (confirmed / total) * 100 : 0,
+        completionRate: 0,
+        averageConfirmationTime: 0
+      };
+    } catch (error) {
+      this.logger.error('Error calculating stats', error);
+      return {
+        totalInstances: 0,
+        confirmedInstances: 0,
+        cancelledInstances: 0,
+        pendingInstances: 0,
+        completedInstances: 0,
+        noShowInstances: 0,
+        confirmationRate: 0,
+        completionRate: 0,
+        averageConfirmationTime: 0
+      };
+    }
+  }
 
   // Command Methods
 

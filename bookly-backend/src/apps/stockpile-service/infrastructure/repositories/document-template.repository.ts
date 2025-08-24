@@ -12,18 +12,62 @@ export class PrismaDocumentTemplateRepository implements DocumentTemplateReposit
     private readonly prisma: PrismaService,
     private readonly loggingService: LoggingService
   ) {}
-    findDocumentTemplatesByScope(resourceType?: string, categoryId?: string, eventType?: DocumentEventType): Promise<DocumentTemplateEntity[]> {
-        throw new Error('Method not implemented.');
-    }
-    findGeneratedDocumentsByReservationId(reservationId: string): Promise<GeneratedDocumentEntity[]> {
-        throw new Error('Method not implemented.');
-    }
-    findGeneratedDocumentsByTemplateId(templateId: string): Promise<GeneratedDocumentEntity[]> {
-        throw new Error('Method not implemented.');
-    }
-    deleteGeneratedDocument(id: string): Promise<void> {
-        throw new Error('Method not implemented.');
-    }
+  async findDocumentTemplatesByScope(resourceType?: string, categoryId?: string, eventType?: DocumentEventType): Promise<DocumentTemplateEntity[]> {
+    this.loggingService.log('Finding document templates by scope', 'PrismaDocumentTemplateRepository', LoggingHelper.logParams({ resourceType, categoryId, eventType }));
+
+    const templates = await this.prisma.documentTemplate.findMany({
+      where: {
+        resourceType,
+        categoryId,
+        eventType,
+        isActive: true
+      },
+      include: {
+        category: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return templates.map(template => this.mapToDocumentTemplateEntity(template));
+  }
+
+  async findGeneratedDocumentsByReservationId(reservationId: string): Promise<GeneratedDocumentEntity[]> {
+    this.loggingService.log('Finding generated documents by reservation ID', 'PrismaDocumentTemplateRepository', LoggingHelper.logParams({ reservationId }));
+
+    const documents = await this.prisma.generatedDocument.findMany({
+      where: { reservationId },
+      include: {
+        template: true,
+        reservation: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return documents.map(document => this.mapToGeneratedDocumentEntity(document));
+  }
+
+  async findGeneratedDocumentsByTemplateId(templateId: string): Promise<GeneratedDocumentEntity[]> {
+    this.loggingService.log('Finding generated documents by template ID', 'PrismaDocumentTemplateRepository', LoggingHelper.logParams({ templateId }));
+
+    const documents = await this.prisma.generatedDocument.findMany({
+      where: { templateId },
+      include: {
+        template: true,
+        reservation: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return documents.map(document => this.mapToGeneratedDocumentEntity(document));
+  }
+
+  async deleteGeneratedDocument(id: string): Promise<void> {
+    this.loggingService.log('Deleting generated document from database', 'PrismaDocumentTemplateRepository', LoggingHelper.logParams({ id }));
+
+    await this.prisma.generatedDocument.delete({
+      where: { id }
+    });
+  }
 
   async createDocumentTemplate(template: DocumentTemplateEntity): Promise<DocumentTemplateEntity> {
     this.loggingService.log('Creating document template in database', 'PrismaDocumentTemplateRepository', LoggingHelper.logParams({ templateId: template.id }));

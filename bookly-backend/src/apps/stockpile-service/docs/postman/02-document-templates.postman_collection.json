@@ -1,0 +1,594 @@
+{
+  "info": {
+    "name": "Bookly Stockpile Service - Document Templates",
+    "description": "Postman collection for Document Template Management endpoints\n\nThis collection covers:\n- Creating and managing document templates\n- Template variable management\n- Document generation from templates\n- File upload and download operations\n- Template versioning and activation\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the stockpile service\n- {{authToken}} - JWT Bearer token for authentication\n- {{adminToken}} - JWT Bearer token for admin operations\n- {{testTemplateId}} - Document template ID for testing\n- {{testReservationId}} - Reservation ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "stockpile-document-templates",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "if (!pm.environment.get('testReservationId')) {",
+          "  pm.environment.set('testReservationId', 'reservation-test-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/stockpile",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Template Management",
+      "item": [
+        {
+          "name": "Create Document Template",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Approval Letter Template\",\n  \"description\": \"Standard template for reservation approval letters\",\n  \"resourceType\": \"CLASSROOM\",\n  \"categoryId\": \"classroom-standard\",\n  \"eventType\": \"RESERVATION_APPROVED\",\n  \"templateContent\": \"Dear {{user.firstName}} {{user.lastName}},\\n\\nYour reservation request for {{resource.name}} has been approved.\\n\\nReservation Details:\\n- Date: {{reservation.date}}\\n- Time: {{reservation.startTime}} - {{reservation.endTime}}\\n- Purpose: {{reservation.purpose}}\\n\\nPlease ensure you follow all facility guidelines.\\n\\nBest regards,\\n{{approver.name}}\\n{{approver.title}}\",\n  \"variables\": {\n    \"user\": [\"firstName\", \"lastName\", \"email\"],\n    \"resource\": [\"name\", \"location\", \"capacity\"],\n    \"reservation\": [\"date\", \"startTime\", \"endTime\", \"purpose\"],\n    \"approver\": [\"name\", \"title\", \"department\"]\n  },\n  \"outputFormat\": \"PDF\",\n  \"isDefault\": true,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates"]
+            },
+            "description": "Creates a new document template with variable placeholders"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Template created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('templateContent');",
+                  "  pm.expect(responseJson).to.have.property('variables');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('testTemplateId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Document Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates?resourceType=CLASSROOM&eventType=RESERVATION_APPROVED&isActive=true&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates"],
+              "query": [
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Filter by resource type"
+                },
+                {
+                  "key": "eventType",
+                  "value": "RESERVATION_APPROVED",
+                  "description": "Filter by event type"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter active templates"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves document templates with filtering and pagination"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Templates returned with pagination', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('templates');",
+                  "  pm.expect(responseJson).to.have.property('total');",
+                  "  pm.expect(responseJson.templates).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Document Template by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/{{testTemplateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "{{testTemplateId}}"]
+            },
+            "description": "Retrieves a specific document template by ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Template has all required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('templateContent');",
+                  "  pm.expect(responseJson).to.have.property('eventType');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Document Template",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Approval Letter Template\",\n  \"description\": \"Enhanced template with additional formatting\",\n  \"templateContent\": \"Dear {{user.firstName}} {{user.lastName}},\\n\\nWe are pleased to inform you that your reservation request has been APPROVED.\\n\\nReservation Details:\\n- Resource: {{resource.name}} ({{resource.location}})\\n- Date: {{reservation.date}}\\n- Time: {{reservation.startTime}} - {{reservation.endTime}}\\n- Purpose: {{reservation.purpose}}\\n- Capacity: {{resource.capacity}} people\\n\\nImportant Guidelines:\\n- Please arrive on time\\n- Ensure the space is clean after use\\n- Report any issues immediately\\n\\nApproved by: {{approver.name}}\\nDate: {{approval.date}}\\n\\nThank you for using our facilities.\",\n  \"outputFormat\": \"PDF\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/{{testTemplateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "{{testTemplateId}}"]
+            },
+            "description": "Updates an existing document template"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Template updated successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.name).to.equal('Updated Approval Letter Template');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Default Document Template",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/default/search?resourceType=CLASSROOM&eventType=RESERVATION_APPROVED",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "default", "search"],
+              "query": [
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Resource type"
+                },
+                {
+                  "key": "eventType",
+                  "value": "RESERVATION_APPROVED",
+                  "description": "Event type"
+                }
+              ]
+            },
+            "description": "Retrieves the default template for a specific resource type and event"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Template Variables",
+      "item": [
+        {
+          "name": "Get Template Variables",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/{{testTemplateId}}/variables",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "{{testTemplateId}}", "variables"]
+            },
+            "description": "Retrieves available variables for a specific template"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Variables object returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Available Variables by Event Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/variables/available?eventType=RESERVATION_APPROVED&resourceType=CLASSROOM",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "variables", "available"],
+              "query": [
+                {
+                  "key": "eventType",
+                  "value": "RESERVATION_APPROVED",
+                  "description": "Event type"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Resource type"
+                }
+              ]
+            },
+            "description": "Retrieves all available variables for a specific event type and resource"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Available variables returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('object');",
+                  "  pm.expect(responseJson).to.have.property('user');",
+                  "  pm.expect(responseJson).to.have.property('resource');",
+                  "  pm.expect(responseJson).to.have.property('reservation');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Document Generation",
+      "item": [
+        {
+          "name": "Generate Document from Template",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"{{testTemplateId}}\",\n  \"reservationId\": \"{{testReservationId}}\",\n  \"variables\": {\n    \"user\": {\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"email\": \"john.doe@ufps.edu.co\"\n    },\n    \"resource\": {\n      \"name\": \"Classroom A-101\",\n      \"location\": \"Building A, First Floor\",\n      \"capacity\": 30\n    },\n    \"reservation\": {\n      \"date\": \"2024-01-20\",\n      \"startTime\": \"09:00\",\n      \"endTime\": \"11:00\",\n      \"purpose\": \"Software Engineering Lecture\"\n    },\n    \"approver\": {\n      \"name\": \"Dr. Maria Rodriguez\",\n      \"title\": \"Department Head\",\n      \"department\": \"Computer Science\"\n    },\n    \"approval\": {\n      \"date\": \"2024-01-18\"\n    }\n  },\n  \"outputFormat\": \"PDF\",\n  \"fileName\": \"approval-letter-{{reservation.date}}-{{user.lastName}}.pdf\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "generate"]
+            },
+            "description": "Generates a document from a template with provided variables"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Document generated successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('fileName');",
+                  "  pm.expect(responseJson).to.have.property('filePath');",
+                  "  pm.expect(responseJson).to.have.property('fileSize');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('generatedDocumentId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Generated Documents by Reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/generated/reservation/{{testReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "generated", "reservation", "{{testReservationId}}"]
+            },
+            "description": "Retrieves all generated documents for a specific reservation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Generated documents array returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Generated Document by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/generated/{{generatedDocumentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "generated", "{{generatedDocumentId}}"]
+            },
+            "description": "Retrieves a specific generated document by ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Generated document details returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('templateId');",
+                  "  pm.expect(responseJson).to.have.property('reservationId');",
+                  "  pm.expect(responseJson).to.have.property('fileName');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download Generated Document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/generated/{{generatedDocumentId}}/download",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "generated", "{{generatedDocumentId}}", "download"]
+            },
+            "description": "Downloads a generated document file"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Download response received', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('message');",
+                  "  pm.expect(responseJson).to.have.property('filePath');",
+                  "  pm.expect(responseJson).to.have.property('fileName');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "File Operations",
+      "item": [
+        {
+          "name": "Upload Template File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Template file to upload (PDF, DOCX, HTML)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/{{testTemplateId}}/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "{{testTemplateId}}", "upload"]
+            },
+            "description": "Uploads a template file for a document template (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('File uploaded successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('fileName');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Document Template",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/document-templates/{{testTemplateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-templates", "{{testTemplateId}}"]
+            },
+            "description": "Soft deletes a document template (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,815 @@
+{
+	"info": {
+		"_postman_id": "feedback-audit-collection",
+		"name": "Reports Service - Feedback & Audit",
+		"description": "Collection for testing Feedback and Audit endpoints (RF-34, RF-44)\n\nThis collection covers:\n- Create and manage user feedback\n- View feedback submissions (admin)\n- Access audit logs and system tracking\n- Filter audit logs by various criteria\n\nAll endpoints require JWT authentication with appropriate role permissions.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"if (!pm.environment.get('base_url')) {",
+					"    pm.environment.set('base_url', 'http://localhost:3004');",
+					"}",
+					"",
+					"if (!pm.environment.get('jwt_token')) {",
+					"    console.warn('JWT token not set. Please set jwt_token in environment variables.');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"pm.test('Content-Type is application/json', function () {",
+					"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3004",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Feedback Management",
+			"item": [
+				{
+					"name": "Create Resource Feedback",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Feedback created successfully', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('Thank you');",
+									"});",
+									"",
+									"pm.test('Feedback ID is returned', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.be.a('string');",
+									"    pm.expect(jsonData.id).to.have.length.greaterThan(0);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reservationId\": \"res_12345\",\n    \"resourceId\": \"resource_001\",\n    \"rating\": 4,\n    \"category\": \"RESOURCE\",\n    \"title\": \"Great audio quality\",\n    \"comment\": \"The sound system worked perfectly during my presentation. The microphones were clear and the speakers had excellent quality.\",\n    \"anonymous\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reports/feedback",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"feedback"
+							]
+						},
+						"description": "Submit feedback about a specific resource after using it"
+					}
+				},
+				{
+					"name": "Create System Feedback",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('System feedback accepted', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData.message).to.include('feedback');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rating\": 3,\n    \"category\": \"SYSTEM\",\n    \"title\": \"Booking process could be improved\",\n    \"comment\": \"The reservation system is functional but the interface could be more intuitive. Sometimes it takes several clicks to find available time slots.\",\n    \"anonymous\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reports/feedback",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"feedback"
+							]
+						},
+						"description": "Submit feedback about the reservation system itself"
+					}
+				},
+				{
+					"name": "Create Anonymous Suggestion",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Anonymous suggestion accepted', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rating\": 5,\n    \"category\": \"SUGGESTION\",\n    \"title\": \"Add mobile app\",\n    \"comment\": \"It would be great to have a mobile app for making reservations on the go. This would make the system more accessible for students and faculty.\",\n    \"anonymous\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reports/feedback",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"feedback"
+							]
+						},
+						"description": "Submit an anonymous suggestion for system improvement"
+					}
+				},
+				{
+					"name": "Get All Feedback (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Feedback list structure', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('feedback');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"    pm.expect(jsonData.feedback).to.be.an('array');",
+									"});",
+									"",
+									"pm.test('Feedback items have required fields', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.feedback.length > 0) {",
+									"        const feedbackItem = jsonData.feedback[0];",
+									"        pm.expect(feedbackItem).to.have.property('id');",
+									"        pm.expect(feedbackItem).to.have.property('rating');",
+									"        pm.expect(feedbackItem).to.have.property('category');",
+									"        pm.expect(feedbackItem).to.have.property('comment');",
+									"        pm.expect(feedbackItem).to.have.property('createdAt');",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/feedback?page=1&limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"feedback"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number for pagination"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Number of items per page"
+								}
+							]
+						},
+						"description": "Get list of all feedback submissions (requires admin role)"
+					}
+				},
+				{
+					"name": "Get Feedback by Category",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('All feedback items match category', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.feedback && jsonData.feedback.length > 0) {",
+									"        jsonData.feedback.forEach(item => {",
+									"            pm.expect(item.category).to.equal('RESOURCE');",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/feedback?category=RESOURCE&page=1&limit=15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"feedback"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "RESOURCE",
+									"description": "Filter by feedback category"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "15",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get feedback filtered by category (RESOURCE)"
+					}
+				},
+				{
+					"name": "Get High-Rating Feedback",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('All feedback has rating 5', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.feedback && jsonData.feedback.length > 0) {",
+									"        jsonData.feedback.forEach(item => {",
+									"            pm.expect(item.rating).to.equal(5);",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/feedback?rating=5&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"feedback"
+							],
+							"query": [
+								{
+									"key": "rating",
+									"value": "5",
+									"description": "Filter by 5-star rating"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get all 5-star feedback submissions"
+					}
+				}
+			],
+			"description": "Endpoints for managing user feedback about the system and resources"
+		},
+		{
+			"name": "Audit Logs",
+			"item": [
+				{
+					"name": "Get All Audit Logs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Audit logs structure', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('logs');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"    pm.expect(jsonData.logs).to.be.an('array');",
+									"});",
+									"",
+									"pm.test('Audit log entries have required fields', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.logs.length > 0) {",
+									"        const logEntry = jsonData.logs[0];",
+									"        pm.expect(logEntry).to.have.property('id');",
+									"        pm.expect(logEntry).to.have.property('action');",
+									"        pm.expect(logEntry).to.have.property('userId');",
+									"        pm.expect(logEntry).to.have.property('timestamp');",
+									"        pm.expect(logEntry).to.have.property('ipAddress');",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/audit?page=1&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"audit"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number for pagination"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Number of items per page"
+								}
+							]
+						},
+						"description": "Get all system audit logs (requires admin privileges)"
+					}
+				},
+				{
+					"name": "Get Audit Logs by Action",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('All logs have CREATE action', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.logs && jsonData.logs.length > 0) {",
+									"        jsonData.logs.forEach(log => {",
+									"            pm.expect(log.action).to.equal('CREATE');",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/audit?action=CREATE&page=1&limit=15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"audit"
+							],
+							"query": [
+								{
+									"key": "action",
+									"value": "CREATE",
+									"description": "Filter by CREATE actions"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "15",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get audit logs filtered by CREATE actions"
+					}
+				},
+				{
+					"name": "Get Audit Logs by User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('All logs belong to specified user', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.logs && jsonData.logs.length > 0) {",
+									"        jsonData.logs.forEach(log => {",
+									"            pm.expect(log.userId).to.equal('usr_12345');",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/audit?userId=usr_12345&page=1&limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"audit"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "usr_12345",
+									"description": "Filter by specific user ID"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get audit logs for a specific user"
+					}
+				},
+				{
+					"name": "Get Audit Logs by Date Range",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Logs are within date range', function () {",
+									"    const jsonData = pm.response.json();",
+									"    const startDate = new Date('2024-01-01');",
+									"    const endDate = new Date('2024-01-31');",
+									"    ",
+									"    if (jsonData.logs && jsonData.logs.length > 0) {",
+									"        jsonData.logs.forEach(log => {",
+									"            const logDate = new Date(log.timestamp);",
+									"            pm.expect(logDate).to.be.at.least(startDate);",
+									"            pm.expect(logDate).to.be.at.most(endDate);",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/audit?startDate=2024-01-01&endDate=2024-01-31&page=1&limit=25",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"audit"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2024-01-01",
+									"description": "Start date for audit log filter"
+								},
+								{
+									"key": "endDate",
+									"value": "2024-01-31",
+									"description": "End date for audit log filter"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "25",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get audit logs within a specific date range"
+					}
+				},
+				{
+					"name": "Get Login/Logout Audit Logs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('All logs are LOGIN or LOGOUT actions', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.logs && jsonData.logs.length > 0) {",
+									"        jsonData.logs.forEach(log => {",
+									"            pm.expect(['LOGIN', 'LOGOUT']).to.include(log.action);",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/audit?action=LOGIN&page=1&limit=30",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"audit"
+							],
+							"query": [
+								{
+									"key": "action",
+									"value": "LOGIN",
+									"description": "Filter by LOGIN actions"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "30",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get audit logs for login activities"
+					}
+				},
+				{
+					"name": "Get Export Audit Logs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('All logs are EXPORT actions', function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.logs && jsonData.logs.length > 0) {",
+									"        jsonData.logs.forEach(log => {",
+									"            pm.expect(log.action).to.equal('EXPORT');",
+									"        });",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reports/audit?action=EXPORT&resourceType=REPORT&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reports",
+								"audit"
+							],
+							"query": [
+								{
+									"key": "action",
+									"value": "EXPORT",
+									"description": "Filter by EXPORT actions"
+								},
+								{
+									"key": "resourceType",
+									"value": "REPORT",
+									"description": "Filter by resource type"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get audit logs for report export activities"
+					}
+				}
+			],
+			"description": "Endpoints for accessing system audit logs and tracking user activities"
+		}
+	]
+}

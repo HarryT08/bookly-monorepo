@@ -109,13 +109,50 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return (await this.client.exists(key)) === 1;
   }
 
-  async cacheEvent(event: DomainEvent): Promise<void> {
-    const key = `event:${event.eventId}`;
-    await this.set(key, event, 86400); // Cache for 24 hours
+  async lPush(key: string, value: string): Promise<void> {
+    await this.client.lPush(key, value);
   }
 
-  async getEvent(eventId: string): Promise<DomainEvent | null> {
-    return await this.get<DomainEvent>(`event:${eventId}`);
+  async lRange(key: string, start: number, stop: number): Promise<string[]> {
+    return await this.client.lRange(key, start, stop);
+  }
+
+  async expire(key: string, seconds: number): Promise<void> {
+    await this.client.expire(key, seconds);
+  }
+
+  async cacheEvent(event: any): Promise<void> {
+    try {
+      const key = `events:${event.aggregateType}:${event.aggregateId}`;
+      await this.client.lPush(key, JSON.stringify(event));
+      await this.client.expire(key, 86400); // 24 hours TTL
+    } catch (error) {
+      console.error('Failed to cache event:', error);
+    }
+  }
+
+  async getEventHistory(aggregateId: string): Promise<any[]> {
+    try {
+      const pattern = `events:*:${aggregateId}`;
+      const keys = await this.client.keys(pattern);
+      
+      if (keys.length === 0) {
+        return [];
+      }
+
+      const events: any[] = [];
+      for (const key of keys) {
+        const eventStrings = await this.client.lRange(key, 0, -1);
+        const keyEvents = eventStrings.map(eventStr => JSON.parse(eventStr));
+        events.push(...keyEvents);
+      }
+
+      // Sort events by timestamp
+      return events.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    } catch (error) {
+      console.error('Failed to get event history:', error);
+      return [];
+    }
   }
 
   async cacheReservationAvailability(resourceId: string, date: string, availability: any): Promise<void> {

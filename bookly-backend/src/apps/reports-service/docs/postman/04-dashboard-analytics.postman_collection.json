@@ -1,0 +1,494 @@
+{
+	"info": {
+		"_postman_id": "dashboard-analytics-collection",
+		"name": "Reports Service - Dashboard & Analytics",
+		"description": "Collection for testing Dashboard and Analytics endpoints (RF-36)\n\nThis collection covers:\n- Get real-time dashboard data\n- Analytics with different time periods\n- Program-specific dashboard data\n- Dashboard alerts and notifications\n\nAll endpoints require JWT authentication.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"if (!pm.environment.get('base_url')) {",
+					"    pm.environment.set('base_url', 'http://localhost:3004');",
+					"}",
+					"",
+					"if (!pm.environment.get('jwt_token')) {",
+					"    console.warn('JWT token not set. Please set jwt_token in environment variables.');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test('Response time is less than 3000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(3000);",
+					"});",
+					"",
+					"pm.test('Content-Type is application/json', function () {",
+					"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3004",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Get Dashboard Data - Current Month",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Dashboard has summary section', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('summary');",
+							"    pm.expect(jsonData.summary).to.be.an('object');",
+							"});",
+							"",
+							"pm.test('Summary contains key metrics', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.have.property('totalReservations');",
+							"    pm.expect(jsonData.summary).to.have.property('activeReservations');",
+							"    pm.expect(jsonData.summary).to.have.property('utilizationRate');",
+							"    pm.expect(jsonData.summary).to.have.property('topResources');",
+							"});",
+							"",
+							"pm.test('Dashboard has charts section', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('charts');",
+							"    pm.expect(jsonData.charts).to.be.an('object');",
+							"});",
+							"",
+							"pm.test('Charts contain required data', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.charts).to.have.property('reservationTrends');",
+							"    pm.expect(jsonData.charts).to.have.property('resourceUtilization');",
+							"    pm.expect(jsonData.charts).to.have.property('userActivity');",
+							"});",
+							"",
+							"pm.test('Dashboard has alerts section', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('alerts');",
+							"    pm.expect(jsonData.alerts).to.be.an('array');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard?period=MONTH",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					],
+					"query": [
+						{
+							"key": "period",
+							"value": "MONTH",
+							"description": "Time period for dashboard data"
+						}
+					]
+				},
+				"description": "Get dashboard data for the current month with all analytics"
+			}
+		},
+		{
+			"name": "Get Dashboard Data - Today",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Today dashboard has real-time data', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.have.property('activeReservations');",
+							"    pm.expect(jsonData.summary.activeReservations).to.be.a('number');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard?period=TODAY",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					],
+					"query": [
+						{
+							"key": "period",
+							"value": "TODAY",
+							"description": "Get today's dashboard data"
+						}
+					]
+				},
+				"description": "Get real-time dashboard data for today"
+			}
+		},
+		{
+			"name": "Get Dashboard Data - This Week",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Weekly dashboard contains trend data', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.charts.reservationTrends).to.be.an('array');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard?period=WEEK",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					],
+					"query": [
+						{
+							"key": "period",
+							"value": "WEEK",
+							"description": "Get this week's dashboard data"
+						}
+					]
+				},
+				"description": "Get dashboard data for the current week"
+			}
+		},
+		{
+			"name": "Get Dashboard Data - Quarterly",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Quarterly data has comprehensive metrics', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary.totalReservations).to.be.a('number');",
+							"    pm.expect(jsonData.summary.utilizationRate).to.be.a('number');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard?period=QUARTER",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					],
+					"query": [
+						{
+							"key": "period",
+							"value": "QUARTER",
+							"description": "Get quarterly dashboard data"
+						}
+					]
+				},
+				"description": "Get dashboard data for the current quarter"
+			}
+		},
+		{
+			"name": "Get Dashboard Data - Yearly",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Yearly data shows long-term trends', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.charts).to.have.property('reservationTrends');",
+							"    pm.expect(jsonData.charts).to.have.property('resourceUtilization');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard?period=YEAR",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					],
+					"query": [
+						{
+							"key": "period",
+							"value": "YEAR",
+							"description": "Get yearly dashboard data"
+						}
+					]
+				},
+				"description": "Get dashboard data for the current year"
+			}
+		},
+		{
+			"name": "Get Dashboard Data - Engineering Program",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Program-specific dashboard data', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.have.property('totalReservations');",
+							"    pm.expect(jsonData.summary).to.have.property('utilizationRate');",
+							"});",
+							"",
+							"pm.test('Top resources are relevant to program', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary.topResources).to.be.an('array');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard?period=MONTH&programId=ING-SIS",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					],
+					"query": [
+						{
+							"key": "period",
+							"value": "MONTH",
+							"description": "Monthly period"
+						},
+						{
+							"key": "programId",
+							"value": "ING-SIS",
+							"description": "Filter by Systems Engineering program"
+						}
+					]
+				},
+				"description": "Get dashboard data filtered by Systems Engineering program"
+			}
+		},
+		{
+			"name": "Get Dashboard Data - Medicine Program",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Medicine program dashboard', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.summary).to.be.an('object');",
+							"    pm.expect(jsonData.charts).to.be.an('object');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard?period=QUARTER&programId=MED-GEN",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					],
+					"query": [
+						{
+							"key": "period",
+							"value": "QUARTER",
+							"description": "Quarterly period"
+						},
+						{
+							"key": "programId",
+							"value": "MED-GEN",
+							"description": "Filter by General Medicine program"
+						}
+					]
+				},
+				"description": "Get dashboard data filtered by Medicine program"
+			}
+		},
+		{
+			"name": "Dashboard - Default Period",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Default period dashboard works', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('summary');",
+							"    pm.expect(jsonData).to.have.property('charts');",
+							"    pm.expect(jsonData).to.have.property('alerts');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/reports/dashboard",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"reports",
+						"dashboard"
+					]
+				},
+				"description": "Get dashboard data with default period (MONTH)"
+			}
+		}
+	]
+}

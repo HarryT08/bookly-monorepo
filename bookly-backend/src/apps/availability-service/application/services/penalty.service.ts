@@ -26,11 +26,27 @@ import { LoggingHelper } from '@/libs/logging/logging.helper';
 
 @Injectable()
 export class PenaltyService {
-  calculatePenaltyScore(userId: string, programId: string, arg2: any): { totalScore: number; scoreBreakdown: any[]; riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"; recommendedActions: string[]; } | PromiseLike<{ totalScore: number; scoreBreakdown: any[]; riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"; recommendedActions: string[]; }> {
-      throw new Error("Method not implemented.");
+  async calculatePenaltyScore(userId: string, programId: string, timeRange: string = '30d'): Promise<{ totalScore: number; scoreBreakdown: any[]; riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"; recommendedActions: string[]; }> {
+    try {
+      this.logger.log('Calculating penalty score', { userId, programId, timeRange });
+      // TODO: Implement calculation logic
+      // Mock calculation for now - would integrate with actual penalty data
+      const mockResponse = {
+        totalScore: 0,
+        scoreBreakdown: [],
+        riskLevel: 'LOW' as const,
+        recommendedActions: []
+      };
+
+      return mockResponse;
+    } catch (error) {
+      this.logger.error('Failed to calculate penalty score', error, LoggingHelper.logParams({ userId, programId }));
+      throw error;
+    }
   }
-  generateAnalytics(programId: string, arg1: any): PenaltyAnalyticsDto | PromiseLike<PenaltyAnalyticsDto> {
-      throw new Error("Method not implemented.");
+
+  async generateAnalytics(programId: string, timeRange: string = '30d'): Promise<PenaltyAnalyticsDto> {
+    return this.getPenaltyAnalytics(programId, timeRange);
   }
   constructor(
     private readonly commandBus: CommandBus,

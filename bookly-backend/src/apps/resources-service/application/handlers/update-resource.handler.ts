@@ -48,7 +48,7 @@ export class UpdateResourceHandler implements ICommandHandler<UpdateResourceComm
       }
 
       // Validate updated resource
-      const validation = updatedResource.validate();
+      const validation = await updatedResource.validate();
       if (!validation.valid) {
         throw new BadRequestException(`Resource validation failed: ${validation.errors.join(', ')}`);
       }
