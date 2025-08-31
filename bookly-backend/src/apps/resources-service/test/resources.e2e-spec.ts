@@ -54,6 +54,7 @@ describe('Resources E2E (Hito 1)', () => {
         capacity: 50,
         location: 'Edificio A, Piso 2',
         description: 'Sala de conferencias con proyector y sistema de audio',
+        programId: 'PROG-001',
         attributes: {
           hasProjector: true,
           hasAudioSystem: true,
@@ -68,14 +69,14 @@ describe('Resources E2E (Hito 1)', () => {
             { dayOfWeek: 5, startTime: '08:00', endTime: '18:00' },
           ],
           restrictions: {
-            userTypes: ['PROFESSOR', 'ADMIN'],
+            userTypes: ['TEACHER', 'ADMIN'],
             maxReservationDuration: 240, // 4 hours
             minReservationDuration: 60,  // 1 hour
-            minAdvanceReservation: 2,    // 2 hours in advance
+            minAdvanceReservation: 1,    // 1 hour
           },
           priorities: [
             { userType: 'ADMIN', priority: 10 },
-            { userType: 'PROFESSOR', priority: 5 },
+            { userType: 'TEACHER', priority: 5 },
           ],
         },
       };
@@ -129,9 +130,10 @@ describe('Resources E2E (Hito 1)', () => {
       // Given: An existing resource
       const createDto: CreateResourceDto = {
         name: 'Test Resource',
-        type: 'LABORATORY',
+        type: 'ROOM',
         capacity: 30,
         location: 'Test Location',
+        programId: 'PROG-001',
       };
 
       const response = await request(app.getHttpServer())
@@ -162,7 +164,7 @@ describe('Resources E2E (Hito 1)', () => {
         name: updateDto.name,
         capacity: updateDto.capacity,
         status: updateDto.status,
-        type: 'LABORATORY', // Should remain unchanged
+        type: 'ROOM', // Should remain unchanged
       });
     });
 
@@ -195,6 +197,7 @@ describe('Resources E2E (Hito 1)', () => {
         name: 'Resource to Delete',
         type: 'EQUIPMENT',
         capacity: 1,
+        programId: 'PROG-001',
       };
 
       const response = await request(app.getHttpServer())
@@ -243,6 +246,7 @@ describe('Resources E2E (Hito 1)', () => {
         type: 'AUDITORIUM',
         capacity: 200,
         location: 'Main Building',
+        programId: 'PROG-001',
       };
 
       const response = await request(app.getHttpServer())
@@ -305,23 +309,26 @@ describe('Resources E2E (Hito 1)', () => {
     beforeEach(async () => {
       // Given: A resource with availability schedules
       const createDto: CreateResourceDto = {
-        name: 'Scheduled Resource',
+        name: 'Available Resource',
         type: 'ROOM',
         capacity: 25,
+        programId: 'PROG-001',
         availableSchedules: {
           operatingHours: [
-            { dayOfWeek: 1, startTime: '09:00', endTime: '17:00' }, // Monday
-            { dayOfWeek: 2, startTime: '09:00', endTime: '17:00' }, // Tuesday
+            {
+              dayOfWeek: 1, // Monday
+              startTime: '09:00',
+              endTime: '17:00',
+            },
           ],
           restrictions: {
-            userTypes: ['PROFESSOR', 'ADMIN'],
-            maxReservationDuration: 180, // 3 hours
-            minReservationDuration: 30,  // 30 minutes
-            minAdvanceReservation: 1,    // 1 hour in advance
+            userTypes: ['TEACHER'],
+            maxReservationDuration: 120,
+            minReservationDuration: 30,
+            minAdvanceReservation: 2,
           },
           priorities: [
-            { userType: 'ADMIN', priority: 10 },
-            { userType: 'PROFESSOR', priority: 5 },
+            { userType: 'TEACHER', priority: 8 },
           ],
         },
       };

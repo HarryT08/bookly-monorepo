@@ -4,28 +4,118 @@
  * Implements RF-01, RF-03, RF-05 from Hito 1
  */
 
+/**
+ * Week day enumeration for scheduling
+ */
+export type WeekDay = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+/**
+ * Available schedule configuration for resources
+ * Implements RF-05 (availability rules)
+ */
 export interface AvailableSchedule {
+  // Regular availability
+  weeklySchedule: {
+    [key in WeekDay]: {
+      enabled: boolean;
+      startTime: string; // HH:mm format
+      endTime: string;   // HH:mm format
+      breaks?: Array<{
+        startTime: string;
+        endTime: string;
+        reason: string;
+      }>;
+    };
+  };
+
+  // Special dates and exceptions
+  exceptions: Array<{
+    date: string; // YYYY-MM-DD format
+    type: 'UNAVAILABLE' | 'SPECIAL_HOURS' | 'MAINTENANCE';
+    reason: string;
+    startTime?: string; // For SPECIAL_HOURS
+    endTime?: string;   // For SPECIAL_HOURS
+  }>;
+
+  // Maintenance schedules
+  maintenanceSchedules: Array<{
+    type: 'PREVENTIVE' | 'CORRECTIVE' | 'EMERGENCY' | 'CLEANING';
+    frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY' | 'ONE_TIME';
+    dayOfWeek?: number; // 0-6, Sunday = 0
+    dayOfMonth?: number; // 1-31
+    time: string; // HH:mm
+    duration: number; // minutes
+    description: string;
+  }>;
+
+  // Restrictions and rules
+  restrictions: {
+    maxReservationDays: number;
+    minReservationHours: number;
+    minReservationDuration: number; // in minutes
+    maxReservationDuration: number; // in minutes
+    minAdvanceReservation: number; // hours
+    maxAdvanceReservation: number; // days
+    userTypePriority: {
+      [userType: string]: number; // Higher number = higher priority
+    };
+    userTypes: string[]; // Allowed user types
+    advanceBookingDays: number;
+  };
+
   // Operating hours
   operatingHours: {
-    dayOfWeek: number; // 0-6 (Sunday to Saturday)
-    startTime: string; // HH:mm format
-    endTime: string; // HH:mm format
-  }[];
-  
-  // Restrictions
-  restrictions: {
-    userTypes?: string[]; // Which user types can reserve this resource
-    maxReservationDuration?: number; // Maximum reservation duration in minutes
-    minReservationDuration?: number; // Minimum reservation duration in minutes
-    maxAdvanceReservation?: number; // Maximum days in advance to reserve
-    minAdvanceReservation?: number; // Minimum hours in advance to reserve
+    [key in WeekDay]: {
+      start: string; // HH:mm
+      end: string;   // HH:mm
+    };
   };
-  
+
   // Priorities
-  priorities: {
-    userType: string;
-    priority: number; // Higher number = higher priority
-  }[];
+  priorities?: {
+    [userType: string]: number;
+  };
+}
+
+/**
+ * Data interface for creating a resource
+ * Encapsulates all parameters with proper typing
+ */
+export interface CreateResourceData {
+  readonly name: string;
+  readonly type: string;
+  readonly capacity: number | null;
+  readonly location: string | null;
+  readonly programId: string;
+  readonly description?: string;
+  readonly attributes?: ResourceAttributes;
+  readonly availableSchedules?: AvailableSchedule;
+  readonly categoryId?: string;
+}
+
+/**
+ * Data interface for updating a resource
+ * Encapsulates all optional update parameters
+ */
+export interface UpdateResourceData {
+  readonly name?: string;
+  readonly type?: string;
+  readonly capacity?: number | null;
+  readonly location?: string | null;
+  readonly description?: string;
+  readonly attributes?: ResourceAttributes;
+  readonly availableSchedules?: AvailableSchedule;
+  readonly categoryId?: string;
+}
+
+/**
+ * Data interface for availability validation
+ * Encapsulates reservation check parameters
+ */
+export interface AvailabilityCheckData {
+  readonly requestedDate: Date;
+  readonly userType: string;
+  readonly reservationDuration: number; // in minutes
 }
 
 export interface ResourceAttributes {
@@ -53,6 +143,7 @@ export class ResourceEntity {
     public readonly capacity: number | null,
     public readonly location: string | null,
     public readonly status: string,
+    public readonly programId: string,
     public readonly description: string | null = null,
     public readonly attributes: ResourceAttributes | null = null,
     public readonly availableSchedules: AvailableSchedule | null = null,
@@ -71,6 +162,7 @@ export class ResourceEntity {
     type: string,
     capacity: number | null,
     location: string | null,
+    programId: string,
     description?: string,
     attributes?: ResourceAttributes,
     availableSchedules?: AvailableSchedule,
@@ -86,6 +178,7 @@ export class ResourceEntity {
       capacity,
       location,
       'AVAILABLE', // Default status
+      programId,
       description || null,
       attributes || null,
       availableSchedules || null,
@@ -93,6 +186,24 @@ export class ResourceEntity {
       true,
       new Date(),
       new Date(),
+    );
+  }
+
+  /**
+   * Alternative factory method using encapsulated data object
+   * Provides better type safety and parameter validation
+   */
+  static createFromData(data: CreateResourceData): ResourceEntity {
+    return ResourceEntity.create(
+      data.name,
+      data.type,
+      data.capacity,
+      data.location,
+      data.programId,
+      data.description,
+      data.attributes,
+      data.availableSchedules,
+      data.categoryId,
     );
   }
 
@@ -118,6 +229,7 @@ export class ResourceEntity {
       capacity ?? this.capacity,
       location ?? this.location,
       this.status, // Status updated separately
+      this.programId,
       description ?? this.description,
       attributes ?? this.attributes,
       availableSchedules ?? this.availableSchedules,
@@ -146,6 +258,7 @@ export class ResourceEntity {
       this.capacity,
       this.location,
       status,
+      this.programId,
       this.description,
       this.attributes,
       this.availableSchedules,
@@ -169,6 +282,7 @@ export class ResourceEntity {
       this.capacity,
       this.location,
       this.status,
+      this.programId,
       this.description,
       this.attributes,
       this.availableSchedules,
@@ -202,10 +316,25 @@ export class ResourceEntity {
       const dayOfWeek = requestedDate.getDay();
       const timeStr = requestedDate.toTimeString().substring(0, 5); // HH:mm format
 
-      // Check operating hours
-      const operatingHour = this.availableSchedules.operatingHours.find(
-        oh => oh.dayOfWeek === dayOfWeek
-      );
+      // Check operating hours - handle both array and object formats
+      let operatingHour;
+      if (Array.isArray(this.availableSchedules.operatingHours)) {
+        operatingHour = this.availableSchedules.operatingHours.find(
+          oh => oh.dayOfWeek === dayOfWeek
+        );
+      } else {
+        // Handle legacy object format
+        const weekDays = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+        const dayKey = weekDays[dayOfWeek] as WeekDay;
+        const daySchedule = this.availableSchedules.operatingHours[dayKey];
+        if (daySchedule) {
+          operatingHour = {
+            dayOfWeek: dayOfWeek,
+            startTime: daySchedule.start,
+            endTime: daySchedule.end
+          };
+        }
+      }
 
       if (!operatingHour) {
         return { available: false, reason: 'Resource not available on this day' };
@@ -258,7 +387,13 @@ export class ResourceEntity {
       return 0; // Default priority
     }
 
-    const priority = this.availableSchedules.priorities.find(p => p.userType === userType);
+    // Handle both array and object formats for priorities
+    let priority;
+    if (Array.isArray(this.availableSchedules.priorities)) {
+      priority = this.availableSchedules.priorities.find(p => p.userType === userType);
+    } else if (this.availableSchedules.priorities && typeof this.availableSchedules.priorities === 'object') {
+      priority = { userType, priority: this.availableSchedules.priorities[userType] || 0 };
+    }
     return priority?.priority || 0;
   }
 
@@ -409,9 +544,22 @@ export class ResourceEntity {
 
     if (this.availableSchedules?.operatingHours) {
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      this.availableSchedules.operatingHours.forEach(oh => {
-        operatingHours.push(`${days[oh.dayOfWeek]}: ${oh.startTime} - ${oh.endTime}`);
-      });
+      
+      // Handle both array and object formats for operating hours
+      if (Array.isArray(this.availableSchedules.operatingHours)) {
+        this.availableSchedules.operatingHours.forEach(oh => {
+          operatingHours.push(`${days[oh.dayOfWeek]}: ${oh.startTime} - ${oh.endTime}`);
+        });
+      } else {
+        // Handle legacy object format
+        const weekDays: WeekDay[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+        weekDays.forEach((day, index) => {
+          const schedule = this.availableSchedules.operatingHours[day];
+          if (schedule) {
+            operatingHours.push(`${days[index + 1]}: ${schedule.start} - ${schedule.end}`);
+          }
+        });
+      }
     }
 
     return {
@@ -434,6 +582,7 @@ export class ResourceEntity {
       overrides.capacity ?? this.capacity,
       overrides.location ?? this.location,
       overrides.status ?? this.status,
+      overrides.programId ?? this.programId,
       overrides.description ?? this.description,
       overrides.attributes ?? this.attributes,
       overrides.availableSchedules ?? this.availableSchedules,

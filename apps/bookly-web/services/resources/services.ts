@@ -1,8 +1,9 @@
 import { client as http, PaginatedResponse, QueryParams } from '../http';
 import { mapPaginatedResources, mapSingleResource } from './models';
-import { CreateResourceDto, ResourceResponseDto, UpdateResourceDto } from './types';
+import { CreateResourceDto, ResourceResponseDto, UpdateResourceDto, CategoryDto, ProgramDto } from './types';
 
 const base = 'resources';
+const RESOURCES_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_RESOURCES_SERVICE_URL || 'http://localhost:3003';
 
 export interface ResourceListFilters extends QueryParams {
 	type?: string;
@@ -78,4 +79,39 @@ export async function deleteResource(id: string, force?: boolean): Promise<{ suc
 		})
 		.json<{ success: boolean; data?: ResourceResponseDto }>();
 	return res.data ?? { success: true };
+}
+
+// Categories API services
+export async function listCategories(
+	filters: { isDefault?: boolean; isActive?: boolean } = {}
+): Promise<CategoryDto[]> {
+	const searchParams = new URLSearchParams();
+
+	if (filters.isDefault !== undefined) searchParams.set('isDefault', String(filters.isDefault));
+
+	if (filters.isActive !== undefined) searchParams.set('isActive', String(filters.isActive));
+
+	const res = await http.get('categories', { searchParams }).json<{ success: boolean; data: CategoryDto[] }>();
+	return mapSingleResource<CategoryDto[]>(res);
+}
+
+export async function getCategoryById(id: string): Promise<CategoryDto> {
+	const res = await http.get(`categories/${id}`).json<{ success: boolean; data: CategoryDto }>();
+	return mapSingleResource<CategoryDto>(res);
+}
+
+// Programs API services
+export async function listPrograms(): Promise<ProgramDto[]> {
+	const res = await http.get('programs').json<{ success: boolean; data: ProgramDto[] }>();
+	return mapSingleResource<ProgramDto[]>(res);
+}
+
+export async function listActivePrograms(): Promise<ProgramDto[]> {
+	const res = await http.get('programs/active').json<{ success: boolean; data: ProgramDto[] }>();
+	return mapSingleResource<ProgramDto[]>(res);
+}
+
+export async function getProgramById(id: string): Promise<ProgramDto> {
+	const res = await http.get(`programs/${id}`).json<{ success: boolean; data: ProgramDto }>();
+	return mapSingleResource<ProgramDto>(res);
 }

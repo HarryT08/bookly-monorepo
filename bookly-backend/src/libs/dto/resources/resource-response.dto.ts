@@ -38,6 +38,9 @@ export class ResourceResponseDto {
   @ApiPropertyOptional({ description: 'Category ID' })
   categoryId?: string;
 
+  @ApiProperty({ description: 'Academic Program ID' })
+  programId: string;
+
   @ApiProperty({ description: 'Is resource active' })
   isActive: boolean;
 

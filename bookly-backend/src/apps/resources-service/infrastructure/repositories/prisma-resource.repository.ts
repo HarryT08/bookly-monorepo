@@ -274,6 +274,7 @@ export class PrismaResourceRepository implements ResourceRepository {
       data.capacity,
       data.location,
       data.status,
+      data.programId,
       data.description,
       data.attributes as ResourceAttributes,
       data.availableSchedules as AvailableSchedule,

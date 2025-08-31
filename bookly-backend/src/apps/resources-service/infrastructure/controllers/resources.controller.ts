@@ -23,12 +23,12 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import {
-  CreateResourceDto,
   UpdateResourceDto,
   ResourceResponseDto,
   PaginatedResourceResponseDto,
   ResourceAvailabilityResponseDto,
 } from '../../../../libs/dto/resources';
+import { CreateResourceDto, AvailableScheduleDto } from '../../../../libs/dto/resources/create-resource.dto';
 import { CreateResourceCommand } from '../../application/commands/create-resource.command';
 import { UpdateResourceCommand } from '../../application/commands/update-resource.command';
 import { DeleteResourceCommand } from '../../application/commands/delete-resource.command';
@@ -76,16 +76,17 @@ export class ResourcesController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Resource code already exists' })
   async create(@Body(ValidationPipe) createResourceDto: CreateResourceDto): Promise<ResourceResponseDto> {
-    const command = new CreateResourceCommand(
-      createResourceDto.name,
-      createResourceDto.type,
-      createResourceDto.capacity || null,
-      createResourceDto.location || null,
-      createResourceDto.description,
-      createResourceDto.attributes,
-      createResourceDto.availableSchedules,
-      createResourceDto.categoryId,
-    );
+    const command = new CreateResourceCommand({
+      name: createResourceDto.name,
+      type: createResourceDto.type,
+      capacity: createResourceDto.capacity || null,
+      location: createResourceDto.location || null,
+      programId: createResourceDto.programId,
+      description: createResourceDto.description,
+      attributes: createResourceDto.attributes,
+      availableSchedules: createResourceDto.availableSchedules ? this.mapDtoToAvailableSchedule(createResourceDto.availableSchedules) : null,
+      categoryId: createResourceDto.categoryId,
+    });
 
     const resource: ResourceEntity = await this.commandBus.execute(command);
     return this.mapToResponseDto(resource);
@@ -302,7 +303,7 @@ export class ResourcesController {
       updateResourceDto.status,
       updateResourceDto.description,
       updateResourceDto.attributes,
-      updateResourceDto.availableSchedules,
+      updateResourceDto.availableSchedules ? this.mapDtoToAvailableSchedule(updateResourceDto.availableSchedules) : null,
       updateResourceDto.categoryId,
     );
 
@@ -335,17 +336,35 @@ export class ResourcesController {
   }
 
   /**
-   * Map ResourceEntity to ResourceResponseDto
+   * Map AvailableScheduleDto to domain AvailableSchedule interface
+   */
+  private mapDtoToAvailableSchedule(dto: AvailableScheduleDto): any {
+    // Create a basic mapping that maintains compatibility with existing functionality
+    // This ensures the DTO can be used while preserving the domain structure
+    return {
+      operatingHours: dto.operatingHours,
+      restrictions: dto.restrictions,
+      priorities: dto.priorities,
+      // Add default empty arrays for domain interface compatibility
+      weeklySchedule: {},
+      exceptions: [],
+      maintenanceSchedules: []
+    };
+  }
+
+  /**
+   * Map resource entity to response DTO
    */
   private mapToResponseDto(resource: ResourceEntity): ResourceResponseDto {
     return {
       id: resource.id,
       name: resource.name,
       code: resource.code,
-      description: resource.description,
       type: resource.type,
+      description: resource.description,
       capacity: resource.capacity,
       location: resource.location,
+      programId: resource.programId,
       status: resource.status,
       attributes: resource.attributes,
       availableSchedules: resource.availableSchedules,
