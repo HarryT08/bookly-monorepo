@@ -1,8 +1,8 @@
 # Stockpile Service - Validación de Criterios de Aceptación
 
-**Fecha de Validación**: 2025-08-24  
+**Fecha de Validación**: 2025-08-31  
 **Versión del Servicio**: 1.0.0  
-**Puerto de Servicio**: 3001  
+**Puerto de Servicio**: 3004  
 **Responsable de QA**: Sistema de Validación Automatizado
 
 ---

@@ -1,9 +1,9 @@
 # 📊 Reports Service - Validación de Criterios de Aceptación
 
 **Hito 5 - Reportes Básicos**  
-**Fecha de validación**: 2025-08-24  
+**Fecha de validación**: 2025-08-31  
 **Versión del servicio**: v1.0.0  
-**Puerto**: 3004
+**Puerto**: 3005
 
 ---
 

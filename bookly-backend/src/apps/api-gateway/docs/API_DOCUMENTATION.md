@@ -1,7 +1,7 @@
 # API Gateway - Documentación de API
 
 **Versión**: 1.0.0  
-**Fecha de Actualización**: 2025-08-24  
+**Fecha de Actualización**: 2025-08-31  
 **Base URL**: `http://localhost:3000`  
 **Puerto del Servicio**: 3000
 

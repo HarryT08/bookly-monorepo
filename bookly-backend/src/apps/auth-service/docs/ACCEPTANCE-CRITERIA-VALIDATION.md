@@ -1,9 +1,9 @@
 # 🔐 Auth Service - Validación de Criterios de Aceptación
 
 **Hito 4 - Auth Core + SSO**  
-**Fecha de validación**: 2025-08-24  
+**Fecha de validación**: 2025-08-31  
 **Versión del servicio**: v1.0.0  
-**Puerto**: 3000
+**Puerto**: 3001
 
 ---
 

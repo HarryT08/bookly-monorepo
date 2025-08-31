@@ -1,7 +1,7 @@
 # 🏢 Resources Service - Validación de Criterios de Aceptación
 
 **Hito 1 - Gestión de Recursos Core + Hito 6 - Mejoras**  
-**Fecha de validación**: 2025-08-24  
+**Fecha de validación**: 2025-08-31  
 **Versión del servicio**: v1.0.0  
 **Puerto**: 3003
 

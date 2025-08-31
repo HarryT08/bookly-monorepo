@@ -1,7 +1,7 @@
 # 📅 Availability Service - Validación de Criterios de Aceptación
 
 **Hito 2 - Disponibilidad y Reservas Core**  
-**Fecha de validación**: 2025-08-24  
+**Fecha de validación**: 2025-08-31  
 **Versión del servicio**: v1.0.0  
 **Puerto**: 3002
 
