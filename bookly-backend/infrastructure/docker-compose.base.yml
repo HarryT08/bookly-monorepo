@@ -42,6 +42,7 @@ services:
     command: [
       "--replSet", "bookly-rs",
       "--bind_ip_all",
+      "--port", "27018",
       "--keyFile", "/opt/keyfile/mongodb-keyfile",
       "--auth"
     ]
@@ -49,7 +50,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
     ports:
-      - "27018:27017"
+      - "27018:27018"
     volumes:
       - mongodb_secondary1_data:/data/db
       - mongodb_secondary1_config:/data/configdb
@@ -59,7 +60,7 @@ services:
     depends_on:
       - mongodb-primary
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--host", "localhost", "--port", "27018", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -73,6 +74,7 @@ services:
     command: [
       "--replSet", "bookly-rs",
       "--bind_ip_all",
+      "--port", "27019",
       "--keyFile", "/opt/keyfile/mongodb-keyfile",
       "--auth"
     ]
@@ -80,7 +82,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
     ports:
-      - "27019:27017"
+      - "27019:27019"
     volumes:
       - mongodb_secondary2_data:/data/db
       - mongodb_secondary2_config:/data/configdb
@@ -90,7 +92,7 @@ services:
     depends_on:
       - mongodb-primary
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--host", "localhost", "--port", "27019", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -178,6 +180,28 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # Inicializador automático del replica set MongoDB
+  mongodb-init:
+    image: mongo:7.0
+    container_name: bookly-mongodb-init
+    hostname: mongodb-init
+    restart: "no"  # Solo ejecutar una vez
+    command: ["/bin/bash", "/scripts/init-replica-auto.sh"]
+    volumes:
+      - ./mongodb/init-replica-auto.sh:/scripts/init-replica-auto.sh:ro
+    networks:
+      - bookly-network
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      mongodb-secondary1:
+        condition: service_healthy
+      mongodb-secondary2:
+        condition: service_healthy
+    environment:
+      - MONGODB_ROOT_USERNAME=${MONGODB_ROOT_USERNAME:-bookly}
+      - MONGODB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD:-bookly123}
 
 # Volúmenes persistentes
 volumes:

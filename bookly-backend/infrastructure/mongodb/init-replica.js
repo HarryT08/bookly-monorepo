@@ -15,12 +15,12 @@ var config = {
     },
     {
       "_id": 1,
-      "host": "mongodb-secondary1:27017",
+      "host": "mongodb-secondary1:27018",
       "priority": 2
     },
     {
       "_id": 2,
-      "host": "mongodb-secondary2:27017",
+      "host": "mongodb-secondary2:27019",
       "priority": 1
     }
   ]

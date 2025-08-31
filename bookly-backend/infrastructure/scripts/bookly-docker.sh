@@ -320,24 +320,50 @@ create_backup() {
 check_health() {
     log_info "Verificando salud de los servicios..."
     
-    local services=(
-        "mongodb-primary:27017"
-        "redis:6379" 
-        "rabbitmq:5672"
-        "api-gateway:3000"
-        "auth-service:3001"
-        "resources-service:3002"
-        "availability-service:3003"
-        "stockpile-service:3004"
-        "reports-service:3005"
+    # Servicios base con sus puertos host
+    local base_services=(
+        "mongodb-primary:27017:localhost"
+        "redis:6379:localhost" 
+        "rabbitmq:5672:localhost"
     )
     
-    for service in "${services[@]}"; do
-        local name="${service%:*}"
-        local port="${service#*:}"
+    # Microservicios con sus puertos host
+    local micro_services=(
+        "api-gateway:3000:localhost"
+        "auth-service:3001:localhost"
+        "resources-service:3002:localhost"
+        "availability-service:3003:localhost"
+        "stockpile-service:3004:localhost"
+        "reports-service:3005:localhost"
+    )
+    
+    # Verificar servicios base
+    for service in "${base_services[@]}"; do
+        local name="${service%%:*}"
+        local port_host="${service#*:}"
+        local port="${port_host%%:*}"
+        local host="${port_host#*:}"
         
         if docker ps --format "table {{.Names}}" | grep -q "bookly-$name"; then
-            if timeout 5 bash -c "</dev/tcp/$name/$port" 2>/dev/null; then
+            if nc -z "$host" "$port" 2>/dev/null; then
+                log_success "$name: ✓ Saludable"
+            else
+                log_error "$name: ✗ No responde"
+            fi
+        else
+            log_warning "$name: - No está ejecutándose"
+        fi
+    done
+    
+    # Verificar microservicios
+    for service in "${micro_services[@]}"; do
+        local name="${service%%:*}"
+        local port_host="${service#*:}"
+        local port="${port_host%%:*}"
+        local host="${port_host#*:}"
+        
+        if docker ps --format "table {{.Names}}" | grep -q "bookly-$name"; then
+            if nc -z "$host" "$port" 2>/dev/null; then
                 log_success "$name: ✓ Saludable"
             else
                 log_error "$name: ✗ No responde"

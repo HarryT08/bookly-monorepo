@@ -21,41 +21,35 @@ WORKDIR /app
 # Configurar variables de entorno
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-
-# Instalar pnpm globalmente
-RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copiar archivos de configuración de paquetes
-COPY package*.json ./
-COPY pnpm-lock.yaml* ./
+COPY package*.json package-lock.json ./
 
 # Instalar dependencias
-RUN pnpm install --frozen-lockfile --prod=false
+RUN npm install
 
 # Copiar código fuente
 COPY . .
 
 # Generar cliente Prisma
-RUN pnpm prisma generate
+RUN npx prisma generate
 
 # Stage para desarrollo
 FROM base AS development
 ENV NODE_ENV=development
 EXPOSE 3000
 USER bookly
-CMD ["dumb-init", "pnpm", "start:dev"]
+CMD ["dumb-init", "npm", "run", "start:dev"]
 
 # Stage para build de producción
 FROM base AS build
 ENV NODE_ENV=production
 
 # Build de la aplicación
-RUN pnpm build
+RUN npm run build
 
 # Remover dependencias de desarrollo
-RUN pnpm prune --prod
+RUN npm prune --production
 
 # Stage final de producción
 FROM node:22-alpine AS production
