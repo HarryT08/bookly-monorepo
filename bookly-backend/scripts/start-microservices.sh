@@ -128,14 +128,163 @@ start_microservice() {
     fi
 }
 
+# Función para iniciar un microservicio en paralelo
+start_microservice_parallel() {
+    local service_name=$1
+    local port=$2
+    local npm_script=$3
+    local status_file="$PROJECT_ROOT/scripts/status/${service_name}.status"
+    
+    # Verificar si el puerto ya está en uso
+    if nc -z localhost $port; then
+        echo "RUNNING:$service_name ya está ejecutándose en puerto $port" > "$status_file"
+        return 0
+    fi
+    
+    # Cambiar al directorio del proyecto
+    cd "$PROJECT_ROOT"
+    
+    # Iniciar el microservicio en background
+    nohup npm run $npm_script > "scripts/logs/${service_name}.log" 2>&1 &
+    local pid=$!
+    
+    # Guardar PID
+    echo $pid > "scripts/pids/${service_name}.pid"
+    
+    # Esperar hasta 30 segundos para que el servicio se inicie
+    local max_wait=30
+    local waited=0
+    local service_started=false
+    
+    while [ $waited -lt $max_wait ]; do
+        sleep 1
+        waited=$((waited + 1))
+        
+        # Verificar si el proceso sigue vivo
+        if ! kill -0 $pid 2>/dev/null; then
+            local error_msg=$(tail -n 5 "scripts/logs/${service_name}.log" | tr '\n' ' ')
+            echo "ERROR:$service_name falló al iniciar. Error: $error_msg" > "$status_file"
+            return 1
+        fi
+        
+        # Verificar si el puerto está disponible
+        if nc -z localhost $port; then
+            echo "SUCCESS:$service_name iniciado correctamente en puerto $port (PID: $pid)" > "$status_file"
+            service_started=true
+            break
+        fi
+    done
+    
+    if [ "$service_started" = false ]; then
+        echo "TIMEOUT:$service_name no respondió en puerto $port después de ${max_wait}s (PID: $pid)" > "$status_file"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Función para esperar y mostrar el status de todos los servicios
+wait_for_all_services() {
+    local services="$1"
+    local max_total_wait=60  # 60 segundos máximo total
+    local waited=0
+    local all_completed=false
+    
+    log_info "Esperando a que todos los microservicios se inicien..."
+    
+    # Mostrar progreso
+    while [ $waited -lt $max_total_wait ] && [ "$all_completed" = false ]; do
+        sleep 2
+        waited=$((waited + 2))
+        
+        local completed_count=0
+        local total_count=0
+        
+        for service_port in $services; do
+            local service_name=$(echo $service_port | cut -d: -f1)
+            total_count=$((total_count + 1))
+            
+            if [ -f "$PROJECT_ROOT/scripts/status/${service_name}.status" ]; then
+                completed_count=$((completed_count + 1))
+            fi
+        done
+        
+        if [ $completed_count -eq $total_count ]; then
+            all_completed=true
+        else
+            echo -ne "\r[INFO] Progreso: $completed_count/$total_count servicios completados (${waited}s)"
+        fi
+    done
+    
+    echo ""  # Nueva línea
+    
+    # Mostrar resultados finales
+    log_info "=== RESULTADO FINAL ==="
+    local success_count=0
+    local error_count=0
+    
+    for service_port in $services; do
+        local service_name=$(echo $service_port | cut -d: -f1)
+        local port=$(echo $service_port | cut -d: -f2)
+        local status_file="$PROJECT_ROOT/scripts/status/${service_name}.status"
+        
+        if [ -f "$status_file" ]; then
+            local status_content=$(cat "$status_file")
+            local status_type=$(echo "$status_content" | cut -d: -f1)
+            local status_message=$(echo "$status_content" | cut -d: -f2-)
+            
+            case "$status_type" in
+                "SUCCESS")
+                    log_success "✓ $service_name: $status_message"
+                    success_count=$((success_count + 1))
+                    ;;
+                "RUNNING")
+                    log_success "✓ $service_name: $status_message"
+                    success_count=$((success_count + 1))
+                    ;;
+                "ERROR")
+                    log_error "✗ $service_name: $status_message"
+                    error_count=$((error_count + 1))
+                    ;;
+                "TIMEOUT")
+                    log_warning "⚠ $service_name: $status_message"
+                    error_count=$((error_count + 1))
+                    ;;
+                *)
+                    log_error "✗ $service_name: Estado desconocido - $status_content"
+                    error_count=$((error_count + 1))
+                    ;;
+            esac
+        else
+            log_error "✗ $service_name: No se pudo determinar el estado"
+            error_count=$((error_count + 1))
+        fi
+    done
+    
+    echo ""
+    log_info "=== RESUMEN ==="
+    log_success "Servicios exitosos: $success_count"
+    if [ $error_count -gt 0 ]; then
+        log_error "Servicios con errores: $error_count"
+    fi
+    
+    if [ $error_count -eq 0 ]; then
+        log_success "🎉 Todos los microservicios se iniciaron correctamente"
+        return 0
+    else
+        log_warning "⚠️  Algunos microservicios tuvieron problemas. Revise los logs para más detalles."
+        return 1
+    fi
+}
+
 # Función para detener todos los microservicios
 stop_microservices() {
     log_info "Deteniendo microservicios..."
     
     cd "$PROJECT_ROOT"
     
-    if [ -d "pids" ]; then
-        for pidfile in pids/*.pid; do
+    if [ -d "scripts/pids" ]; then
+        for pidfile in scripts/pids/*.pid; do
             if [ -f "$pidfile" ]; then
                 local service_name=$(basename "$pidfile" .pid)
                 local pid=$(cat "$pidfile")
@@ -184,42 +333,60 @@ start_all() {
     
     # Crear directorios necesarios
     cd "$PROJECT_ROOT"
-    mkdir -p logs pids
+    mkdir -p scripts/logs scripts/pids scripts/status
     
-    # Iniciar microservicios uno por uno
-    log_info "Iniciando microservicios..."
+    # Limpiar archivos de status previos
+    rm -f scripts/status/*.status
     
-    # API Gateway debe iniciarse primero como puerta de entrada
-    start_microservice "api-gateway" "3000" "start:gateway"
-    sleep 3
+    # Copiar archivo de configuración host si no existe .env
+    if [ ! -f ".env" ]; then
+        log_info "Copiando configuración host a .env"
+        cp .env.host .env
+    fi
     
-    start_microservice "auth-service" "3001" "start:auth"
-    sleep 2
+    # Instalar dependencias si es necesario
+    if [ ! -d "node_modules" ]; then
+        log_info "Instalando dependencias..."
+        npm install
+    fi
     
-    start_microservice "resources-service" "3002" "start:resources"
-    sleep 2
+    # Generar cliente Prisma una sola vez
+    log_info "Generando cliente Prisma..."
+    npx prisma generate
     
-    start_microservice "availability-service" "3003" "start:availability"
-    sleep 2
+    # Lista de servicios y sus configuraciones
+    local services="api-gateway:3000:start:gateway auth-service:3001:start:auth resources-service:3002:start:resources availability-service:3003:start:availability stockpile-service:3004:start:stockpile reports-service:3005:start:reports"
     
-    start_microservice "stockpile-service" "3004" "start:stockpile"
-    sleep 2
+    log_info "Iniciando todos los microservicios en paralelo..."
     
-    start_microservice "reports-service" "3005" "start:reports"
-    sleep 2
+    # Iniciar todos los servicios en paralelo
+    for service_config in $services; do
+        local service_name=$(echo $service_config | cut -d: -f1)
+        local port=$(echo $service_config | cut -d: -f2)
+        local npm_script=$(echo $service_config | cut -d: -f3-)
+        
+        log_info "Lanzando $service_name..."
+        start_microservice_parallel "$service_name" "$port" "$npm_script" &
+    done
     
-    log_success "=== Microservicios iniciados ==="
-    status_microservices
+    # Esperar a que todos los servicios se inicien y mostrar resultados
+    wait_for_all_services "$services"
+    local result=$?
     
-    log_info "Logs disponibles en: $PROJECT_ROOT/logs/"
-    log_info "PIDs guardados en: $PROJECT_ROOT/pids/"
+    echo ""
+    log_info "Logs disponibles en: $PROJECT_ROOT/scripts/logs/"
+    log_info "PIDs guardados en: $PROJECT_ROOT/scripts/pids/"
+    log_info "Status guardado en: $PROJECT_ROOT/scripts/status/"
     log_info "Para detener: $0 stop"
+    log_info "Para ver estado: $0 status"
+    
+    return $result
 }
 
 # Función para mostrar logs de un servicio específico
 logs() {
     local service_name=$1
-    local log_file="$PROJECT_ROOT/logs/${service_name}.log"
+    local log_file="$PROJECT_ROOT/scripts/logs/${service_name}.log"
     
     if [ -f "$log_file" ]; then
         tail -f "$log_file"
@@ -232,7 +399,7 @@ logs() {
 # Función para reiniciar un servicio específico
 restart_service() {
 {{ ... }}
-    local pidfile="$PROJECT_ROOT/pids/${service_name}.pid"
+    local pidfile="$PROJECT_ROOT/scripts/pids/${service_name}.pid"
     
     if [ -f "$pidfile" ]; then
         local pid=$(cat "$pidfile")
