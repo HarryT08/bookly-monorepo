@@ -103,13 +103,16 @@ start_microservice() {
     log_info "Generando cliente Prisma..."
     npx prisma generate
     
+    # Crear directorios si no existen
+    mkdir -p scripts/pids scripts/logs
+    
     # Iniciar el microservicio en background
     log_info "Ejecutando: npm run $npm_script"
-    nohup npm run $npm_script > "logs/${service_name}.log" 2>&1 &
+    nohup npm run $npm_script > "scripts/logs/${service_name}.log" 2>&1 &
     local pid=$!
     
     # Guardar PID para poder detener el servicio después
-    echo $pid > "pids/${service_name}.pid"
+    echo $pid > "scripts/pids/${service_name}.pid"
     
     # Esperar un momento y verificar que el servicio esté ejecutándose
     sleep 3
@@ -283,7 +286,11 @@ stop_microservices() {
     
     cd "$PROJECT_ROOT"
     
-    if [ -d "scripts/pids" ]; then
+    # Crear directorios si no existen
+    mkdir -p pids logs
+    
+    # Detener servicios por archivos PID
+    if [ -d "pids" ]; then
         for pidfile in scripts/pids/*.pid; do
             if [ -f "$pidfile" ]; then
                 local service_name=$(basename "$pidfile" .pid)
@@ -291,32 +298,64 @@ stop_microservices() {
                 
                 if kill -0 $pid 2>/dev/null; then
                     log_info "Deteniendo $service_name (PID: $pid)"
-                    kill $pid
-                    rm "$pidfile"
-                else
-                    log_warning "$service_name ya no está ejecutándose"
-                    rm "$pidfile"
+                    # Intentar terminación amable primero
+                    kill -TERM $pid
+                    sleep 2
+                    # Si aún está corriendo, forzar terminación
+                    if kill -0 $pid 2>/dev/null; then
+                        log_warning "Forzando terminación de $service_name"
+                        kill -KILL $pid
+                    fi
                 fi
+                rm "$pidfile"
             fi
         done
     fi
+    
+    # Método alternativo: buscar procesos por puerto
+    local services=(
+        "3000:api-gateway"
+        "3001:auth-service" 
+        "3002:availability-service"
+        "3003:resources-service"
+        "3004:stockpile-service"
+        "3005:reports-service"
+    )
+    
+    for service_config in "${services[@]}"; do
+        local port=$(echo $service_config | cut -d: -f1)
+        local service_name=$(echo $service_config | cut -d: -f2)
+        
+        # Buscar proceso usando el puerto
+        local pid=$(lsof -ti:$port 2>/dev/null)
+        if [ ! -z "$pid" ]; then
+            log_info "Deteniendo $service_name en puerto $port (PID: $pid)"
+            kill -TERM $pid 2>/dev/null
+            sleep 2
+            # Verificar si aún existe y forzar si es necesario
+            if kill -0 $pid 2>/dev/null; then
+                log_warning "Forzando terminación de $service_name"
+                kill -KILL $pid 2>/dev/null
+            fi
+        fi
+    done
 }
 
 # Función para verificar estado de microservicios
 status_microservices() {
-    log_info "Estado de microservicios:"
+    log_info "Estado de microservicios: \n"
     
     # Lista de servicios y sus puertos
-    local services="api-gateway:3000 auth-service:3001 resources-service:3002 availability-service:3003 stockpile-service:3004 reports-service:3005"
+    local services="api-gateway:3000 auth-service:3001 availability-service:3002 resources-service:3003 stockpile-service:3004 reports-service:3005"
     
     for service_port in $services; do
         local service_name=$(echo $service_port | cut -d: -f1)
         local port=$(echo $service_port | cut -d: -f2)
         
         if nc -z localhost $port; then
-            log_success "$service_name: ✓ Activo en puerto $port"
+            log_success "$service_name: ✓ Activo en puerto $port \n"
         else
-            log_warning "$service_name: ✗ Inactivo en puerto $port"
+            log_warning "$service_name: ✗ Inactivo en puerto $port \n"
         fi
     done
 }
@@ -355,9 +394,9 @@ start_all() {
     npx prisma generate
     
     # Lista de servicios y sus configuraciones
-    local services="api-gateway:3000:start:gateway auth-service:3001:start:auth resources-service:3002:start:resources availability-service:3003:start:availability stockpile-service:3004:start:stockpile reports-service:3005:start:reports"
+    local services="api-gateway:3000:start:gateway auth-service:3001:start:auth availability-service:3002:start:availability resources-service:3003:start:resources stockpile-service:3004:start:stockpile reports-service:3005:start:reports"
     
-    log_info "Iniciando todos los microservicios en paralelo..."
+    log_info "Iniciando todos los microservicios en paralelo... \n"
     
     # Iniciar todos los servicios en paralelo
     for service_config in $services; do
@@ -398,7 +437,14 @@ logs() {
 
 # Función para reiniciar un servicio específico
 restart_service() {
-{{ ... }}
+    local service_name=$1
+    
+    if [ -z "$service_name" ]; then
+        log_error "Nombre de servicio requerido"
+        return 1
+    fi
+    
+    log_info "Reiniciando servicio: $service_name"
     local pidfile="$PROJECT_ROOT/scripts/pids/${service_name}.pid"
     
     if [ -f "$pidfile" ]; then
@@ -406,35 +452,97 @@ restart_service() {
         if kill -0 $pid 2>/dev/null; then
             log_info "Deteniendo $service_name (PID: $pid)"
             kill $pid
+            
+            # Esperar a que el proceso termine y el puerto se libere
+            local max_wait=10
+            local wait_count=0
+            while kill -0 $pid 2>/dev/null && [ $wait_count -lt $max_wait ]; do
+                sleep 1
+                wait_count=$((wait_count + 1))
+            done
+            
+            # Si aún está corriendo, forzar terminación
+            if kill -0 $pid 2>/dev/null; then
+                log_warning "Forzando terminación de $service_name"
+                kill -KILL $pid
+                sleep 2
+            fi
         fi
         rm "$pidfile"
+    fi
+    
+    # Esperar adicional para que el puerto se libere completamente
+    local service_port=""
+    case $service_name in
+        "api-gateway") service_port="3000" ;;
+        "auth-service") service_port="3001" ;;
+        "availability-service") service_port="3002" ;;
+        "resources-service") service_port="3003" ;;
+        "stockpile-service") service_port="3004" ;;
+        "reports-service") service_port="3005" ;;
+    esac
+    
+    if [ ! -z "$service_port" ]; then
+        local port_wait=5
+        while nc -z localhost $service_port 2>/dev/null && [ $port_wait -gt 0 ]; do
+            log_info "Esperando que se libere el puerto $service_port..."
+            sleep 1
+            port_wait=$((port_wait - 1))
+        done
     fi
     
     # Reiniciar según el servicio
     case $service_name in
         "api-gateway")
             start_microservice "api-gateway" "3000" "start:gateway"
+            service_port="3000"
             ;;
         "auth-service")
             start_microservice "auth-service" "3001" "start:auth"
+            service_port="3001"
             ;;
         "resources-service")
-            start_microservice "resources-service" "3002" "start:resources"
+            start_microservice "resources-service" "3003" "start:resources"
+            service_port="3003"
             ;;
         "availability-service")
-            start_microservice "availability-service" "3003" "start:availability"
+            start_microservice "availability-service" "3002" "start:availability"
+            service_port="3002"
             ;;
         "stockpile-service")
             start_microservice "stockpile-service" "3004" "start:stockpile"
+            service_port="3004"
             ;;
         "reports-service")
             start_microservice "reports-service" "3005" "start:reports"
+            service_port="3005"
             ;;
         *)
             log_error "Servicio desconocido: $service_name"
             log_info "Servicios disponibles: api-gateway, auth-service, resources-service, availability-service, stockpile-service, reports-service"
+            return 1
             ;;
     esac
+    
+    # Esperar a que el servicio esté completamente iniciado y respondiendo
+    if [ ! -z "$service_port" ]; then
+        log_info "Esperando que $service_name responda completamente..."
+        local max_startup_wait=30
+        local startup_wait=0
+        
+        while [ $startup_wait -lt $max_startup_wait ]; do
+            if nc -z localhost $service_port 2>/dev/null; then
+                log_success "$service_name reiniciado exitosamente y respondiendo en puerto $service_port"
+                return 0
+            fi
+            sleep 2
+            startup_wait=$((startup_wait + 2))
+            log_info "Esperando respuesta de $service_name... ($startup_wait/$max_startup_wait segundos)"
+        done
+        
+        log_error "$service_name no responde después de $max_startup_wait segundos"
+        return 1
+    fi
 }
 
 # Función de ayuda
@@ -451,15 +559,15 @@ show_help() {
     echo "  help            Mostrar esta ayuda"
     echo ""
     echo "EJEMPLOS:"
-    echo "  $0 start                    # Iniciar todos los servicios"
-    echo "  $0 logs auth-service        # Ver logs de auth-service"
-    echo "  $0 restart resources-service # Reiniciar resources-service"
+    echo "  $0 start                     # Iniciar todos los servicios"
+    echo "  $0 logs api-gateway          # Ver logs de api-gateway"
+    echo "  $0 restart auth-service      # Reiniciar auth-service"
     echo ""
     echo "SERVICIOS DISPONIBLES:"
     echo "  api-gateway (puerto 3000) - Puerta de entrada principal"
     echo "  auth-service (puerto 3001) - Gestión de autenticación y autorización"
-    echo "  resources-service (puerto 3002) - Gestión de recursos institucionales"
-    echo "  availability-service (puerto 3003) - Gestión de disponibilidad de recursos"
+    echo "  availability-service (puerto 3002) - Gestión de disponibilidad de recursos"
+    echo "  resources-service (puerto 3003) - Gestión de recursos institucionales"
     echo "  stockpile-service (puerto 3004) - Gestión de inventario de recursos"
     echo "  reports-service (puerto 3005) - Generación de informes y reportes"
 }

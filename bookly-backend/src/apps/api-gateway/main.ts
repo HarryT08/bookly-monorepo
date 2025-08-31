@@ -63,10 +63,10 @@ async function bootstrap() {
 
     // Get configuration service
     const configService = app.get(ConfigService);
-    const port = configService.get<number>('gateway.service.port', 3000);
-    const host = configService.get<string>('gateway.service.host', 'localhost');
+    const port = configService.get<number>('API_GATEWAY_PORT', 3000);
+    const host = configService.get<string>('API_GATEWAY_HOST', '0.0.0.0');
     const environment = configService.get<string>('NODE_ENV', 'development');
-    const globalPrefix = configService.get<string>('gateway.service.globalPrefix', 'api/v1');
+    const globalPrefix = configService.get<string>('API_GLOBAL_PREFIX', 'api');
 
     // Global prefix
     app.setGlobalPrefix(globalPrefix);

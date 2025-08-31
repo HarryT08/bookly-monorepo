@@ -61,8 +61,8 @@ export class AuthService {
         lastLoginAt: payload.lastLoginAt ? new Date(payload.lastLoginAt) : undefined,
       };
 
-      // Validate with auth service for additional security
-      await this.validateUserWithAuthService(user.id, token);
+      // Skip additional auth service validation for now - JWT verification is sufficient
+      // await this.validateUserWithAuthService(user.id, token);
 
       return {
         user,

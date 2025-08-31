@@ -11,11 +11,15 @@ export interface RouteConfig {
   service: string;
   path: string;
   method: string;
+  version?: string; // API version (v1, v2, etc.)
+  targetVersion?: string; // Target microservice version
   timeout?: number;
   retries?: number;
   cache?: boolean;
   auth?: boolean;
   rateLimit?: boolean;
+  deprecated?: boolean;
+  deprecationDate?: string;
 }
 
 export interface ProxyRequest {
@@ -49,106 +53,128 @@ export class RoutingService {
   }
 
   private initializeRoutes(): void {
-    // Authentication routes
-    this.addRoute('POST', '/auth/login', 'auth', { auth: false, rateLimit: true });
-    this.addRoute('POST', '/auth/register', 'auth', { auth: false, rateLimit: true });
-    this.addRoute('POST', '/auth/refresh', 'auth', { auth: false, rateLimit: true });
-    this.addRoute('POST', '/auth/logout', 'auth', { auth: true });
-    this.addRoute('GET', '/auth/profile', 'auth', { auth: true, cache: true });
-    this.addRoute('PUT', '/auth/profile', 'auth', { auth: true });
-    this.addRoute('POST', '/auth/forgot-password', 'auth', { auth: false, rateLimit: true });
-    this.addRoute('POST', '/auth/reset-password', 'auth', { auth: false, rateLimit: true });
-    this.addRoute('POST', '/auth/verify-email', 'auth', { auth: false });
+    // Initialize versioned routes
+    this.initializeV1Routes();
+    this.initializeV2Routes(); // For future versions
     
-    // OAuth routes
-    this.addRoute('GET', '/auth/oauth/google', 'auth', { auth: false });
-    this.addRoute('GET', '/auth/oauth/google/callback', 'auth', { auth: false });
+    this.logger.log(`Initialized ${this.routes.size} versioned routes`);
+  }
 
-    // User management routes
-    this.addRoute('GET', '/auth/users', 'auth', { auth: true, cache: true });
-    this.addRoute('GET', '/auth/users/:id', 'auth', { auth: true, cache: true });
-    this.addRoute('PUT', '/auth/users/:id', 'auth', { auth: true });
-    this.addRoute('DELETE', '/auth/users/:id', 'auth', { auth: true });
+  private initializeV1Routes(): void {
+    // V1 Aggregated health route (handled by gateway)
+    this.addVersionedRoute('GET', '/v1/health', 'gateway', 'v1', { auth: false });
+    
+    // V1 Health routes - individual microservice health checks
+    this.addVersionedRoute('GET', '/v1/auth/health', 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/resources/health', 'resources', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/availability/health', 'availability', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/stockpile/health', 'stockpile', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/reports/health', 'reports', 'v1', { auth: false });
+    
+    // V1 Authentication routes
+    this.addVersionedRoute('POST', '/v1/auth/login', 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', '/v1/auth/register', 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', '/v1/auth/refresh', 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', '/v1/auth/logout', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('POST', '/v1/auth/profile', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/auth/profile', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('POST', '/v1/auth/forgot-password', 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', '/v1/auth/reset-password', 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', '/v1/auth/verify-email', 'auth', 'v1', { auth: false });
+    
+    // V1 OAuth routes
+    this.addVersionedRoute('GET', '/v1/auth/oauth/google', 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/auth/oauth/google/callback', 'auth', 'v1', { auth: false });
 
-    // Role management routes
-    this.addRoute('GET', '/auth/roles', 'auth', { auth: true, cache: true });
-    this.addRoute('POST', '/auth/roles', 'auth', { auth: true });
-    this.addRoute('GET', '/auth/roles/:id', 'auth', { auth: true, cache: true });
-    this.addRoute('PUT', '/auth/roles/:id', 'auth', { auth: true });
-    this.addRoute('DELETE', '/auth/roles/:id', 'auth', { auth: true });
+    // V1 User management routes
+    this.addVersionedRoute('GET', '/v1/auth/users', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', '/v1/auth/users/:id', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/auth/users/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/auth/users/:id', 'auth', 'v1', { auth: true });
 
-    // Permission management routes
-    this.addRoute('GET', '/auth/permissions', 'auth', { auth: true, cache: true });
-    this.addRoute('POST', '/auth/permissions', 'auth', { auth: true });
-    this.addRoute('GET', '/auth/permissions/:id', 'auth', { auth: true, cache: true });
-    this.addRoute('PUT', '/auth/permissions/:id', 'auth', { auth: true });
-    this.addRoute('DELETE', '/auth/permissions/:id', 'auth', { auth: true });
+    // V1 Role management routes
+    this.addVersionedRoute('GET', '/v1/auth/roles', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/auth/roles', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/auth/roles/:id', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/auth/roles/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/auth/roles/:id', 'auth', 'v1', { auth: true });
 
-    // Resources routes
-    this.addRoute('GET', '/resources', 'resources', { auth: true, cache: true });
-    this.addRoute('POST', '/resources', 'resources', { auth: true });
-    this.addRoute('GET', '/resources/:id', 'resources', { auth: true, cache: true });
-    this.addRoute('PUT', '/resources/:id', 'resources', { auth: true });
-    this.addRoute('DELETE', '/resources/:id', 'resources', { auth: true });
-    this.addRoute('GET', '/resources/search', 'resources', { auth: true, cache: true });
-    this.addRoute('POST', '/resources/bulk', 'resources', { auth: true });
-    this.addRoute('GET', '/resources/categories', 'resources', { auth: true, cache: true });
-    this.addRoute('POST', '/resources/categories', 'resources', { auth: true });
+    // V1 Permission management routes
+    this.addVersionedRoute('GET', '/v1/auth/permissions', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/auth/permissions', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/auth/permissions/:id', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/auth/permissions/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/auth/permissions/:id', 'auth', 'v1', { auth: true });
 
-    // Availability routes
-    this.addRoute('GET', '/availability', 'availability', { auth: true, cache: true });
-    this.addRoute('POST', '/availability/check', 'availability', { auth: true });
-    this.addRoute('GET', '/availability/calendar', 'availability', { auth: true, cache: true });
-    this.addRoute('GET', '/availability/schedules', 'availability', { auth: true, cache: true });
-    this.addRoute('POST', '/availability/schedules', 'availability', { auth: true });
-    this.addRoute('PUT', '/availability/schedules/:id', 'availability', { auth: true });
-    this.addRoute('DELETE', '/availability/schedules/:id', 'availability', { auth: true });
+    // V1 Resources routes
+    this.addVersionedRoute('GET', '/v1/resources', 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/resources', 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/resources/:id', 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/resources/:id', 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/resources/:id', 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/resources/search', 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/resources/bulk', 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/resources/categories', 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/resources/categories', 'resources', 'v1', { auth: true });
 
-    // Reservations routes
-    this.addRoute('GET', '/reservations', 'availability', { auth: true, cache: true });
-    this.addRoute('POST', '/reservations', 'availability', { auth: true });
-    this.addRoute('GET', '/reservations/:id', 'availability', { auth: true, cache: true });
-    this.addRoute('PUT', '/reservations/:id', 'availability', { auth: true });
-    this.addRoute('DELETE', '/reservations/:id', 'availability', { auth: true });
-    this.addRoute('POST', '/reservations/:id/cancel', 'availability', { auth: true });
-    this.addRoute('GET', '/reservations/history', 'availability', { auth: true, cache: true });
+    // V1 Availability routes
+    this.addVersionedRoute('GET', '/v1/availability', 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/availability/check', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/availability/calendar', 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', '/v1/availability/schedules', 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/availability/schedules', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('PUT', '/v1/availability/schedules/:id', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/availability/schedules/:id', 'availability', 'v1', { auth: true });
 
-    // Stockpile (Approval) routes
-    this.addRoute('GET', '/approvals', 'stockpile', { auth: true, cache: true });
-    this.addRoute('POST', '/approvals', 'stockpile', { auth: true });
-    this.addRoute('GET', '/approvals/:id', 'stockpile', { auth: true, cache: true });
-    this.addRoute('PUT', '/approvals/:id', 'stockpile', { auth: true });
-    this.addRoute('POST', '/approvals/:id/approve', 'stockpile', { auth: true });
-    this.addRoute('POST', '/approvals/:id/reject', 'stockpile', { auth: true });
-    this.addRoute('GET', '/approvals/flows', 'stockpile', { auth: true, cache: true });
-    this.addRoute('POST', '/approvals/flows', 'stockpile', { auth: true });
+    // V1 Reservations routes
+    this.addVersionedRoute('GET', '/v1/reservations', 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/reservations', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/reservations/:id', 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/reservations/:id', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/reservations/:id', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('POST', '/v1/reservations/:id/cancel', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/reservations/history', 'availability', 'v1', { auth: true, cache: true });
 
-    // Document templates routes
-    this.addRoute('GET', '/documents/templates', 'stockpile', { auth: true, cache: true });
-    this.addRoute('POST', '/documents/templates', 'stockpile', { auth: true });
-    this.addRoute('GET', '/documents/templates/:id', 'stockpile', { auth: true, cache: true });
-    this.addRoute('PUT', '/documents/templates/:id', 'stockpile', { auth: true });
-    this.addRoute('DELETE', '/documents/templates/:id', 'stockpile', { auth: true });
-    this.addRoute('POST', '/documents/generate', 'stockpile', { auth: true });
+    // V1 Stockpile (Approval) routes
+    this.addVersionedRoute('GET', '/v1/approvals', 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/approvals', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/approvals/:id', 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/approvals/:id', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', '/v1/approvals/:id/approve', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', '/v1/approvals/:id/reject', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/approvals/flows', 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/approvals/flows', 'stockpile', 'v1', { auth: true });
 
-    // Notification templates routes
-    this.addRoute('GET', '/notifications/templates', 'stockpile', { auth: true, cache: true });
-    this.addRoute('POST', '/notifications/templates', 'stockpile', { auth: true });
-    this.addRoute('GET', '/notifications/templates/:id', 'stockpile', { auth: true, cache: true });
-    this.addRoute('PUT', '/notifications/templates/:id', 'stockpile', { auth: true });
-    this.addRoute('DELETE', '/notifications/templates/:id', 'stockpile', { auth: true });
-    this.addRoute('POST', '/notifications/send', 'stockpile', { auth: true });
+    // V1 Document templates routes
+    this.addVersionedRoute('GET', '/v1/documents/templates', 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/documents/templates', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/documents/templates/:id', 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/documents/templates/:id', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/documents/templates/:id', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', '/v1/documents/generate', 'stockpile', 'v1', { auth: true });
 
-    // Reports routes
-    this.addRoute('GET', '/reports', 'reports', { auth: true, cache: true });
-    this.addRoute('POST', '/reports/generate', 'reports', { auth: true });
-    this.addRoute('GET', '/reports/:id', 'reports', { auth: true, cache: true });
-    this.addRoute('GET', '/reports/usage', 'reports', { auth: true, cache: true });
-    this.addRoute('GET', '/reports/analytics', 'reports', { auth: true, cache: true });
-    this.addRoute('GET', '/reports/dashboard', 'reports', { auth: true, cache: true });
-    this.addRoute('POST', '/reports/export', 'reports', { auth: true });
+    // V1 Notification templates routes
+    this.addVersionedRoute('GET', '/v1/notifications/templates', 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/notifications/templates', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/notifications/templates/:id', 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/notifications/templates/:id', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/notifications/templates/:id', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', '/v1/notifications/send', 'stockpile', 'v1', { auth: true });
 
-    this.logger.log(`Initialized ${this.routes.size} routes`);
+    // V1 Reports routes
+    this.addVersionedRoute('GET', '/v1/reports', 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/reports/generate', 'reports', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/reports/:id', 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', '/v1/reports/usage', 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', '/v1/reports/analytics', 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', '/v1/reports/dashboard', 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/reports/export', 'reports', 'v1', { auth: true });
+  }
+
+  private initializeV2Routes(): void {
+    // V2 routes can be added here for future versions
+    // Example: Enhanced authentication with additional security
+    // this.addVersionedRoute('POST', '/v2/auth/login', 'auth', 'v2', { auth: false, rateLimit: true, enhanced: true });
   }
 
   private addRoute(method: string, path: string, service: string, options: Partial<RouteConfig> = {}): void {
@@ -157,7 +183,26 @@ export class RoutingService {
       service,
       path,
       method,
-      timeout: this.configService.get(`gateway.microservices.${service}.timeout`, 5000),
+      timeout: this.configService.get(`gateway.microservices.${service}.timeout`, 30000),
+      retries: this.configService.get(`gateway.microservices.${service}.retries`, 3),
+      cache: false,
+      auth: true,
+      rateLimit: false,
+      ...options,
+    };
+    
+    this.routes.set(key, config);
+  }
+
+  private addVersionedRoute(method: string, path: string, service: string, version: string, options: Partial<RouteConfig> = {}): void {
+    const key = `${method}:${path}`;
+    const config: RouteConfig = {
+      service,
+      path,
+      method,
+      version,
+      targetVersion: version, // Target microservice version
+      timeout: this.configService.get(`gateway.microservices.${service}.timeout`, 30000),
       retries: this.configService.get(`gateway.microservices.${service}.retries`, 3),
       cache: false,
       auth: true,
@@ -183,7 +228,24 @@ export class RoutingService {
       }
     }
 
+    // If no versioned route found, try to find a fallback without version
+    const pathWithoutVersion = this.extractPathWithoutVersion(path);
+    if (pathWithoutVersion !== path) {
+      return this.findRoute(method, pathWithoutVersion);
+    }
+
     return null;
+  }
+
+  private extractPathWithoutVersion(path: string): string {
+    // Remove version prefix like /v1, /v2, etc. and ensure leading slash
+    const pathWithoutVersion = path.replace(/^\/v\d+/, '');
+    return pathWithoutVersion.startsWith('/') ? pathWithoutVersion : '/' + pathWithoutVersion;
+  }
+
+  private extractVersionFromPath(path: string): string | null {
+    const versionMatch = path.match(/^\/v(\d+)/);
+    return versionMatch ? `v${versionMatch[1]}` : null;
   }
 
   private matchPath(pattern: string, path: string): boolean {
@@ -202,7 +264,39 @@ export class RoutingService {
     try {
       // Get service URL with load balancing
       const serviceUrl = await this.loadBalancer.getServiceUrl(route.service);
-      const fullUrl = `${serviceUrl}${request.url}`;
+      
+      // Build target URL with version handling
+      let targetPath = request.url;
+      
+      // Debug logging
+      this.logger.debug(`Original request.url: ${request.url}`);
+      
+      // If route has a version, ensure the microservice receives the correct path
+      if (route.version && route.targetVersion) {
+        // Remove gateway version from path and add target version if different
+        const pathWithoutVersion = this.extractPathWithoutVersion(request.url);
+        this.logger.debug(`Path without version: ${pathWithoutVersion}`);
+        
+        // Handle special routing for health endpoints
+        if (pathWithoutVersion.endsWith('/health')) {
+          // For health endpoints, only send /health to the service
+          // /auth/health → /health, /resources/health → /health, etc.
+          targetPath = `/api/v1/health`;
+        } else {
+          // For other endpoints, send the full path
+          targetPath = `/api/v1${pathWithoutVersion}`;
+        }
+        
+        // Add version info to headers for microservice version detection
+        request.headers = {
+          ...request.headers,
+          'X-API-Version': route.version,
+          'X-Target-Version': route.targetVersion,
+        };
+      }
+      
+      const fullUrl = `${serviceUrl}${targetPath}`;
+      this.logger.debug(`Final proxy URL: ${fullUrl}`);
 
       // Check circuit breaker
       if (!this.circuitBreaker.canExecute(route.service)) {
@@ -227,12 +321,19 @@ export class RoutingService {
 
       const duration = Date.now() - startTime;
       
-      this.logger.debug(`Proxied ${request.method} ${request.url} to ${route.service} in ${duration}ms`);
+      this.logger.debug(`Proxied ${request.method} ${request.url} to ${route.service}${route.version ? ` (${route.version})` : ''} in ${duration}ms`);
+
+      // Add version information to response headers
+      const responseHeaders = {
+        ...response.headers as Record<string, string>,
+        'X-Gateway-Version': route.version || 'v1',
+        'X-Service-Version': route.targetVersion || 'v1',
+      };
 
       return {
         status: response.status,
         data: response.data,
-        headers: response.headers as Record<string, string>,
+        headers: responseHeaders,
         duration,
       };
 
@@ -242,7 +343,7 @@ export class RoutingService {
       // Record failure for circuit breaker
       this.circuitBreaker.recordFailure(route.service);
       
-      this.logger.error(`Failed to proxy ${request.method} ${request.url} to ${route.service}:`, error.message);
+      this.logger.error(`Failed to proxy ${request.method} ${request.url} to ${route.service}${route.version ? ` (${route.version})` : ''}:`, error.message);
       
       throw {
         status: error.response?.status || 500,

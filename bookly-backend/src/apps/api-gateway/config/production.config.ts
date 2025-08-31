@@ -38,7 +38,7 @@ export default registerAs('production', () => ({
   microservices: {
     auth: {
       url: process.env.AUTH_SERVICE_URL,
-      timeout: 5000,
+      timeout: 3000,
       retries: 3,
       circuitBreaker: {
         enabled: true,
@@ -48,7 +48,7 @@ export default registerAs('production', () => ({
     },
     availability: {
       url: process.env.AVAILABILITY_SERVICE_URL,
-      timeout: 5000,
+      timeout: 3000,
       retries: 3,
       circuitBreaker: {
         enabled: true,
@@ -58,7 +58,7 @@ export default registerAs('production', () => ({
     },
     resources: {
       url: process.env.RESOURCES_SERVICE_URL,
-      timeout: 5000,
+      timeout: 3000,
       retries: 3,
       circuitBreaker: {
         enabled: true,
@@ -68,7 +68,7 @@ export default registerAs('production', () => ({
     },
     stockpile: {
       url: process.env.STOCKPILE_SERVICE_URL,
-      timeout: 5000,
+      timeout: 3000,
       retries: 3,
       circuitBreaker: {
         enabled: true,
@@ -78,7 +78,7 @@ export default registerAs('production', () => ({
     },
     reports: {
       url: process.env.REPORTS_SERVICE_URL,
-      timeout: 5000,
+      timeout: 3000,
       retries: 3,
       circuitBreaker: {
         enabled: true,
@@ -94,7 +94,7 @@ export default registerAs('production', () => ({
     healthCheck: {
       enabled: true,
       interval: 30000, // 30 seconds
-      timeout: 5000,
+      timeout: 3000,
       retries: 3,
     },
   },

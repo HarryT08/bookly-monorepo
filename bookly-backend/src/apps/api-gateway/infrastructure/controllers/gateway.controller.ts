@@ -82,6 +82,67 @@ export class GatewayManagementController {
     };
   }
 
+  @Get('health/aggregated')
+  @ApiOperation({ summary: 'Aggregated health check of all microservices' })
+  @ApiResponse({ status: 200, description: 'Health status of all services' })
+  async getAggregatedHealth(): Promise<any> {
+    const services = ['auth', 'resources', 'availability', 'stockpile', 'reports'];
+    const healthResults: any = {};
+    let overallStatus = 'healthy';
+
+    for (const service of services) {
+      try {
+        const serviceUrl = await this.loadBalancerService.getServiceUrl(service);
+        const healthUrl = `${serviceUrl}/api/v1/health`;
+        
+        // Simple health check using fetch with timeout
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch(healthUrl, {
+          signal: controller.signal,
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        clearTimeout(timeout);
+        
+        if (response.ok) {
+          const healthData = await response.json();
+          healthResults[service] = {
+            status: 'up',
+            response: healthData,
+            url: healthUrl
+          };
+        } else {
+          healthResults[service] = {
+            status: 'down',
+            error: `HTTP ${response.status}`,
+            url: healthUrl
+          };
+          overallStatus = 'degraded';
+        }
+      } catch (error: any) {
+        healthResults[service] = {
+          status: 'down',
+          error: error.message || 'Connection failed',
+          url: 'N/A'
+        };
+        overallStatus = 'degraded';
+      }
+    }
+
+    return {
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      gateway: {
+        status: 'healthy',
+        version: '1.0.0'
+      },
+      services: healthResults
+    };
+  }
+
   @Get('routes')
   @ApiOperation({ summary: 'Get all configured routes' })
   @ApiResponse({ status: 200, description: 'List of all routes' })

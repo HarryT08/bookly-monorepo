@@ -7,6 +7,7 @@ import { RateLimitService } from '../services/rate-limit.service';
 import { ResponseAggregationService } from '../services/response-aggregation.service';
 import { ObservabilityService } from '../services/observability.service';
 import { ProtocolTranslationService } from '../services/protocol-translation.service';
+import { LoadBalancerService } from '../services/load-balancer.service';
 
 export interface GatewayRequest extends Request {
   requestId: string;
@@ -27,6 +28,7 @@ export class GatewayMiddleware implements NestMiddleware {
     private readonly aggregationService: ResponseAggregationService,
     private readonly observabilityService: ObservabilityService,
     private readonly protocolTranslationService: ProtocolTranslationService,
+    private readonly loadBalancerService: LoadBalancerService,
   ) {}
 
   async use(req: GatewayRequest, res: Response, next: NextFunction): Promise<void> {
@@ -34,18 +36,31 @@ export class GatewayMiddleware implements NestMiddleware {
     req.requestId = uuidv4();
     req.startTime = Date.now();
 
+    // Get the original path before NestJS prefix stripping
+    const originalPath = req.originalUrl.replace(/\?.*$/, ''); // Remove query params
+    const globalPrefix = '/api';
+    const routePath = originalPath.startsWith(globalPrefix) 
+      ? originalPath.substring(globalPrefix.length) 
+      : originalPath;
+
     // Start tracing
     const traceId = this.observabilityService.startTrace('gateway_request', {
       method: req.method,
-      path: req.path,
+      path: routePath,
+      originalPath: originalPath,
       userAgent: req.get('User-Agent'),
       ip: req.ip,
     });
 
     try {
-      // 1. Find route configuration
-      const route = this.routingService.findRoute(req.method, req.path);
+      this.logger.debug(`Processing request: ${req.method} ${routePath} (original: ${originalPath})`);
+      
+      // 1. Find route configuration using the corrected path
+      const route = this.routingService.findRoute(req.method, routePath);
+      this.logger.debug(`Route found: ${route ? `${route.service}:${route.path}` : 'null'}`);
+      
       if (!route) {
+        this.logger.warn(`No route found for: ${req.method} ${routePath}`);
         return this.handleNotFound(req, res);
       }
 
@@ -87,7 +102,12 @@ export class GatewayMiddleware implements NestMiddleware {
         req.headers = { ...req.headers, ...translationResult.headers };
       }
 
-      // 6. Proxy to microservice
+      // 6. Handle gateway-specific routes or proxy to microservice
+      if (route.service === 'gateway') {
+        return this.handleGatewayRoute(req, res, route, traceId);
+      }
+      
+      // Proxy to microservice
       await this.proxyRequest(req, res, route, traceId);
 
     } catch (error) {
@@ -243,9 +263,12 @@ export class GatewayMiddleware implements NestMiddleware {
     try {
       this.observabilityService.addTraceTag(traceId, 'proxy', 'true');
 
+      // Use the route path from the route config, not req.path which is stripped
+      const routePath = route.path;
+      
       const proxyRequest = {
         method: req.method,
-        url: req.path,
+        url: routePath,
         headers: req.headers as Record<string, string>,
         body: req.body,
         query: req.query as Record<string, string>,
@@ -372,6 +395,91 @@ export class GatewayMiddleware implements NestMiddleware {
 
     res.status(401).json(error);
   }
+
+  private async handleGatewayRoute(
+    req: GatewayRequest,
+    res: Response,
+    route: any,
+    traceId: string,
+  ): Promise<void> {
+    try {
+      this.observabilityService.addTraceTag(traceId, 'gateway_route', 'true');
+      
+      // Handle aggregated health endpoint
+      if (route.path === '/v1/health' && req.method === 'GET') {
+        const services = ['auth', 'resources', 'availability', 'stockpile', 'reports'];
+        const healthResults: any = {};
+        let overallStatus = 'healthy';
+
+        for (const service of services) {
+          try {
+            // Use LoadBalancerService to get dynamic service URL
+            const serviceUrl = await this.loadBalancerService.getServiceUrl(service);
+            const healthUrl = `${serviceUrl}/api/v1/health`;
+            
+            // Simple HTTP request
+            const response = await fetch(healthUrl, {
+              method: 'GET',
+              headers: { 'Accept': 'application/json' },
+              signal: AbortSignal.timeout(3000)
+            });
+            
+            if (response.ok) {
+              const healthData = await response.json();
+              healthResults[service] = {
+                status: 'up',
+                response: healthData,
+                url: healthUrl
+              };
+            } else {
+              healthResults[service] = {
+                status: 'down',
+                error: `HTTP ${response.status}`,
+                url: healthUrl
+              };
+              overallStatus = 'degraded';
+            }
+          } catch (error: any) {
+            let serviceUrl = 'N/A';
+            try {
+              serviceUrl = await this.loadBalancerService.getServiceUrl(service);
+            } catch {}
+            
+            healthResults[service] = {
+              status: 'down',
+              error: error.message || 'Connection failed',
+              url: serviceUrl !== 'N/A' ? `${serviceUrl}/api/v1/health` : 'N/A'
+            };
+            overallStatus = 'degraded';
+          }
+        }
+
+        const result = {
+          status: overallStatus,
+          timestamp: new Date().toISOString(),
+          gateway: {
+            status: 'healthy',
+            version: '1.0.0'
+          },
+          services: healthResults
+        };
+
+        res.status(200).json(result);
+        return;
+      }
+      
+      // Default fallback for unknown gateway routes
+      res.status(404).json({
+        code: 'GATEWAY_ROUTE_NOT_FOUND',
+        message: `Gateway route not implemented: ${req.method} ${route.path}`,
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      this.handleError(req, res, error, traceId);
+    }
+  }
+
 
   private handleError(req: GatewayRequest, res: Response, error: any, traceId: string): void {
     const statusCode = error.status || error.statusCode || 500;

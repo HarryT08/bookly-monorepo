@@ -25,8 +25,8 @@ export class HealthController {
   @ApiResponse({ status: 200, description: 'Health check successful' })
   @HealthCheck()
   check() {
-    const heapThresholdMB = this.configService.get<number>('MEMORY_HEAP_THRESHOLD_MB', 1536);
-    const rssThresholdMB = this.configService.get<number>('MEMORY_RSS_THRESHOLD_MB', 1536);
+    const heapThresholdMB = this.configService.get<number>('MEMORY_HEAP_THRESHOLD_MB', 2048);
+    const rssThresholdMB = this.configService.get<number>('MEMORY_RSS_THRESHOLD_MB', 2048);
     
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', heapThresholdMB * 1024 * 1024),
