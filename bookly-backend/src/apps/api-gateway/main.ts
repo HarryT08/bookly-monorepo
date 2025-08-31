@@ -120,7 +120,7 @@ async function bootstrap() {
           },
           'JWT-auth',
         )
-        .addServer(`http://${host}:${port}`, 'Local Development Server')
+        .addServer(`http://localhost:${port}`, 'Local Development Server')
         .addTag('Gateway', 'API Gateway management endpoints')
         .addTag('Authentication', 'Authentication proxy endpoints')
         .addTag('Resources', 'Resource management proxy endpoints')
@@ -171,7 +171,7 @@ async function bootstrap() {
         },
       });
 
-      logger.log(`Swagger documentation available at http://${host}:${port}/${swaggerPath}`);
+      logger.log(`Swagger documentation available at http://localhost:${port}/${swaggerPath}`);
     }
 
     // Health check endpoint

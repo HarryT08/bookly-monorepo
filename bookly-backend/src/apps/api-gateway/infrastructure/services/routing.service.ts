@@ -177,23 +177,6 @@ export class RoutingService {
     // this.addVersionedRoute('POST', '/v2/auth/login', 'auth', 'v2', { auth: false, rateLimit: true, enhanced: true });
   }
 
-  private addRoute(method: string, path: string, service: string, options: Partial<RouteConfig> = {}): void {
-    const key = `${method}:${path}`;
-    const config: RouteConfig = {
-      service,
-      path,
-      method,
-      timeout: this.configService.get(`gateway.microservices.${service}.timeout`, 30000),
-      retries: this.configService.get(`gateway.microservices.${service}.retries`, 3),
-      cache: false,
-      auth: true,
-      rateLimit: false,
-      ...options,
-    };
-    
-    this.routes.set(key, config);
-  }
-
   private addVersionedRoute(method: string, path: string, service: string, version: string, options: Partial<RouteConfig> = {}): void {
     const key = `${method}:${path}`;
     const config: RouteConfig = {
@@ -303,15 +286,24 @@ export class RoutingService {
         throw new Error(`Circuit breaker is open for service: ${route.service}`);
       }
 
+      // Clean headers for proxy request
+      const proxyHeaders = { ...request.headers };
+      
+      // Remove problematic headers that should be set by axios
+      delete proxyHeaders['host'];
+      delete proxyHeaders['content-length'];
+      
       // Prepare request config
       const config: AxiosRequestConfig = {
         method: request.method as any,
         url: fullUrl,
-        headers: request.headers,
+        headers: proxyHeaders,
         timeout: route.timeout,
         data: request.body,
         params: request.query,
+        validateStatus: (status) => status < 500, // Same as health check
       };
+
 
       // Execute request with retry logic
       const response = await this.httpService.axiosRef.request(config);

@@ -1,4 +1,4 @@
-import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { JwtModule } from '@nestjs/jwt';
@@ -131,7 +131,11 @@ export class ApiGatewayModule implements NestModule {
     // Apply gateway middleware to all routes except management endpoints
     consumer
       .apply(GatewayMiddleware)
-      .exclude('_gateway/(.*)', 'health', 'metrics')
+      .exclude(
+        '_gateway/(.*)',
+        'health',
+        'metrics'
+      )
       .forRoutes('*');
   }
 }

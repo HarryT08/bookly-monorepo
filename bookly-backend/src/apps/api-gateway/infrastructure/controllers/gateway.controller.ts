@@ -24,27 +24,8 @@ export class GatewayController {
     private readonly protocolTranslationService: ProtocolTranslationService,
   ) {}
 
-  @All('*')
-  @ApiOperation({ summary: 'Universal proxy endpoint for all microservice requests' })
-  @ApiResponse({ status: 200, description: 'Request successfully proxied' })
-  @ApiResponse({ status: 401, description: 'Authentication failed' })
-  @ApiResponse({ status: 403, description: 'Authorization failed' })
-  @ApiResponse({ status: 404, description: 'Route not found' })
-  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
-  @ApiResponse({ status: 502, description: 'Bad gateway - service unavailable' })
-  @ApiResponse({ status: 503, description: 'Service unavailable - circuit breaker open' })
-  async handleRequest(@Req() req: Request, @Res() res: Response): Promise<void> {
-    // The actual request handling is done by the GatewayMiddleware
-    // This controller method serves as documentation and fallback
-    this.logger.warn(`Request reached controller fallback: ${req.method} ${req.path}`);
-    
-    res.status(500).json({
-      code: 'GATEWAY_FALLBACK_ERROR',
-      message: 'Request reached controller fallback - middleware may not be configured correctly',
-      timestamp: new Date().toISOString(),
-    });
-  }
+  // All request handling should be done by GatewayMiddleware
+  // No routes defined here to avoid interference with specific controllers
 }
 
 @ApiTags('Gateway Management')

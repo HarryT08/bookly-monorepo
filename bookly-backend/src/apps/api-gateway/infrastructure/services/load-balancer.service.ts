@@ -162,7 +162,8 @@ export class LoadBalancerService {
     const startTime = Date.now();
     
     try {
-      const response = await this.httpService.axiosRef.get(`${instance.url}/health`, {
+      this.logger.debug(`Health checking ${serviceName} at ${instance.url}/api/v1/health`);
+      const response = await this.httpService.axiosRef.get(`${instance.url}/api/v1/health`, {
         timeout,
         validateStatus: (status) => status < 500, // Accept 4xx as healthy
       });
@@ -173,6 +174,8 @@ export class LoadBalancerService {
       instance.healthy = response.status < 400;
       instance.lastHealthCheck = new Date();
       instance.responseTime = responseTime;
+
+      this.logger.debug(`Health check result for ${serviceName}: status=${response.status}, healthy=${instance.healthy}, responseTime=${responseTime}ms`);
 
       if (wasUnhealthy && instance.healthy) {
         this.logger.log(`Service instance ${instance.id} (${serviceName}) is now healthy`);
@@ -186,6 +189,7 @@ export class LoadBalancerService {
       instance.lastHealthCheck = new Date();
       instance.responseTime = responseTime;
 
+      this.logger.warn(`Health check failed for ${serviceName} at ${instance.url}/api/v1/health: ${error.message}`);
       if (wasHealthy) {
         this.logger.warn(`Service instance ${instance.id} (${serviceName}) is now unhealthy: ${error.message}`);
       }

@@ -315,6 +315,12 @@ export class GatewayMiddleware implements NestMiddleware {
       res.status(proxyResponse.status).json(proxyResponse.data);
 
     } catch (error) {
+      this.logger.error(`Proxy request failed for ${req.method} ${req.path}:`, {
+        error: error.message,
+        stack: error.stack,
+        service: route.service,
+        routePath: route.path
+      });
       this.handleError(req, res, error, traceId);
     }
   }
