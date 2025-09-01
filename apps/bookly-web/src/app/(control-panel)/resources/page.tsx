@@ -4,29 +4,34 @@ import NextLink from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import type { MRT_SortingState } from 'material-react-table';
 import DataTable from '@components/molecules/DataTable/DataTable';
-import { listResourcesPaginated } from '@services/resources/services';
 import type { ResourceResponseDto } from '@services/resources/types';
-import { mockListResourcesPaginated } from '@services/resources/mocks/crud';
-import { useAppSelector } from 'store';
+import { useAppSelector, useAppDispatch } from 'store';
+import { fetchResourcesPaginated, setFilters } from '@store/slices/resourcesSlice';
 import { useSnackbar } from 'notistack';
 import { Button, Link } from '@mui/material';
 import { ResourceRowActions } from '@components/molecules/resources/resource-row-actions';
 import { useTranslation } from 'react-i18next';
 
 export default function ResourcesPage() {
+	const dispatch = useAppDispatch();
 	const { enqueueSnackbar } = useSnackbar();
-	const [items, setItems] = useState<ResourceResponseDto[]>([]);
-	const [loading, setLoading] = useState<boolean>(false);
-	const [error, setError] = useState<string | null>(null);
-	const useMocks = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
+
+	// Redux state
+	const {
+		resources,
+		pagination: reduxPagination,
+		filters,
+		loading,
+		errors
+	} = useAppSelector((state) => state.resources);
+
 	// Table state (server-side)
-	const [pagination, setPagination] = useState<{ pageIndex: number; pageSize: number }>({
-		pageIndex: 0,
-		pageSize: 10
+	const [tablePagination, setTablePagination] = useState<{ pageIndex: number; pageSize: number }>({
+		pageIndex: reduxPagination.page - 1,
+		pageSize: reduxPagination.limit
 	});
-	const [rowCount, setRowCount] = useState<number>(0);
 	const [sorting, setSorting] = useState<MRT_SortingState>([]);
-	const [globalFilter, setGlobalFilter] = useState<string>('');
+	const [globalFilter, setGlobalFilter] = useState<string>(filters.q || '');
 
 	const { t } = useTranslation('generic');
 	const { t: tResources } = useTranslation('resources');
@@ -49,51 +54,52 @@ export default function ResourcesPage() {
 		return user.roles?.some((r) => /administrador/i.test(r.name));
 	}, [user]);
 
+	// Sync table pagination with Redux pagination
 	useEffect(() => {
-		let mounted = true;
-		(async () => {
-			try {
-				setLoading(true);
-				const sortBy = sorting[0]?.id as string | undefined;
-				const sortOrder = sorting[0]?.desc ? 'desc' : 'asc';
-				const page = pagination.pageIndex + 1;
-				const limit = pagination.pageSize;
-				const baseParams = { page, limit } as {
-					page: number;
-					limit: number;
-					sortBy?: string;
-					sortOrder?: 'asc' | 'desc';
-					q?: string;
-				};
+		setTablePagination({
+			pageIndex: reduxPagination.page - 1,
+			pageSize: reduxPagination.limit
+		});
+	}, [reduxPagination]);
 
-				if (sortBy) {
-					baseParams.sortBy = sortBy;
-					baseParams.sortOrder = sortOrder;
-				}
+	// Fetch resources when pagination, sorting or filters change
+	useEffect(() => {
+		const sortBy = sorting[0]?.id as string | undefined;
+		const sortOrder = sorting[0]?.desc ? 'desc' : 'asc';
+		const page = tablePagination.pageIndex + 1;
+		const limit = tablePagination.pageSize;
 
-				if (globalFilter && globalFilter.trim()) {
-					baseParams.q = globalFilter.trim();
-				}
-
-				const res = useMocks
-					? mockListResourcesPaginated(baseParams)
-					: await listResourcesPaginated(baseParams);
-
-				if (!mounted) return;
-
-				setItems(res.data);
-				setRowCount(res.pagination.total);
-			} catch (_e) {
-				setError('No fue posible cargar los recursos');
-				enqueueSnackbar('No fue posible cargar los recursos.', { variant: 'error' });
-			} finally {
-				setLoading(false);
-			}
-		})();
-		return () => {
-			mounted = false;
+		const params = { page, limit } as {
+			page: number;
+			limit: number;
+			sortBy?: string;
+			sortOrder?: 'asc' | 'desc';
+			q?: string;
 		};
-	}, [useMocks, pagination, sorting, globalFilter, enqueueSnackbar, user]);
+
+		if (sortBy) {
+			params.sortBy = sortBy;
+			params.sortOrder = sortOrder;
+		}
+
+		if (globalFilter && globalFilter.trim()) {
+			params.q = globalFilter.trim();
+		}
+
+		dispatch(fetchResourcesPaginated(params));
+	}, [dispatch, tablePagination, sorting, globalFilter]);
+
+	// Update filters in Redux when globalFilter changes
+	useEffect(() => {
+		dispatch(setFilters({ q: globalFilter || undefined }));
+	}, [dispatch, globalFilter]);
+
+	// Show error notifications
+	useEffect(() => {
+		if (errors.list) {
+			enqueueSnackbar(errors.list, { variant: 'error' });
+		}
+	}, [errors.list, enqueueSnackbar]);
 
 	return (
 		<div className="space-y-4 p-6">
@@ -109,10 +115,10 @@ export default function ResourcesPage() {
 				</Button>
 			</div>
 
-			{loading && <div>{t('LOADING')}</div>}
-			{error && <div className="text-red-600">{tResources('RESOURCE_LOAD_FAILED')}</div>}
+			{loading.list && <div>{t('LOADING')}</div>}
+			{errors.list && <div className="text-red-600">{tResources('RESOURCE_LOAD_FAILED')}</div>}
 
-			{!loading && !error && (
+			{!loading.list && !errors.list && (
 				<DataTable<ResourceResponseDto>
 					columns={[
 						{
@@ -134,16 +140,16 @@ export default function ResourcesPage() {
 						{ accessorKey: 'status', header: tResources('STATUS') },
 						{ accessorKey: 'capacity', header: tResources('CAPACITY') }
 					]}
-					data={items}
+					data={resources}
 					manualPagination
-					onPaginationChange={setPagination}
+					onPaginationChange={setTablePagination}
 					state={{
-						isLoading: loading,
-						pagination,
+						isLoading: loading.list,
+						pagination: tablePagination,
 						globalFilter,
 						sorting
 					}}
-					rowCount={rowCount}
+					rowCount={reduxPagination.total}
 					manualSorting
 					onSortingChange={setSorting}
 					manualFiltering
@@ -153,11 +159,25 @@ export default function ResourcesPage() {
 						canManageResources ? (
 							<ResourceRowActions
 								resource={row.original}
-								useMocks={useMocks}
-								onDeleted={(id) => setItems((prev) => prev.filter((r) => r.id !== id))}
-								onDisabled={(updated) =>
-									setItems((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
-								}
+								useMocks={process.env.NEXT_PUBLIC_USE_MOCKS === 'true'}
+								onDeleted={() => {
+									// Resource will be refetched through Redux
+									dispatch(
+										fetchResourcesPaginated({
+											page: tablePagination.pageIndex + 1,
+											limit: tablePagination.pageSize
+										})
+									);
+								}}
+								onDisabled={() => {
+									// Resource will be refetched through Redux
+									dispatch(
+										fetchResourcesPaginated({
+											page: tablePagination.pageIndex + 1,
+											limit: tablePagination.pageSize
+										})
+									);
+								}}
 							/>
 						) : null
 					}

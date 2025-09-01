@@ -9,12 +9,14 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import authSlice from './slices/authSlice';
 import uiSlice from './slices/uiSlice';
 import settingsSlice from './slices/settingsSlice';
+import resourcesSlice from './slices/resourcesSlice';
 
 export const store = configureStore({
 	reducer: {
 		auth: authSlice,
 		ui: uiSlice,
-		settings: settingsSlice
+		settings: settingsSlice,
+		resources: resourcesSlice
 	},
 	middleware: (getDefaultMiddleware) =>
 		getDefaultMiddleware({

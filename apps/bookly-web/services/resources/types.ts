@@ -100,12 +100,12 @@ export interface CreateResourceDto {
 	name: string;
 	description?: string;
 	type: ResourceType;
-	categoryId: string; // Required in backend
-	programId: string; // Required in backend (not academicProgramId)
+	categoryId?: string; // Optional in backend
+	programId: string; // Required in backend
 	location?: string; // Backend expects string, not object
 	capacity?: number; // >= 1 when provided
 	attributes?: Record<string, unknown>; // Key-value pairs for resource-specific attributes
-	availabilityRules?: Record<string, unknown>; // Rules defining when resource is available
+	availableSchedules?: Record<string, unknown>; // Updated to match backend field name
 	isActive?: boolean; // Default true
 }
 
@@ -116,26 +116,27 @@ export interface UpdateResourceDto {
 	capacity?: number;
 	status?: ResourceStatus;
 	attributes?: Record<string, unknown>;
-	availabilityRules?: Record<string, unknown>;
+	availableSchedules?: Record<string, unknown>; // Updated to match backend field name
+	categoryId?: string;
 	isActive?: boolean;
 }
 
 export interface ResourceResponseDto {
 	id: string;
 	name: string;
+	code: string; // Added to match backend response
 	description?: string;
 	type: ResourceType;
 	categoryId?: string;
-	programId?: string;
+	programId: string; // Required in backend response
 	location?: string; // Backend uses string, not object
 	capacity?: number;
 	status: ResourceStatus;
 	attributes?: Record<string, unknown>; // Key-value pairs for resource-specific attributes
-	availabilityRules?: Record<string, unknown>; // Rules defining when resource is available
+	availableSchedules?: Record<string, unknown>; // Updated to match backend field name
 	isActive: boolean;
-	createdBy?: string;
-	createdAt: string;
-	updatedAt: string;
+	createdAt: string; // Backend uses Date but serialized as string
+	updatedAt: string; // Backend uses Date but serialized as string
 	// Related entities from backend
 	category?: CategoryDto;
 	program?: ProgramDto;
