@@ -45,6 +45,14 @@ const navigationConfig: FuseNavItemType[] = [
 		url: '/reservations'
 	},
 	{
+		id: 'reports',
+		title: 'Reportes',
+		translate: 'REPORTS',
+		type: 'item',
+		icon: 'heroicons-outline:chart-bar',
+		url: '/reports'
+	},
+	{
 		id: 'academic-programs',
 		title: 'Programas Académicos',
 		translate: 'ACADEMIC_PROGRAMS',

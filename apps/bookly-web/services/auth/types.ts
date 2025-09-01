@@ -52,6 +52,8 @@ export interface Permission {
 	action: string;
 	scope?: string;
 	conditions?: Record<string, unknown>;
+	name?: string;
+	description?: string;
 }
 
 // API Response types (backend response structure)
@@ -101,4 +103,104 @@ export interface ApiLoginResponse {
 	refresh_token?: string;
 	expiresIn?: number;
 	expires_in?: number;
+}
+
+// Role management types
+export interface CreateRoleRequest {
+	name: string;
+	description?: string;
+	category?: string;
+	permissions?: string[];
+}
+
+export interface UpdateRoleRequest {
+	name?: string;
+	description?: string;
+	category?: string;
+	permissions?: string[];
+}
+
+export interface RoleWithPermissions extends Role {
+	userCount?: number;
+	createdAt: string;
+	updatedAt: string;
+	createdBy?: string;
+	isPredefined: boolean;
+	isActive: boolean;
+}
+
+// Permission management types
+export interface CreatePermissionRequest {
+	name: string;
+	resource: string;
+	action: string;
+	scope?: string;
+	description?: string;
+	conditions?: Record<string, unknown>;
+}
+
+export interface UpdatePermissionRequest {
+	name?: string;
+	resource?: string;
+	action?: string;
+	scope?: string;
+	description?: string;
+	conditions?: Record<string, unknown>;
+}
+
+export interface PermissionWithDetails extends Permission {
+	name: string;
+	description?: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+	roleCount?: number;
+}
+
+// User role assignment types
+export interface AssignRoleRequest {
+	userId: string;
+	roleId: string;
+	programId?: string;
+}
+
+export interface UserRoleAssignment {
+	id: string;
+	userId: string;
+	roleId: string;
+	programId?: string;
+	assignedAt: string;
+	assignedBy?: string;
+	isActive: boolean;
+	user?: User;
+	role?: Role;
+}
+
+// SSO types
+export interface SSOLoginResponse {
+	user: User;
+	token: string;
+	refreshToken: string;
+	expiresIn: number;
+	isFirstLogin: boolean;
+}
+
+export interface SSOProvider {
+	id: string;
+	name: string;
+	type: 'google' | 'microsoft' | 'saml';
+	isEnabled: boolean;
+	configuration?: Record<string, unknown>;
+}
+
+// Audit types
+export interface AuthAuditLog {
+	id: string;
+	userId?: string;
+	action: string;
+	resource: string;
+	details?: Record<string, unknown>;
+	ipAddress?: string;
+	userAgent?: string;
+	createdAt: string;
 }
