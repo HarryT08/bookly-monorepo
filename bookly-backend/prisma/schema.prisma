@@ -56,7 +56,13 @@ model User {
   resourceImports           ResourceImport[]    @relation("ResourceImports")
   responsibleForResources   ResourceResponsible[] @relation("ResponsibleForResources")
   assignedResponsibles      ResourceResponsible[] @relation("AssignedResponsible")
-  reportedMaintenances      Maintenance[]       @relation("ReportedMaintenance")
+  reportedMaintenances      MaintenanceRecord[] @relation("MaintenanceReportedBy")
+  assignedMaintenances      MaintenanceRecord[] @relation("MaintenanceAssignedTo")
+  reportedIncidents         IncidentReport[]    @relation("IncidentReportedBy")
+  assignedIncidents         IncidentReport[]    @relation("IncidentAssignedTo")
+  resolvedIncidents         IncidentReport[]    @relation("IncidentResolvedBy")
+  scheduledMaintenancesAssigned ScheduledMaintenance[] @relation("ScheduledMaintenanceAssignedTo")
+  scheduledMaintenancesCreated  ScheduledMaintenance[] @relation("ScheduledMaintenanceCreatedBy")
   
   // HITO 7: Advanced availability relations
   recurringReservations     RecurringReservation[]
@@ -68,6 +74,7 @@ model User {
   createdResourceEquivalences ResourceEquivalence[]
 
   @@map("users")
+  Maintenance Maintenance[] @relation("ReportedMaintenance")
 }
 
 model Role {
@@ -223,6 +230,11 @@ model Resource {
   calendarIntegrations CalendarIntegration[]
   resourceCategories ResourceCategory[] // HITO 6: Multiple categories
   responsibles ResourceResponsible[]     // HITO 6: Resource responsibles
+  
+  // HITO 6: Maintenance relations
+  maintenanceRecords   MaintenanceRecord[]
+  incidentReports      IncidentReport[]
+  scheduledMaintenances ScheduledMaintenance[]
   
   // HITO 7: Advanced availability relations
   recurringReservations RecurringReservation[]
@@ -1410,6 +1422,189 @@ model ReassignmentConfiguration {
   program                     Program @relation(fields: [programId], references: [id])
   
   @@map("reassignment_configurations")
+}
+
+// ========================================
+// MAINTENANCE MODELS (HITO 6 - RF-06)
+// ========================================
+
+// Model for maintenance records (executed maintenances)
+model MaintenanceRecord {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Basic information
+  title       String
+  description String?
+  type        String   // PREVENTIVO, CORRECTIVO, EMERGENCIA, LIMPIEZA
+  status      String   // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  priority    String   // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // Resource relation
+  resourceId  String   @db.ObjectId
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  
+  // Maintenance details
+  startDate   DateTime
+  endDate     DateTime?
+  duration    Int?     // Duration in minutes
+  cost        Float?   // Maintenance cost
+  
+  // Personnel
+  technician  String?  // Technician name or ID
+  supervisor  String?  // Supervisor name or ID
+  
+  // User relations
+  reportedBy  String?  @db.ObjectId
+  assignedTo  String?  @db.ObjectId
+  reportedByUser User? @relation("MaintenanceReportedBy", fields: [reportedBy], references: [id])
+  assignedToUser User? @relation("MaintenanceAssignedTo", fields: [assignedTo], references: [id])
+  
+  // Technical details
+  workPerformed    String?  // Description of work done
+  partsUsed        String[] // List of parts/materials used
+  tools            String[] // Tools used
+  observations     String?  // Technician observations
+  recommendations  String?  // Recommendations for future
+  
+  // Files and evidence
+  attachments      String[] // File URLs or paths
+  beforePhotos     String[] // Photos before maintenance
+  afterPhotos      String[] // Photos after maintenance
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  incidentIds        String[] @db.ObjectId // Array of incident IDs
+  scheduledMaintenance ScheduledMaintenance? @relation(fields: [scheduledMaintenanceId], references: [id])
+  scheduledMaintenanceId String? @db.ObjectId
+  
+  @@map("maintenance_records")
+}
+
+// Model for incident reports (damage reports by users)
+model IncidentReport {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Basic information
+  title       String
+  description String
+  type        String   // DAMAGE, MALFUNCTION, SAFETY, SECURITY, OTHER
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  status      String   // REPORTED, UNDER_REVIEW, ASSIGNED, IN_PROGRESS, RESOLVED, CLOSED
+  priority    String   // LOW, MEDIUM, HIGH, URGENT
+  
+  // Resource relation
+  resourceId  String   @db.ObjectId
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  
+  // Reporter information
+  reportedBy  String   @db.ObjectId
+  reportedByUser User  @relation("IncidentReportedBy", fields: [reportedBy], references: [id])
+  reportedAt  DateTime @default(now())
+  
+  // Assignment
+  assignedTo  String?  @db.ObjectId
+  assignedToUser User? @relation("IncidentAssignedTo", fields: [assignedTo], references: [id])
+  assignedAt  DateTime?
+  
+  // Location and context
+  location    String?  // Specific location within resource
+  context     String?  // What was happening when incident occurred
+  witnesses   String[] // Names of witnesses
+  
+  // Evidence
+  photos      String[] // Photo URLs or paths
+  documents   String[] // Document URLs or paths
+  
+  // Impact assessment
+  impactLevel       String?  // NONE, LOW, MEDIUM, HIGH, CRITICAL
+  affectedCapacity  Int?     // How much capacity is affected
+  estimatedCost     Float?   // Estimated repair cost
+  
+  // Resolution
+  resolutionNotes   String?  // How the incident was resolved
+  resolvedAt        DateTime?
+  resolvedBy        String?  @db.ObjectId
+  resolvedByUser    User?    @relation("IncidentResolvedBy", fields: [resolvedBy], references: [id])
+  
+  // Follow-up
+  preventiveMeasures String? // Measures to prevent similar incidents
+  followUpRequired   Boolean @default(false)
+  followUpDate       DateTime?
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  maintenanceRecordIds String[] @db.ObjectId // Array of maintenance record IDs
+  
+  @@map("incident_reports")
+}
+
+// Model for scheduled maintenances (preventive maintenances)
+model ScheduledMaintenance {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Basic information
+  title       String
+  description String?
+  type        String   // PREVENTIVO, CORRECTIVO, EMERGENCIA, LIMPIEZA
+  status      String   // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, POSTPONED
+  priority    String   // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // Resource relation
+  resourceId  String   @db.ObjectId
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  
+  // Scheduling
+  scheduledDate    DateTime
+  estimatedDuration Int     // Duration in minutes
+  actualStartDate  DateTime?
+  actualEndDate    DateTime?
+  
+  // Recurrence
+  isRecurring      Boolean  @default(false)
+  recurrenceType   String?  // DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
+  recurrenceInterval Int?   // Every X intervals
+  recurrenceEnd    DateTime? // When recurrence ends
+  parentScheduleId String?  @db.ObjectId // For recurring maintenance instances
+  
+  // Personnel
+  assignedTo       String?  @db.ObjectId
+  assignedToUser   User?    @relation("ScheduledMaintenanceAssignedTo", fields: [assignedTo], references: [id])
+  createdBy        String   @db.ObjectId
+  createdByUser    User     @relation("ScheduledMaintenanceCreatedBy", fields: [createdBy], references: [id])
+  
+  // Maintenance details
+  checklist        String[] // List of tasks to perform
+  requiredTools    String[] // Tools needed
+  requiredParts    String[] // Parts/materials needed
+  estimatedCost    Float?   // Estimated cost
+  
+  // Instructions
+  instructions     String?  // Detailed instructions
+  safetyNotes      String?  // Safety considerations
+  specialRequirements String? // Special requirements
+  
+  // Notifications
+  notifyBefore     Int?     // Minutes before to send notification
+  notificationSent Boolean  @default(false)
+  
+  // Completion details
+  completionNotes  String?  // Notes after completion
+  actualCost       Float?   // Actual cost
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  maintenanceRecords MaintenanceRecord[]
+  
+  @@map("scheduled_maintenances")
 }
 
 // ========================================
