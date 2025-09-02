@@ -1,4 +1,4 @@
-import { client as http, PaginatedResponse, QueryParams } from '../http';
+import { resourcesClient as http, PaginatedResponse, QueryParams } from '../http';
 import { mapPaginatedResources, mapSingleResource } from './models';
 import { CreateResourceDto, ResourceResponseDto, UpdateResourceDto, CategoryDto, ProgramDto } from './types';
 

@@ -1,4 +1,4 @@
-import { httpClient } from '@services/http';
+import { authClient } from '@services/http';
 import type { ApiResponse } from '@services/http/types';
 import type {
 	LoginRequest,
@@ -25,49 +25,49 @@ export const authServices = {
 	 * Login user
 	 */
 	async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
-		return httpClient.post('auth/login', { json: credentials }).json();
+		return authClient.post('auth/login', { json: credentials }).json();
 	},
 
 	/**
 	 * Register new user
 	 */
 	async register(userData: RegisterRequest): Promise<ApiResponse<User>> {
-		return httpClient.post('auth/register', { json: userData }).json();
+		return authClient.post('auth/register', { json: userData }).json();
 	},
 
 	/**
 	 * Logout user
 	 */
 	async logout(): Promise<ApiResponse<void>> {
-		return httpClient.post('auth/logout').json();
+		return authClient.post('auth/logout').json();
 	},
 
 	/**
 	 * Get current user profile
 	 */
 	async getProfile(): Promise<ApiResponse<User>> {
-		return httpClient.get('auth/profile').json();
+		return authClient.get('auth/profile').json();
 	},
 
 	/**
 	 * Update user profile
 	 */
 	async updateProfile(userData: Partial<User>): Promise<ApiResponse<User>> {
-		return httpClient.put('auth/profile', { json: userData }).json();
+		return authClient.put('auth/profile', { json: userData }).json();
 	},
 
 	/**
 	 * Request password reset
 	 */
 	async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
-		return httpClient.post('auth/password-reset', { json: { email } }).json();
+		return authClient.post('auth/password-reset', { json: { email } }).json();
 	},
 
 	/**
 	 * Reset password with token
 	 */
 	async resetPassword(token: string, newPassword: string): Promise<ApiResponse<void>> {
-		return httpClient
+		return authClient
 			.post('auth/password-reset/confirm', {
 				json: { token, newPassword }
 			})
@@ -85,7 +85,7 @@ export const authServices = {
 	 * SSO Google Callback
 	 */
 	async ssoCallback(token: string): Promise<ApiResponse<SSOLoginResponse>> {
-		return httpClient.get(`oauth/callback?token=${token}`).json();
+		return authClient.get(`oauth/callback?token=${token}`).json();
 	}
 };
 
@@ -109,56 +109,56 @@ export const roleServices = {
 
 		if (params?.search) searchParams.set('search', params.search);
 
-		return httpClient.get(`roles?${searchParams.toString()}`).json();
+		return authClient.get(`roles?${searchParams.toString()}`).json();
 	},
 
 	/**
 	 * Get active roles
 	 */
 	async getActiveRoles(): Promise<ApiResponse<RoleWithPermissions[]>> {
-		return httpClient.get('roles/active').json();
+		return authClient.get('roles/active').json();
 	},
 
 	/**
 	 * Get role by ID
 	 */
 	async getRoleById(id: string): Promise<ApiResponse<RoleWithPermissions>> {
-		return httpClient.get(`roles/${id}`).json();
+		return authClient.get(`roles/${id}`).json();
 	},
 
 	/**
 	 * Create role
 	 */
 	async createRole(data: CreateRoleRequest): Promise<ApiResponse<RoleWithPermissions>> {
-		return httpClient.post('roles', { json: data }).json();
+		return authClient.post('roles', { json: data }).json();
 	},
 
 	/**
 	 * Update role
 	 */
 	async updateRole(id: string, data: UpdateRoleRequest): Promise<ApiResponse<RoleWithPermissions>> {
-		return httpClient.put(`roles/${id}`, { json: data }).json();
+		return authClient.put(`roles/${id}`, { json: data }).json();
 	},
 
 	/**
 	 * Delete role
 	 */
 	async deleteRole(id: string): Promise<ApiResponse<void>> {
-		return httpClient.delete(`roles/${id}`).json();
+		return authClient.delete(`roles/${id}`).json();
 	},
 
 	/**
 	 * Assign role to user
 	 */
 	async assignRole(data: AssignRoleRequest): Promise<ApiResponse<UserRoleAssignment>> {
-		return httpClient.post('users/roles/assign', { json: data }).json();
+		return authClient.post('users/roles/assign', { json: data }).json();
 	},
 
 	/**
 	 * Remove role from user
 	 */
 	async removeRole(userId: string, roleId: string): Promise<ApiResponse<void>> {
-		return httpClient.delete(`users/${userId}/roles/${roleId}`).json();
+		return authClient.delete(`users/${userId}/roles/${roleId}`).json();
 	}
 };
 
@@ -185,14 +185,14 @@ export const permissionServices = {
 
 		if (filters?.isActive !== undefined) searchParams.set('isActive', filters.isActive.toString());
 
-		return httpClient.get(`permissions?${searchParams.toString()}`).json();
+		return authClient.get(`permissions?${searchParams.toString()}`).json();
 	},
 
 	/**
 	 * Get active permissions
 	 */
 	async getActivePermissions(): Promise<ApiResponse<PermissionWithDetails[]>> {
-		return httpClient.get('permissions/active').json();
+		return authClient.get('permissions/active').json();
 	},
 
 	/**
@@ -209,56 +209,56 @@ export const permissionServices = {
 
 		if (scope) searchParams.set('scope', scope);
 
-		return httpClient.get(`permissions/resource/${resource}?${searchParams.toString()}`).json();
+		return authClient.get(`permissions/resource/${resource}?${searchParams.toString()}`).json();
 	},
 
 	/**
 	 * Get permission by ID
 	 */
 	async getPermissionById(id: string): Promise<ApiResponse<PermissionWithDetails>> {
-		return httpClient.get(`permissions/${id}`).json();
+		return authClient.get(`permissions/${id}`).json();
 	},
 
 	/**
 	 * Create permission
 	 */
 	async createPermission(data: CreatePermissionRequest): Promise<ApiResponse<PermissionWithDetails>> {
-		return httpClient.post('permissions', { json: data }).json();
+		return authClient.post('permissions', { json: data }).json();
 	},
 
 	/**
 	 * Update permission
 	 */
 	async updatePermission(id: string, data: UpdatePermissionRequest): Promise<ApiResponse<PermissionWithDetails>> {
-		return httpClient.put(`permissions/${id}`, { json: data }).json();
+		return authClient.put(`permissions/${id}`, { json: data }).json();
 	},
 
 	/**
 	 * Activate permission
 	 */
 	async activatePermission(id: string): Promise<ApiResponse<PermissionWithDetails>> {
-		return httpClient.put(`permissions/${id}/activate`).json();
+		return authClient.put(`permissions/${id}/activate`).json();
 	},
 
 	/**
 	 * Deactivate permission
 	 */
 	async deactivatePermission(id: string): Promise<ApiResponse<PermissionWithDetails>> {
-		return httpClient.put(`permissions/${id}/deactivate`).json();
+		return authClient.put(`permissions/${id}/deactivate`).json();
 	},
 
 	/**
 	 * Delete permission
 	 */
 	async deletePermission(id: string): Promise<ApiResponse<void>> {
-		return httpClient.delete(`permissions/${id}`).json();
+		return authClient.delete(`permissions/${id}`).json();
 	},
 
 	/**
 	 * Create default system permissions
 	 */
 	async seedDefaultPermissions(): Promise<ApiResponse<PermissionWithDetails[]>> {
-		return httpClient.post('permissions/seed-defaults').json();
+		return authClient.post('permissions/seed-defaults').json();
 	}
 };
 
@@ -278,42 +278,42 @@ export const userServices = {
 
 		if (params?.search) searchParams.set('search', params.search);
 
-		return httpClient.get(`users?${searchParams.toString()}`).json();
+		return authClient.get(`users?${searchParams.toString()}`).json();
 	},
 
 	/**
 	 * Get user by ID
 	 */
 	async getUserById(id: string): Promise<ApiResponse<User>> {
-		return httpClient.get(`users/${id}`).json();
+		return authClient.get(`users/${id}`).json();
 	},
 
 	/**
 	 * Update user
 	 */
 	async updateUser(id: string, data: Partial<User>): Promise<ApiResponse<User>> {
-		return httpClient.put(`users/${id}`, { json: data }).json();
+		return authClient.put(`users/${id}`, { json: data }).json();
 	},
 
 	/**
 	 * Get user roles
 	 */
 	async getUserRoles(userId: string): Promise<ApiResponse<UserRoleAssignment[]>> {
-		return httpClient.get(`users/${userId}/roles`).json();
+		return authClient.get(`users/${userId}/roles`).json();
 	},
 
 	/**
 	 * Activate user
 	 */
 	async activateUser(id: string): Promise<ApiResponse<User>> {
-		return httpClient.put(`users/${id}/activate`).json();
+		return authClient.put(`users/${id}/activate`).json();
 	},
 
 	/**
 	 * Deactivate user
 	 */
 	async deactivateUser(id: string): Promise<ApiResponse<User>> {
-		return httpClient.put(`users/${id}/deactivate`).json();
+		return authClient.put(`users/${id}/deactivate`).json();
 	}
 };
 
@@ -349,7 +349,7 @@ export const auditServices = {
 
 		if (params?.dateTo) searchParams.set('dateTo', params.dateTo);
 
-		return httpClient.get(`audit/logs?${searchParams.toString()}`).json();
+		return authClient.get(`audit/logs?${searchParams.toString()}`).json();
 	}
 };
 
