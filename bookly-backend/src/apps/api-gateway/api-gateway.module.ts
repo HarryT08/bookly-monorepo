@@ -33,6 +33,10 @@ import { GatewayMiddleware } from './infrastructure/middleware/gateway.middlewar
 // Controllers
 import { GatewayController, GatewayManagementController } from './infrastructure/controllers/gateway.controller';
 
+// WebSocket Gateway
+import { BooklyWebSocketGateway } from './infrastructure/gateways/websocket.gateway';
+import { WebSocketTestController } from './infrastructure/controllers/websocket-test.controller';
+
 // Legacy services (if they exist)
 import { ApiGatewayService } from './application/services/api-gateway.service';
 
@@ -94,6 +98,7 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
   controllers: [
     GatewayController,
     GatewayManagementController,
+    WebSocketTestController,
   ],
 
   providers: [
@@ -110,6 +115,9 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
     // Middleware
     GatewayMiddleware,
 
+    // WebSocket Gateway
+    BooklyWebSocketGateway,
+
     // Legacy service (if exists)
     ApiGatewayService,
   ],
@@ -123,6 +131,7 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
     ResponseAggregationService,
     ObservabilityService,
     ProtocolTranslationService,
+    BooklyWebSocketGateway,
     ApiGatewayService,
   ],
 })

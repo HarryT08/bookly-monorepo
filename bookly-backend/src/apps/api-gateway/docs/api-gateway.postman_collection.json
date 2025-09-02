@@ -1,7 +1,8 @@
 {
   "info": {
     "name": "Bookly API Gateway",
-    "description": "Complete API Gateway collection for Bookly reservation system",
+    "description": "Complete API Gateway collection for Bookly reservation system including WebSocket testing endpoints",
+    "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -246,6 +247,114 @@
               "raw": "{{gatewayBaseUrl}}/api/v1/availability/reservations",
               "host": ["{{gatewayBaseUrl}}"],
               "path": ["api", "v1", "availability", "reservations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Testing",
+      "item": [
+        {
+          "name": "Emit Test Reservation Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Event emitted successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.eventType).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"reservation-created\",\n  \"aggregateId\": \"reservation_{{$randomUUID}}\",\n  \"userId\": \"{{testUserId}}\",\n  \"data\": {\n    \"reservationId\": \"{{$randomUUID}}\",\n    \"resourceId\": \"{{testResourceId}}\",\n    \"resourceName\": \"Sala de Pruebas\",\n    \"startTime\": \"{{testStartDate}}\",\n    \"endTime\": \"{{testEndDate}}\",\n    \"status\": \"PENDING_APPROVAL\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-reservation-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-reservation-event"]
+            }
+          }
+        },
+        {
+          "name": "Emit Test Resource Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"resource-created\",\n  \"aggregateId\": \"resource_{{$randomUUID}}\",\n  \"data\": {\n    \"resourceId\": \"{{$randomUUID}}\",\n    \"name\": \"Nuevo Recurso de Prueba\",\n    \"type\": \"SALA\",\n    \"capacity\": 20,\n    \"status\": \"AVAILABLE\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-resource-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-resource-event"]
+            }
+          }
+        },
+        {
+          "name": "Emit Test Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"notification\",\n  \"aggregateId\": \"notification_{{$randomUUID}}\",\n  \"userId\": \"{{testUserId}}\",\n  \"data\": {\n    \"type\": \"INFO\",\n    \"title\": \"Notificación de Prueba\",\n    \"message\": \"Esta es una notificación generada desde Postman\",\n    \"userId\": \"{{testUserId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-notification-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-notification-event"]
+            }
+          }
+        },
+        {
+          "name": "Emit System Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"system-alert\",\n  \"aggregateId\": \"system_{{$randomUUID}}\",\n  \"data\": {\n    \"level\": \"INFO\",\n    \"message\": \"Alerta del sistema generada para testing\",\n    \"source\": \"postman-testing\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-system-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-system-event"]
             }
           }
         }

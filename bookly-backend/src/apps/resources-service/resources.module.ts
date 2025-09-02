@@ -3,8 +3,10 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { ResourcesController } from './infrastructure/controllers/resources.controller';
 import { PrismaResourceRepository } from './infrastructure/repositories/prisma-resource.repository';
 import { PrismaCategoryRepository } from './infrastructure/repositories/prisma-category.repository';
+import { ResourcesService } from './application/services/resources.service';
 import { LoggingModule } from '../../libs/logging/logging.module';
 import { CommonModule } from '../../libs/common/common.module';
+import { EventBusModule } from '../../libs/event-bus/event-bus.module';
 
 // Command Handlers
 import { CreateResourceHandler } from './application/handlers/create-resource.handler';
@@ -45,9 +47,12 @@ const QueryHandlers = [
     CqrsModule,
     LoggingModule,
     CommonModule,
+    EventBusModule,
   ],
   controllers: [ResourcesController],
   providers: [
+    // Services
+    ResourcesService,
     // Repositories
     {
       provide: 'ResourceRepository',

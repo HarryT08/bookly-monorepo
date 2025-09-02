@@ -46,13 +46,14 @@ import { ICalService } from './infrastructure/services/ical.service';
 import { InternalCalendarService } from './infrastructure/services/internal-calendar.service';
 
 // Advanced booking modules
-import { NotificationModule } from './infrastructure/modules/notification.module';
+import { NotificationModule as LocalNotificationModule } from './infrastructure/modules/notification.module';
 import { AuditModule } from './infrastructure/modules/audit.module';
 
 // Shared modules
 import { CommonModule } from '../../libs/common/common.module';
 import { EventBusModule } from '../../libs/event-bus/event-bus.module';
 import { LoggingModule } from '../../libs/logging/logging.module';
+import { NotificationModule } from '../../libs/notification/notification.module';
 import { ResourcesModule } from '../resources-service/resources.module';
 
 const commandHandlers = [
@@ -111,6 +112,7 @@ const infrastructureServices = [
     LoggingModule,
     ResourcesModule,
     NotificationModule,
+    LocalNotificationModule,
     AuditModule,
   ],
   controllers: [

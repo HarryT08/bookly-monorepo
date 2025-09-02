@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation';
 import { PageTitle } from '@components/atoms';
 import { CalendarView } from '@components/organisms/calendar/calendar-view';
 import { useCalendarView, useReservation } from '@hooks/useAvailability';
+import { useAuth } from '@hooks/useAuth';
 import {
 	CalendarViewType,
 	CalendarEventDisplay,
@@ -71,8 +72,8 @@ export default function CalendarPage() {
 	const [selectedDateForCreate, setSelectedDateForCreate] = useState<Date | null>(null);
 
 	// Hooks
+	const { user } = useAuth();
 	const { loading, error, calendarData, getCalendarView } = useCalendarView();
-
 	const { createReservation } = useReservation();
 
 	// Load calendar data
@@ -94,11 +95,11 @@ export default function CalendarPage() {
 			],
 			includeAvailability: true,
 			includeExternalEvents: true,
-			...(calendarState.showOnlyMyReservations && { userId: 'current-user-id' }) // TODO: Get from auth context
+			...(calendarState.showOnlyMyReservations && { userId: user?.id })
 		};
 
 		await getCalendarView(query);
-	}, [calendarState, getCalendarView]);
+	}, [calendarState, getCalendarView, user?.id]);
 
 	useEffect(() => {
 		loadCalendarData();
@@ -494,11 +495,13 @@ export default function CalendarPage() {
 					</Button>
 					<Button
 						onClick={() =>
+							user?.id &&
 							handleCreateReservation({
 								title: 'Nueva Reserva',
 								startDate: selectedDateForCreate || new Date(),
 								endDate: selectedDateForCreate || new Date(),
-								resourceId: ''
+								resourceId: '',
+								userId: user.id
 							})
 						}
 						variant="contained"

@@ -4,7 +4,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Dialog,
 	DialogTitle,
@@ -22,10 +22,11 @@ import {
 	CircularProgress
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { Reservation } from '@services/availability/types';
-import { ResourceResponseDto } from '@services/resources/types';
 import { useResources } from '@hooks/useResources';
-import { useReservation } from '@hooks/useAvailability';
+import { useAuth } from '@hooks/useAuth';
+import { reservationService } from '@services/availability/services';
+import type { ResourceResponseDto } from '@services/resources/types';
+import type { Reservation, CreateReservationRequest } from '@services/availability/types';
 
 interface ReassignmentDialogProps {
 	open: boolean;
@@ -42,10 +43,11 @@ interface ReassignmentRequest {
 	priority: 'low' | 'medium' | 'high';
 }
 
-export function ReassignmentDialog({ open, onClose, reservation, onSuccess }: ReassignmentDialogProps) {
+export default function ReassignmentDialog({ open, onClose, reservation, onSuccess }: ReassignmentDialogProps) {
 	const { enqueueSnackbar } = useSnackbar();
-	const { resources, fetchResources, loading } = useResources();
-	const { createReservation, loading: reassignLoading } = useReservation();
+	const { user } = useAuth();
+	const { resources, fetchResources } = useResources();
+	const [loading, setLoading] = useState(false);
 
 	const formatDateForInput = (date: Date): string => {
 		return date.toISOString().slice(0, 16);
@@ -107,16 +109,26 @@ export function ReassignmentDialog({ open, onClose, reservation, onSuccess }: Re
 		}
 
 		try {
+			if (!user?.id) {
+				enqueueSnackbar('Usuario no autenticado', { variant: 'error' });
+				return;
+			}
+
+			setLoading(true);
+
 			// For now, we'll create a new reservation as a reassignment placeholder
 			// In a real implementation, this would call a dedicated reassignment API
-			const newReservation = await createReservation({
+			const reservationData: CreateReservationRequest = {
 				title: `${reservation.title} (Reassigned)`,
-				description: `Reassigned from ${reservation.resourceName}. Reason: ${formData.reason}`,
+				description: `Reassigned from resource ${reservation.resourceId}. Reason: ${formData.reason}`,
 				startDate: new Date(formData.newStartDate),
 				endDate: new Date(formData.newEndDate),
 				resourceId: formData.newResourceId,
+				userId: user.id,
 				priority: formData.priority.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH'
-			});
+			};
+
+			const newReservation = await reservationService.createReservation(reservationData);
 
 			if (newReservation) {
 				enqueueSnackbar('Reassignment request created successfully', { variant: 'success' });
@@ -124,7 +136,10 @@ export function ReassignmentDialog({ open, onClose, reservation, onSuccess }: Re
 				onClose();
 			}
 		} catch (error) {
+			console.error('Reassignment error:', error);
 			enqueueSnackbar('Failed to create reassignment request', { variant: 'error' });
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -160,7 +175,7 @@ export function ReassignmentDialog({ open, onClose, reservation, onSuccess }: Re
 					<FormControl
 						fullWidth
 						error={!!errors.newResourceId}
-						disabled={loading.list}
+						disabled={loading}
 					>
 						<InputLabel>New Resource</InputLabel>
 						<Select
@@ -250,21 +265,21 @@ export function ReassignmentDialog({ open, onClose, reservation, onSuccess }: Re
 			<DialogActions>
 				<Button
 					onClick={onClose}
-					disabled={reassignLoading}
+					disabled={loading}
 				>
 					Cancel
 				</Button>
 				<Button
 					onClick={handleSubmit}
 					variant="contained"
-					disabled={reassignLoading || loading.list}
-					startIcon={reassignLoading ? <CircularProgress size={20} /> : null}
+					disabled={loading}
+					startIcon={loading ? <CircularProgress size={20} /> : null}
 				>
-					{reassignLoading ? 'Creating Request...' : 'Request Reassignment'}
+					{loading ? 'Creating Request...' : 'Request Reassignment'}
 				</Button>
 			</DialogActions>
 		</Dialog>
 	);
 }
 
-export default ReassignmentDialog;
+export { ReassignmentDialog };

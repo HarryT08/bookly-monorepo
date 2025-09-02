@@ -3,7 +3,7 @@
  */
 
 import { io, Socket } from 'socket.io-client';
-import type { BooklyEvent, ConnectionState, AuthPayload, RoomSubscription } from './types';
+import type { BooklyEvent, ConnectionState, RoomSubscription } from './types';
 
 type EventCallback = (data: BooklyEvent) => void;
 

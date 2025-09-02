@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Bookly Auth Service API",
-    "description": "Sistema de Autenticación y Autorización - Bookly UFPS\n\nServicio de autenticación que implementa:\n- RF-41: Gestión diferenciada de roles y permisos granulares\n- RF-42: Restricción de modificación de recursos solo para administradores\n- RF-43: Autenticación mediante credenciales universitarias y SSO\n\nCaracterísticas principales:\n- Autenticación tradicional (email/password) y SSO (Google Workspace)\n- Sistema de roles predefinidos e inmutables + roles personalizados\n- Permisos granulares con máxima especificidad\n- Auditoría completa de accesos y modificaciones\n- Guards de seguridad para restricción de recursos",
-    "version": "1.0.0",
+    "name": "Bookly Auth Service API v2.0",
+    "description": "Sistema de Autenticación, Autorización y WebSocket - Bookly UFPS\n\nServicio de autenticación que implementa:\n- RF-41: Gestión diferenciada de roles y permisos granulares\n- RF-42: Restricción de modificación de recursos solo para administradores\n- RF-43: Autenticación mediante credenciales universitarias y SSO\n- RF-44: Auditoría completa de accesos y modificaciones\n- RF-45: Doble factor de autenticación\n\nCaracterísticas principales:\n- Autenticación tradicional (email/password) y SSO (Google Workspace)\n- Sistema de roles predefinidos e inmutables + roles personalizados\n- Permisos granulares con máxima especificidad\n- WebSocket authentication con JWT\n- Rate limiting y security guards\n- Event-driven architecture con RabbitMQ\n- Observabilidad completa (Winston, Sentry, OpenTelemetry)",
+    "version": "2.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -22,6 +22,11 @@
       "type": "string"
     },
     {
+      "key": "ws_url",
+      "value": "ws://localhost:3000",
+      "type": "string"
+    },
+    {
       "key": "access_token",
       "value": "",
       "type": "string"
@@ -33,6 +38,11 @@
     },
     {
       "key": "role_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ws_connection_id",
       "value": "",
       "type": "string"
     }
@@ -619,6 +629,88 @@
               "path": ["auth", "categories", "defaults"]
             },
             "description": "Obtener categorías de roles por defecto del sistema"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Testing",
+      "item": [
+        {
+          "name": "Test WebSocket Auth Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"test-auth-connection\",\n  \"data\": {\n    \"token\": \"{{access_token}}\",\n    \"userId\": \"{{user_id}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/websocket/test-connection",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "websocket", "test-connection"]
+            },
+            "description": "Test WebSocket authentication with JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Emit User Status Update",
+          "request": {
+            "method": "POST", 
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"user-status-update\",\n  \"data\": {\n    \"userId\": \"{{user_id}}\",\n    \"status\": \"online\",\n    \"lastSeen\": \"{{$timestamp}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/websocket/emit",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "websocket", "emit"]
+            },
+            "description": "Emit user status update event through WebSocket"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Role Assignment Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type", 
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"role-assigned\",\n  \"data\": {\n    \"userId\": \"{{user_id}}\",\n    \"roleId\": \"{{role_id}}\",\n    \"roleName\": \"coordinator\",\n    \"assignedBy\": \"admin\",\n    \"timestamp\": \"{{$timestamp}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/websocket/emit",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "websocket", "emit"]
+            },
+            "description": "Test role assignment WebSocket event emission"
           },
           "response": []
         }

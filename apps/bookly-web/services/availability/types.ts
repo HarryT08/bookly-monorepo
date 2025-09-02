@@ -274,6 +274,7 @@ export interface CreateReservationRequest {
 	startDate: Date;
 	endDate: Date;
 	resourceId: string;
+	userId: string;
 	isRecurring?: boolean;
 	recurrence?: RecurrenceRule;
 	notes?: string;

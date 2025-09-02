@@ -4,7 +4,7 @@
  */
 
 import { reportsClient } from '../http';
-import type { PaginatedResponse, QueryParams } from '../http/types';
+import type { QueryParams } from '../http/types';
 
 export interface ReportFilter extends QueryParams {
 	resourceId?: string;
@@ -16,47 +16,117 @@ export interface ReportFilter extends QueryParams {
 	format?: 'json' | 'csv' | 'excel' | 'pdf';
 }
 
-export interface UsageReport {
-	id: string;
-	resourceId: string;
-	resourceName: string;
-	programId?: string;
-	programName?: string;
+// Aligned with backend DTOs
+export interface ReportMetadata {
+	generatedAt: string;
+	generatedBy: string;
+	reportType: string;
+	filters?: Record<string, string | number | boolean>;
+	totalRecords: number;
+	executionTime: number;
+}
+
+export interface UsageReportData {
+	resource: {
+		id: string;
+		name: string;
+		code: string;
+		type: string;
+		capacity?: number;
+	};
+	program?: {
+		id: string;
+		name: string;
+		code: string;
+	};
+	subject?: string;
 	totalReservations: number;
+	confirmedReservations: number;
+	cancelledReservations: number;
 	totalHours: number;
 	utilizationRate: number;
-	peakUsageHours: string[];
-	period: {
-		startDate: string;
-		endDate: string;
-	};
-	generatedAt: string;
+	cancellationRate: number;
+	peakHours?: string[];
+	frequentDays?: string[];
 }
 
-export interface UserReport {
-	id: string;
-	userId: string;
-	userName: string;
-	userEmail: string;
+export interface UsageReportResponse {
+	metadata: ReportMetadata;
+	data: UsageReportData[];
+	pagination?: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrevious: boolean;
+	};
+	summary: {
+		totalResources: number;
+		totalReservations: number;
+		averageUtilization: number;
+		mostUsedResource: string;
+		leastUsedResource: string;
+	};
+}
+
+export interface UserReportData {
+	user: {
+		id: string;
+		email: string;
+		firstName: string;
+		lastName: string;
+		userType: string;
+	};
 	totalReservations: number;
-	totalHours: number;
-	frequencyRate: number;
-	favoriteResources: {
-		resourceId: string;
+	confirmedReservations: number;
+	cancelledReservations: number;
+	noShowReservations: number;
+	utilizationRate: number;
+	cancellationRate: number;
+	frequentResources: {
 		resourceName: string;
-		usageCount: number;
+		count: number;
 	}[];
-	period: {
+	totalHours: number;
+	reservationDetails?: {
+		id: string;
+		title: string;
+		resourceName: string;
 		startDate: string;
 		endDate: string;
-	};
-	generatedAt: string;
+		status: string;
+	}[];
 }
 
-export interface DemandReport {
-	id: string;
-	resourceId: string;
-	resourceName: string;
+export interface UserReportResponse {
+	metadata: ReportMetadata;
+	data: UserReportData[];
+	pagination?: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrevious: boolean;
+	};
+	summary: {
+		totalUsers: number;
+		totalReservations: number;
+		averageReservationsPerUser: number;
+		topUser: string;
+		averageUtilization: number;
+	};
+}
+
+export interface DemandReportData {
+	resource: {
+		id: string;
+		name: string;
+		code: string;
+		type: string;
+		capacity?: number;
+	};
 	totalRequests: number;
 	satisfiedRequests: number;
 	unsatisfiedRequests: number;
@@ -65,15 +135,29 @@ export interface DemandReport {
 		reason: string;
 		count: number;
 	}[];
-	period: {
-		startDate: string;
-		endDate: string;
-	};
-	generatedAt: string;
 }
 
-export interface FeedbackReport {
-	id: string;
+export interface DemandReportResponse {
+	metadata: ReportMetadata;
+	data: DemandReportData[];
+	pagination?: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrevious: boolean;
+	};
+	summary: {
+		totalResources: number;
+		totalRequests: number;
+		averageUtilization: number;
+		mostDemandedResource: string;
+		leastDemandedResource: string;
+	};
+}
+
+export interface FeedbackReportData {
 	averageRating: number;
 	totalFeedbacks: number;
 	ratingDistribution: Record<string, number>;
@@ -83,11 +167,31 @@ export interface FeedbackReport {
 		count: number;
 	}[];
 	improvementSuggestions: string[];
-	period: {
-		startDate: string;
-		endDate: string;
+}
+
+export interface FeedbackReportResponse {
+	metadata: ReportMetadata;
+	data: FeedbackReportData[];
+	pagination?: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+		hasNext: boolean;
+		hasPrevious: boolean;
 	};
+}
+
+// Export response for CSV/Excel/PDF downloads
+export interface ExportResponse {
+	status: 'SUCCESS' | 'FAILED' | 'PROCESSING';
+	downloadUrl: string;
+	filename: string;
+	fileSize: number;
+	recordCount: number;
 	generatedAt: string;
+	expiresAt?: string;
+	errorMessage?: string;
 }
 
 export interface DashboardStats {
@@ -112,12 +216,12 @@ const REPORTS_BASE_URL = '/api/reports';
 
 // RF-31: Report generation by resource/program/period
 export const usageReportsService = {
-	async generateUsageReport(filter: ReportFilter): Promise<UsageReport> {
+	async generateUsageReport(filter: ReportFilter): Promise<UsageReportResponse> {
 		const response = await reportsClient.post(`${REPORTS_BASE_URL}/usage/generate`, { json: filter });
 		return response.json();
 	},
 
-	async getUsageReports(filter?: ReportFilter): Promise<PaginatedResponse<UsageReport>> {
+	async getUsageReports(filter?: ReportFilter): Promise<UsageReportResponse> {
 		const params = new URLSearchParams();
 
 		if (filter) {
@@ -132,7 +236,7 @@ export const usageReportsService = {
 		return response.json();
 	},
 
-	async getUsageReport(id: string): Promise<UsageReport> {
+	async getUsageReport(id: string): Promise<UsageReportResponse> {
 		const response = await reportsClient.get(`${REPORTS_BASE_URL}/usage/${id}`);
 		return response.json();
 	},
@@ -144,12 +248,12 @@ export const usageReportsService = {
 
 // RF-32: Report by user/professor
 export const userReportsService = {
-	async generateUserReport(filter: ReportFilter): Promise<UserReport> {
+	async generateUserReport(filter: ReportFilter): Promise<UserReportResponse> {
 		const response = await reportsClient.post(`${REPORTS_BASE_URL}/users/generate`, { json: filter });
 		return response.json();
 	},
 
-	async getUserReports(filter?: ReportFilter): Promise<PaginatedResponse<UserReport>> {
+	async getUserReports(filter?: ReportFilter): Promise<UserReportResponse> {
 		const params = new URLSearchParams();
 
 		if (filter) {
@@ -164,7 +268,7 @@ export const userReportsService = {
 		return response.json();
 	},
 
-	async getUserReport(id: string): Promise<UserReport> {
+	async getUserReport(id: string): Promise<UserReportResponse> {
 		const response = await reportsClient.get(`${REPORTS_BASE_URL}/users/${id}`);
 		return response.json();
 	},
@@ -176,12 +280,17 @@ export const userReportsService = {
 
 // RF-33: CSV export
 export const exportService = {
-	async exportReport(reportId: string, format: 'csv' | 'excel' | 'pdf' = 'csv'): Promise<Blob> {
+	async exportReport(reportId: string, format: 'csv' | 'excel' | 'pdf' = 'csv'): Promise<ExportResponse> {
 		const response = await reportsClient.get(`${REPORTS_BASE_URL}/export/${reportId}?format=${format}`);
+		return response.json();
+	},
+
+	async downloadExport(downloadUrl: string): Promise<Blob> {
+		const response = await reportsClient.get(downloadUrl);
 		return response.blob();
 	},
 
-	async exportUsageData(filter: ReportFilter, format: 'csv' | 'excel' = 'csv'): Promise<Blob> {
+	async exportUsageData(filter: ReportFilter, format: 'csv' | 'excel' = 'csv'): Promise<ExportResponse> {
 		const params = new URLSearchParams();
 
 		if (filter) {
@@ -195,10 +304,10 @@ export const exportService = {
 		params.append('format', format);
 
 		const response = await reportsClient.get(`${REPORTS_BASE_URL}/export/usage?${params}`);
-		return response.blob();
+		return response.json();
 	},
 
-	async exportUserData(filter: ReportFilter, format: 'csv' | 'excel' = 'csv'): Promise<Blob> {
+	async exportUserData(filter: ReportFilter, format: 'csv' | 'excel' = 'csv'): Promise<ExportResponse> {
 		const params = new URLSearchParams();
 
 		if (filter) {
@@ -212,18 +321,18 @@ export const exportService = {
 		params.append('format', format);
 
 		const response = await reportsClient.get(`${REPORTS_BASE_URL}/export/users?${params}`);
-		return response.blob();
+		return response.json();
 	}
 };
 
 // RF-37: Unsatisfied demand reports
 export const demandReportsService = {
-	async generateDemandReport(filter: ReportFilter): Promise<DemandReport> {
+	async generateDemandReport(filter: ReportFilter): Promise<DemandReportResponse> {
 		const response = await reportsClient.post(`${REPORTS_BASE_URL}/demand/generate`, { json: filter });
 		return response.json();
 	},
 
-	async getDemandReports(filter?: ReportFilter): Promise<PaginatedResponse<DemandReport>> {
+	async getDemandReports(filter?: ReportFilter): Promise<DemandReportResponse> {
 		const params = new URLSearchParams();
 
 		if (filter) {
@@ -238,7 +347,7 @@ export const demandReportsService = {
 		return response.json();
 	},
 
-	async getDemandReport(id: string): Promise<DemandReport> {
+	async getDemandReport(id: string): Promise<DemandReportResponse> {
 		const response = await reportsClient.get(`${REPORTS_BASE_URL}/demand/${id}`);
 		return response.json();
 	}
@@ -246,12 +355,12 @@ export const demandReportsService = {
 
 // RF-34 & RF-35: Feedback and evaluation reports
 export const feedbackReportsService = {
-	async generateFeedbackReport(filter: ReportFilter): Promise<FeedbackReport> {
+	async generateFeedbackReport(filter: ReportFilter): Promise<FeedbackReportResponse> {
 		const response = await reportsClient.post(`${REPORTS_BASE_URL}/feedback/generate`, { json: filter });
 		return response.json();
 	},
 
-	async getFeedbackReports(filter?: ReportFilter): Promise<PaginatedResponse<FeedbackReport>> {
+	async getFeedbackReports(filter?: ReportFilter): Promise<FeedbackReportResponse> {
 		const params = new URLSearchParams();
 
 		if (filter) {
@@ -266,7 +375,7 @@ export const feedbackReportsService = {
 		return response.json();
 	},
 
-	async getFeedbackReport(id: string): Promise<FeedbackReport> {
+	async getFeedbackReport(id: string): Promise<FeedbackReportResponse> {
 		const response = await reportsClient.get(`${REPORTS_BASE_URL}/feedback/${id}`);
 		return response.json();
 	}

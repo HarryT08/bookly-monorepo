@@ -25,6 +25,7 @@ import { useSnackbar } from 'notistack';
 import { PageTitle } from '@components/atoms';
 import { RecurrenceSelector, RecurrencePattern } from '../../../../components/molecules/RecurrenceSelector';
 import { useReservation } from '@hooks/useAvailability';
+import { useAuth } from '@hooks/useAuth';
 import { CreateReservationRequest } from '@services/availability/types';
 
 interface ReservationFormData {
@@ -48,6 +49,7 @@ const PRIORITY_OPTIONS = [
 export default function CreateReservationPage() {
 	const router = useRouter();
 	const { enqueueSnackbar } = useSnackbar();
+	const { user } = useAuth();
 	const { createReservation, loading } = useReservation();
 
 	const [formData, setFormData] = useState<ReservationFormData>({
@@ -123,6 +125,11 @@ export default function CreateReservationPage() {
 		}
 
 		try {
+			if (!user?.id) {
+				enqueueSnackbar('User not authenticated', { variant: 'error' });
+				return;
+			}
+
 			const reservationRequest: CreateReservationRequest = {
 				title: formData.title,
 				description: formData.description,
@@ -132,6 +139,7 @@ export default function CreateReservationPage() {
 				notes: formData.notes,
 				priority: formData.priority,
 				isPrivate: formData.isPrivate,
+				userId: user.id,
 				// Add recurrence if not NONE
 				...(formData.recurrence.frequency !== 'NONE' && {
 					isRecurring: true,
@@ -161,7 +169,7 @@ export default function CreateReservationPage() {
 		} catch (_error) {
 			enqueueSnackbar('Failed to create reservation', { variant: 'error' });
 		}
-	}, [formData, validateForm, createReservation, enqueueSnackbar, router]);
+	}, [formData, validateForm, createReservation, enqueueSnackbar, router, user?.id]);
 
 	const handleCancel = useCallback(() => {
 		router.back();
