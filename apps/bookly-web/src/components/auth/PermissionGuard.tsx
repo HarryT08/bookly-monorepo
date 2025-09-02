@@ -40,10 +40,16 @@ export function PermissionGuard({
 		// Check specific permission by resource/action/scope
 		hasAccess = hasPermission(resource, action, scope);
 	} else {
-		// Check by permission names/IDs
+		// Check by permission names/IDs - check if user has any permission with matching name
 		hasAccess = requireAll
-			? requiredPermissions.every((permission) => hasPermission(permission))
-			: requiredPermissions.some((permission) => hasPermission(permission));
+			? requiredPermissions.every(
+					(permissionName) =>
+						user?.permissions?.some((p) => p.name === permissionName || p.id === permissionName) || false
+				)
+			: requiredPermissions.some(
+					(permissionName) =>
+						user?.permissions?.some((p) => p.name === permissionName || p.id === permissionName) || false
+				);
 	}
 
 	// If user has access, render children

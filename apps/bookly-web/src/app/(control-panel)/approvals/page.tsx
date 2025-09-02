@@ -24,7 +24,6 @@ import {
 	InputLabel,
 	Select,
 	MenuItem,
-	Grid,
 	Alert,
 	Stack,
 	Pagination,
@@ -215,100 +214,80 @@ export default function ApprovalsPage() {
 
 				{/* Stats Cards */}
 				{stats && (
-					<Grid
-						container
-						spacing={2}
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: {
+								xs: '1fr',
+								sm: 'repeat(2, 1fr)',
+								md: 'repeat(4, 1fr)'
+							},
+							gap: 2,
+							mb: 3
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
-							<Card>
-								<CardContent>
-									<Typography
-										color="textSecondary"
-										gutterBottom
+						<Card>
+							<CardContent>
+								<Typography
+									color="textSecondary"
+									gutterBottom
+								>
+									Pending Requests
+								</Typography>
+								<Typography variant="h4">
+									<Badge
+										badgeContent={stats.pendingCount}
+										color="warning"
 									>
-										Pending Requests
-									</Typography>
-									<Typography variant="h4">
-										<Badge
-											badgeContent={stats.pendingCount}
-											color="warning"
-										>
-											{stats.pendingCount}
-										</Badge>
-									</Typography>
-								</CardContent>
-							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
-							<Card>
-								<CardContent>
-									<Typography
-										color="textSecondary"
-										gutterBottom
-									>
-										Approved Today
-									</Typography>
-									<Typography
-										variant="h4"
-										color="success.main"
-									>
-										{stats.approvedToday}
-									</Typography>
-								</CardContent>
-							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
-							<Card>
-								<CardContent>
-									<Typography
-										color="textSecondary"
-										gutterBottom
-									>
-										Rejected Today
-									</Typography>
-									<Typography
-										variant="h4"
-										color="error.main"
-									>
-										{stats.rejectedToday}
-									</Typography>
-								</CardContent>
-							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
-							<Card>
-								<CardContent>
-									<Typography
-										color="textSecondary"
-										gutterBottom
-									>
-										Avg Response Time
-									</Typography>
-									<Typography variant="h4">{Math.round(stats.avgResponseTime)}h</Typography>
-								</CardContent>
-							</Card>
-						</Grid>
-					</Grid>
+										{stats.pendingCount}
+									</Badge>
+								</Typography>
+							</CardContent>
+						</Card>
+						<Card>
+							<CardContent>
+								<Typography
+									color="textSecondary"
+									gutterBottom
+								>
+									Approved Today
+								</Typography>
+								<Typography
+									variant="h4"
+									color="success.main"
+								>
+									{stats.approvedToday}
+								</Typography>
+							</CardContent>
+						</Card>
+						<Card>
+							<CardContent>
+								<Typography
+									color="textSecondary"
+									gutterBottom
+								>
+									Rejected Today
+								</Typography>
+								<Typography
+									variant="h4"
+									color="error.main"
+								>
+									{stats.rejectedToday}
+								</Typography>
+							</CardContent>
+						</Card>
+						<Card>
+							<CardContent>
+								<Typography
+									color="textSecondary"
+									gutterBottom
+								>
+									Total This Month
+								</Typography>
+								<Typography variant="h4">{stats.totalThisMonth}</Typography>
+							</CardContent>
+						</Card>
+					</Box>
 				)}
 
 				{/* Error Alert */}
@@ -405,7 +384,7 @@ export default function ApprovalsPage() {
 												<TableCell>
 													<Chip
 														label={statusLabels[request.status]}
-														color={statusColors[request.status] as any}
+														color={statusColors[request.status]}
 														size="small"
 													/>
 												</TableCell>

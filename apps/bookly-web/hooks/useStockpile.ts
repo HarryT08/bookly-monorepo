@@ -11,7 +11,6 @@ import {
 	notificationTemplateService,
 	notificationService,
 	notificationChannelService,
-	notificationConfigService,
 	// Types
 	ApprovalFlow,
 	ApprovalRequest,
@@ -20,7 +19,6 @@ import {
 	NotificationTemplate,
 	SentNotification,
 	NotificationChannel,
-	NotificationConfig,
 	CreateApprovalFlowRequest,
 	UpdateApprovalFlowRequest,
 	ProcessApprovalRequest,
@@ -58,8 +56,8 @@ export function useApprovalFlow() {
 				const result = await approvalFlowService.createApprovalFlow(data);
 				enqueueSnackbar('Approval flow created successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to create approval flow';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to create approval flow';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -78,8 +76,8 @@ export function useApprovalFlow() {
 				const result = await approvalFlowService.updateApprovalFlow(id, data);
 				enqueueSnackbar('Approval flow updated successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to update approval flow';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to update approval flow';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -97,8 +95,8 @@ export function useApprovalFlow() {
 			try {
 				const result = await approvalFlowService.getApprovalFlows(filter);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch approval flows';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch approval flows';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -116,8 +114,8 @@ export function useApprovalFlow() {
 			try {
 				const result = await approvalFlowService.getApprovalFlow(id);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch approval flow';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch approval flow';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -136,8 +134,8 @@ export function useApprovalFlow() {
 				await approvalFlowService.deleteApprovalFlow(id);
 				enqueueSnackbar('Approval flow deleted successfully', { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to delete approval flow';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to delete approval flow';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -171,8 +169,8 @@ export function useApprovalRequest() {
 			try {
 				const result = await approvalRequestService.getPendingRequests(filter);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch pending requests';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch pending requests';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -193,8 +191,8 @@ export function useApprovalRequest() {
 					data.action === 'APPROVE' ? 'approved' : data.action === 'REJECT' ? 'rejected' : 'updated';
 				enqueueSnackbar(`Request ${actionText} successfully`, { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to process request';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to process request';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -212,8 +210,8 @@ export function useApprovalRequest() {
 			try {
 				const result = await approvalRequestService.getRequestsByReservation(reservationId);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch reservation requests';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch reservation requests';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -231,8 +229,8 @@ export function useApprovalRequest() {
 			try {
 				const result = await approvalRequestService.getReservationStatus(reservationId);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch reservation status';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch reservation status';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -251,8 +249,8 @@ export function useApprovalRequest() {
 				await approvalRequestService.cancelReservation(reservationId, reason);
 				enqueueSnackbar('Reservation cancelled successfully', { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to cancel reservation';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to cancel reservation';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -269,8 +267,8 @@ export function useApprovalRequest() {
 		try {
 			const result = await approvalRequestService.getDashboardStats();
 			return result;
-		} catch (err: any) {
-			const message = err?.message || 'Failed to fetch dashboard stats';
+		} catch (err: unknown) {
+			const message = (err instanceof Error ? err.message : null) || 'Failed to fetch dashboard stats';
 			setError(message);
 			return null;
 		} finally {
@@ -307,8 +305,8 @@ export function useDocumentTemplate() {
 				const result = await documentTemplateService.createTemplate(data);
 				enqueueSnackbar('Document template created successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to create document template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to create document template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -327,8 +325,8 @@ export function useDocumentTemplate() {
 				const result = await documentTemplateService.updateTemplate(id, data);
 				enqueueSnackbar('Document template updated successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to update document template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to update document template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -346,8 +344,8 @@ export function useDocumentTemplate() {
 			try {
 				const result = await documentTemplateService.getTemplates(filter);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch document templates';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch document templates';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -365,8 +363,8 @@ export function useDocumentTemplate() {
 			try {
 				const result = await documentTemplateService.getTemplate(id);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch document template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch document template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -385,8 +383,8 @@ export function useDocumentTemplate() {
 				await documentTemplateService.deleteTemplate(id);
 				enqueueSnackbar('Document template deleted successfully', { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to delete document template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to delete document template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -398,14 +396,21 @@ export function useDocumentTemplate() {
 	);
 
 	const previewTemplate = useCallback(
-		async (id: string, variables: Record<string, any>): Promise<{ content: string; fileName: string } | null> => {
+		async (
+			id: string,
+			variables: Record<string, unknown>
+		): Promise<{ content: string; fileName: string } | null> => {
 			setLoading(true);
 			setError(null);
 			try {
 				const result = await documentTemplateService.previewTemplate(id, variables);
-				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to preview template';
+				// Transform the result to match the expected return type
+				return {
+					content: result.preview || '',
+					fileName: `template-${id}-preview.html`
+				};
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to preview template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -441,8 +446,8 @@ export function useDocumentGeneration() {
 				const result = await documentGenerationService.generateDocument(data);
 				enqueueSnackbar('Document generated successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to generate document';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to generate document';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -460,8 +465,8 @@ export function useDocumentGeneration() {
 			try {
 				const result = await documentGenerationService.getDocuments(filter);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch documents';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch documents';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -491,8 +496,8 @@ export function useDocumentGeneration() {
 
 				enqueueSnackbar('Document downloaded successfully', { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to download document';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to download document';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -511,8 +516,8 @@ export function useDocumentGeneration() {
 				await documentGenerationService.deleteDocument(id);
 				enqueueSnackbar('Document deleted successfully', { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to delete document';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to delete document';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -529,8 +534,8 @@ export function useDocumentGeneration() {
 		try {
 			const result = await documentGenerationService.getDocumentStats();
 			return result;
-		} catch (err: any) {
-			const message = err?.message || 'Failed to fetch document stats';
+		} catch (err: unknown) {
+			const message = (err instanceof Error ? err.message : null) || 'Failed to fetch document stats';
 			setError(message);
 			return null;
 		} finally {
@@ -566,8 +571,8 @@ export function useNotificationTemplate() {
 				const result = await notificationTemplateService.createTemplate(data);
 				enqueueSnackbar('Notification template created successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to create notification template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to create notification template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -586,8 +591,8 @@ export function useNotificationTemplate() {
 				const result = await notificationTemplateService.updateTemplate(id, data);
 				enqueueSnackbar('Notification template updated successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to update notification template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to update notification template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -605,8 +610,8 @@ export function useNotificationTemplate() {
 			try {
 				const result = await notificationTemplateService.getTemplates(filter);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch notification templates';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch notification templates';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -624,8 +629,8 @@ export function useNotificationTemplate() {
 			try {
 				const result = await notificationTemplateService.getTemplate(id);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch notification template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch notification template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -644,8 +649,8 @@ export function useNotificationTemplate() {
 				await notificationTemplateService.deleteTemplate(id);
 				enqueueSnackbar('Notification template deleted successfully', { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to delete notification template';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to delete notification template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -657,14 +662,18 @@ export function useNotificationTemplate() {
 	);
 
 	const previewTemplate = useCallback(
-		async (id: string, variables: Record<string, any>): Promise<{ subject?: string; content: string } | null> => {
+		async (
+			id: string,
+			variables: Record<string, unknown>
+		): Promise<{ subject?: string; content: string } | null> => {
 			setLoading(true);
 			setError(null);
 			try {
 				const result = await notificationTemplateService.previewTemplate(id, variables);
-				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to preview notification template';
+				return { content: result.preview, subject: 'Documento generado' };
+			} catch (err: unknown) {
+				const message =
+					(err instanceof Error ? err.message : null) || 'Failed to preview notification template';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -700,8 +709,8 @@ export function useNotification() {
 				const result = await notificationService.sendNotification(data);
 				enqueueSnackbar('Notification sent successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to send notification';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to send notification';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -719,8 +728,8 @@ export function useNotification() {
 			try {
 				const result = await notificationService.getNotifications(filter);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch notifications';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch notifications';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -731,20 +740,25 @@ export function useNotification() {
 		[enqueueSnackbar]
 	);
 
-	const markAsRead = useCallback(async (id: string): Promise<boolean> => {
-		setLoading(true);
-		setError(null);
-		try {
-			await notificationService.markAsRead(id);
-			return true;
-		} catch (err: any) {
-			const message = err?.message || 'Failed to mark notification as read';
-			setError(message);
-			return false;
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+	const retryNotification = useCallback(
+		async (id: string): Promise<SentNotification | null> => {
+			setLoading(true);
+			setError(null);
+			try {
+				const result = await notificationService.retryNotification(id);
+				enqueueSnackbar('Notification retried successfully', { variant: 'success' });
+				return result;
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to retry notification';
+				setError(message);
+				enqueueSnackbar(message, { variant: 'error' });
+				return null;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[enqueueSnackbar]
+	);
 
 	const getNotificationStats = useCallback(async (): Promise<NotificationStats | null> => {
 		setLoading(true);
@@ -752,8 +766,8 @@ export function useNotification() {
 		try {
 			const result = await notificationService.getNotificationStats();
 			return result;
-		} catch (err: any) {
-			const message = err?.message || 'Failed to fetch notification stats';
+		} catch (err: unknown) {
+			const message = (err instanceof Error ? err.message : null) || 'Failed to fetch notification stats';
 			setError(message);
 			return null;
 		} finally {
@@ -761,16 +775,16 @@ export function useNotification() {
 		}
 	}, []);
 
-	const resendNotification = useCallback(
+	const deleteNotification = useCallback(
 		async (id: string): Promise<boolean> => {
 			setLoading(true);
 			setError(null);
 			try {
-				await notificationService.resendNotification(id);
-				enqueueSnackbar('Notification resent successfully', { variant: 'success' });
+				await notificationService.deleteNotification(id);
+				enqueueSnackbar('Notification deleted successfully', { variant: 'success' });
 				return true;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to resend notification';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to delete notification';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return false;
@@ -786,9 +800,9 @@ export function useNotification() {
 		error,
 		sendNotification,
 		getNotifications,
-		markAsRead,
-		getNotificationStats,
-		resendNotification
+		retryNotification,
+		deleteNotification,
+		getNotificationStats
 	};
 }
 
@@ -803,8 +817,8 @@ export function useNotificationChannel() {
 		try {
 			const result = await notificationChannelService.getChannels();
 			return result;
-		} catch (err: any) {
-			const message = err?.message || 'Failed to fetch notification channels';
+		} catch (err: unknown) {
+			const message = (err instanceof Error ? err.message : null) || 'Failed to fetch notification channels';
 			setError(message);
 			enqueueSnackbar(message, { variant: 'error' });
 			return null;
@@ -820,8 +834,8 @@ export function useNotificationChannel() {
 			try {
 				const result = await notificationChannelService.getChannel(id);
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to fetch notification channel';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to fetch notification channel';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;
@@ -833,15 +847,15 @@ export function useNotificationChannel() {
 	);
 
 	const updateChannel = useCallback(
-		async (id: string, settings: Record<string, any>): Promise<NotificationChannel | null> => {
+		async (id: string, settings: Record<string, unknown>): Promise<NotificationChannel | null> => {
 			setLoading(true);
 			setError(null);
 			try {
 				const result = await notificationChannelService.updateChannel(id, settings);
 				enqueueSnackbar('Notification channel updated successfully', { variant: 'success' });
 				return result;
-			} catch (err: any) {
-				const message = err?.message || 'Failed to update notification channel';
+			} catch (err: unknown) {
+				const message = (err instanceof Error ? err.message : null) || 'Failed to update notification channel';
 				setError(message);
 				enqueueSnackbar(message, { variant: 'error' });
 				return null;

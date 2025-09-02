@@ -38,15 +38,8 @@ import {
 	ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
-
-// Types
-interface ImportRecord {
-	row: number;
-	data: Record<string, string>;
-	status: 'pending' | 'success' | 'error' | 'warning';
-	errors: string[];
-	warnings: string[];
-}
+import { importService } from '@services/import';
+import type { ImportRecord, ImportType, ImportJob, ImportTemplate } from '@services/import/types';
 
 interface ImportResult {
 	total: number;
@@ -56,11 +49,12 @@ interface ImportResult {
 	records: ImportRecord[];
 }
 
-const IMPORT_TYPES = [
-	{ value: 'resources', label: 'Recursos', template: 'recursos_template.csv' },
-	{ value: 'users', label: 'Usuarios', template: 'usuarios_template.csv' },
-	{ value: 'programs', label: 'Programas Académicos', template: 'programas_template.csv' },
-	{ value: 'categories', label: 'Categorías', template: 'categorias_template.csv' }
+const IMPORT_TYPES: { value: ImportType; label: string }[] = [
+	{ value: 'resources', label: 'Recursos' },
+	{ value: 'users', label: 'Usuarios' },
+	{ value: 'schedules', label: 'Horarios' },
+	{ value: 'categories', label: 'Categorías' },
+	{ value: 'programs', label: 'Programas' }
 ];
 
 const FIELD_MAPPINGS = {
@@ -96,13 +90,15 @@ const FIELD_MAPPINGS = {
 
 export default function ImportPage() {
 	const [activeStep, setActiveStep] = useState(0);
-	const [importType, setImportType] = useState<string>('');
+	const [importType, setImportType] = useState<ImportType | ''>('');
 	const [csvFile, setCsvFile] = useState<File | null>(null);
 	const [csvData, setCsvData] = useState<string[][]>([]);
 	const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
 	const [validationResult, setValidationResult] = useState<ImportResult | null>(null);
 	const [importing, setImporting] = useState(false);
 	const [importResult, setImportResult] = useState<ImportResult | null>(null);
+	const [_currentJob, _setCurrentJob] = useState<ImportJob | null>(null);
+	const [_templates, _setTemplates] = useState<ImportTemplate[]>([]);
 
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,7 +128,7 @@ export default function ImportPage() {
 		setImportResult(null);
 	};
 
-	const downloadTemplate = (templateName: string) => {
+	const _downloadTemplate = (templateName: string) => {
 		// TODO: Replace with actual template download
 		const templates: Record<string, string[][]> = {
 			'recursos_template.csv': [
@@ -319,6 +315,7 @@ export default function ImportPage() {
 				});
 			}
 		} catch (error) {
+			console.error(error);
 			enqueueSnackbar('Error durante la importación', { variant: 'error' });
 		} finally {
 			setImporting(false);
@@ -360,11 +357,32 @@ export default function ImportPage() {
 								<Button
 									variant="outlined"
 									startIcon={<DownloadIcon />}
-									onClick={() => {
-										const template = IMPORT_TYPES.find((t) => t.value === importType)?.template;
-
-										if (template) downloadTemplate(template);
+									onClick={async () => {
+										if (importType) {
+											try {
+												const blob = await importService.downloadTemplate(
+													importType as ImportType
+												);
+												const url = window.URL.createObjectURL(blob);
+												const link = document.createElement('a');
+												link.href = url;
+												link.download = `${importType}_template.csv`;
+												document.body.appendChild(link);
+												link.click();
+												document.body.removeChild(link);
+												window.URL.revokeObjectURL(url);
+												enqueueSnackbar('Plantilla descargada exitosamente', {
+													variant: 'success'
+												});
+											} catch (error) {
+												console.error('Error downloading template:', error);
+												enqueueSnackbar('Error al descargar la plantilla', {
+													variant: 'error'
+												});
+											}
+										}
 									}}
+									disabled={!importType}
 								>
 									Descargar Plantilla CSV
 								</Button>
@@ -439,7 +457,7 @@ export default function ImportPage() {
 					</Box>
 				);
 
-			case 2:
+			case 2: {
 				const expectedFields = FIELD_MAPPINGS[importType as keyof typeof FIELD_MAPPINGS] || [];
 				const headers = csvData[0] || [];
 
@@ -508,6 +526,7 @@ export default function ImportPage() {
 						</Box>
 					</Box>
 				);
+			}
 
 			case 3:
 				return (

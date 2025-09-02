@@ -1,4 +1,10 @@
 // Maintenance Record Types
+export type MaintenanceType = 'PREVENTIVO' | 'CORRECTIVO' | 'EMERGENCIA' | 'LIMPIEZA';
+export type MaintenanceStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type MaintenancePriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type MaintenanceRecurringPattern = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+export type MaintenanceColors = 'error' | 'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'default';
+
 export interface MaintenanceRecord {
 	id: string;
 	resourceId: string;

@@ -15,7 +15,6 @@ import {
 	TableHead,
 	TableRow,
 	Paper,
-	Grid,
 	Alert,
 	Stack,
 	Pagination,
@@ -65,15 +64,6 @@ export default function NotificationsPage() {
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [filter] = useState<NotificationFilter>({ page: 1, limit: 10 });
-
-	const {
-		loading: notificationLoading,
-		error: notificationError,
-		getNotifications,
-		markAsRead,
-		getNotificationStats,
-		resendNotification
-	} = useNotification();
 
 	const loadNotifications = useCallback(async () => {
 		setLoading(true);
@@ -136,16 +126,14 @@ export default function NotificationsPage() {
 				</Box>
 
 				{stats && (
-					<Grid
-						container
-						spacing={2}
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+							gap: 2
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -157,13 +145,8 @@ export default function NotificationsPage() {
 									<Typography variant="h4">{stats.sentToday}</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -175,13 +158,8 @@ export default function NotificationsPage() {
 									<Typography variant="h4">{Math.round(stats.deliveryRate)}%</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -193,13 +171,8 @@ export default function NotificationsPage() {
 									<Typography variant="h4">{stats.byChannel.EMAIL || 0}</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -216,8 +189,8 @@ export default function NotificationsPage() {
 									</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				)}
 
 				{notificationError && <Alert severity="error">{notificationError}</Alert>}
@@ -280,7 +253,7 @@ export default function NotificationsPage() {
 												<TableCell>
 													<Chip
 														label={notification.status}
-														color={statusColors[notification.status] as any}
+														color={statusColors[notification.status] as 'success' | 'warning' | 'info'}
 														size="small"
 													/>
 												</TableCell>

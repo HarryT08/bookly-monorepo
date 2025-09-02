@@ -1,7 +1,7 @@
 // Reports Service Types - RF31, RF32, RF33
 export interface UsageReportFilters {
-	startDate?: string;
-	endDate?: string;
+	startDate?: string | Date;
+	endDate?: string | Date;
 	programIds?: string[];
 	resourceTypes?: string[];
 	categories?: string[];

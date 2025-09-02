@@ -16,15 +16,13 @@ interface AuthGuardProps {
  * Redirects to login if user is not authenticated
  */
 export function AuthGuard({ children, fallback, redirectTo = '/auth/login' }: AuthGuardProps) {
-	const { isAuthenticated, user: _user } = useAuth();
+	const { isAuthenticated, loading, user: _user } = useAuth();
 	const [checking, setChecking] = useState(true);
 	const router = useRouter();
 
 	useEffect(() => {
 		const checkAuth = async () => {
-			if (!isAuthenticated) {
-				router.push(redirectTo);
-				return;
+			if (!loading) {
 				if (!isAuthenticated) {
 					router.push(redirectTo);
 					return;

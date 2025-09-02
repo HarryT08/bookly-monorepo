@@ -28,9 +28,16 @@ export const usageReportsService = {
 	async generateUsageReport(filters: UsageReportFilters): Promise<UsageReportResponse> {
 		const params = new URLSearchParams();
 
-		if (filters.startDate) params.append('startDate', filters.startDate);
+		if (filters.startDate) {
+			const startDateStr =
+				filters.startDate instanceof Date ? filters.startDate.toISOString() : filters.startDate;
+			params.append('startDate', startDateStr);
+		}
 
-		if (filters.endDate) params.append('endDate', filters.endDate);
+		if (filters.endDate) {
+			const endDateStr = filters.endDate instanceof Date ? filters.endDate.toISOString() : filters.endDate;
+			params.append('endDate', endDateStr);
+		}
 
 		if (filters.programIds?.length) {
 			filters.programIds.forEach((id) => params.append('programIds', id));
@@ -62,9 +69,16 @@ export const usageReportsService = {
 	async getUsageReportSummary(filters: UsageReportFilters): Promise<UsageReportSummary> {
 		const params = new URLSearchParams();
 
-		if (filters.startDate) params.append('startDate', filters.startDate);
+		if (filters.startDate) {
+			const startDateStr =
+				filters.startDate instanceof Date ? filters.startDate.toISOString() : filters.startDate;
+			params.append('startDate', startDateStr);
+		}
 
-		if (filters.endDate) params.append('endDate', filters.endDate);
+		if (filters.endDate) {
+			const endDateStr = filters.endDate instanceof Date ? filters.endDate.toISOString() : filters.endDate;
+			params.append('endDate', endDateStr);
+		}
 
 		if (filters.programIds?.length) {
 			filters.programIds.forEach((id) => params.append('programIds', id));

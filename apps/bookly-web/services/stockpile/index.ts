@@ -15,5 +15,5 @@ export {
 	notificationChannelService,
 	notificationTemplateService,
 	notificationService,
-	notificationConfigService
+	stockpileConfigService
 } from './services';

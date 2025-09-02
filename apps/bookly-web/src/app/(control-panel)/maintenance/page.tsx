@@ -1,21 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 	Box,
-	Typography,
 	Card,
 	CardContent,
 	CardActions,
-	Chip,
+	Typography,
+	Button,
 	Avatar,
+	Chip,
+	CircularProgress,
+	Alert,
 	List,
 	ListItem,
-	ListItemText,
 	ListItemAvatar,
-	Divider,
-	Button,
-	Alert
+	ListItemText,
+	Divider
 } from '@mui/material';
 import {
 	Build as BuildIcon,
@@ -25,19 +26,11 @@ import {
 	Assignment as AssignmentIcon,
 	Timeline as TimelineIcon,
 	Add as AddIcon,
-	Visibility as ViewIcon
+	Visibility as ViewIcon,
+	Error as ErrorIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
-
-// Mock data - replace with real API calls
-const mockStats = {
-	scheduled: 15,
-	inProgress: 3,
-	completed: 47,
-	incidents: 8,
-	preventive: 28,
-	corrective: 19
-};
+import { useMaintenance } from '../../../../hooks/useMaintenance';
 
 const mockScheduledMaintenance = [
 	{
@@ -122,6 +115,86 @@ const getPriorityColor = (priority: string) => {
 
 export default function MaintenancePage() {
 	const [_selectedPeriod, _setSelectedPeriod] = useState('month');
+	const {
+		maintenanceRecords,
+		scheduledMaintenance,
+		incidents,
+		statistics: _statistics,
+		isLoading,
+		error,
+		getMaintenanceRecords,
+		getScheduledMaintenance,
+		getIncidents,
+		getStatistics
+	} = useMaintenance();
+
+	// Process stats from real data
+	const processedStats = {
+		scheduled: scheduledMaintenance.filter((s) => s.status === 'SCHEDULED').length,
+		inProgress: maintenanceRecords.filter((r) => r.status === 'IN_PROGRESS').length,
+		completed: maintenanceRecords.filter((r) => r.status === 'COMPLETED').length,
+		incidents: incidents.length,
+		preventive: maintenanceRecords.filter((r) => r.maintenanceType === 'PREVENTIVO').length,
+		corrective: maintenanceRecords.filter((r) => r.maintenanceType === 'CORRECTIVO').length
+	};
+
+	// Load data on component mount
+	useEffect(() => {
+		const loadData = async () => {
+			try {
+				await Promise.all([
+					getMaintenanceRecords(),
+					getScheduledMaintenance(),
+					getIncidents(),
+					getStatistics()
+				]);
+			} catch (err) {
+				console.error('Error loading maintenance data:', err);
+			}
+		};
+
+		loadData();
+	}, [getMaintenanceRecords, getScheduledMaintenance, getIncidents, getStatistics]);
+
+	// Show loading state
+	if (isLoading) {
+		return (
+			<Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+				<CircularProgress />
+			</Box>
+		);
+	}
+
+	// Show error state
+	if (error) {
+		return (
+			<Box sx={{ p: 3 }}>
+				<Alert
+					severity="error"
+					icon={<ErrorIcon />}
+					action={
+						<Button
+							color="inherit"
+							size="small"
+							onClick={() => window.location.reload()}
+						>
+							Recargar
+						</Button>
+					}
+				>
+					<Typography
+						variant="h6"
+						gutterBottom
+					>
+						Error al cargar los datos de mantenimiento
+					</Typography>
+					<Typography variant="body2">
+						{error || 'Ha ocurrido un error inesperado. Por favor, intente nuevamente.'}
+					</Typography>
+				</Alert>
+			</Box>
+		);
+	}
 
 	return (
 		<Box sx={{ p: 3 }}>
@@ -175,7 +248,7 @@ export default function MaintenancePage() {
 										variant="h4"
 										component="div"
 									>
-										{mockStats.scheduled}
+										{processedStats.scheduled}
 									</Typography>
 									<Typography
 										color="text.secondary"
@@ -201,7 +274,7 @@ export default function MaintenancePage() {
 										variant="h4"
 										component="div"
 									>
-										{mockStats.inProgress}
+										{processedStats.inProgress}
 									</Typography>
 									<Typography
 										color="text.secondary"
@@ -227,7 +300,7 @@ export default function MaintenancePage() {
 										variant="h4"
 										component="div"
 									>
-										{mockStats.completed}
+										{processedStats.completed}
 									</Typography>
 									<Typography
 										color="text.secondary"
@@ -253,7 +326,7 @@ export default function MaintenancePage() {
 										variant="h4"
 										component="div"
 									>
-										{mockStats.incidents}
+										{processedStats.incidents}
 									</Typography>
 									<Typography
 										color="text.secondary"
@@ -316,12 +389,12 @@ export default function MaintenancePage() {
 														<Chip
 															label={maintenance.status}
 															size="small"
-															color={getStatusColor(maintenance.status) as any}
+															color={getStatusColor(maintenance.status)}
 														/>
 														<Chip
 															label={maintenance.priority}
 															size="small"
-															color={getPriorityColor(maintenance.priority) as any}
+															color={getPriorityColor(maintenance.priority)}
 														/>
 													</Box>
 												}
@@ -424,12 +497,12 @@ export default function MaintenancePage() {
 															<Chip
 																label={incident.status}
 																size="small"
-																color={getStatusColor(incident.status) as any}
+																color={getStatusColor(incident.status)}
 															/>
 															<Chip
 																label={incident.priority}
 																size="small"
-																color={getPriorityColor(incident.priority) as any}
+																color={getPriorityColor(incident.priority)}
 															/>
 														</Box>
 													</Box>

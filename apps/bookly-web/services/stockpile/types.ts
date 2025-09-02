@@ -66,7 +66,7 @@ export interface ApprovalRequest {
 	requestedAt: Date;
 	respondedAt?: Date;
 	timeoutAt?: Date;
-	notificationsSent: Record<string, any>;
+	notificationsSent: Record<string, never>;
 	createdAt: Date;
 	updatedAt: Date;
 	// Extended fields for UI
@@ -125,7 +125,7 @@ export interface DocumentTemplate {
 	categoryId?: string;
 	templatePath?: string;
 	content?: string;
-	variables: Record<string, any>;
+	variables: Record<string, never>;
 	isDefault: boolean;
 	isActive: boolean;
 	canSendAsAttachment: boolean;
@@ -144,7 +144,7 @@ export interface GeneratedDocument {
 	mimeType: string;
 	fileSize?: number;
 	generatedBy: string;
-	variables?: Record<string, any>;
+	variables?: Record<string, never>;
 	createdAt: Date;
 	updatedAt: Date;
 	downloadUrl?: string;
@@ -194,7 +194,7 @@ export interface NotificationChannel {
 	supportsLinks: boolean;
 	maxMessageLength?: number;
 	isActive: boolean;
-	settings: Record<string, any>;
+	settings: Record<string, never>;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -208,7 +208,7 @@ export interface NotificationTemplate {
 	subject?: string;
 	resourceType?: string;
 	categoryId?: string;
-	variables: Record<string, any>;
+	variables: Record<string, never>;
 	isDefault: boolean;
 	isActive: boolean;
 	attachDocument: boolean;
@@ -245,7 +245,7 @@ export interface SentNotification {
 	subject?: string;
 	hasAttachment: boolean;
 	attachmentPath?: string;
-	variables: Record<string, any>;
+	variables: Record<string, never>;
 	sentAt?: Date;
 	deliveredAt?: Date;
 	readAt?: Date;
@@ -306,7 +306,7 @@ export interface CreateDocumentTemplateRequest {
 	categoryId?: string;
 	content?: string;
 	templatePath?: string;
-	variables?: Record<string, any>;
+	variables?: Record<string, never>;
 	isDefault?: boolean;
 	canSendAsAttachment?: boolean;
 	canSendAsLink?: boolean;
@@ -316,7 +316,7 @@ export interface UpdateDocumentTemplateRequest {
 	name?: string;
 	description?: string;
 	content?: string;
-	variables?: Record<string, any>;
+	variables?: Record<string, never>;
 	isActive?: boolean;
 	canSendAsAttachment?: boolean;
 	canSendAsLink?: boolean;
@@ -325,7 +325,7 @@ export interface UpdateDocumentTemplateRequest {
 export interface GenerateDocumentRequest {
 	templateId: string;
 	reservationId: string;
-	variables: Record<string, any>;
+	variables: Record<string, never>;
 }
 
 export interface CreateNotificationTemplateRequest {
@@ -336,7 +336,7 @@ export interface CreateNotificationTemplateRequest {
 	subject?: string;
 	resourceType?: string;
 	categoryId?: string;
-	variables?: Record<string, any>;
+	variables?: Record<string, never>;
 	isDefault?: boolean;
 	attachDocument?: boolean;
 	documentAsLink?: boolean;
@@ -346,7 +346,7 @@ export interface UpdateNotificationTemplateRequest {
 	name?: string;
 	content?: string;
 	subject?: string;
-	variables?: Record<string, any>;
+	variables?: Record<string, never>;
 	isActive?: boolean;
 	attachDocument?: boolean;
 	documentAsLink?: boolean;
@@ -356,7 +356,7 @@ export interface SendNotificationRequest {
 	templateId: string;
 	reservationId: string;
 	recipientId: string;
-	variables: Record<string, any>;
+	variables: Record<string, never>;
 	documentId?: string;
 }
 
@@ -435,6 +435,7 @@ export interface ApprovalDashboardStats {
 	rejectedToday: number;
 	timeoutCount: number;
 	avgResponseTime: number;
+	totalThisMonth: number;
 }
 
 export interface DocumentStats {

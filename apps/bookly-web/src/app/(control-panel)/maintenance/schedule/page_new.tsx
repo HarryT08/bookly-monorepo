@@ -48,7 +48,7 @@ export default function ScheduleMaintenancePage() {
 		}
 
 		try {
-			console.log('Scheduling maintenance:', formData);
+			console.error('Scheduling maintenance:', formData);
 			enqueueSnackbar('Mantenimiento programado exitosamente', { variant: 'success' });
 		} catch (_error) {
 			enqueueSnackbar('Error al programar el mantenimiento', { variant: 'error' });

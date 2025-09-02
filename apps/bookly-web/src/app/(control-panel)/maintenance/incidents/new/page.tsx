@@ -8,7 +8,6 @@ import {
 	Typography,
 	TextField,
 	Button,
-	Grid,
 	FormControl,
 	InputLabel,
 	Select,
@@ -32,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import Link from 'next/link';
+import { MaintenanceColors } from '@services/maintenance/types';
 
 // Mock data
 const mockResources = [
@@ -114,7 +114,7 @@ export default function NewIncidentPage() {
 	const [attachments, setAttachments] = useState<Attachment[]>([]);
 	const [submitting, setSubmitting] = useState(false);
 
-	const handleInputChange = (field: string, value: any) => {
+	const handleInputChange = (field: string, value: unknown) => {
 		setFormData((prev) => ({
 			...prev,
 			[field]: value
@@ -155,7 +155,6 @@ export default function NewIncidentPage() {
 		setSubmitting(true);
 		try {
 			// TODO: Replace with actual API call
-			console.log('Creating incident:', { ...formData, attachments });
 
 			// Simulate API call
 			await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -164,7 +163,7 @@ export default function NewIncidentPage() {
 
 			// Reset form or redirect
 			// router.push('/maintenance/incidents');
-		} catch (error) {
+		} catch (_error) {
 			enqueueSnackbar('Error al reportar la incidencia', { variant: 'error' });
 		} finally {
 			setSubmitting(false);
@@ -201,15 +200,15 @@ export default function NewIncidentPage() {
 			</Box>
 
 			<form onSubmit={handleSubmit}>
-				<Grid
-					container
-					spacing={3}
+				<Box
+					sx={{
+						display: 'grid',
+						gridTemplateColumns: 'repeat(12, 1fr)',
+						gap: 3
+					}}
 				>
 					{/* Resource Selection */}
-					<Grid
-						item
-						xs={12}
-					>
+					<Box sx={{ gridColumn: '1 / -1' }}>
 						<Card>
 							<CardContent>
 								<Typography
@@ -255,13 +254,10 @@ export default function NewIncidentPage() {
 								/>
 							</CardContent>
 						</Card>
-					</Grid>
+					</Box>
 
 					{/* Incident Details */}
-					<Grid
-						item
-						xs={12}
-					>
+					<Box sx={{ gridColumn: '1 / -1' }}>
 						<Card>
 							<CardContent>
 								<Typography
@@ -271,14 +267,14 @@ export default function NewIncidentPage() {
 									Detalles de la Incidencia
 								</Typography>
 
-								<Grid
-									container
-									spacing={2}
+								<Box
+									sx={{
+										display: 'grid',
+										gridTemplateColumns: 'repeat(12, 1fr)',
+										gap: 2
+									}}
 								>
-									<Grid
-										item
-										xs={12}
-									>
+									<Box sx={{ gridColumn: '1 / -1' }}>
 										<TextField
 											fullWidth
 											label="Título de la incidencia *"
@@ -287,13 +283,9 @@ export default function NewIncidentPage() {
 											placeholder="Ej: Proyector no enciende"
 											helperText="Resuma el problema en pocas palabras"
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<FormControl fullWidth>
 											<InputLabel>Categoría</InputLabel>
 											<Select
@@ -311,13 +303,9 @@ export default function NewIncidentPage() {
 												))}
 											</Select>
 										</FormControl>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<FormControl fullWidth>
 											<InputLabel>Prioridad</InputLabel>
 											<Select
@@ -332,19 +320,16 @@ export default function NewIncidentPage() {
 													>
 														<Chip
 															label={priority.label}
-															color={priority.color as any}
+															color={priority.color as MaintenanceColors}
 															size="small"
 														/>
 													</MenuItem>
 												))}
 											</Select>
 										</FormControl>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<FormControl fullWidth>
 											<InputLabel>Severidad</InputLabel>
 											<Select
@@ -370,12 +355,9 @@ export default function NewIncidentPage() {
 												))}
 											</Select>
 										</FormControl>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-									>
+									<Box sx={{ gridColumn: '1 / -1' }}>
 										<TextField
 											fullWidth
 											multiline
@@ -386,13 +368,9 @@ export default function NewIncidentPage() {
 											placeholder="Describa el problema con el mayor detalle posible"
 											helperText="Incluya síntomas, cuándo ocurre, frecuencia, etc."
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<TextField
 											fullWidth
 											multiline
@@ -402,13 +380,9 @@ export default function NewIncidentPage() {
 											onChange={(e) => handleInputChange('expectedBehavior', e.target.value)}
 											placeholder="Describa el comportamiento esperado"
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<TextField
 											fullWidth
 											multiline
@@ -418,12 +392,9 @@ export default function NewIncidentPage() {
 											onChange={(e) => handleInputChange('actualBehavior', e.target.value)}
 											placeholder="Describa lo que realmente ocurrió"
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-									>
+									<Box sx={{ gridColumn: '1 / -1' }}>
 										<TextField
 											fullWidth
 											multiline
@@ -434,12 +405,9 @@ export default function NewIncidentPage() {
 											placeholder="1. Primer paso&#10;2. Segundo paso&#10;3. Tercer paso"
 											helperText="Enumere los pasos específicos para reproducir el problema"
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-									>
+									<Box sx={{ gridColumn: '1 / -1' }}>
 										<TextField
 											fullWidth
 											multiline
@@ -449,17 +417,14 @@ export default function NewIncidentPage() {
 											onChange={(e) => handleInputChange('workaround', e.target.value)}
 											placeholder="¿Encontró alguna forma temporal de solucionar o evitar el problema?"
 										/>
-									</Grid>
-								</Grid>
+									</Box>
+								</Box>
 							</CardContent>
 						</Card>
-					</Grid>
+					</Box>
 
 					{/* Attachments */}
-					<Grid
-						item
-						xs={12}
-					>
+					<Box sx={{ gridColumn: '1 / -1' }}>
 						<Card>
 							<CardContent>
 								<Typography
@@ -533,13 +498,10 @@ export default function NewIncidentPage() {
 								)}
 							</CardContent>
 						</Card>
-					</Grid>
+					</Box>
 
 					{/* Reporter Information */}
-					<Grid
-						item
-						xs={12}
-					>
+					<Box sx={{ gridColumn: '1 / -1' }}>
 						<Card>
 							<CardContent>
 								<Typography
@@ -549,15 +511,14 @@ export default function NewIncidentPage() {
 									Información de Contacto
 								</Typography>
 
-								<Grid
-									container
-									spacing={2}
+								<Box
+									sx={{
+										display: 'grid',
+										gridTemplateColumns: 'repeat(12, 1fr)',
+										gap: 2
+									}}
 								>
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<TextField
 											fullWidth
 											label="Nombre completo *"
@@ -565,13 +526,9 @@ export default function NewIncidentPage() {
 											onChange={(e) => handleInputChange('reporterName', e.target.value)}
 											placeholder="Su nombre completo"
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<TextField
 											fullWidth
 											type="email"
@@ -580,13 +537,9 @@ export default function NewIncidentPage() {
 											onChange={(e) => handleInputChange('reporterEmail', e.target.value)}
 											placeholder="su.email@ufps.edu.co"
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<TextField
 											fullWidth
 											label="Teléfono"
@@ -594,13 +547,9 @@ export default function NewIncidentPage() {
 											onChange={(e) => handleInputChange('reporterPhone', e.target.value)}
 											placeholder="(opcional)"
 										/>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-										md={6}
-									>
+									<Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
 										<FormControl fullWidth>
 											<InputLabel>Preferencia de contacto</InputLabel>
 											<Select
@@ -613,12 +562,9 @@ export default function NewIncidentPage() {
 												<MenuItem value="BOTH">Ambos</MenuItem>
 											</Select>
 										</FormControl>
-									</Grid>
+									</Box>
 
-									<Grid
-										item
-										xs={12}
-									>
+									<Box sx={{ gridColumn: '1 / -1' }}>
 										<TextField
 											fullWidth
 											multiline
@@ -628,17 +574,14 @@ export default function NewIncidentPage() {
 											onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
 											placeholder="Cualquier información adicional que considere relevante"
 										/>
-									</Grid>
-								</Grid>
+									</Box>
+								</Box>
 							</CardContent>
 						</Card>
-					</Grid>
+					</Box>
 
 					{/* Submit Actions */}
-					<Grid
-						item
-						xs={12}
-					>
+					<Box sx={{ gridColumn: '1 / -1' }}>
 						<Card>
 							<CardContent>
 								<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -672,8 +615,8 @@ export default function NewIncidentPage() {
 								</Box>
 							</CardContent>
 						</Card>
-					</Grid>
-				</Grid>
+					</Box>
+				</Box>
 			</form>
 		</Box>
 	);

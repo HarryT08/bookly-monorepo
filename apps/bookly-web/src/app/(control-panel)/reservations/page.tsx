@@ -114,7 +114,7 @@ export default function ReservationsPage() {
 		if (reservations) {
 			setPagination((prev) => ({
 				...prev,
-				total: reservations.total || 0
+				total: reservations.data?.length || 0
 			}));
 		}
 	}, [reservations]);
@@ -344,20 +344,29 @@ export default function ReservationsPage() {
 			)}
 
 			<DataTable
-				data={reservations?.items || []}
+				data={reservations?.data || []}
 				columns={columns}
-				loading={loading}
-				pagination={{
-					page: pagination.page,
-					pageSize: pagination.pageSize,
-					total: pagination.total
+				state={{
+					isLoading: loading,
+					pagination: {
+						pageIndex: pagination.page,
+						pageSize: pagination.pageSize
+					}
 				}}
-				onPaginationChange={(newPagination) => {
-					setPagination((prev) => ({
-						...prev,
-						page: newPagination.page,
-						pageSize: newPagination.pageSize
-					}));
+				manualPagination
+				rowCount={pagination.total}
+				onPaginationChange={(updater) => {
+					if (typeof updater === 'function') {
+						const newState = updater({
+							pageIndex: pagination.page,
+							pageSize: pagination.pageSize
+						});
+						setPagination((prev) => ({
+							...prev,
+							page: newState.pageIndex,
+							pageSize: newState.pageSize
+						}));
+					}
 				}}
 			/>
 

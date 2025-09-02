@@ -20,7 +20,6 @@ import {
 	InputLabel,
 	Select,
 	MenuItem,
-	Grid,
 	Avatar,
 	IconButton,
 	TablePagination,
@@ -39,9 +38,26 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { enqueueSnackbar } from 'notistack';
+import { MaintenanceColors } from '@services/maintenance/types';
+
+// Types
+interface MockIncident {
+	id: string;
+	resourceName: string;
+	resourceType: string;
+	title: string;
+	description: string;
+	priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+	status: 'REPORTED' | 'IN_REVIEW' | 'ASSIGNED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+	reportedBy: string;
+	assignedTo?: string;
+	reportedAt: string;
+	resolvedAt?: string;
+	category: string;
+}
 
 // Mock data
-const mockIncidents = [
+const mockIncidents: MockIncident[] = [
 	{
 		id: '1',
 		resourceName: 'Proyector Salón 205',
@@ -49,9 +65,9 @@ const mockIncidents = [
 		title: 'Proyector no enciende',
 		description: 'La lámpara del proyector no enciende cuando se presiona el botón de encendido',
 		reportedBy: 'Ana Martínez',
-		reportedDate: '2024-01-08T10:30:00',
-		status: 'ABIERTO',
-		priority: 'ALTA',
+		reportedAt: '2024-01-08T10:30:00',
+		status: 'REPORTED',
+		priority: 'HIGH',
 		assignedTo: 'Juan Pérez',
 		category: 'HARDWARE'
 	},
@@ -62,9 +78,9 @@ const mockIncidents = [
 		title: 'Aire no enfría',
 		description: 'El aire acondicionado funciona pero no enfría adecuadamente el laboratorio',
 		reportedBy: 'Pedro Silva',
-		reportedDate: '2024-01-07T14:15:00',
-		status: 'EN_REVISION',
-		priority: 'MEDIA',
+		reportedAt: '2024-01-07T14:15:00',
+		status: 'IN_REVIEW',
+		priority: 'MEDIUM',
 		assignedTo: 'María García',
 		category: 'CLIMATIZACION'
 	},
@@ -75,9 +91,9 @@ const mockIncidents = [
 		title: 'Cerradura dañada',
 		description: 'La cerradura de la puerta principal está trabada y no se puede abrir con facilidad',
 		reportedBy: 'Carlos López',
-		reportedDate: '2024-01-06T09:00:00',
-		status: 'SOLUCIONADO',
-		priority: 'MEDIA',
+		reportedAt: '2024-01-06T09:00:00',
+		status: 'RESOLVED',
+		priority: 'MEDIUM',
 		assignedTo: 'Luis Rodríguez',
 		category: 'SEGURIDAD'
 	},
@@ -88,9 +104,9 @@ const mockIncidents = [
 		title: 'Conexión intermitente',
 		description: 'La conexión a internet WiFi se desconecta frecuentemente en el área de la biblioteca',
 		reportedBy: 'Sofia Mendoza',
-		reportedDate: '2024-01-05T16:45:00',
-		status: 'EN_PROGRESO',
-		priority: 'ALTA',
+		reportedAt: '2024-01-07T14:30:00',
+		status: 'IN_PROGRESS',
+		priority: 'HIGH',
 		assignedTo: 'Diego Torres',
 		category: 'REDES'
 	}
@@ -118,7 +134,7 @@ export default function IncidentsPage() {
 	const [priorityFilter, setPriorityFilter] = useState('');
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(10);
-	const [selectedIncident, setSelectedIncident] = useState<any>(null);
+	const [selectedIncident, setSelectedIncident] = useState<MockIncident | null>(null);
 	const [detailsOpen, setDetailsOpen] = useState(false);
 
 	// Filter incidents
@@ -147,26 +163,26 @@ export default function IncidentsPage() {
 		setPage(0);
 	}, [incidents, searchTerm, statusFilter, priorityFilter]);
 
-	const handleViewDetails = (incident: any) => {
+	const handleViewIncident = (incident: MockIncident) => {
 		setSelectedIncident(incident);
 		setDetailsOpen(true);
 	};
 
-	const handleStatusChange = (incidentId: string, newStatus: string) => {
+	const handleStatusChange = (incidentId: string, newStatus: MockIncident['status']) => {
 		setIncidents((prev) =>
 			prev.map((incident) => (incident.id === incidentId ? { ...incident, status: newStatus } : incident))
 		);
 		enqueueSnackbar('Estado de incidencia actualizado', { variant: 'success' });
 	};
 
-	const getStatusColor = (status: string) => {
+	const getStatusColor = (status: string): MaintenanceColors => {
 		const option = statusOptions.find((opt) => opt.value === status);
-		return option?.color || 'default';
+		return (option?.color || 'default') as MaintenanceColors;
 	};
 
-	const getPriorityColor = (priority: string) => {
+	const getPriorityColor = (priority: string): MaintenanceColors => {
 		const option = priorityOptions.find((opt) => opt.value === priority);
-		return option?.color || 'default';
+		return (option?.color || 'default') as MaintenanceColors;
 	};
 
 	const paginatedIncidents = filteredIncidents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -202,17 +218,15 @@ export default function IncidentsPage() {
 			{/* Filters */}
 			<Card sx={{ mb: 3 }}>
 				<CardContent>
-					<Grid
-						container
-						spacing={2}
-						alignItems="center"
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
+							gap: 2,
+							alignItems: 'center'
+						}}
 					>
-						<Grid
-							component="div"
-							item
-							xs={12}
-							md={4}
-						>
+						<Box>
 							<TextField
 								fullWidth
 								placeholder="Buscar incidencias..."
@@ -226,12 +240,8 @@ export default function IncidentsPage() {
 									)
 								}}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<FormControl fullWidth>
 								<InputLabel>Estado</InputLabel>
 								<Select
@@ -250,12 +260,8 @@ export default function IncidentsPage() {
 									))}
 								</Select>
 							</FormControl>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<FormControl fullWidth>
 								<InputLabel>Prioridad</InputLabel>
 								<Select
@@ -274,13 +280,8 @@ export default function IncidentsPage() {
 									))}
 								</Select>
 							</FormControl>
-						</Grid>
-						<Grid
-							component="div"
-							item
-							xs={12}
-							md={2}
-						>
+						</Box>
+						<Box>
 							<Button
 								fullWidth
 								variant="outlined"
@@ -293,8 +294,8 @@ export default function IncidentsPage() {
 							>
 								Limpiar
 							</Button>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				</CardContent>
 			</Card>
 
@@ -380,7 +381,7 @@ export default function IncidentsPage() {
 													>
 														<Chip
 															label={option.label}
-															color={option.color as any}
+															color={option.color as MaintenanceColors}
 															size="small"
 														/>
 													</MenuItem>
@@ -391,7 +392,7 @@ export default function IncidentsPage() {
 									<TableCell>
 										<Chip
 											label={incident.priority}
-											color={getPriorityColor(incident.priority) as any}
+											color={getPriorityColor(incident.priority) as never}
 											size="small"
 										/>
 									</TableCell>
@@ -400,19 +401,19 @@ export default function IncidentsPage() {
 									</TableCell>
 									<TableCell>
 										<Typography variant="body2">
-											{new Date(incident.reportedDate).toLocaleDateString()}
+											{new Date(incident.reportedAt).toLocaleDateString()}
 										</Typography>
 										<Typography
 											variant="caption"
 											color="text.secondary"
 										>
-											{new Date(incident.reportedDate).toLocaleTimeString()}
+											{new Date(incident.reportedAt).toLocaleTimeString()}
 										</Typography>
 									</TableCell>
 									<TableCell align="center">
 										<IconButton
 											size="small"
-											onClick={() => handleViewDetails(incident)}
+											onClick={() => handleViewIncident(incident)}
 											title="Ver detalles"
 										>
 											<ViewIcon />
@@ -456,14 +457,14 @@ export default function IncidentsPage() {
 				<DialogContent>
 					{selectedIncident && (
 						<Box sx={{ mt: 2 }}>
-							<Grid
-								container
-								spacing={2}
+							<Box
+								sx={{
+									display: 'grid',
+									gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+									gap: 2
+								}}
 							>
-								<Grid
-									item
-									xs={12}
-								>
+								<Box sx={{ gridColumn: '1 / -1' }}>
 									<Typography
 										variant="h6"
 										gutterBottom
@@ -473,22 +474,18 @@ export default function IncidentsPage() {
 									<Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
 										<Chip
 											label={selectedIncident.status}
-											color={getStatusColor(selectedIncident.status) as any}
+											color={getStatusColor(selectedIncident.status)}
 											size="small"
 										/>
 										<Chip
 											label={selectedIncident.priority}
-											color={getPriorityColor(selectedIncident.priority) as any}
+											color={getPriorityColor(selectedIncident.priority)}
 											size="small"
 										/>
 									</Box>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									md={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
@@ -501,13 +498,9 @@ export default function IncidentsPage() {
 									>
 										{selectedIncident.resourceName} ({selectedIncident.resourceType})
 									</Typography>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									md={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
@@ -520,12 +513,9 @@ export default function IncidentsPage() {
 									>
 										{selectedIncident.category}
 									</Typography>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
@@ -538,13 +528,9 @@ export default function IncidentsPage() {
 									>
 										{selectedIncident.description}
 									</Typography>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									md={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
@@ -557,13 +543,9 @@ export default function IncidentsPage() {
 									>
 										{selectedIncident.reportedBy}
 									</Typography>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									md={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
@@ -576,12 +558,9 @@ export default function IncidentsPage() {
 									>
 										{selectedIncident.assignedTo}
 									</Typography>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
@@ -589,10 +568,10 @@ export default function IncidentsPage() {
 										Fecha de Reporte
 									</Typography>
 									<Typography variant="body2">
-										{new Date(selectedIncident.reportedDate).toLocaleString()}
+										{new Date(selectedIncident.reportedAt).toLocaleString()}
 									</Typography>
-								</Grid>
-							</Grid>
+								</Box>
+							</Box>
 						</Box>
 					)}
 				</DialogContent>

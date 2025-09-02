@@ -14,7 +14,6 @@ import {
 	DialogContent,
 	DialogTitle,
 	FormControl,
-	Grid,
 	IconButton,
 	InputLabel,
 	MenuItem,
@@ -53,7 +52,7 @@ interface PermissionFormData {
 	resource: string;
 	action: string;
 	scope: string;
-	conditions: Record<string, any>;
+	conditions: Record<string, unknown>;
 	isActive: boolean;
 }
 
@@ -88,19 +87,14 @@ const ACTIONS = [
 const SCOPES = ['global', 'program', 'department', 'own', 'assigned', 'public'];
 
 export default function PermissionsPage() {
-	const {
-		permissions,
-		loading,
-		pagination,
-		getAllPermissions,
-		getActivePermissions,
-		createPermission,
-		updatePermission,
-		deletePermission,
-		activatePermission,
-		deactivatePermission,
-		setPagination
-	} = usePermissionManagement();
+	const [permissions, setPermissions] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [pagination, setPagination] = useState({
+		page: 1,
+		limit: 10,
+		total: 0
+	});
+	const { getAllPermissions, createPermission, updatePermission, deletePermission } = usePermissionManagement();
 
 	const [searchTerm, setSearchTerm] = useState('');
 	const [selectedResource, setSelectedResource] = useState('');
@@ -128,45 +122,87 @@ export default function PermissionsPage() {
 
 	// Load data on component mount
 	useEffect(() => {
-		getAllPermissions({ page: 1, limit: 10 });
-	}, [getAllPermissions]);
+		const loadPermissions = async () => {
+			setLoading(true);
+			try {
+				const result = await getAllPermissions();
+
+				if (result && result.success) {
+					setPermissions(result.data || []);
+					setPagination({
+						page: 1,
+						limit: 10,
+						total: result.data?.length || 0
+					});
+				}
+			} catch (error) {
+				console.error('Error loading permissions:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
+		loadPermissions();
+	}, []);
 
 	// Handle search and filtering
 	const handleSearch = async () => {
-		await getAllPermissions({
-			page: 1,
-			limit: pagination.limit,
-			search: searchTerm,
-			resource: selectedResource || undefined,
-			action: selectedAction || undefined,
-			scope: selectedScope || undefined
-		});
+		setLoading(true);
+		try {
+			const result = await getAllPermissions({
+				resource: selectedResource || undefined,
+				action: selectedAction || undefined,
+				scope: selectedScope || undefined
+			});
+
+			if (result && result.success) {
+				// Filter by search term locally if provided
+				let filteredData = result.data || [];
+
+				if (searchTerm) {
+					filteredData = filteredData.filter(
+						(permission) =>
+							permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+							(permission.description &&
+								permission.description.toLowerCase().includes(searchTerm.toLowerCase()))
+					);
+				}
+
+				setPermissions(filteredData);
+				setPagination((prev) => ({ ...prev, page: 1, total: filteredData.length }));
+			}
+		} catch (error) {
+			console.error('Error searching permissions:', error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handlePageChange = async (event: unknown, newPage: number) => {
 		const page = newPage + 1;
-		await getAllPermissions({
-			page,
-			limit: pagination.limit,
-			search: searchTerm,
-			resource: selectedResource || undefined,
-			action: selectedAction || undefined,
-			scope: selectedScope || undefined
-		});
-		setPagination((prev) => ({ ...prev, page }));
+		setLoading(true);
+		try {
+			// For now, handle pagination client-side
+			// In a real app, this would be server-side pagination
+			const currentPermissions = permissions;
+			setPagination((prev) => ({ ...prev, page }));
+		} catch (error) {
+			console.error('Error changing page:', error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleRowsPerPageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const limit = parseInt(event.target.value, 10);
-		await getAllPermissions({
-			page: 1,
-			limit,
-			search: searchTerm,
-			resource: selectedResource || undefined,
-			action: selectedAction || undefined,
-			scope: selectedScope || undefined
-		});
-		setPagination((prev) => ({ ...prev, limit, page: 1 }));
+		setLoading(true);
+		try {
+			// For now, handle pagination client-side
+			setPagination((prev) => ({ ...prev, limit, page: 1 }));
+		} catch (error) {
+			console.error('Error changing rows per page:', error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	// Dialog handlers
@@ -221,6 +257,7 @@ export default function PermissionsPage() {
 	};
 
 	const handleSubmit = async () => {
+		setLoading(true);
 		try {
 			if (editingPermission) {
 				// Update existing permission
@@ -230,8 +267,7 @@ export default function PermissionsPage() {
 					resource: formData.resource,
 					action: formData.action,
 					scope: formData.scope,
-					conditions: formData.conditions,
-					isActive: formData.isActive
+					conditions: formData.conditions
 				};
 				await updatePermission(editingPermission.id, updateData);
 			} else {
@@ -242,47 +278,58 @@ export default function PermissionsPage() {
 					resource: formData.resource,
 					action: formData.action,
 					scope: formData.scope,
-					conditions: formData.conditions,
-					isActive: formData.isActive
+					conditions: formData.conditions
 				};
 				await createPermission(createData);
 			}
 
 			handleCloseDialog();
 			// Refresh the list
-			await getAllPermissions({
-				page: pagination.page,
-				limit: pagination.limit,
-				search: searchTerm,
+			const result = await getAllPermissions({
 				resource: selectedResource || undefined,
 				action: selectedAction || undefined,
-				scope: selectedScope || undefined
+				scope: selectedScope || undefined,
+				isActive: undefined
 			});
+
+			if (result && result.success) {
+				setPermissions(result.data || []);
+				setPagination((prev) => ({ ...prev, total: result.data?.length || 0 }));
+			}
 		} catch (error) {
 			console.error('Error saving permission:', error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	// Toggle permission status
 	const handleToggleStatus = async (permission: PermissionWithDetails) => {
+		setLoading(true);
 		try {
-			if (permission.isActive) {
-				await deactivatePermission(permission.id);
-			} else {
-				await activatePermission(permission.id);
-			}
+			// Toggle permission status using updatePermission
+			const updateData = {
+				name: permission.name,
+				description: permission.description,
+				resource: permission.resource,
+				action: permission.action,
+				scope: permission.scope,
+				conditions: permission.conditions,
+				isActive: !permission.isActive
+			};
+			await updatePermission(permission.id, updateData);
 
 			// Refresh the list
-			await getAllPermissions({
-				page: pagination.page,
-				limit: pagination.limit,
-				search: searchTerm,
-				resource: selectedResource || undefined,
-				action: selectedAction || undefined,
-				scope: selectedScope || undefined
-			});
+			const result = await getAllPermissions();
+
+			if (result && result.success) {
+				setPermissions(result.data || []);
+				setPagination((prev) => ({ ...prev, total: result.data?.length || 0 }));
+			}
 		} catch (error) {
 			console.error('Error toggling permission status:', error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -293,17 +340,22 @@ export default function PermissionsPage() {
 
 	const handleDeleteConfirm = async () => {
 		if (deleteConfirmDialog.permission) {
-			await deletePermission(deleteConfirmDialog.permission.id);
-			setDeleteConfirmDialog({ open: false, permission: null });
-			// Refresh the list
-			await getAllPermissions({
-				page: pagination.page,
-				limit: pagination.limit,
-				search: searchTerm,
-				resource: selectedResource || undefined,
-				action: selectedAction || undefined,
-				scope: selectedScope || undefined
-			});
+			setLoading(true);
+			try {
+				await deletePermission(deleteConfirmDialog.permission.id);
+				setDeleteConfirmDialog({ open: false, permission: null });
+				// Refresh the list
+				const result = await getAllPermissions();
+
+				if (result && result.success) {
+					setPermissions(result.data || []);
+					setPagination((prev) => ({ ...prev, total: result.data?.length || 0 }));
+				}
+			} catch (error) {
+				console.error('Error deleting permission:', error);
+			} finally {
+				setLoading(false);
+			}
 		}
 	};
 
@@ -364,17 +416,15 @@ export default function PermissionsPage() {
 			</Box>
 
 			{/* Statistics Cards */}
-			<Grid
-				container
-				spacing={3}
-				sx={{ mb: 4 }}
+			<Box
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+					gap: 3,
+					mb: 4
+				}}
 			>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -396,13 +446,8 @@ export default function PermissionsPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				</Box>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -424,13 +469,8 @@ export default function PermissionsPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				</Box>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -452,13 +492,8 @@ export default function PermissionsPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				</Box>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -480,22 +515,21 @@ export default function PermissionsPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-			</Grid>
+				</Box>
+			</Box>
 
 			{/* Controls */}
 			<Card sx={{ mb: 3 }}>
 				<CardContent>
-					<Grid
-						container
-						spacing={2}
-						alignItems="center"
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: { xs: '1fr', md: '3fr 2fr 2fr 2fr 1fr 2fr' },
+							gap: 2,
+							alignItems: 'center'
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							md={3}
-						>
+						<Box>
 							<TextField
 								fullWidth
 								placeholder="Buscar permisos..."
@@ -506,12 +540,8 @@ export default function PermissionsPage() {
 									startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
 								}}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={2}
-						>
+						</Box>
+						<Box>
 							<Autocomplete
 								options={RESOURCES}
 								value={selectedResource}
@@ -523,12 +553,8 @@ export default function PermissionsPage() {
 									/>
 								)}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={2}
-						>
+						</Box>
+						<Box>
 							<Autocomplete
 								options={ACTIONS}
 								value={selectedAction}
@@ -540,12 +566,8 @@ export default function PermissionsPage() {
 									/>
 								)}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={2}
-						>
+						</Box>
+						<Box>
 							<Autocomplete
 								options={SCOPES}
 								value={selectedScope}
@@ -557,12 +579,8 @@ export default function PermissionsPage() {
 									/>
 								)}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={1}
-						>
+						</Box>
+						<Box>
 							<Button
 								variant="outlined"
 								onClick={handleSearch}
@@ -570,12 +588,8 @@ export default function PermissionsPage() {
 							>
 								Buscar
 							</Button>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={2}
-						>
+						</Box>
+						<Box>
 							<Button
 								variant="contained"
 								startIcon={<AddIcon />}
@@ -584,8 +598,8 @@ export default function PermissionsPage() {
 							>
 								Nuevo Permiso
 							</Button>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				</CardContent>
 			</Card>
 
@@ -748,16 +762,15 @@ export default function PermissionsPage() {
 			>
 				<DialogTitle>{editingPermission ? 'Editar Permiso' : 'Crear Nuevo Permiso'}</DialogTitle>
 				<DialogContent>
-					<Grid
-						container
-						spacing={3}
-						sx={{ mt: 1 }}
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+							gap: 3,
+							mt: 1
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
+						<Box>
 							<TextField
 								fullWidth
 								label="Nombre del Permiso"
@@ -765,12 +778,8 @@ export default function PermissionsPage() {
 								onChange={handleFormChange('name')}
 								required
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
+						</Box>
+						<Box>
 							<Autocomplete
 								options={RESOURCES}
 								value={formData.resource}
@@ -785,12 +794,8 @@ export default function PermissionsPage() {
 									/>
 								)}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
+						</Box>
+						<Box>
 							<Autocomplete
 								options={ACTIONS}
 								value={formData.action}
@@ -803,12 +808,8 @@ export default function PermissionsPage() {
 									/>
 								)}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
+						</Box>
+						<Box>
 							<FormControl fullWidth>
 								<InputLabel>Alcance</InputLabel>
 								<Select
@@ -826,11 +827,8 @@ export default function PermissionsPage() {
 									))}
 								</Select>
 							</FormControl>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-						>
+						</Box>
+						<Box sx={{ gridColumn: '1 / -1' }}>
 							<TextField
 								fullWidth
 								multiline
@@ -839,11 +837,8 @@ export default function PermissionsPage() {
 								value={formData.description}
 								onChange={handleFormChange('description')}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-						>
+						</Box>
+						<Box sx={{ gridColumn: '1 / -1' }}>
 							<FormControlLabel
 								control={
 									<Switch
@@ -853,8 +848,8 @@ export default function PermissionsPage() {
 								}
 								label="Permiso Activo"
 							/>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleCloseDialog}>Cancelar</Button>

@@ -19,31 +19,12 @@ import { enqueueSnackbar } from 'notistack';
 import Link from 'next/link';
 
 // Mock data
-const _mockResources = [
-	{ id: '1', name: 'Salón 101', type: 'SALON' },
-	{ id: '2', name: 'Lab Cómputo 1', type: 'LAB' },
-	{ id: '3', name: 'Auditorio Principal', type: 'AUDITORIO' },
-	{ id: '4', name: 'Proyector Salón 205', type: 'EQUIPO' }
-];
-
-const _mockTechnicians = [
-	{ id: '1', name: 'Juan Pérez', specialty: 'Electrónica' },
-	{ id: '2', name: 'María García', specialty: 'Sistemas' },
-	{ id: '3', name: 'Carlos López', specialty: 'Plomería' },
-	{ id: '4', name: 'Ana Martínez', specialty: 'Limpieza' }
-];
 
 const maintenanceTypes = [
 	{ value: 'PREVENTIVO', label: 'Preventivo' },
 	{ value: 'CORRECTIVO', label: 'Correctivo' },
 	{ value: 'EMERGENCIA', label: 'Emergencia' },
 	{ value: 'LIMPIEZA', label: 'Limpieza' }
-];
-
-const _priorities = [
-	{ value: 'ALTA', label: 'Alta' },
-	{ value: 'MEDIA', label: 'Media' },
-	{ value: 'BAJA', label: 'Baja' }
 ];
 
 interface MaintenanceTask {

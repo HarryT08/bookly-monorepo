@@ -5,9 +5,6 @@ import {
 	Box,
 	Typography,
 	Button,
-	Card,
-	CardContent,
-	Chip,
 	FormControl,
 	InputLabel,
 	Select,
@@ -19,9 +16,7 @@ import {
 	DialogContent,
 	DialogActions,
 	TextField,
-	Stack,
-	Grid,
-	Paper
+	Stack
 } from '@mui/material';
 import {
 	ChevronLeft as ChevronLeftIcon,
@@ -33,12 +28,17 @@ import {
 	Add as AddIcon,
 	Refresh as RefreshIcon
 } from '@mui/icons-material';
-import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 
 import { PageTitle } from '@components/atoms';
+import { CalendarView } from '@components/organisms/calendar/calendar-view';
 import { useCalendarView, useReservation } from '@hooks/useAvailability';
-import { CalendarViewType, CalendarEventDisplay, EventType, AvailabilitySlot } from '@services/availability/types';
+import {
+	CalendarViewType,
+	CalendarEventDisplay,
+	EventType,
+	CreateReservationRequest
+} from '@services/availability/types';
 
 interface CalendarState {
 	currentDate: Date;
@@ -46,14 +46,6 @@ interface CalendarState {
 	selectedResourceId: string;
 	showOnlyMyReservations: boolean;
 }
-
-const EVENT_TYPE_COLORS = {
-	RESERVATION: '#1976d2',
-	SCHEDULE: '#388e3c',
-	AVAILABILITY: '#f57c00',
-	EXTERNAL: '#7b1fa2',
-	BLOCKED: '#d32f2f'
-} as const;
 
 const VIEW_TYPE_ICONS = {
 	MONTH: ViewModuleIcon,
@@ -64,7 +56,6 @@ const VIEW_TYPE_ICONS = {
 
 export default function CalendarPage() {
 	const router = useRouter();
-	const { enqueueSnackbar } = useSnackbar();
 
 	// State management
 	const [calendarState, setCalendarState] = useState<CalendarState>({
@@ -80,7 +71,7 @@ export default function CalendarPage() {
 	const [selectedDateForCreate, setSelectedDateForCreate] = useState<Date | null>(null);
 
 	// Hooks
-	const { loading, error, calendarData, getCalendarView, refreshCalendarView } = useCalendarView();
+	const { loading, error, calendarData, getCalendarView } = useCalendarView();
 
 	const { createReservation } = useReservation();
 
@@ -207,7 +198,7 @@ export default function CalendarPage() {
 		setShowCreateDialog(true);
 	};
 
-	const handleCreateReservation = async (reservationData: any) => {
+	const handleCreateReservation = async (reservationData: CreateReservationRequest) => {
 		const success = await createReservation({
 			...reservationData,
 			startDate: selectedDateForCreate || new Date(),
@@ -230,10 +221,11 @@ export default function CalendarPage() {
 		switch (viewType) {
 			case CalendarViewType.MONTH:
 				return date.toLocaleDateString('en-US', options);
-			case CalendarViewType.WEEK:
+			case CalendarViewType.WEEK: {
 				const startOfWeek = getViewStartDate(date, viewType);
 				const endOfWeek = getViewEndDate(date, viewType);
 				return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+			}
 			case CalendarViewType.DAY:
 				return date.toLocaleDateString('en-US', { ...options, day: 'numeric', weekday: 'long' });
 			default:
@@ -244,204 +236,19 @@ export default function CalendarPage() {
 	const renderCalendarGrid = () => {
 		if (!calendarData) return null;
 
-		const { events, availabilitySlots, conflicts } = calendarData;
-
-		switch (calendarState.viewType) {
-			case CalendarViewType.MONTH:
-				return renderMonthView(events, availabilitySlots);
-			case CalendarViewType.WEEK:
-				return renderWeekView(events, availabilitySlots);
-			case CalendarViewType.DAY:
-				return renderDayView(events, availabilitySlots);
-			case CalendarViewType.AGENDA:
-				return renderAgendaView(events);
-			default:
-				return renderMonthView(events, availabilitySlots);
-		}
-	};
-
-	const renderMonthView = (events: CalendarEventDisplay[], slots: AvailabilitySlot[]) => {
-		const startDate = getViewStartDate(calendarState.currentDate, CalendarViewType.MONTH);
-		const weeks = [];
-		const currentDate = new Date(startDate);
-
-		for (let week = 0; week < 6; week++) {
-			const days = [];
-			for (let day = 0; day < 7; day++) {
-				const dayEvents = events.filter(
-					(event) => new Date(event.start).toDateString() === currentDate.toDateString()
-				);
-
-				days.push(
-					<Paper
-						key={currentDate.toISOString()}
-						elevation={1}
-						sx={{
-							minHeight: 120,
-							p: 1,
-							cursor: 'pointer',
-							'&:hover': { bgcolor: 'action.hover' }
-						}}
-						onClick={() => handleDateClick(new Date(currentDate))}
-					>
-						<Typography
-							variant="body2"
-							sx={{ mb: 1 }}
-						>
-							{currentDate.getDate()}
-						</Typography>
-						{dayEvents.slice(0, 3).map((event, index) => (
-							<Chip
-								key={event.id}
-								label={event.title}
-								size="small"
-								sx={{
-									mb: 0.5,
-									bgcolor: event.color || EVENT_TYPE_COLORS[event.type],
-									color: 'white',
-									fontSize: '0.7rem',
-									height: 18
-								}}
-								onClick={(e) => {
-									e.stopPropagation();
-									handleEventClick(event);
-								}}
-							/>
-						))}
-						{dayEvents.length > 3 && (
-							<Typography
-								variant="caption"
-								color="text.secondary"
-							>
-								+{dayEvents.length - 3} more
-							</Typography>
-						)}
-					</Paper>
-				);
-				currentDate.setDate(currentDate.getDate() + 1);
-			}
-			weeks.push(
-				<Grid
-					container
-					spacing={1}
-					key={week}
-				>
-					{days.map((day, index) => (
-						<Grid
-							item
-							xs
-							key={index}
-						>
-							{day}
-						</Grid>
-					))}
-				</Grid>
-			);
-		}
+		const { events, availabilitySlots } = calendarData;
 
 		return (
-			<Box>
-				{/* Day headers */}
-				<Grid
-					container
-					spacing={1}
-					sx={{ mb: 1 }}
-				>
-					{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-						<Grid
-							item
-							xs
-							key={day}
-						>
-							<Typography
-								variant="subtitle2"
-								align="center"
-								sx={{ p: 1 }}
-							>
-								{day}
-							</Typography>
-						</Grid>
-					))}
-				</Grid>
-				{weeks}
-			</Box>
-		);
-	};
-
-	const renderWeekView = (events: CalendarEventDisplay[], slots: AvailabilitySlot[]) => {
-		return (
-			<Typography
-				variant="h6"
-				align="center"
-				sx={{ py: 4 }}
-			>
-				Week View - Implementation Coming Soon
-			</Typography>
-		);
-	};
-
-	const renderDayView = (events: CalendarEventDisplay[], slots: AvailabilitySlot[]) => {
-		return (
-			<Typography
-				variant="h6"
-				align="center"
-				sx={{ py: 4 }}
-			>
-				Day View - Implementation Coming Soon
-			</Typography>
-		);
-	};
-
-	const renderAgendaView = (events: CalendarEventDisplay[]) => {
-		return (
-			<Stack spacing={2}>
-				{events.map((event) => (
-					<Card
-						key={event.id}
-						elevation={1}
-					>
-						<CardContent sx={{ py: 2 }}>
-							<Stack
-								direction="row"
-								spacing={2}
-								alignItems="center"
-							>
-								<Box
-									sx={{
-										width: 12,
-										height: 12,
-										borderRadius: 1,
-										bgcolor: event.color || EVENT_TYPE_COLORS[event.type]
-									}}
-								/>
-								<Box sx={{ flexGrow: 1 }}>
-									<Typography variant="subtitle1">{event.title}</Typography>
-									<Typography
-										variant="body2"
-										color="text.secondary"
-									>
-										{new Date(event.start).toLocaleString()} -{' '}
-										{new Date(event.end).toLocaleString()}
-									</Typography>
-									{event.resourceName && (
-										<Typography
-											variant="caption"
-											color="text.secondary"
-										>
-											Resource: {event.resourceName}
-										</Typography>
-									)}
-								</Box>
-								<Chip
-									label={event.type}
-									size="small"
-									color={event.status === 'CONFIRMED' ? 'success' : 'default'}
-								/>
-							</Stack>
-						</CardContent>
-					</Card>
-				))}
-			</Stack>
+			<CalendarView
+				events={events}
+				availabilitySlots={availabilitySlots}
+				viewType={calendarState.viewType}
+				currentDate={calendarState.currentDate}
+				onDateChange={(date: Date) => setCalendarState((prev) => ({ ...prev, currentDate: date }))}
+				onEventClick={handleEventClick}
+				onDateClick={handleDateClick}
+				loading={loading}
+			/>
 		);
 	};
 
@@ -686,7 +493,14 @@ export default function CalendarPage() {
 						Full Form
 					</Button>
 					<Button
-						onClick={() => handleCreateReservation({})}
+						onClick={() =>
+							handleCreateReservation({
+								title: 'Nueva Reserva',
+								startDate: selectedDateForCreate || new Date(),
+								endDate: selectedDateForCreate || new Date(),
+								resourceId: ''
+							})
+						}
 						variant="contained"
 					>
 						Quick Create

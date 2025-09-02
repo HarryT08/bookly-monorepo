@@ -210,6 +210,43 @@ export function useAuth() {
 		authServices.ssoGoogleLogin();
 	}, []);
 
+	const handleSSOCallback = useCallback(async (code: string, _state: string | null) => {
+		setLoading(true);
+		try {
+			const response = await authServices.ssoCallback(code);
+
+			if (response.success) {
+				const userData = transformUser(response.data.user);
+				const token = response.data.token;
+
+				// Store in memory
+				currentUser = userData;
+				authToken = token;
+				isAuthenticated = true;
+
+				// Store in localStorage
+				localStorage.setItem('auth_token', token);
+				localStorage.setItem('user_data', JSON.stringify(userData));
+
+				setUser(userData);
+				setIsLoggedIn(true);
+
+				enqueueSnackbar('Inicio de sesión SSO exitoso', { variant: 'success' });
+
+				return { success: true, user: userData };
+			} else {
+				enqueueSnackbar(response.message || 'Error en el callback SSO', { variant: 'error' });
+				throw new Error(response.message || 'Error en el callback SSO');
+			}
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Error en el callback SSO';
+			enqueueSnackbar(errorMessage, { variant: 'error' });
+			throw error;
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
 	return {
 		// State
 		user,
@@ -224,6 +261,7 @@ export function useAuth() {
 		updateProfile,
 		refreshProfile,
 		ssoGoogleLogin,
+		handleSSOCallback,
 
 		// Permissions
 		hasPermission,

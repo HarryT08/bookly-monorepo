@@ -24,7 +24,6 @@ import {
 	InputLabel,
 	Select,
 	MenuItem,
-	Grid,
 	Alert,
 	Stack,
 	Pagination,
@@ -329,16 +328,14 @@ export default function DocumentsPage() {
 
 				{/* Stats Cards */}
 				{stats && (
-					<Grid
-						container
-						spacing={2}
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+							gap: 2
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -350,13 +347,8 @@ export default function DocumentsPage() {
 									<Typography variant="h4">{stats.generatedToday}</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -368,13 +360,8 @@ export default function DocumentsPage() {
 									<Typography variant="h4">{stats.totalGenerated}</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -386,13 +373,8 @@ export default function DocumentsPage() {
 									<Typography variant="h4">{stats.byFormat.PDF || 0}</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<Card>
 								<CardContent>
 									<Typography
@@ -404,8 +386,8 @@ export default function DocumentsPage() {
 									<Typography variant="h4">{stats.byEventType.RESERVATION_APPROVED || 0}</Typography>
 								</CardContent>
 							</Card>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				)}
 
 				{/* Error Alerts */}
@@ -718,14 +700,14 @@ export default function DocumentsPage() {
 							onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })}
 						/>
 
-						<Grid
-							container
-							spacing={2}
+						<Box
+							sx={{
+								display: 'grid',
+								gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+								gap: 2
+							}}
 						>
-							<Grid
-								item
-								xs={6}
-							>
+							<Box>
 								<FormControl fullWidth>
 									<InputLabel>Event Type</InputLabel>
 									<Select
@@ -747,11 +729,8 @@ export default function DocumentsPage() {
 										))}
 									</Select>
 								</FormControl>
-							</Grid>
-							<Grid
-								item
-								xs={6}
-							>
+							</Box>
+							<Box>
 								<FormControl fullWidth>
 									<InputLabel>Format</InputLabel>
 									<Select
@@ -773,8 +752,8 @@ export default function DocumentsPage() {
 										))}
 									</Select>
 								</FormControl>
-							</Grid>
-						</Grid>
+							</Box>
+						</Box>
 
 						<TextField
 							fullWidth

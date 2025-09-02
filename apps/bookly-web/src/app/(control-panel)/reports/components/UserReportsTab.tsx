@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
 	Box,
-	Grid,
 	Card,
 	CardContent,
 	Typography,
@@ -123,7 +122,7 @@ export default function UserReportsTab() {
 				try {
 					const status = await exportReportsService.getExportStatus(exportResponse.id);
 
-					if (status.status === 'COMPLETED' && status.isAvailable) {
+					if (status.status === 'COMPLETED') {
 						const blob = await exportReportsService.downloadExport(exportResponse.id);
 
 						// Create download link
@@ -221,16 +220,18 @@ export default function UserReportsTab() {
 							Filtros de Reporte de Usuarios
 						</Typography>
 
-						<Grid
-							container
-							spacing={3}
+						<Box
+							sx={{
+								display: 'grid',
+								gridTemplateColumns: {
+									xs: '1fr',
+									md: 'repeat(4, 1fr)'
+								},
+								gap: 3
+							}}
 						>
 							{/* Date Range */}
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<DatePicker
 									label="Fecha Inicio"
 									value={filters.startDate ? new Date(filters.startDate) : null}
@@ -244,13 +245,9 @@ export default function UserReportsTab() {
 										}
 									}}
 								/>
-							</Grid>
+							</Box>
 
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<DatePicker
 									label="Fecha Fin"
 									value={filters.endDate ? new Date(filters.endDate) : null}
@@ -264,14 +261,10 @@ export default function UserReportsTab() {
 										}
 									}}
 								/>
-							</Grid>
+							</Box>
 
 							{/* Roles Filter */}
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<FormControl
 									fullWidth
 									size="small"
@@ -311,14 +304,10 @@ export default function UserReportsTab() {
 										))}
 									</Select>
 								</FormControl>
-							</Grid>
+							</Box>
 
 							{/* Options */}
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<FormControlLabel
 									control={
 										<Switch
@@ -328,13 +317,10 @@ export default function UserReportsTab() {
 									}
 									label="Incluir detalles"
 								/>
-							</Grid>
+							</Box>
 
 							{/* Actions */}
-							<Grid
-								item
-								xs={12}
-							>
+							<Box sx={{ gridColumn: '1 / -1' }}>
 								<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
 									<Button
 										variant="contained"
@@ -354,8 +340,8 @@ export default function UserReportsTab() {
 										Exportar CSV
 									</Button>
 								</Box>
-							</Grid>
-						</Grid>
+							</Box>
+						</Box>
 					</CardContent>
 				</Card>
 
@@ -379,17 +365,18 @@ export default function UserReportsTab() {
 					reportData && (
 						<>
 							{/* Summary Cards */}
-							<Grid
-								container
-								spacing={3}
-								sx={{ mb: 3 }}
+							<Box
+								sx={{
+									display: 'grid',
+									gridTemplateColumns: {
+										xs: '1fr',
+										sm: 'repeat(2, 1fr)'
+									},
+									gap: 3,
+									mb: 3
+								}}
 							>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -406,13 +393,8 @@ export default function UserReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								</Box>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -429,13 +411,8 @@ export default function UserReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								</Box>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -452,13 +429,8 @@ export default function UserReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								</Box>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -475,8 +447,8 @@ export default function UserReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-							</Grid>
+								</Box>
+							</Box>
 
 							{/* Data Table */}
 							<Card>

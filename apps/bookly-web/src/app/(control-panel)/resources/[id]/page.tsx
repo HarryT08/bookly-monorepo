@@ -125,8 +125,7 @@ export default function ResourceDetailPage({ params }: PageProps) {
 					<span className="font-medium">{tResources('CAPACITY')}:</span> {data.capacity}
 				</div>
 				<div>
-					<span className="font-medium">{tResources('LOCATION')}:</span>{' '}
-					{data.location?.description ?? '-'}{' '}
+					<span className="font-medium">{tResources('LOCATION')}:</span> {data.location ?? '-'}{' '}
 				</div>
 				<div>
 					<span className="font-medium">{tResources('STATUS')}:</span> {data.status}

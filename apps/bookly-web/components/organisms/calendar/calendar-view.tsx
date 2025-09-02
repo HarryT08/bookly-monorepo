@@ -1,18 +1,9 @@
 'use client';
 
 import React from 'react';
-import {
-	Box,
-	Card,
-	CardContent,
-	Typography,
-	Stack,
-	Paper,
-	Chip,
-	alpha,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Stack, Paper, Chip, alpha } from '@mui/material';
 
-import { CalendarEventDisplay, CalendarViewType, EventType, AvailabilitySlot } from '@services/availability/types';
+import { CalendarEventDisplay, CalendarViewType, AvailabilitySlot } from '@services/availability/types';
 
 interface CalendarViewProps {
 	events: CalendarEventDisplay[];
@@ -111,7 +102,7 @@ export function CalendarView({
 		onDateClick?.(date);
 	};
 
-	const renderDayCell = (date: Date, isCurrentMonth: boolean = true) => {
+	const renderDayCell = (date: Date, isCurrentMonth = true) => {
 		const dayEvents = getEventsForDate(date);
 		const daySlots = getAvailabilitySlotsForDate(date);
 		const isToday = date.toDateString() === new Date().toDateString();
@@ -222,7 +213,10 @@ export function CalendarView({
 				{/* Day headers */}
 				<Box sx={{ display: 'flex', gap: 1 }}>
 					{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-						<Box key={day} sx={{ flex: 1 }}>
+						<Box
+							key={day}
+							sx={{ flex: 1 }}
+						>
 							<Typography
 								variant="subtitle2"
 								align="center"
@@ -240,11 +234,17 @@ export function CalendarView({
 
 				{/* Calendar grid */}
 				{weeks.map((week, weekIndex) => (
-					<Box key={weekIndex} sx={{ display: 'flex', gap: 1 }}>
+					<Box
+						key={weekIndex}
+						sx={{ display: 'flex', gap: 1 }}
+					>
 						{week.map((date, dayIndex) => {
 							const isCurrentMonth = date.getMonth() === currentDate.getMonth();
 							return (
-								<Box key={dayIndex} sx={{ flex: 1 }}>
+								<Box
+									key={dayIndex}
+									sx={{ flex: 1 }}
+								>
 									{renderDayCell(date, isCurrentMonth)}
 								</Box>
 							);
@@ -263,7 +263,10 @@ export function CalendarView({
 				{/* Day headers */}
 				<Box sx={{ display: 'flex', gap: 1 }}>
 					{days.map((date, index) => (
-						<Box key={index} sx={{ flex: 1 }}>
+						<Box
+							key={index}
+							sx={{ flex: 1 }}
+						>
 							<Typography
 								variant="subtitle2"
 								align="center"
@@ -278,7 +281,10 @@ export function CalendarView({
 				{/* Week grid */}
 				<Box sx={{ display: 'flex', gap: 1 }}>
 					{days.map((date, index) => (
-						<Box key={index} sx={{ flex: 1 }}>
+						<Box
+							key={index}
+							sx={{ flex: 1 }}
+						>
 							{renderDayCell(date, true)}
 						</Box>
 					))}

@@ -7,20 +7,22 @@ import {
 	Card,
 	CardContent,
 	CardHeader,
-	Chip,
 	Container,
+	Typography,
 	Dialog,
-	DialogActions,
-	DialogContent,
 	DialogTitle,
+	DialogContent,
+	DialogActions,
+	TextField,
 	FormControl,
-	FormControlLabel,
-	Grid,
-	IconButton,
 	InputLabel,
-	MenuItem,
-	Paper,
 	Select,
+	MenuItem,
+	FormGroup,
+	FormControlLabel,
+	Checkbox,
+	Chip,
+	Tooltip,
 	Table,
 	TableBody,
 	TableCell,
@@ -28,11 +30,8 @@ import {
 	TableHead,
 	TablePagination,
 	TableRow,
-	TextField,
-	Typography,
-	Tooltip,
-	Checkbox,
-	FormGroup
+	IconButton,
+	Paper
 } from '@mui/material';
 import {
 	Add as AddIcon,
@@ -66,7 +65,7 @@ export default function RolesPage() {
 		loading,
 		pagination,
 		getAllRoles,
-		getActiveRoles,
+		getActiveRoles: _getActiveRoles,
 		createRole,
 		updateRole,
 		deleteRole,
@@ -274,17 +273,19 @@ export default function RolesPage() {
 			</Box>
 
 			{/* Statistics Cards */}
-			<Grid
-				container
-				spacing={3}
-				sx={{ mb: 4 }}
+			<Box
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: {
+						xs: '1fr',
+						sm: 'repeat(2, 1fr)',
+						md: 'repeat(4, 1fr)'
+					},
+					gap: 3,
+					mb: 4
+				}}
 			>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -306,13 +307,8 @@ export default function RolesPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				</Box>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -334,13 +330,8 @@ export default function RolesPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				</Box>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -362,13 +353,8 @@ export default function RolesPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-				<Grid
-					item
-					xs={12}
-					sm={6}
-					md={3}
-				>
+				</Box>
+				<Box>
 					<Card>
 						<CardContent>
 							<Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -390,22 +376,24 @@ export default function RolesPage() {
 							</Box>
 						</CardContent>
 					</Card>
-				</Grid>
-			</Grid>
+				</Box>
+			</Box>
 
 			{/* Controls */}
 			<Card sx={{ mb: 3 }}>
 				<CardContent>
-					<Grid
-						container
-						spacing={2}
-						alignItems="center"
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: {
+								xs: '1fr',
+								md: 'repeat(4, 1fr)'
+							},
+							gap: 2,
+							alignItems: 'center'
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							md={4}
-						>
+						<Box>
 							<TextField
 								fullWidth
 								placeholder="Buscar roles..."
@@ -416,12 +404,8 @@ export default function RolesPage() {
 									startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
 								}}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<FormControl fullWidth>
 								<InputLabel>Categoría</InputLabel>
 								<Select
@@ -440,12 +424,8 @@ export default function RolesPage() {
 									))}
 								</Select>
 							</FormControl>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={3}
-						>
+						</Box>
+						<Box>
 							<Button
 								variant="outlined"
 								onClick={handleSearch}
@@ -453,12 +433,8 @@ export default function RolesPage() {
 							>
 								Buscar
 							</Button>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={2}
-						>
+						</Box>
+						<Box>
 							<Button
 								variant="contained"
 								startIcon={<AddIcon />}
@@ -467,8 +443,8 @@ export default function RolesPage() {
 							>
 								Nuevo Rol
 							</Button>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				</CardContent>
 			</Card>
 
@@ -619,16 +595,18 @@ export default function RolesPage() {
 			>
 				<DialogTitle>{editingRole ? 'Editar Rol' : 'Crear Nuevo Rol'}</DialogTitle>
 				<DialogContent>
-					<Grid
-						container
-						spacing={3}
-						sx={{ mt: 1 }}
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: {
+								xs: '1fr',
+								md: 'repeat(2, 1fr)'
+							},
+							gap: 3,
+							mt: 1
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
+						<Box>
 							<TextField
 								fullWidth
 								label="Nombre del Rol"
@@ -636,12 +614,8 @@ export default function RolesPage() {
 								onChange={handleFormChange('name')}
 								required
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							md={6}
-						>
+						</Box>
+						<Box>
 							<FormControl fullWidth>
 								<InputLabel>Categoría</InputLabel>
 								<Select
@@ -659,11 +633,8 @@ export default function RolesPage() {
 									))}
 								</Select>
 							</FormControl>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-						>
+						</Box>
+						<Box sx={{ gridColumn: '1 / -1' }}>
 							<TextField
 								fullWidth
 								multiline
@@ -672,11 +643,8 @@ export default function RolesPage() {
 								value={formData.description}
 								onChange={handleFormChange('description')}
 							/>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-						>
+						</Box>
+						<Box sx={{ gridColumn: '1 / -1' }}>
 							<Typography
 								variant="subtitle1"
 								sx={{ mb: 2 }}
@@ -684,17 +652,18 @@ export default function RolesPage() {
 								Permisos
 							</Typography>
 							<FormGroup>
-								<Grid
-									container
-									spacing={1}
+								<Box
+									sx={{
+										display: 'grid',
+										gridTemplateColumns: {
+											xs: '1fr',
+											md: 'repeat(2, 1fr)'
+										},
+										gap: 1
+									}}
 								>
 									{permissions.map((permission) => (
-										<Grid
-											item
-											xs={12}
-											md={6}
-											key={permission.id}
-										>
+										<Box key={permission.id}>
 											<FormControlLabel
 												control={
 													<Checkbox
@@ -714,12 +683,12 @@ export default function RolesPage() {
 													</Box>
 												}
 											/>
-										</Grid>
+										</Box>
 									))}
-								</Grid>
+								</Box>
 							</FormGroup>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleCloseDialog}>Cancelar</Button>

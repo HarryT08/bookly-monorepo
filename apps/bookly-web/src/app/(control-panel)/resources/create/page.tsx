@@ -25,7 +25,7 @@ export default function CreateResourcePage() {
 			/>
 
 			<div className="rounded border p-4">
-				<ResourceForm />
+				<ResourceForm mode="create" />
 			</div>
 		</div>
 	);

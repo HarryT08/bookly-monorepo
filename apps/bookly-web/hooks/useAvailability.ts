@@ -4,7 +4,7 @@
  * Based on CQRS patterns and following RF-07, RF-08, RF-10, RF-11 requirements
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useSnackbar } from 'notistack';
 import {
 	availabilityService,

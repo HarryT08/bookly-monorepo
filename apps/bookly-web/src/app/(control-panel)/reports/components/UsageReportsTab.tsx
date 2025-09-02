@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
 	Box,
-	Grid,
 	Card,
 	CardContent,
 	Typography,
@@ -106,7 +105,7 @@ export default function UsageReportsTab() {
 				try {
 					const status = await exportReportsService.getExportStatus(exportResponse.id);
 
-					if (status.status === 'COMPLETED' && status.isAvailable) {
+					if (status.status === 'COMPLETED') {
 						const blob = await exportReportsService.downloadExport(exportResponse.id);
 
 						// Create download link
@@ -142,7 +141,7 @@ export default function UsageReportsTab() {
 		}
 	};
 
-	const handleFilterChange = (key: keyof UsageReportFilters, value: any) => {
+	const handleFilterChange = (key: keyof UsageReportFilters, value: UsageReportFilters[keyof UsageReportFilters]) => {
 		setFilters((prev) => ({
 			...prev,
 			[key]: value,
@@ -182,16 +181,18 @@ export default function UsageReportsTab() {
 							Filtros de Reporte de Uso
 						</Typography>
 
-						<Grid
-							container
-							spacing={3}
+						<Box
+							sx={{
+								display: 'grid',
+								gridTemplateColumns: {
+									xs: '1fr',
+									md: 'repeat(4, 1fr)'
+								},
+								gap: 3
+							}}
 						>
 							{/* Date Range */}
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<DatePicker
 									label="Fecha Inicio"
 									value={filters.startDate ? new Date(filters.startDate) : null}
@@ -205,13 +206,9 @@ export default function UsageReportsTab() {
 										}
 									}}
 								/>
-							</Grid>
+							</Box>
 
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<DatePicker
 									label="Fecha Fin"
 									value={filters.endDate ? new Date(filters.endDate) : null}
@@ -225,14 +222,10 @@ export default function UsageReportsTab() {
 										}
 									}}
 								/>
-							</Grid>
+							</Box>
 
 							{/* Programs Filter */}
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<FormControl
 									fullWidth
 									size="small"
@@ -241,7 +234,7 @@ export default function UsageReportsTab() {
 									<Select
 										multiple
 										value={filters.programIds || []}
-										onChange={(e) => handleFilterChange('programIds', e.target.value)}
+										onChange={(e) => handleFilterChange('programIds', e.target.value as string[])}
 										renderValue={(selected) => (
 											<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 												{(selected as string[]).map((value) => {
@@ -267,14 +260,10 @@ export default function UsageReportsTab() {
 										))}
 									</Select>
 								</FormControl>
-							</Grid>
+							</Box>
 
 							{/* Resource Types Filter */}
-							<Grid
-								item
-								xs={12}
-								md={3}
-							>
+							<Box>
 								<FormControl
 									fullWidth
 									size="small"
@@ -283,7 +272,9 @@ export default function UsageReportsTab() {
 									<Select
 										multiple
 										value={filters.resourceTypes || []}
-										onChange={(e) => handleFilterChange('resourceTypes', e.target.value)}
+										onChange={(e) =>
+											handleFilterChange('resourceTypes', e.target.value as string[])
+										}
 										renderValue={(selected) => (
 											<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
 												{(selected as string[]).map((value) => (
@@ -306,19 +297,18 @@ export default function UsageReportsTab() {
 										))}
 									</Select>
 								</FormControl>
-							</Grid>
+							</Box>
 
 							{/* Options */}
-							<Grid
-								item
-								xs={12}
-							>
+							<Box sx={{ gridColumn: '1 / -1' }}>
 								<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
 									<FormControlLabel
 										control={
 											<Switch
 												checked={filters.includeDetails || false}
-												onChange={(e) => handleFilterChange('includeDetails', e.target.checked)}
+												onChange={(e) =>
+													handleFilterChange('includeDetails', e.target.checked as boolean)
+												}
 											/>
 										}
 										label="Incluir detalles"
@@ -342,8 +332,8 @@ export default function UsageReportsTab() {
 										Exportar CSV
 									</Button>
 								</Box>
-							</Grid>
-						</Grid>
+							</Box>
+						</Box>
 					</CardContent>
 				</Card>
 
@@ -367,17 +357,18 @@ export default function UsageReportsTab() {
 					reportData && (
 						<>
 							{/* Summary Cards */}
-							<Grid
-								container
-								spacing={3}
-								sx={{ mb: 3 }}
+							<Box
+								sx={{
+									display: 'grid',
+									gridTemplateColumns: {
+										xs: '1fr',
+										sm: 'repeat(2, 1fr)'
+									},
+									gap: 3,
+									mb: 3
+								}}
 							>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -394,13 +385,8 @@ export default function UsageReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								</Box>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -417,13 +403,8 @@ export default function UsageReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								</Box>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -440,13 +421,8 @@ export default function UsageReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-									md={3}
-								>
+								</Box>
+								<Box>
 									<Card>
 										<CardContent>
 											<Typography
@@ -463,8 +439,8 @@ export default function UsageReportsTab() {
 											</Typography>
 										</CardContent>
 									</Card>
-								</Grid>
-							</Grid>
+								</Box>
+							</Box>
 
 							{/* Data Table */}
 							<Card>

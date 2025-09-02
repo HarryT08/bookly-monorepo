@@ -5,7 +5,6 @@ import {
 	Box,
 	Card,
 	CardContent,
-	Grid,
 	Typography,
 	Tab,
 	Tabs,
@@ -138,17 +137,18 @@ export default function ReportsPage() {
 					</Box>
 				) : (
 					statistics && (
-						<Grid
-							container
-							spacing={3}
-							sx={{ mb: 4 }}
+						<Box
+							sx={{
+								display: 'grid',
+								gridTemplateColumns: {
+									xs: '1fr',
+									sm: 'repeat(2, 1fr)'
+								},
+								gap: 3,
+								mb: 4
+							}}
 						>
-							<Grid
-								item
-								xs={12}
-								sm={6}
-								md={3}
-							>
+							<Box>
 								<Card>
 									<CardContent>
 										<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -170,13 +170,8 @@ export default function ReportsPage() {
 										</Box>
 									</CardContent>
 								</Card>
-							</Grid>
-							<Grid
-								item
-								xs={12}
-								sm={6}
-								md={3}
-							>
+							</Box>
+							<Box>
 								<Card>
 									<CardContent>
 										<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -198,13 +193,8 @@ export default function ReportsPage() {
 										</Box>
 									</CardContent>
 								</Card>
-							</Grid>
-							<Grid
-								item
-								xs={12}
-								sm={6}
-								md={3}
-							>
+							</Box>
+							<Box>
 								<Card>
 									<CardContent>
 										<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -226,13 +216,8 @@ export default function ReportsPage() {
 										</Box>
 									</CardContent>
 								</Card>
-							</Grid>
-							<Grid
-								item
-								xs={12}
-								sm={6}
-								md={3}
-							>
+							</Box>
+							<Box>
 								<Card>
 									<CardContent>
 										<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -254,8 +239,8 @@ export default function ReportsPage() {
 										</Box>
 									</CardContent>
 								</Card>
-							</Grid>
-						</Grid>
+							</Box>
+						</Box>
 					)
 				)}
 

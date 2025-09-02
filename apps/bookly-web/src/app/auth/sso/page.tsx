@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@hooks/useAuth';
 
 export default function SSOPage() {
-	const { isAuthenticated, loading, loginSSO } = useAuth();
+	const { isAuthenticated, loading, ssoGoogleLogin } = useAuth();
 	const router = useRouter();
 
 	// Redirect if already authenticated
@@ -19,7 +19,7 @@ export default function SSOPage() {
 
 	const handleGoogleSSO = async () => {
 		try {
-			await loginSSO();
+			ssoGoogleLogin();
 		} catch (error) {
 			console.error('SSO login failed:', error);
 		}

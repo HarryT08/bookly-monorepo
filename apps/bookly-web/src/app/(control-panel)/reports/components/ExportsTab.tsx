@@ -24,7 +24,6 @@ import {
 	DialogContent,
 	DialogActions,
 	LinearProgress,
-	Grid,
 	FormControl,
 	InputLabel,
 	Select,
@@ -182,17 +181,19 @@ export default function ExportsTab() {
 						</Tooltip>
 					</Box>
 
-					<Grid
-						container
-						spacing={2}
-						alignItems="center"
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateColumns: {
+								xs: '1fr',
+								sm: 'repeat(2, 1fr)',
+								md: 'repeat(3, 1fr)'
+							},
+							gap: 2,
+							alignItems: 'center'
+						}}
 					>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={4}
-						>
+						<Box>
 							<FormControl
 								fullWidth
 								size="small"
@@ -208,21 +209,16 @@ export default function ExportsTab() {
 									<MenuItem value="users">Reportes de Usuarios</MenuItem>
 								</Select>
 							</FormControl>
-						</Grid>
-						<Grid
-							item
-							xs={12}
-							sm={6}
-							md={4}
-						>
+						</Box>
+						<Box>
 							<Typography
 								variant="body2"
 								color="text.secondary"
 							>
 								Total: {filteredExports.length} exportaciones
 							</Typography>
-						</Grid>
-					</Grid>
+						</Box>
+					</Box>
 				</CardContent>
 			</Card>
 
@@ -380,34 +376,24 @@ export default function ExportsTab() {
 				<DialogContent>
 					{selectedExport && (
 						<Box sx={{ pt: 1 }}>
-							<Grid
-								container
-								spacing={2}
+							<Box
+								sx={{
+									display: 'grid',
+									gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+									gap: 2
+								}}
 							>
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
 									>
 										Archivo
 									</Typography>
-									<Typography
-										variant="body2"
-										sx={{ mb: 2 }}
-									>
-										{selectedExport.filename}
-									</Typography>
-								</Grid>
+									<Typography variant="body2">{selectedExport.filename}</Typography>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
@@ -418,166 +404,73 @@ export default function ExportsTab() {
 										label={getStatusLabel(selectedExport.status)}
 										color={getStatusColor(selectedExport.status)}
 										size="small"
-										sx={{ mb: 2 }}
 									/>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
 									>
-										Tipo de Reporte
+										Tipo
 									</Typography>
-									<Typography
-										variant="body2"
-										sx={{ mb: 2 }}
-									>
+									<Typography variant="body2">
 										{selectedExport.reportType === 'usage'
 											? 'Reporte de Uso'
 											: 'Reporte de Usuarios'}
 									</Typography>
-								</Grid>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
 									>
 										Formato
 									</Typography>
-									<Typography
-										variant="body2"
-										sx={{ mb: 2 }}
-									>
-										{selectedExport.format.toUpperCase()}
-									</Typography>
-								</Grid>
+									<Typography variant="body2">{selectedExport.format.toUpperCase()}</Typography>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
 									>
-										Fecha de Creación
+										Creado
 									</Typography>
-									<Typography
-										variant="body2"
-										sx={{ mb: 2 }}
-									>
-										{formatDate(selectedExport.createdAt)}
-									</Typography>
-								</Grid>
+									<Typography variant="body2">{formatDate(selectedExport.createdAt)}</Typography>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
 									>
-										Fecha de Expiración
+										Expira
 									</Typography>
-									<Typography
-										variant="body2"
-										sx={{ mb: 2 }}
-										color={isExpired(selectedExport.expiresAt) ? 'error' : 'text.primary'}
-									>
-										{formatDate(selectedExport.expiresAt)}
-									</Typography>
-								</Grid>
+									<Typography variant="body2">{formatDate(selectedExport.expiresAt)}</Typography>
+								</Box>
 
-								{selectedExport.completedAt && (
-									<Grid
-										item
-										xs={12}
-										sm={6}
-									>
-										<Typography
-											variant="subtitle2"
-											gutterBottom
-										>
-											Fecha de Finalización
-										</Typography>
-										<Typography
-											variant="body2"
-											sx={{ mb: 2 }}
-										>
-											{formatDate(selectedExport.completedAt)}
-										</Typography>
-									</Grid>
-								)}
-
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
 									>
-										Tamaño del Archivo
+										Tamaño
 									</Typography>
-									<Typography
-										variant="body2"
-										sx={{ mb: 2 }}
-									>
-										{formatFileSize(selectedExport.fileSize)}
-									</Typography>
-								</Grid>
+									<Typography variant="body2">{formatFileSize(selectedExport.fileSize)}</Typography>
+								</Box>
 
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
+								<Box>
 									<Typography
 										variant="subtitle2"
 										gutterBottom
 									>
-										Número de Descargas
+										Descargas
 									</Typography>
-									<Typography
-										variant="body2"
-										sx={{ mb: 2 }}
-									>
-										{selectedExport.downloadCount}
-									</Typography>
-								</Grid>
-
-								<Grid
-									item
-									xs={12}
-									sm={6}
-								>
-									<Typography
-										variant="subtitle2"
-										gutterBottom
-									>
-										Disponible
-									</Typography>
-									<Chip
-										label={selectedExport.isAvailable ? 'Sí' : 'No'}
-										color={selectedExport.isAvailable ? 'success' : 'error'}
-										size="small"
-									/>
-								</Grid>
-							</Grid>
+									<Typography variant="body2">{selectedExport.downloadCount}</Typography>
+								</Box>
+							</Box>
 
 							{selectedExport.status === 'PROCESSING' && (
 								<Box sx={{ mt: 3 }}>
