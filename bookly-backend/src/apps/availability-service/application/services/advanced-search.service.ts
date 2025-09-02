@@ -4,7 +4,7 @@
  * Following Clean Architecture and CQRS patterns
  */
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { ResourceRepository } from '../../../resources-service/domain/repositories/resource.repository';
 import { ReservationRepository } from '../../domain/repositories/reservation.repository';
 import { AdvancedSearchDomainService } from '../../domain/services/advanced-search-domain.service';
@@ -25,7 +25,9 @@ import {
 @Injectable()
 export class AdvancedSearchService {
   constructor(
+    @Inject('ResourceRepository')
     private readonly resourceRepository: ResourceRepository,
+    @Inject('ReservationRepository')
     private readonly reservationRepository: ReservationRepository,
     private readonly advancedSearchDomain: AdvancedSearchDomainService,
     private readonly logger: LoggingService

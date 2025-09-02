@@ -53,6 +53,7 @@ import { AuditModule } from './infrastructure/modules/audit.module';
 import { CommonModule } from '../../libs/common/common.module';
 import { EventBusModule } from '../../libs/event-bus/event-bus.module';
 import { LoggingModule } from '../../libs/logging/logging.module';
+import { ResourcesModule } from '../resources-service/resources.module';
 
 const commandHandlers = [
   CreateCalendarIntegrationHandler,
@@ -108,6 +109,7 @@ const infrastructureServices = [
     CommonModule,
     EventBusModule,
     LoggingModule,
+    ResourcesModule,
     NotificationModule,
     AuditModule,
   ],

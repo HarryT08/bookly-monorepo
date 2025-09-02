@@ -4,7 +4,7 @@
  * Following Clean Architecture and Domain-Driven Design patterns
  */
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { ResourceRepository } from '../../../resources-service/domain/repositories/resource.repository';
 import { ReservationRepository } from '../repositories/reservation.repository';
 import { LoggingService } from '@libs/logging/logging.service';
@@ -39,7 +39,9 @@ export interface AvailabilityOptions {
 @Injectable()
 export class AdvancedSearchDomainService {
   constructor(
+    @Inject('ResourceRepository')
     private readonly resourceRepository: ResourceRepository,
+    @Inject('ReservationRepository')
     private readonly reservationRepository: ReservationRepository,
     private readonly logger: LoggingService
   ) {}
