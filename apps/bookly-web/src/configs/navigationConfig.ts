@@ -53,6 +53,61 @@ const navigationConfig: FuseNavItemType[] = [
 		url: '/reports'
 	},
 	{
+		id: 'control-panel',
+		title: 'Panel de Control',
+		translate: 'CONTROL_PANEL',
+		type: 'group',
+		children: [
+			{
+				id: 'approvals',
+				title: 'Aprobaciones',
+				translate: 'APPROVALS',
+				type: 'item',
+				icon: 'heroicons-outline:clipboard-document-check',
+				url: '/control-panel/approvals'
+			},
+			{
+				id: 'surveillance',
+				title: 'Vigilancia',
+				translate: 'SURVEILLANCE',
+				type: 'item',
+				icon: 'heroicons-outline:eye',
+				url: '/control-panel/surveillance'
+			},
+			{
+				id: 'notifications',
+				title: 'Notificaciones',
+				translate: 'NOTIFICATIONS',
+				type: 'item',
+				icon: 'heroicons-outline:bell',
+				url: '/control-panel/notifications'
+			},
+			{
+				id: 'maintenance',
+				title: 'Mantenimiento',
+				translate: 'MAINTENANCE',
+				type: 'collapsable',
+				icon: 'heroicons-outline:wrench-screwdriver',
+				children: [
+					{
+						id: 'maintenance-incidents',
+						title: 'Incidentes',
+						translate: 'INCIDENTS',
+						type: 'item',
+						url: '/control-panel/maintenance/incidents'
+					},
+					{
+						id: 'maintenance-schedules',
+						title: 'Programación',
+						translate: 'SCHEDULES',
+						type: 'item',
+						url: '/control-panel/maintenance/schedules'
+					}
+				]
+			}
+		]
+	},
+	{
 		id: 'academic-programs',
 		title: 'Programas Académicos',
 		translate: 'ACADEMIC_PROGRAMS',

@@ -60,10 +60,17 @@ const channelIcons = {
 export default function NotificationsPage() {
 	const [notifications, setNotifications] = useState<SentNotification[]>([]);
 	const [stats, setStats] = useState<NotificationStats | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(false);
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
-	const [filter] = useState<NotificationFilter>({ page: 1, limit: 10 });
+	const [filter, setFilter] = useState<NotificationFilter>({});
+	
+	const { 
+		getNotifications, 
+		getNotificationStats, 
+		retryNotification, 
+		deleteNotification 
+	} = useNotification();
 
 	const loadNotifications = useCallback(async () => {
 		setLoading(true);
@@ -91,12 +98,13 @@ export default function NotificationsPage() {
 	}, [loadNotifications, loadStats]);
 
 	const handleMarkAsRead = async (id: string) => {
-		await markAsRead(id);
+		// Mark as read functionality - to be implemented
+		void id;
 		loadNotifications();
 	};
 
 	const handleResend = async (id: string) => {
-		await resendNotification(id);
+		await retryNotification(id);
 		loadNotifications();
 		loadStats();
 	};
@@ -193,7 +201,7 @@ export default function NotificationsPage() {
 					</Box>
 				)}
 
-				{notificationError && <Alert severity="error">{notificationError}</Alert>}
+				{/* Error handling placeholder - to be implemented with actual error state */}
 
 				<Card>
 					<CardContent>
