@@ -6,7 +6,6 @@ import {
 	Typography,
 	Button,
 	Chip,
-	Tooltip,
 	IconButton,
 	Menu,
 	MenuItem,
@@ -217,6 +216,7 @@ export default function ReservationsPage() {
 		if (selectedReservation?.id) {
 			router.push(`/reservations/${selectedReservation.id}/edit`);
 		}
+
 		handleActionMenuClose();
 	};
 
@@ -228,11 +228,13 @@ export default function ReservationsPage() {
 		if (!selectedReservation?.id) return;
 
 		const success = await cancelReservation(selectedReservation.id, cancelReason);
+
 		if (success) {
 			setShowCancelDialog(false);
 			setCancelReason('');
 			loadReservations();
 		}
+
 		handleActionMenuClose();
 	};
 
@@ -240,9 +242,11 @@ export default function ReservationsPage() {
 		if (!selectedReservation?.id) return;
 
 		const success = await deleteReservation(selectedReservation.id);
+
 		if (success) {
 			loadReservations();
 		}
+
 		handleActionMenuClose();
 	};
 
@@ -271,6 +275,7 @@ export default function ReservationsPage() {
 		};
 
 		const blob = await exportHistory(params);
+
 		if (blob) {
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');

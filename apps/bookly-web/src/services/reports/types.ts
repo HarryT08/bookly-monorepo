@@ -216,6 +216,25 @@ export interface PersonalStats {
 	}[];
 }
 
+// Export status interface
+export interface ExportStatus {
+	id: string;
+	status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+	progress?: number;
+	estimatedTimeRemaining?: number;
+	errorMessage?: string;
+}
+
+// Cached report interface
+export interface CachedReport {
+	id: string;
+	reportType: string;
+	data: unknown;
+	createdAt: string;
+	expiresAt: string;
+	isValid: boolean;
+}
+
 // API Response wrapper
 export interface ApiResponse<T> {
 	success: boolean;

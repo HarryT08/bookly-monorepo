@@ -271,6 +271,7 @@ export default function PermissionsPage() {
 			} else {
 				await activatePermission(permission.id);
 			}
+
 			// Refresh the list
 			await getAllPermissions({
 				page: pagination.page,

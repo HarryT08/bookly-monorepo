@@ -1,24 +1,16 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import {
 	Box,
-	Paper,
-	Typography,
-	Chip,
-	Grid,
-	Stack,
-	IconButton,
-	Tooltip,
 	Card,
 	CardContent,
-	alpha
+	Typography,
+	Stack,
+	Paper,
+	Chip,
+	alpha,
 } from '@mui/material';
-import {
-	ChevronLeft as ChevronLeftIcon,
-	ChevronRight as ChevronRightIcon,
-	Today as TodayIcon
-} from '@mui/icons-material';
 
 import { CalendarEventDisplay, CalendarViewType, EventType, AvailabilitySlot } from '@services/availability/types';
 
@@ -228,16 +220,9 @@ export function CalendarView({
 		return (
 			<Stack spacing={1}>
 				{/* Day headers */}
-				<Grid
-					container
-					spacing={1}
-				>
+				<Box sx={{ display: 'flex', gap: 1 }}>
 					{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-						<Grid
-							item
-							xs
-							key={day}
-						>
+						<Box key={day} sx={{ flex: 1 }}>
 							<Typography
 								variant="subtitle2"
 								align="center"
@@ -249,30 +234,22 @@ export function CalendarView({
 							>
 								{day}
 							</Typography>
-						</Grid>
+						</Box>
 					))}
-				</Grid>
+				</Box>
 
 				{/* Calendar grid */}
 				{weeks.map((week, weekIndex) => (
-					<Grid
-						container
-						spacing={1}
-						key={weekIndex}
-					>
+					<Box key={weekIndex} sx={{ display: 'flex', gap: 1 }}>
 						{week.map((date, dayIndex) => {
 							const isCurrentMonth = date.getMonth() === currentDate.getMonth();
 							return (
-								<Grid
-									item
-									xs
-									key={dayIndex}
-								>
+								<Box key={dayIndex} sx={{ flex: 1 }}>
 									{renderDayCell(date, isCurrentMonth)}
-								</Grid>
+								</Box>
 							);
 						})}
-					</Grid>
+					</Box>
 				))}
 			</Stack>
 		);
@@ -284,16 +261,9 @@ export function CalendarView({
 		return (
 			<Stack spacing={1}>
 				{/* Day headers */}
-				<Grid
-					container
-					spacing={1}
-				>
+				<Box sx={{ display: 'flex', gap: 1 }}>
 					{days.map((date, index) => (
-						<Grid
-							item
-							xs
-							key={index}
-						>
+						<Box key={index} sx={{ flex: 1 }}>
 							<Typography
 								variant="subtitle2"
 								align="center"
@@ -301,25 +271,18 @@ export function CalendarView({
 							>
 								{date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
 							</Typography>
-						</Grid>
+						</Box>
 					))}
-				</Grid>
+				</Box>
 
 				{/* Week grid */}
-				<Grid
-					container
-					spacing={1}
-				>
+				<Box sx={{ display: 'flex', gap: 1 }}>
 					{days.map((date, index) => (
-						<Grid
-							item
-							xs
-							key={index}
-						>
+						<Box key={index} sx={{ flex: 1 }}>
 							{renderDayCell(date, true)}
-						</Grid>
+						</Box>
 					))}
-				</Grid>
+				</Box>
 			</Stack>
 		);
 	};

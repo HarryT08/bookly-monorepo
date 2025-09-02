@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
 	Box,
 	Card,
@@ -78,15 +78,18 @@ export default function NotificationsPage() {
 	const loadNotifications = useCallback(async () => {
 		setLoading(true);
 		const result = await getNotifications({ ...filter, page });
+
 		if (result) {
 			setNotifications(result.data);
 			setTotalPages(result.totalPages);
 		}
+
 		setLoading(false);
 	}, [getNotifications, filter, page]);
 
 	const loadStats = useCallback(async () => {
 		const result = await getNotificationStats();
+
 		if (result) {
 			setStats(result);
 		}

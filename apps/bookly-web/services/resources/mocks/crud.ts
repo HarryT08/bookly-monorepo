@@ -95,6 +95,7 @@ export function mockCreateResource(dto: CreateResourceDto): ResourceResponseDto 
 	const newItem: ResourceResponseDto = {
 		id: generateId(),
 		name: dto.name,
+		code: `RES-${Date.now()}`, // Generate unique code
 		type: dto.type,
 		description: dto.description,
 		location: dto.location,
@@ -103,7 +104,7 @@ export function mockCreateResource(dto: CreateResourceDto): ResourceResponseDto 
 		categoryId: dto.categoryId,
 		programId: dto.programId,
 		attributes: dto.attributes,
-		availabilityRules: dto.availabilityRules,
+		availableSchedules: dto.availableSchedules,
 		isActive: true,
 		createdAt: now,
 		updatedAt: now

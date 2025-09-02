@@ -172,7 +172,7 @@ export default function UserReportsTab() {
 	};
 
 	const getRoleColor = (role: string) => {
-		const roleColors: { [key: string]: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' } = {
+		const roleColors: Record<string, 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info'> = {
 			ADMIN: 'error',
 			PROGRAM_ADMIN: 'warning',
 			TEACHER: 'primary',

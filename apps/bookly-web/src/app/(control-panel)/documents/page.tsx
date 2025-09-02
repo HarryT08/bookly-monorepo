@@ -128,25 +128,30 @@ export default function DocumentsPage() {
 	const loadTemplates = useCallback(async () => {
 		setLoading(true);
 		const result = await getTemplates({ page, limit: 10 });
+
 		if (result) {
 			setTemplates(result.data);
 			setTotalPages(result.totalPages);
 		}
+
 		setLoading(false);
 	}, [getTemplates, page]);
 
 	const loadDocuments = useCallback(async () => {
 		setLoading(true);
 		const result = await getDocuments({ ...filter, page });
+
 		if (result) {
 			setDocuments(result.data);
 			setTotalPages(result.totalPages);
 		}
+
 		setLoading(false);
 	}, [getDocuments, filter, page]);
 
 	const loadStats = useCallback(async () => {
 		const result = await getDocumentStats();
+
 		if (result) {
 			setStats(result);
 		}
@@ -158,15 +163,18 @@ export default function DocumentsPage() {
 		} else {
 			loadDocuments();
 		}
+
 		loadStats();
 	}, [activeTab, loadTemplates, loadDocuments, loadStats]);
 
 	// Event handlers
 	const handleCreateTemplate = async () => {
 		const result = await createTemplate(templateForm);
+
 		if (result) {
 			setTemplateDialogOpen(false);
 			resetTemplateForm();
+
 			if (activeTab === 'templates') {
 				loadTemplates();
 			}
@@ -177,9 +185,11 @@ export default function DocumentsPage() {
 		if (!selectedTemplate) return;
 
 		const result = await updateTemplate(selectedTemplate.id, templateForm);
+
 		if (result) {
 			setTemplateDialogOpen(false);
 			resetTemplateForm();
+
 			if (activeTab === 'templates') {
 				loadTemplates();
 			}
@@ -188,6 +198,7 @@ export default function DocumentsPage() {
 
 	const handleDeleteTemplate = async (id: string) => {
 		const success = await deleteTemplate(id);
+
 		if (success && activeTab === 'templates') {
 			loadTemplates();
 		}
@@ -195,18 +206,22 @@ export default function DocumentsPage() {
 
 	const handleGenerateDocument = async () => {
 		const result = await generateDocument(generateForm);
+
 		if (result) {
 			setGenerateDialogOpen(false);
 			resetGenerateForm();
+
 			if (activeTab === 'documents') {
 				loadDocuments();
 			}
+
 			loadStats();
 		}
 	};
 
 	const handlePreviewTemplate = async (template: DocumentTemplate) => {
 		const result = await previewTemplate(template.id, {});
+
 		if (result) {
 			setPreviewContent(result);
 			setPreviewDialogOpen(true);
@@ -219,6 +234,7 @@ export default function DocumentsPage() {
 
 	const handleDeleteDocument = async (id: string) => {
 		const success = await deleteDocument(id);
+
 		if (success && activeTab === 'documents') {
 			loadDocuments();
 			loadStats();
@@ -257,6 +273,7 @@ export default function DocumentsPage() {
 		} else {
 			resetTemplateForm();
 		}
+
 		setTemplateDialogOpen(true);
 	};
 
@@ -272,6 +289,7 @@ export default function DocumentsPage() {
 
 	const formatFileSize = (bytes?: number): string => {
 		if (!bytes) return 'Unknown';
+
 		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(1024));
 		return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
 	Box,
 	Typography,
@@ -31,21 +31,14 @@ import {
 	ViewDay as ViewDayIcon,
 	ViewModule as ViewModuleIcon,
 	Add as AddIcon,
-	Refresh as RefreshIcon,
-	Settings as SettingsIcon
+	Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 
 import { PageTitle } from '@components/atoms';
 import { useCalendarView, useReservation } from '@hooks/useAvailability';
-import {
-	CalendarViewType,
-	CalendarEventDisplay,
-	EventType,
-	AvailabilitySlot,
-	CalendarConflict
-} from '@services/availability/types';
+import { CalendarViewType, CalendarEventDisplay, EventType, AvailabilitySlot } from '@services/availability/types';
 
 interface CalendarState {
 	currentDate: Date;
@@ -270,7 +263,7 @@ export default function CalendarPage() {
 	const renderMonthView = (events: CalendarEventDisplay[], slots: AvailabilitySlot[]) => {
 		const startDate = getViewStartDate(calendarState.currentDate, CalendarViewType.MONTH);
 		const weeks = [];
-		let currentDate = new Date(startDate);
+		const currentDate = new Date(startDate);
 
 		for (let week = 0; week < 6; week++) {
 			const days = [];

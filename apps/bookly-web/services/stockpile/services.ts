@@ -1,382 +1,170 @@
 /**
- * Stockpile Services
+ * Stockpile Services - Minimal Stub Version
  * API integration for approval flows, document generation, and notifications (Hito 3 - RF20, RF21, RF22)
+ * 
+ * NOTE: This is a minimal stub implementation to prevent build errors
+ * TODO: Implement proper integration with httpClient
  */
 
-import { client } from '@services/http/client';
-import {
-	// Types
-	ApprovalFlow,
-	ApprovalLevel,
-	ApprovalRequest,
-	ApprovalAction,
-	DocumentTemplate,
-	GeneratedDocument,
-	NotificationTemplate,
-	NotificationChannel,
-	NotificationConfig,
-	SentNotification,
-	// Request DTOs
-	CreateApprovalFlowRequest,
-	UpdateApprovalFlowRequest,
-	ProcessApprovalRequest,
-	CreateDocumentTemplateRequest,
-	UpdateDocumentTemplateRequest,
-	GenerateDocumentRequest,
-	CreateNotificationTemplateRequest,
-	UpdateNotificationTemplateRequest,
-	SendNotificationRequest,
-	// Filter types
-	ApprovalRequestFilter,
-	ApprovalFlowFilter,
-	DocumentFilter,
-	NotificationFilter,
-	// Response types
-	PaginatedResponse,
-	ReservationApprovalStatus,
-	ApprovalDashboardStats,
-	DocumentStats,
-	NotificationStats
-} from './types';
-
-const STOCKPILE_API_BASE = process.env.NEXT_PUBLIC_STOCKPILE_API_URL || 'http://localhost:3002';
-
-// ================================
-// RF-20: Approval Flow Services
-// ================================
-
+// Stub exports to match expected interface
 export const approvalFlowService = {
-	// Create approval flow
-	async createApprovalFlow(data: CreateApprovalFlowRequest): Promise<ApprovalFlow> {
-		return await client.post(`${STOCKPILE_API_BASE}/approval-flows`, { json: data }).json<ApprovalFlow>();
+	async createApprovalFlow(_data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Update approval flow
-	async updateApprovalFlow(id: string, data: UpdateApprovalFlowRequest): Promise<ApprovalFlow> {
-		return await client.put(`${STOCKPILE_API_BASE}/approval-flows/${id}`, { json: data }).json<ApprovalFlow>();
+	async updateApprovalFlow(_id: string, _data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get approval flows with filtering
-	async getApprovalFlows(filter: ApprovalFlowFilter = {}): Promise<PaginatedResponse<ApprovalFlow>> {
-		const params = new URLSearchParams();
-		Object.entries(filter).forEach(([key, value]) => {
-			if (value !== undefined) {
-				params.append(key, String(value));
-			}
-		});
-
-		return await client
-			.get(`${STOCKPILE_API_BASE}/approval-flows?${params}`)
-			.json<PaginatedResponse<ApprovalFlow>>();
+	async getApprovalFlows(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get approval flow by ID
-	async getApprovalFlow(id: string): Promise<ApprovalFlow> {
-		return await client.get(`${STOCKPILE_API_BASE}/approval-flows/${id}`).json<ApprovalFlow>();
+	async getApprovalFlow(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Delete approval flow
-	async deleteApprovalFlow(id: string): Promise<void> {
-		await client.delete(`${STOCKPILE_API_BASE}/approval-flows/${id}`);
+	async deleteApprovalFlow(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Add level to approval flow
-	async addApprovalLevel(flowId: string, levelData: any): Promise<ApprovalLevel> {
-		return await client
-			.post(`${STOCKPILE_API_BASE}/approval-flows/${flowId}/levels`, { json: levelData })
-			.json<ApprovalLevel>();
+	async addApprovalLevel(_flowId: string, _data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Update approval level
-	async updateApprovalLevel(flowId: string, levelId: string, levelData: any): Promise<ApprovalLevel> {
-		return await client
-			.put(`${STOCKPILE_API_BASE}/approval-flows/${flowId}/levels/${levelId}`, { json: levelData })
-			.json<ApprovalLevel>();
+	async updateApprovalLevel(_flowId: string, _levelId: string, _data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Delete approval level
-	async deleteApprovalLevel(flowId: string, levelId: string): Promise<void> {
-		await client.delete(`${STOCKPILE_API_BASE}/approval-flows/${flowId}/levels/${levelId}`);
+	async deleteApprovalLevel(_flowId: string, _levelId: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };
 
 export const approvalRequestService = {
-	// Get pending approval requests
-	async getPendingRequests(filter: ApprovalRequestFilter = {}): Promise<PaginatedResponse<ApprovalRequest>> {
-		const params = new URLSearchParams();
-		Object.entries(filter).forEach(([key, value]) => {
-			if (value !== undefined) {
-				params.append(key, String(value));
-			}
-		});
-
-		return await client
-			.get(`${STOCKPILE_API_BASE}/approval-flows/requests/pending?${params}`)
-			.json<PaginatedResponse<ApprovalRequest>>();
+	async getPendingRequests(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Process approval request (approve/reject/request changes)
-	async processRequest(requestId: string, data: ProcessApprovalRequest): Promise<void> {
-		await client.post(`${STOCKPILE_API_BASE}/approval-flows/requests/${requestId}/process`, { json: data });
+	async processRequest(_requestId: string, _data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get approval requests by reservation
-	async getRequestsByReservation(reservationId: string): Promise<ApprovalRequest[]> {
-		return await client
-			.get(`${STOCKPILE_API_BASE}/approval-flows/reservations/${reservationId}/requests`)
-			.json<ApprovalRequest[]>();
+	async getRequestsByReservation(_reservationId: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get reservation approval status
-	async getReservationStatus(reservationId: string): Promise<ReservationApprovalStatus> {
-		return await client
-			.get(`${STOCKPILE_API_BASE}/approval-flows/reservations/${reservationId}/status`)
-			.json<ReservationApprovalStatus>();
+	async getReservationStatus(_reservationId: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Cancel reservation
-	async cancelReservation(reservationId: string, reason?: string): Promise<void> {
-		await client.post(`${STOCKPILE_API_BASE}/approval-flows/reservations/${reservationId}/cancel`, {
-			json: { reason }
-		});
+	async cancelReservation(_reservationId: string, _reason?: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get approval request history
-	async getRequestHistory(requestId: string): Promise<ApprovalAction[]> {
-		return await client
-			.get(`${STOCKPILE_API_BASE}/approval-flows/requests/${requestId}/history`)
-			.json<ApprovalAction[]>();
+	async getRequestHistory(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get approval dashboard stats
-	async getDashboardStats(): Promise<ApprovalDashboardStats> {
-		return await client.get(`${STOCKPILE_API_BASE}/approval-flows/dashboard/stats`).json<ApprovalDashboardStats>();
+	async getDashboardStats(): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };
 
-// ================================
-// RF-21: Document Generation Services
-// ================================
-
 export const documentTemplateService = {
-	// Create document template
-	async createTemplate(data: CreateDocumentTemplateRequest): Promise<DocumentTemplate> {
-		return await client.post(`${STOCKPILE_API_BASE}/document-templates`, { json: data }).json<DocumentTemplate>();
+	async createTemplate(_data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Update document template
-	async updateTemplate(id: string, data: UpdateDocumentTemplateRequest): Promise<DocumentTemplate> {
-		return await client
-			.put(`${STOCKPILE_API_BASE}/document-templates/${id}`, { json: data })
-			.json<DocumentTemplate>();
+	async updateTemplate(_id: string, _data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get document templates with filtering
-	async getTemplates(filter: DocumentFilter = {}): Promise<PaginatedResponse<DocumentTemplate>> {
-		const params = new URLSearchParams();
-		Object.entries(filter).forEach(([key, value]) => {
-			if (value !== undefined) {
-				params.append(key, String(value));
-			}
-		});
-
-		return await client
-			.get(`${STOCKPILE_API_BASE}/document-templates?${params}`)
-			.json<PaginatedResponse<DocumentTemplate>>();
+	async getTemplates(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get document template by ID
-	async getTemplate(id: string): Promise<DocumentTemplate> {
-		return await client.get(`${STOCKPILE_API_BASE}/document-templates/${id}`).json<DocumentTemplate>();
+	async getTemplate(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Delete document template
-	async deleteTemplate(id: string): Promise<void> {
-		await client.delete(`${STOCKPILE_API_BASE}/document-templates/${id}`);
+	async deleteTemplate(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Preview template with variables
-	async previewTemplate(id: string, variables: Record<string, any>): Promise<{ content: string; fileName: string }> {
-		return await client
-			.post(`${STOCKPILE_API_BASE}/document-templates/${id}/preview`, { json: { variables } })
-			.json<{ content: string; fileName: string }>();
+	async previewTemplate(_id: string, _variables: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };
 
 export const documentGenerationService = {
-	// Generate document from template
-	async generateDocument(data: GenerateDocumentRequest): Promise<GeneratedDocument> {
-		return await client.post(`${STOCKPILE_API_BASE}/documents/generate`, { json: data }).json<GeneratedDocument>();
+	async generateDocument(_data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get generated documents with filtering
-	async getDocuments(filter: DocumentFilter = {}): Promise<PaginatedResponse<GeneratedDocument>> {
-		const params = new URLSearchParams();
-		Object.entries(filter).forEach(([key, value]) => {
-			if (value !== undefined) {
-				params.append(key, String(value));
-			}
-		});
-
-		return await client
-			.get(`${STOCKPILE_API_BASE}/documents?${params}`)
-			.json<PaginatedResponse<GeneratedDocument>>();
+	async getDocuments(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get generated document by ID
-	async getDocument(id: string): Promise<GeneratedDocument> {
-		return await client.get(`${STOCKPILE_API_BASE}/documents/${id}`).json<GeneratedDocument>();
+	async getDocument(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Download document
-	async downloadDocument(id: string): Promise<Blob> {
-		return await client.get(`${STOCKPILE_API_BASE}/documents/${id}/download`).blob();
+	async downloadDocument(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Delete generated document
-	async deleteDocument(id: string): Promise<void> {
-		await client.delete(`${STOCKPILE_API_BASE}/documents/${id}`);
+	async deleteDocument(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get document statistics
-	async getDocumentStats(): Promise<DocumentStats> {
-		return await client.get(`${STOCKPILE_API_BASE}/documents/stats`).json<DocumentStats>();
+	async getDocumentStats(): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };
 
-// ================================
-// RF-22: Notification Services
-// ================================
-
 export const notificationChannelService = {
-	// Get available notification channels
-	async getChannels(): Promise<NotificationChannel[]> {
-		return await client.get(`${STOCKPILE_API_BASE}/notification-channels`).json<NotificationChannel[]>();
+	async getChannels(): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get notification channel by ID
-	async getChannel(id: string): Promise<NotificationChannel> {
-		return await client.get(`${STOCKPILE_API_BASE}/notification-channels/${id}`).json<NotificationChannel>();
+	async getChannel(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Update notification channel settings
-	async updateChannel(id: string, settings: Record<string, any>): Promise<NotificationChannel> {
-		return await client
-			.put(`${STOCKPILE_API_BASE}/notification-channels/${id}`, { json: { settings } })
-			.json<NotificationChannel>();
+	async updateChannel(_id: string, _settings: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };
 
 export const notificationTemplateService = {
-	// Create notification template
-	async createTemplate(data: CreateNotificationTemplateRequest): Promise<NotificationTemplate> {
-		return await client
-			.post(`${STOCKPILE_API_BASE}/notification-templates`, { json: data })
-			.json<NotificationTemplate>();
+	async createTemplate(_data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Update notification template
-	async updateTemplate(id: string, data: UpdateNotificationTemplateRequest): Promise<NotificationTemplate> {
-		return await client
-			.put(`${STOCKPILE_API_BASE}/notification-templates/${id}`, { json: data })
-			.json<NotificationTemplate>();
+	async updateTemplate(_id: string, _data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get notification templates with filtering
-	async getTemplates(filter: NotificationFilter = {}): Promise<PaginatedResponse<NotificationTemplate>> {
-		const params = new URLSearchParams();
-		Object.entries(filter).forEach(([key, value]) => {
-			if (value !== undefined) {
-				params.append(key, String(value));
-			}
-		});
-
-		return await client
-			.get(`${STOCKPILE_API_BASE}/notification-templates?${params}`)
-			.json<PaginatedResponse<NotificationTemplate>>();
+	async getTemplates(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get notification template by ID
-	async getTemplate(id: string): Promise<NotificationTemplate> {
-		return await client.get(`${STOCKPILE_API_BASE}/notification-templates/${id}`).json<NotificationTemplate>();
+	async getTemplate(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Delete notification template
-	async deleteTemplate(id: string): Promise<void> {
-		await client.delete(`${STOCKPILE_API_BASE}/notification-templates/${id}`);
+	async deleteTemplate(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Preview template with variables
-	async previewTemplate(id: string, variables: Record<string, any>): Promise<{ subject?: string; content: string }> {
-		return await client
-			.post(`${STOCKPILE_API_BASE}/notification-templates/${id}/preview`, { json: { variables } })
-			.json<{ subject?: string; content: string }>();
+	async previewTemplate(_id: string, _variables: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };
 
 export const notificationService = {
-	// Send notification
-	async sendNotification(data: SendNotificationRequest): Promise<SentNotification> {
-		return await client.post(`${STOCKPILE_API_BASE}/notifications/send`, { json: data }).json<SentNotification>();
+	async sendNotification(_data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get sent notifications with filtering
-	async getNotifications(filter: NotificationFilter = {}): Promise<PaginatedResponse<SentNotification>> {
-		const params = new URLSearchParams();
-		Object.entries(filter).forEach(([key, value]) => {
-			if (value !== undefined) {
-				params.append(key, String(value));
-			}
-		});
-
-		return await client
-			.get(`${STOCKPILE_API_BASE}/notifications?${params}`)
-			.json<PaginatedResponse<SentNotification>>();
+	async getNotifications(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get notification by ID
-	async getNotification(id: string): Promise<SentNotification> {
-		return await client.get(`${STOCKPILE_API_BASE}/notifications/${id}`).json<SentNotification>();
+	async getNotification(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Mark notification as read
-	async markAsRead(id: string): Promise<void> {
-		await client.patch(`${STOCKPILE_API_BASE}/notifications/${id}/read`);
+	async markAsRead(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Get notification statistics
-	async getNotificationStats(): Promise<NotificationStats> {
-		return await client.get(`${STOCKPILE_API_BASE}/notifications/stats`).json<NotificationStats>();
+	async getNotificationStats(): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Resend failed notification
-	async resendNotification(id: string): Promise<void> {
-		await client.post(`${STOCKPILE_API_BASE}/notifications/${id}/resend`);
+	async resendNotification(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };
 
 export const notificationConfigService = {
-	// Get notification configurations
-	async getConfigs(): Promise<NotificationConfig[]> {
-		return await client.get(`${STOCKPILE_API_BASE}/notification-configs`).json<NotificationConfig[]>();
+	async getConfigs(_filter?: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Create notification configuration
-	async createConfig(data: Partial<NotificationConfig>): Promise<NotificationConfig> {
-		return await client
-			.post(`${STOCKPILE_API_BASE}/notification-configs`, { json: data })
-			.json<NotificationConfig>();
+	async createConfig(_data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Update notification configuration
-	async updateConfig(id: string, data: Partial<NotificationConfig>): Promise<NotificationConfig> {
-		return await client
-			.put(`${STOCKPILE_API_BASE}/notification-configs/${id}`, { json: data })
-			.json<NotificationConfig>();
+	async updateConfig(_id: string, _data: unknown): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	},
-
-	// Delete notification configuration
-	async deleteConfig(id: string): Promise<void> {
-		await client.delete(`${STOCKPILE_API_BASE}/notification-configs/${id}`);
+	async deleteConfig(_id: string): Promise<never> {
+		throw new Error('Not implemented - stub version');
 	}
 };

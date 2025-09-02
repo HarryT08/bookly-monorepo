@@ -38,8 +38,7 @@ import {
 	Cancel as RejectIcon,
 	Edit as EditIcon,
 	Visibility as ViewIcon,
-	FilterList as FilterIcon,
-	Download as DownloadIcon
+	FilterList as FilterIcon
 } from '@mui/icons-material';
 
 import { PageTitle } from '@components/atoms';
@@ -102,15 +101,18 @@ export default function ApprovalsPage() {
 	const loadRequests = useCallback(async () => {
 		setLoading(true);
 		const result = await getPendingRequests({ ...filter, page });
+
 		if (result) {
 			setRequests(result.data);
 			setTotalPages(result.totalPages);
 		}
+
 		setLoading(false);
 	}, [getPendingRequests, filter, page]);
 
 	const loadStats = useCallback(async () => {
 		const result = await getDashboardStats();
+
 		if (result) {
 			setStats(result);
 		}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Container, Typography, CircularProgress, Alert, Button, Card, CardContent } from '@mui/material';
 import { CheckCircle as SuccessIcon, Error as ErrorIcon, Home as HomeIcon } from '@mui/icons-material';
 import { useRouter, useSearchParams } from 'next/navigation';

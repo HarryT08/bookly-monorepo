@@ -21,17 +21,19 @@ export function AdminGuard({ children, fallback, level = 'any' }: AdminGuardProp
 	// Check administrator access based on level
 	let hasAdminAccess = false;
 
-	switch (level) {
-		case 'general':
-			hasAdminAccess = hasRole('ADMINISTRADOR_GENERAL');
-			break;
-		case 'program':
-			hasAdminAccess = hasRole('ADMINISTRADOR_PROGRAMA');
-			break;
-		case 'any':
-		default:
-			hasAdminAccess = hasRole('ADMINISTRADOR_GENERAL') || hasRole('ADMINISTRADOR_PROGRAMA');
-			break;
+	if (user && hasRole) {
+		switch (level) {
+			case 'general':
+				hasAdminAccess = hasRole('ADMINISTRADOR_GENERAL');
+				break;
+			case 'program':
+				hasAdminAccess = hasRole('ADMINISTRADOR_PROGRAMA');
+				break;
+			case 'any':
+			default:
+				hasAdminAccess = hasRole('ADMINISTRADOR_GENERAL') || hasRole('ADMINISTRADOR_PROGRAMA');
+				break;
+		}
 	}
 
 	// If user has admin access, render children

@@ -4,8 +4,6 @@ import { enqueueSnackbar } from 'notistack';
 import { authServices, roleServices, permissionServices, userServices } from '@services/auth/services';
 import { transformUser, transformRole, transformPermission } from '@services/auth/models';
 import type {
-	LoginRequest,
-	RegisterRequest,
 	User,
 	CreateRoleRequest,
 	UpdateRoleRequest,
@@ -14,7 +12,7 @@ import type {
 	UpdatePermissionRequest,
 	PermissionWithDetails,
 	AssignRoleRequest,
-	SSOLoginResponse
+	RegisterRequest
 } from '@services/auth/types';
 
 // Store auth state
@@ -52,7 +50,7 @@ export function useAuth() {
 		}
 	}, []);
 
-	const login = useCallback(async (credentials: LoginRequest) => {
+	const login = useCallback(async (credentials: { email: string; password: string }): Promise<boolean> => {
 		setLoading(true);
 		try {
 			const response = await authServices.login(credentials);
@@ -75,15 +73,15 @@ export function useAuth() {
 
 				enqueueSnackbar('Login exitoso', { variant: 'success' });
 
-				return { success: true, user: userData };
+				return true;
 			} else {
 				enqueueSnackbar(response.message || 'Error en el login', { variant: 'error' });
-				return { success: false, error: response.message };
+				return false;
 			}
-		} catch (error) {
-			console.error('Login error:', error);
-			enqueueSnackbar('Error de conexión', { variant: 'error' });
-			return { success: false, error: 'Error de conexión' };
+		} catch (error: unknown) {
+			const errorMessage = error instanceof Error ? error.message : 'Error en el login';
+			enqueueSnackbar(errorMessage, { variant: 'error' });
+			return false;
 		} finally {
 			setLoading(false);
 		}
@@ -258,8 +256,8 @@ export function useRoleManagement() {
 
 				setRoles(transformedRoles);
 
-				if (response.pagination) {
-					setPagination(response.pagination);
+				if ('pagination' in response && response.pagination) {
+					setPagination(response.pagination as typeof pagination);
 				}
 
 				return { success: true, data: transformedRoles };
@@ -619,8 +617,8 @@ export function useUserManagement() {
 				const transformedUsers = response.data.map(transformUser);
 				setUsers(transformedUsers);
 
-				if (response.pagination) {
-					setPagination(response.pagination);
+				if ('pagination' in response && response.pagination) {
+					setPagination(response.pagination as typeof pagination);
 				}
 
 				return { success: true, data: transformedUsers };
@@ -758,17 +756,6 @@ export function useUserManagement() {
 
 		// Actions
 		getAllUsers,
-		getUserById,
-		updateUser,
-		getUserRoles,
-		activateUser,
-		deactivateUser,
-		setPagination
-	};
-}
-
-export default useAuth;
-
 		getUserById,
 		updateUser,
 		getUserRoles,

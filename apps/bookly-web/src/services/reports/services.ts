@@ -10,7 +10,10 @@ import {
 	ReportFilterOptions,
 	ReportStatistics,
 	PersonalStats,
-	ApiResponse
+	UsageReportSummary,
+	UserReportSummary,
+	ExportStatus,
+	CachedReport
 } from './types';
 
 const REPORTS_BASE_URL = process.env.NEXT_PUBLIC_REPORTS_SERVICE_URL || 'http://localhost:3005/api';
@@ -56,7 +59,7 @@ export const usageReportsService = {
 	/**
 	 * Get usage report summary statistics
 	 */
-	async getUsageReportSummary(filters: UsageReportFilters): Promise<any> {
+	async getUsageReportSummary(filters: UsageReportFilters): Promise<UsageReportSummary> {
 		const params = new URLSearchParams();
 
 		if (filters.startDate) params.append('startDate', filters.startDate);
@@ -71,7 +74,7 @@ export const usageReportsService = {
 			filters.resourceTypes.forEach((type) => params.append('resourceTypes', type));
 		}
 
-		const response = await apiClient.get(`${REPORTS_BASE_URL}/reports/usage/summary?${params}`);
+		const response = await apiClient.get<UsageReportSummary>(`${REPORTS_BASE_URL}/reports/usage/summary?${params}`);
 		return response.data;
 	},
 
@@ -121,7 +124,7 @@ export const userReportsService = {
 	/**
 	 * Get user report summary statistics
 	 */
-	async getUserReportSummary(filters: UserReportFilters): Promise<any> {
+	async getUserReportSummary(filters: UserReportFilters): Promise<UserReportSummary> {
 		const params = new URLSearchParams();
 
 		if (filters.userIds?.length) {
@@ -136,7 +139,7 @@ export const userReportsService = {
 
 		if (filters.endDate) params.append('endDate', filters.endDate);
 
-		const response = await apiClient.get(`${REPORTS_BASE_URL}/reports/users/summary?${params}`);
+		const response = await apiClient.get<UserReportSummary>(`${REPORTS_BASE_URL}/reports/users/summary?${params}`);
 		return response.data;
 	},
 
@@ -151,14 +154,14 @@ export const userReportsService = {
 	/**
 	 * Get user report history
 	 */
-	async getReportHistory(reportType?: string, limit?: number): Promise<any[]> {
+	async getReportHistory(reportType?: string, limit?: number): Promise<ExportHistory[]> {
 		const params = new URLSearchParams();
 
 		if (reportType) params.append('reportType', reportType);
 
 		if (limit) params.append('limit', limit.toString());
 
-		const response = await apiClient.get(`${REPORTS_BASE_URL}/reports/users/history?${params}`);
+		const response = await apiClient.get<ExportHistory[]>(`${REPORTS_BASE_URL}/reports/users/history?${params}`);
 		return response.data;
 	}
 };
@@ -179,9 +182,7 @@ export const exportReportsService = {
 	 * Download exported file
 	 */
 	async downloadExport(exportId: string): Promise<Blob> {
-		const response = await apiClient.get(`${REPORTS_BASE_URL}/reports/export/download/${exportId}`, {
-			responseType: 'blob'
-		});
+		const response = await apiClient.get<Blob>(`${REPORTS_BASE_URL}/reports/export/download/${exportId}`);
 		return response.data;
 	},
 
@@ -202,16 +203,16 @@ export const exportReportsService = {
 	/**
 	 * Get export status
 	 */
-	async getExportStatus(exportId: string): Promise<any> {
-		const response = await apiClient.get(`${REPORTS_BASE_URL}/reports/export/status/${exportId}`);
+	async getExportStatus(exportId: string): Promise<ExportStatus> {
+		const response = await apiClient.get<ExportStatus>(`${REPORTS_BASE_URL}/reports/export/status/${exportId}`);
 		return response.data;
 	},
 
 	/**
 	 * Get cached report data
 	 */
-	async getCachedReport(reportId: string): Promise<any> {
-		const response = await apiClient.get(`${REPORTS_BASE_URL}/reports/export/cached/${reportId}`);
+	async getCachedReport(reportId: string): Promise<CachedReport> {
+		const response = await apiClient.get<CachedReport>(`${REPORTS_BASE_URL}/reports/export/cached/${reportId}`);
 		return response.data;
 	}
 };
@@ -327,5 +328,4 @@ export const reportsService = {
 	}
 };
 
-// Export all services as named exports
-export { usageReportsService, userReportsService, exportReportsService, reportsService };
+// Services are already exported above, no need for duplicate exports

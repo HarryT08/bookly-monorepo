@@ -28,7 +28,10 @@ export default function EditResourcePage({ params }: PageProps) {
 			/>
 
 			<div className="rounded border p-4">
-				<ResourceForm mode="edit" resourceId={id} />
+				<ResourceForm
+					mode="edit"
+					resourceId={id}
+				/>
 			</div>
 		</div>
 	);

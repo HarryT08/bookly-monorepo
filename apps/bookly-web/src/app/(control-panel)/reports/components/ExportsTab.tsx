@@ -33,7 +33,6 @@ import {
 import {
 	FileDownload as FileDownloadIcon,
 	Refresh as RefreshIcon,
-	Delete as DeleteIcon,
 	Visibility as VisibilityIcon,
 	History as HistoryIcon,
 	GetApp as GetAppIcon
@@ -152,6 +151,7 @@ export default function ExportsTab() {
 
 	const filteredExports = exports.filter((exp) => {
 		if (filterType === 'all') return true;
+
 		return exp.reportType === filterType;
 	});
 

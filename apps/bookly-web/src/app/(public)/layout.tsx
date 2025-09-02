@@ -1,4 +1,4 @@
-import MainLayout from '../../components/MainLayout';
+import MainLayout from '../../../components/templates/MainLayout';
 
 function Layout(props: { children: React.ReactNode }) {
 	const { children } = props;

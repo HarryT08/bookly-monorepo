@@ -19,14 +19,14 @@ interface PermissionGuardProps {
  * PermissionGuard component that protects content based on specific permissions
  * Shows fallback content if user doesn't have required permissions
  */
-export function PermissionGuard({ 
-	children, 
+export function PermissionGuard({
+	children,
 	permissions,
 	resource,
 	action,
 	scope,
-	fallback, 
-	requireAll = false 
+	fallback,
+	requireAll = false
 }: PermissionGuardProps) {
 	const { user, hasPermission } = useAuth();
 
@@ -41,9 +41,9 @@ export function PermissionGuard({
 		hasAccess = hasPermission(resource, action, scope);
 	} else {
 		// Check by permission names/IDs
-		hasAccess = requireAll 
-			? requiredPermissions.every(permission => hasPermission(permission))
-			: requiredPermissions.some(permission => hasPermission(permission));
+		hasAccess = requireAll
+			? requiredPermissions.every((permission) => hasPermission(permission))
+			: requiredPermissions.some((permission) => hasPermission(permission));
 	}
 
 	// If user has access, render children
@@ -67,20 +67,36 @@ export function PermissionGuard({
 			p={3}
 		>
 			<SecurityIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
-			<Typography variant="h6" color="text.secondary" align="center">
+			<Typography
+				variant="h6"
+				color="text.secondary"
+				align="center"
+			>
 				Permisos Insuficientes
 			</Typography>
-			<Alert severity="error" sx={{ maxWidth: 500 }}>
+			<Alert
+				severity="error"
+				sx={{ maxWidth: 500 }}
+			>
 				<Typography variant="body2">
 					No tienes los permisos específicos necesarios para acceder a este contenido.
 				</Typography>
 				{resource && action && (
-					<Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-						Permiso requerido: {resource}:{action}{scope ? `:${scope}` : ''}
+					<Typography
+						variant="caption"
+						color="text.secondary"
+						sx={{ mt: 1, display: 'block' }}
+					>
+						Permiso requerido: {resource}:{action}
+						{scope ? `:${scope}` : ''}
 					</Typography>
 				)}
 				{!resource && !action && (
-					<Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+					<Typography
+						variant="caption"
+						color="text.secondary"
+						sx={{ mt: 1, display: 'block' }}
+					>
 						Permisos requeridos: {requiredPermissions.join(', ')}
 					</Typography>
 				)}
