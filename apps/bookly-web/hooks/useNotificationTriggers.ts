@@ -244,6 +244,7 @@ export function useNotificationTriggers() {
 		async (event: ApprovalChangeEvent, notificationEvent: NotificationEvent) => {
 			try {
 				const trigger = defaultTriggers[notificationEvent];
+
 				if (!trigger.config.enabled) return;
 
 				const notificationData = {
@@ -284,9 +285,11 @@ export function useNotificationTriggers() {
 		async (event: ReservationChangeEvent, notificationEvent: NotificationEvent) => {
 			try {
 				const trigger = defaultTriggers[notificationEvent];
+
 				if (!trigger.config.enabled) return;
 
 				const notificationData = {
+					reservationId: event.reservationId,
 					recipientId: event.userId,
 					channels: trigger.config.channels,
 					templateId: trigger.config.templateId,

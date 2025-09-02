@@ -3,10 +3,15 @@ import { CqrsModule } from '@nestjs/cqrs';
 
 // Controllers
 import { AvailabilityController } from './infrastructure/controllers/availability.controller';
+import { AdvancedSearchController } from './infrastructure/controllers/advanced-search.controller';
 
 // Services
 import { AvailabilityService } from './application/services/availability.service';
 import { CalendarIntegrationService } from './application/services/calendar-integration.service';
+import { AdvancedSearchService } from './application/services/advanced-search.service';
+
+// Domain Services
+import { AdvancedSearchDomainService } from './domain/services/advanced-search-domain.service';
 
 // Command Handlers
 import { CreateCalendarIntegrationHandler } from './application/commands/create-calendar-integration.handler';
@@ -17,6 +22,15 @@ import { GetCalendarIntegrationsHandler } from './application/queries/get-calend
 import { GetAvailabilityWithConflictsHandler } from './application/queries/get-availability-with-conflicts.handler';
 import { GetCalendarViewHandler } from './application/queries/get-calendar-view.handler';
 import { GetReservationHistoryHandler } from './application/handlers/get-reservation-history.handler';
+
+// Advanced Search Query Handlers - RF-09
+import {
+  AdvancedResourceSearchHandler,
+  RealTimeAvailabilitySearchHandler,
+  SearchHistoryHandler,
+  PopularResourcesHandler,
+  QuickSearchHandler
+} from './application/handlers/advanced-search.query-handlers';
 
 // Repository Implementations
 import { PrismaScheduleRepository } from './infrastructure/repositories/prisma-schedule.repository';
@@ -50,6 +64,12 @@ const queryHandlers = [
   GetAvailabilityWithConflictsHandler,
   GetCalendarViewHandler,
   GetReservationHistoryHandler,
+  // Advanced Search Query Handlers - RF-09
+  AdvancedResourceSearchHandler,
+  RealTimeAvailabilitySearchHandler,
+  SearchHistoryHandler,
+  PopularResourcesHandler,
+  QuickSearchHandler,
 ];
 
 const repositories = [
@@ -91,10 +111,15 @@ const infrastructureServices = [
     NotificationModule,
     AuditModule,
   ],
-  controllers: [AvailabilityController],
+  controllers: [
+    AvailabilityController,
+    AdvancedSearchController,
+  ],
   providers: [
     AvailabilityService,
     CalendarIntegrationService,
+    AdvancedSearchService,
+    AdvancedSearchDomainService,
     ...commandHandlers,
     ...queryHandlers,
     ...repositories,

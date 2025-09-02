@@ -64,6 +64,7 @@ export interface RecurrenceRule {
 	count?: number;
 	byWeekDay?: number[];
 	byMonthDay?: number[];
+	exceptions?: Date[];
 }
 
 // ========================================
@@ -227,8 +228,8 @@ export interface ReservationHistory {
 	userId: string;
 	action: HistoryAction;
 	source: HistorySource;
-	previousData?: Record<string, any>;
-	newData?: Record<string, any>;
+	previousData?: Record<string, unknown>;
+	newData?: Record<string, unknown>;
 	details?: string;
 	ipAddress?: string;
 	userAgent?: string;
@@ -275,6 +276,9 @@ export interface CreateReservationRequest {
 	resourceId: string;
 	isRecurring?: boolean;
 	recurrence?: RecurrenceRule;
+	notes?: string;
+	priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+	isPrivate?: boolean;
 }
 
 export interface UpdateReservationRequest extends Partial<CreateReservationRequest> {
@@ -308,6 +312,158 @@ export interface ReservationHistoryQuery {
 }
 
 // ========================================
+// RF-14: Waiting List Types
+// ========================================
+
+export interface WaitlistEntry {
+	id?: string;
+	resourceId: string;
+	resourceName?: string;
+	userId: string;
+	userName?: string;
+	userEmail?: string;
+	requestedStartDate: Date;
+	requestedEndDate: Date;
+	title: string;
+	description?: string;
+	priority: 'LOW' | 'MEDIUM' | 'HIGH';
+	status: WaitlistStatus;
+	position: number;
+	createdAt?: Date;
+	updatedAt?: Date;
+	notificationSent?: boolean;
+	expiresAt?: Date;
+}
+
+export enum WaitlistStatus {
+	ACTIVE = 'ACTIVE',
+	NOTIFIED = 'NOTIFIED', // User was notified of availability
+	FULFILLED = 'FULFILLED', // User accepted and reservation was created
+	EXPIRED = 'EXPIRED',
+	CANCELLED = 'CANCELLED'
+}
+
+export interface WaitlistNotification {
+	id?: string;
+	waitlistEntryId: string;
+	availableSlot: AvailabilitySlot;
+	sentAt: Date;
+	expiresAt: Date;
+	status: 'SENT' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+	reservationId?: string; // Set when user accepts
+}
+
+export interface JoinWaitlistRequest {
+	resourceId: string;
+	requestedStartDate: Date;
+	requestedEndDate: Date;
+	title: string;
+	description?: string;
+	priority?: 'LOW' | 'MEDIUM' | 'HIGH';
+	notificationPreferences?: {
+		email?: boolean;
+		sms?: boolean;
+		push?: boolean;
+	};
+}
+
+export interface WaitlistQuery {
+	resourceId?: string;
+	userId?: string;
+	status?: WaitlistStatus[];
+	startDate?: Date;
+	endDate?: Date;
+	page?: number;
+	limit?: number;
+	sortBy?: 'position' | 'createdAt' | 'priority';
+	sortOrder?: 'asc' | 'desc';
+}
+
+// ========================================
+// RF-15: Reassignment Types
+// ========================================
+
+export interface ReassignmentRequest {
+	originalReservationId: string;
+	targetUserId: string;
+	reason: string;
+	type: ReassignmentType;
+	originalStartTime: Date;
+	originalEndTime: Date;
+	newStartTime?: Date;
+	newEndTime?: Date;
+	newResourceId?: string;
+	newResourceName?: string;
+}
+
+export interface ReassignmentValidation {
+	isValid: boolean;
+	conflicts: CalendarConflict[];
+	warnings: { warningType: string; message: string }[];
+	requiresApproval: boolean;
+	estimatedProcessingTime?: string;
+	alternativeSuggestions: {
+		resourceId: string;
+		resourceName: string;
+		startTime: Date;
+		endTime: Date;
+		availability: string;
+	}[];
+}
+
+export interface ReassignmentHistory {
+	id: string;
+	originalReservationId: string;
+	newReservationId?: string;
+	requesterId: string;
+	requesterName: string;
+	requesterEmail: string;
+	targetUserId: string;
+	targetUserName: string;
+	targetUserEmail: string;
+	reason: string;
+	type: ReassignmentType;
+	status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+	requestedAt: Date;
+	processedAt?: Date;
+	processedBy?: string;
+	comments?: string;
+	originalResourceId: string;
+	originalResourceName: string;
+	originalStartTime: Date;
+	originalEndTime: Date;
+	newResourceId?: string;
+	newResourceName?: string;
+	newStartTime?: Date;
+	newEndTime?: Date;
+}
+
+export enum ReassignmentType {
+	TRANSFER = 'TRANSFER',
+	EXCHANGE = 'EXCHANGE', 
+	RESCHEDULE = 'RESCHEDULE'
+}
+
+// API Response types for reassignment
+export interface ReassignmentApiResponse {
+	success: boolean;
+	data?: ReassignmentHistory;
+	error?: { message: string; code?: string };
+}
+
+export interface ReassignmentListResponse {
+	success: boolean;
+	data?: ReassignmentHistory[];
+	error?: { message: string; code?: string };
+}
+
+export interface ReassignmentHistoryResponse {
+	success: boolean;
+	data?: ReassignmentHistory[];
+	error?: { message: string; code?: string };
+}
+
+// ========================================
 // Availability Check Response
 // ========================================
 
@@ -317,4 +473,5 @@ export interface AvailabilityCheckResult {
 	conflicts?: CalendarConflict[];
 	suggestedAlternatives?: AvailabilitySlot[];
 	restrictions?: ScheduleRestrictions;
+	waitlistPosition?: number; // If resource is full, show position if user joins waitlist
 }

@@ -356,7 +356,7 @@ export interface SendNotificationRequest {
 	templateId: string;
 	reservationId: string;
 	recipientId: string;
-	variables: Record<string, never>;
+	variables: Record<string, string | number | boolean | Date>;
 	documentId?: string;
 }
 

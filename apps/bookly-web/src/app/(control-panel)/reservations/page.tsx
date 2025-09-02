@@ -27,13 +27,15 @@ import {
 	MoreVert as MoreVertIcon,
 	FilterList as FilterIcon,
 	Download as DownloadIcon,
-	CalendarToday as CalendarIcon
+	CalendarToday as CalendarIcon,
+	SwapHoriz as ReassignIcon
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 
 import { DataTable } from '@components/molecules';
 import { PageTitle } from '@components/atoms';
+import { ReassignmentDialog } from '@components/molecules/ReassignmentDialog';
 import { useReservation, useReservationHistory } from '@hooks/useAvailability';
 import { Reservation, ReservationStatus } from '@services/availability/types';
 
@@ -71,6 +73,7 @@ export default function ReservationsPage() {
 	const [showCancelDialog, setShowCancelDialog] = useState(false);
 	const [cancelReason, setCancelReason] = useState('');
 	const [showFilters, setShowFilters] = useState(false);
+	const [showReassignmentDialog, setShowReassignmentDialog] = useState(false);
 	const [filters, setFilters] = useState<FilterState>({
 		status: 'ALL',
 		resourceId: '',
@@ -158,12 +161,21 @@ export default function ReservationsPage() {
 			accessorKey: 'status',
 			header: 'Status',
 			size: 120,
-			Cell: ({ cell }: any) => {
+			Cell: ({ cell }: { cell: { getValue: () => ReservationStatus } }) => {
 				const status = cell.getValue() as ReservationStatus;
 				return (
 					<Chip
 						label={STATUS_LABELS[status]}
-						color={STATUS_COLORS[status] as any}
+						color={
+							STATUS_COLORS[status] as
+								| 'primary'
+								| 'secondary'
+								| 'success'
+								| 'error'
+								| 'info'
+								| 'warning'
+								| 'default'
+						}
 						size="small"
 					/>
 				);
@@ -173,7 +185,7 @@ export default function ReservationsPage() {
 			accessorKey: 'isRecurring',
 			header: 'Recurring',
 			size: 100,
-			Cell: ({ cell }: any) => (
+			Cell: ({ cell }: { cell: { getValue: () => boolean } }) => (
 				<Chip
 					label={cell.getValue() ? 'Yes' : 'No'}
 					color={cell.getValue() ? 'primary' : 'default'}
@@ -186,7 +198,7 @@ export default function ReservationsPage() {
 			id: 'actions',
 			header: 'Actions',
 			size: 80,
-			Cell: ({ row }: any) => (
+			Cell: ({ row }: { row: { original: Reservation } }) => (
 				<IconButton
 					size="small"
 					onClick={(e) => handleActionMenuOpen(e, row.original)}
@@ -248,6 +260,16 @@ export default function ReservationsPage() {
 		}
 
 		handleActionMenuClose();
+	};
+
+	const handleReassignReservation = () => {
+		setShowReassignmentDialog(true);
+		handleActionMenuClose();
+	};
+
+	const handleReassignmentSuccess = (reassignmentId: string) => {
+		enqueueSnackbar('Reassignment request created successfully', { variant: 'success' });
+		loadReservations();
 	};
 
 	const handleApplyFilters = () => {
@@ -381,11 +403,18 @@ export default function ReservationsPage() {
 					Edit
 				</MenuItem>
 
-				{selectedReservation?.status === 'CONFIRMED' && (
-					<MenuItem onClick={() => setShowCancelDialog(true)}>
-						<CancelIcon sx={{ mr: 1 }} />
-						Cancel
-					</MenuItem>
+				{(selectedReservation?.status === 'CONFIRMED' || selectedReservation?.status === 'PENDING') && (
+					<>
+						<MenuItem onClick={handleReassignReservation}>
+							<ReassignIcon sx={{ mr: 1 }} />
+							Reassign
+						</MenuItem>
+
+						<MenuItem onClick={() => setShowCancelDialog(true)}>
+							<CancelIcon sx={{ mr: 1 }} />
+							Cancel
+						</MenuItem>
+					</>
 				)}
 
 				<MenuItem
@@ -448,7 +477,12 @@ export default function ReservationsPage() {
 							<Select
 								value={filters.status}
 								label="Status"
-								onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value as any }))}
+								onChange={(e) =>
+									setFilters((prev) => ({
+										...prev,
+										status: e.target.value as ReservationStatus | 'ALL'
+									}))
+								}
 							>
 								<MenuItem value="ALL">All</MenuItem>
 								<MenuItem value="PENDING">Pending</MenuItem>
@@ -508,6 +542,16 @@ export default function ReservationsPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
+
+			{/* Reassignment Dialog */}
+			{selectedReservation && (
+				<ReassignmentDialog
+					open={showReassignmentDialog}
+					onClose={() => setShowReassignmentDialog(false)}
+					reservation={selectedReservation}
+					onSuccess={handleReassignmentSuccess}
+				/>
+			)}
 		</Box>
 	);
 }
