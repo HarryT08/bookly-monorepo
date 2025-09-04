@@ -10,7 +10,6 @@ import {
 	WeeklySchedule,
 	Schedule,
 	CalendarIntegration,
-	CalendarEvent,
 	CalendarViewData,
 	Reservation,
 	ReservationHistory,
@@ -24,7 +23,7 @@ import {
 } from './types';
 
 // Base API URL for availability service
-const AVAILABILITY_API_BASE = process.env.NEXT_PUBLIC_AVAILABILITY_API_URL || 'http://localhost:3001/availability';
+const AVAILABILITY_API_BASE = process.env.NEXT_PUBLIC_AVAILABILITY_API_URL || 'http://localhost:3002';
 
 // ========================================
 // RF-07: Schedule and Availability Management
@@ -98,7 +97,9 @@ export const calendarIntegrationService = {
 	async createIntegration(
 		data: Omit<CalendarIntegration, 'id' | 'createdAt' | 'updatedAt'>
 	): Promise<CalendarIntegration> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/calendar-integrations`, { json: data });
+		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/calendar-integrations`, {
+			json: data
+		});
 		return response.json();
 	},
 
@@ -120,7 +121,9 @@ export const calendarIntegrationService = {
 	},
 
 	async updateIntegration(id: string, data: Partial<CalendarIntegration>): Promise<CalendarIntegration> {
-		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/calendar-integrations/${id}`, { json: data });
+		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/calendar-integrations/${id}`, {
+			json: data
+		});
 		return response.json();
 	},
 
@@ -129,7 +132,9 @@ export const calendarIntegrationService = {
 	},
 
 	async syncIntegration(integrationId: string): Promise<{ success: boolean; eventsCount: number }> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/calendar-integrations/${integrationId}/sync`);
+		const response = await availabilityClient.post(
+			`${AVAILABILITY_API_BASE}/calendar-integrations/${integrationId}/sync`
+		);
 		return response.json();
 	},
 
@@ -146,7 +151,9 @@ export const calendarIntegrationService = {
 			includeConflicts: (params.includeConflicts ?? true).toString()
 		});
 
-		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/availability-with-conflicts?${searchParams}`);
+		const response = await availabilityClient.get(
+			`${AVAILABILITY_API_BASE}/availability-with-conflicts?${searchParams}`
+		);
 		return response.json();
 	}
 };
@@ -176,7 +183,7 @@ export const calendarViewService = {
 
 		if (query.userId) searchParams.append('userId', query.userId);
 
-		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/calendar-view?${searchParams}`);
+		const response = await availabilityClient.get(`availability/calendar?${searchParams}`);
 		return response.json();
 	},
 
@@ -194,7 +201,7 @@ export const calendarViewService = {
 			includeScheduleRestrictions: (params.includeScheduleRestrictions ?? true).toString()
 		});
 
-		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/calendar/${params.resourceId}?${searchParams}`);
+		const response = await availabilityClient.get(`availability/${params.resourceId}/calendar?${searchParams}`);
 		return response.json();
 	}
 };
@@ -244,7 +251,9 @@ export const reservationService = {
 	},
 
 	async updateReservation(data: UpdateReservationRequest): Promise<Reservation> {
-		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/reservations/${data.id}`, { json: data });
+		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/reservations/${data.id}`, {
+			json: data
+		});
 		return response.json();
 	},
 
@@ -290,7 +299,9 @@ export const reservationHistoryService = {
 
 		if (query?.sortOrder) searchParams.append('sortOrder', query.sortOrder);
 
-		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/reservation-history/detailed?${searchParams}`);
+		const response = await availabilityClient.get(
+			`${AVAILABILITY_API_BASE}/reservation-history/detailed?${searchParams}`
+		);
 		return response.json();
 	},
 
@@ -312,7 +323,9 @@ export const reservationHistoryService = {
 
 		if (query?.endDate) searchParams.append('endDate', query.endDate.toISOString());
 
-		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/reservation-history/export?${searchParams}`);
+		const response = await availabilityClient.get(
+			`${AVAILABILITY_API_BASE}/reservation-history/export?${searchParams}`
+		);
 		return response.blob();
 	}
 };

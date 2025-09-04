@@ -33,7 +33,7 @@ export async function listResourcesPaginated(
 		if (v !== undefined && v !== null && v !== '') searchParams.set(k, String(v));
 	});
 
-	const res = await http.get(`${base}/paginated`, { searchParams }).json<{
+	const res = await http.get(`resources/paginated`, { searchParams }).json<{
 		success: boolean;
 		data: ResourceResponseDto[];
 		meta?: { page: number; limit: number; total: number; totalPages: number };
@@ -44,36 +44,36 @@ export async function listResourcesPaginated(
 
 export async function searchResources(q: string): Promise<ResourceResponseDto[]> {
 	const res = await http
-		.get(`${base}/search`, { searchParams: { q } })
+		.get(`resources/search`, { searchParams: { q } })
 		.json<{ success: boolean; data: ResourceResponseDto[] }>();
 	return mapSingleResource<ResourceResponseDto[]>(res);
 }
 
 export async function getResourceById(id: string): Promise<ResourceResponseDto> {
-	const res = await http.get(`${base}/${id}`).json<{ success: boolean; data: ResourceResponseDto }>();
+	const res = await http.get(`resources/${id}`).json<{ success: boolean; data: ResourceResponseDto }>();
 	return mapSingleResource<ResourceResponseDto>(res);
 }
 
 export async function getResourceByCode(code: string): Promise<ResourceResponseDto> {
-	const res = await http.get(`${base}/code/${code}`).json<{ success: boolean; data: ResourceResponseDto }>();
+	const res = await http.get(`resources/code/${code}`).json<{ success: boolean; data: ResourceResponseDto }>();
 	return mapSingleResource<ResourceResponseDto>(res);
 }
 
 export async function createResource(payload: CreateResourceDto): Promise<ResourceResponseDto> {
-	const res = await http.post(base, { json: payload }).json<{ success: boolean; data: ResourceResponseDto }>();
+	const res = await http.post('resources', { json: payload }).json<{ success: boolean; data: ResourceResponseDto }>();
 	return mapSingleResource<ResourceResponseDto>(res);
 }
 
 export async function updateResource(id: string, payload: UpdateResourceDto): Promise<ResourceResponseDto> {
 	const res = await http
-		.put(`${base}/${id}`, { json: payload })
+		.put(`resources/${id}`, { json: payload })
 		.json<{ success: boolean; data: ResourceResponseDto }>();
 	return mapSingleResource<ResourceResponseDto>(res);
 }
 
 export async function deleteResource(id: string, force?: boolean): Promise<{ success: boolean } | ResourceResponseDto> {
 	const res = await http
-		.delete(`${base}/${id}`, {
+		.delete(`resources/${id}`, {
 			searchParams: force ? { force: 'true' } : undefined
 		})
 		.json<{ success: boolean; data?: ResourceResponseDto }>();
@@ -90,7 +90,9 @@ export async function listCategories(
 
 	if (filters.isActive !== undefined) searchParams.set('isActive', String(filters.isActive));
 
-	const res = await http.get('resource-categories', { searchParams }).json<{ success: boolean; data: CategoryDto[] }>();
+	const res = await http
+		.get('resource-categories', { searchParams })
+		.json<{ success: boolean; data: CategoryDto[] }>();
 	return mapSingleResource<CategoryDto[]>(res);
 }
 

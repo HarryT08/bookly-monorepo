@@ -78,14 +78,14 @@ export const authServices = {
 	 * SSO Google Login
 	 */
 	async ssoGoogleLogin(): Promise<void> {
-		window.location.href = `${process.env.NEXT_PUBLIC_AUTH_API_URL}/oauth/google`;
+		window.location.href = `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/auth/oauth/google`;
 	},
 
 	/**
 	 * SSO Google Callback
 	 */
 	async ssoCallback(token: string): Promise<ApiResponse<SSOLoginResponse>> {
-		return authClient.get(`oauth/callback?token=${token}`).json();
+		return authClient.get(`auth/oauth/google/callback?token=${token}`).json();
 	}
 };
 

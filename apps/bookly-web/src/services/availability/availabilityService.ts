@@ -12,17 +12,14 @@ import type {
 	SearchHistoryResponse
 } from '../availability/types';
 
-const AVAILABILITY_API_BASE = '/api/availability';
+const AVAILABILITY_API_BASE = '';
 
 export const availabilityService = {
 	/**
 	 * Perform advanced search with comprehensive filters
 	 */
 	async advancedSearch(filters: AdvancedSearchFilters): Promise<AdvancedSearchResponse> {
-		const response = await httpClient.post<AdvancedSearchResponse>(
-			`${AVAILABILITY_API_BASE}/search/advanced`,
-			filters
-		);
+		const response = await httpClient.post<AdvancedSearchResponse>('/search/advanced', filters);
 
 		if (!response.success) {
 			throw new Error(`Advanced search failed: ${response.message || 'Unknown error'}`);
@@ -35,10 +32,7 @@ export const availabilityService = {
 	 * Check real-time availability for specific resources
 	 */
 	async checkAvailability(request: AvailabilityCheckRequest): Promise<AvailabilityResponse> {
-		const response = await httpClient.post<AvailabilityResponse>(
-			`${AVAILABILITY_API_BASE}/search/availability`,
-			request
-		);
+		const response = await httpClient.post<AvailabilityResponse>('/availability/check', request);
 
 		if (!response.success) {
 			throw new Error(`Availability check failed: ${response.message || 'Unknown error'}`);
@@ -147,10 +141,7 @@ export const availabilityService = {
 	},
 
 	async createReservation(reservationData: Record<string, unknown>): Promise<Record<string, unknown>> {
-		const response = await httpClient.post<Record<string, unknown>>(
-			`${AVAILABILITY_API_BASE}/reservations`,
-			reservationData
-		);
+		const response = await httpClient.post<Record<string, unknown>>('/reservations', reservationData);
 
 		if (!response.success) {
 			throw new Error(`Failed to create reservation: ${response.message || 'Unknown error'}`);
@@ -184,9 +175,7 @@ export const availabilityService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		const response = await httpClient.get<Record<string, unknown>>(
-			`${AVAILABILITY_API_BASE}/reservations?${searchParams}`
-		);
+		const response = await httpClient.get<Record<string, unknown>>(`/reservations?${searchParams}`);
 
 		if (!response.success) {
 			throw new Error(`Failed to get reservations: ${response.message || 'Unknown error'}`);

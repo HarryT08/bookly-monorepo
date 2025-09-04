@@ -19,7 +19,7 @@ import type {
 	ApprovalDashboardStats
 } from './types';
 
-const APPROVAL_BASE_URL = '/api/stockpile/approvals';
+const APPROVAL_BASE_URL = '/approval-flows';
 
 export const approvalFlowService = {
 	async createApprovalFlow(data: CreateApprovalFlowRequest): Promise<ApprovalFlow> {
@@ -66,7 +66,9 @@ export const approvalFlowService = {
 		levelId: string,
 		data: Partial<CreateApprovalLevelRequest>
 	): Promise<ApprovalLevel> {
-		const response = await stockpileClient.put(`${APPROVAL_BASE_URL}/flows/${flowId}/levels/${levelId}`, { json: data });
+		const response = await stockpileClient.put(`${APPROVAL_BASE_URL}/flows/${flowId}/levels/${levelId}`, {
+			json: data
+		});
 		return response.json();
 	},
 
@@ -92,7 +94,9 @@ export const approvalRequestService = {
 	},
 
 	async processRequest(requestId: string, data: ProcessApprovalRequest): Promise<ApprovalRequest> {
-		const response = await stockpileClient.post(`${APPROVAL_BASE_URL}/requests/${requestId}/process`, { json: data });
+		const response = await stockpileClient.post(`${APPROVAL_BASE_URL}/requests/${requestId}/process`, {
+			json: data
+		});
 		return response.json();
 	},
 
@@ -151,7 +155,7 @@ import type {
 	NotificationStats
 } from './types';
 
-const DOCUMENT_BASE_URL = '/api/stockpile/documents';
+const DOCUMENT_BASE_URL = '/document-templates';
 
 export const documentTemplateService = {
 	async createTemplate(data: CreateDocumentTemplateRequest): Promise<DocumentTemplate> {
@@ -189,7 +193,9 @@ export const documentTemplateService = {
 	},
 
 	async previewTemplate(id: string, variables: Record<string, unknown>): Promise<{ preview: string }> {
-		const response = await stockpileClient.post(`${DOCUMENT_BASE_URL}/templates/${id}/preview`, { json: { variables } });
+		const response = await stockpileClient.post(`${DOCUMENT_BASE_URL}/templates/${id}/preview`, {
+			json: { variables }
+		});
 		return response.json();
 	}
 };
@@ -235,7 +241,7 @@ export const documentGenerationService = {
 	}
 };
 
-const NOTIFICATION_BASE_URL = '/api/stockpile/notifications';
+const NOTIFICATION_BASE_URL = '/notifications';
 
 export const notificationChannelService = {
 	async getChannels(): Promise<NotificationChannel[]> {

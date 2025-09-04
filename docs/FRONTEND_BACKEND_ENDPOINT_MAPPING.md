@@ -526,5 +526,5 @@ await http.get('resource-categories', { searchParams })
 
 ---
 
-*Inventario actualizado: 2025-01-03*  
+*Inventario actualizado: 2025-09-03*  
 *Estado: Backend robusto - Ajustes menores requeridos*
