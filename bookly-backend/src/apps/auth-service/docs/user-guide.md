@@ -1,12 +1,40 @@
 # Bookly Auth Service - Guía de Usuario
 
-## 🔐 Introducción
+## 📋 Índice
 
-El Auth Service de Bookly es el sistema de autenticación y autorización que permite a los usuarios de la UFPS acceder de forma segura al sistema de reservas. Soporta tanto autenticación tradicional con credenciales universitarias como Single Sign-On (SSO) con Google Workspace.
+- [Información General](#-información-general)
+- [Tipos de Usuario y Roles](#-tipos-de-usuario-y-roles)
+- [Primeros Pasos](#-primeros-pasos)
+- [Gestión de Perfil](#-gestión-de-perfil)
+- [Autenticación Avanzada](#-autenticación-avanzada)
+- [Recuperación de Contraseña](#-recuperación-de-contraseña)
+- [Configuración de Seguridad](#-configuración-de-seguridad)
+- [Preguntas Frecuentes](#-preguntas-frecuentes)
+- [Troubleshooting](#-troubleshooting)
+- [Soporte Técnico](#-soporte-técnico)
 
----
+## 🏢 Información General
 
-## 👥 Tipos de Usuario
+El **Auth Service** de Bookly es el sistema central de **autenticación y autorización** que permite a usuarios de la Universidad Francisco de Paula Santander (UFPS) acceder de forma segura al sistema de reservas institucionales. Soporta autenticación tradicional con credenciales universitarias, Single Sign-On (SSO) con Google Workspace, y autenticación de dos factores (2FA).
+
+### ¿Qué hace el Auth Service?
+
+- 🔐 **Autenticación segura** con credenciales UFPS o Google SSO
+- 👥 **Gestión de roles** y permisos granulares por programa académico
+- 🛡️ **Autenticación de dos factores** (2FA) para mayor seguridad
+- 📱 **Recuperación de contraseña** automática por email
+- 🔍 **Auditoría completa** de accesos y actividad de usuarios
+- ⚙️ **Gestión de sesiones** con renovación automática de tokens
+
+| Entorno | URL Base | Descripción |
+|---------|----------|-------------|
+| **Producción** | `https://bookly.ufps.edu.co/auth` | Aplicación web principal |
+| **Staging** | `https://ufps.booklyapp.com/auth` | Entorno de desarrollo |
+| **Desarrollo** | `http://localhost:3100/auth` | Entorno de desarrollo |
+| **API Base** | `https://ufps.booklyapp.com/api/v1/auth` | Endpoints REST del servicio |
+| **API Docs** | `https://ufps.booklyapp.com/api/v1/auth/docs` | Documentación Swagger/OpenAPI |
+
+## 👥 Tipos de Usuario y Roles
 
 ### Estudiantes
 
@@ -40,7 +68,7 @@ El Auth Service de Bookly es el sistema de autenticación y autorización que pe
 
 #### Opción A: Registro Manual
 
-1. Visita: `https://bookly.ufps.edu.co/auth/register`
+1. Visita: `/auth/register`
 2. Completa el formulario:
 
    ```
@@ -56,7 +84,7 @@ El Auth Service de Bookly es el sistema de autenticación y autorización que pe
 
 #### Opción B: Google SSO (Recomendado)
 
-1. Visita: `https://bookly.ufps.edu.co/auth/login`
+1. Visita: `/auth/login`
 2. Haz clic en **"Iniciar con Google"**
 3. Autoriza con tu cuenta `@ufps.edu.co`
 4. Acceso inmediato al sistema
@@ -67,7 +95,7 @@ El Auth Service de Bookly es el sistema de autenticación y autorización que pe
 
 ### Método 1: Credenciales Tradicionales
 
-**URL**: `https://bookly.ufps.edu.co/auth/login`
+**URL**: `/auth/login`
 
 ```javascript
 // Formulario de login
@@ -86,7 +114,7 @@ El Auth Service de Bookly es el sistema de autenticación y autorización que pe
 
 ### Método 2: Google SSO
 
-**URL**: `https://bookly.ufps.edu.co/auth/oauth/google`
+**URL**: `/auth/oauth/google`
 
 **Proceso**:
 
@@ -108,7 +136,7 @@ El Auth Service de Bookly es el sistema de autenticación y autorización que pe
 - No uses información personal (nombre, fecha de nacimiento)
 - Cambia la contraseña cada 6 meses
 
-**Ejemplo de contraseña segura**: `Ufps2024#Reserva!`
+**Ejemplo de contraseña segura**: `Ufps2025#Reserva!`
 
 ### Protección de Cuenta
 
@@ -145,7 +173,7 @@ El Auth Service de Bookly es el sistema de autenticación y autorización que pe
     "resource:read",
     "reservation:approve"
   ],
-  "lastLogin": "2024-01-15T10:30:00Z",
+  "lastLogin": "2025-01-15T10:30:00Z",
   "emailVerified": true
 }
 ```
@@ -254,7 +282,7 @@ El Auth Service de Bookly es el sistema de autenticación y autorización que pe
 
 ### Olvidé Mi Contraseña
 
-**URL**: `https://bookly.ufps.edu.co/auth/password/reset`
+**URL**: `/auth/password/reset`
 
 **Proceso**:
 
@@ -452,14 +480,6 @@ socket.on('account-locked', (data) => {
 
 ---
 
-## 📞 Soporte y Ayuda
-
-### Contacto Técnico
-
-- **Email**: `soporte-bookly@ufps.edu.co`
-- **Teléfono**: `+57 (7) 575-8770`
-- **Horario**: Lunes a Viernes, 8:00 AM - 5:00 PM
-
 ### Autoayuda
 
 #### 1. ¿No puedo iniciar sesión?
@@ -489,9 +509,9 @@ socket.on('account-locked', (data) => {
 
 ### Documentación Técnica
 
-- **API Documentation**: `https://api.bookly.ufps.edu.co/auth/docs`
-- **Health Check**: `https://api.bookly.ufps.edu.co/auth/health`
-- **Status Page**: `https://status.bookly.ufps.edu.co`
+- **API Documentation**: `https://api.bookly.ufps.edu.co/auth/docs` | `https://ufps.booklyapp.com/auth/docs`
+- **Health Check**: `https://api.bookly.ufps.edu.co/auth/health` | `https://ufps.booklyapp.com/auth/health`
+- **Status Page**: `https://status.bookly.ufps.edu.co` | `https://ufps.booklyapp.com`
 
 ---
 
@@ -514,4 +534,28 @@ socket.on('account-locked', (data) => {
 
 ---
 
-Esta guía te ayudará a usar el sistema de autenticación de Bookly de forma efectiva y segura. Para dudas específicas o problemas técnicos, no dudes en contactar nuestro equipo de soporte.
+## 📞 Contacto y Soporte
+
+**Para Soporte Técnico**:
+
+- 📧 Email: `soporte-bookly@ufps.edu.co` | `soporte@ufps.booklyapp.com`
+- **WhatsApp**: +57 300 123 4567
+
+Cuando contactes soporte, incluye:
+
+- **Usuario y rol**
+- **Acción que intentabas realizar**
+- **Mensaje de error exacto**
+- **Capturas de pantalla**
+- **Archivo problemático** (para importaciones)
+
+---
+
+**Documento**: User Guide - Auth Service  
+**Última actualización**: 31 de Agosto, 2025  
+**Versión**: 2.0.0  
+**Autor**: Equipo de Desarrollo Bookly  
+**Revisor**: Arquitecto de Sistemas  
+**Estado**: ✅ Documentación Completa y Validada
+
+*Universidad Francisco de Paula Santander - Sistema Bookly de Reservas Institucionales*

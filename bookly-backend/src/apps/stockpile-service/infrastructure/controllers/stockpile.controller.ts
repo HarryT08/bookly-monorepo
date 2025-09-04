@@ -1,71 +1,381 @@
-import { Controller, Get, Post, Put, Param, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { StockpileService } from '../../application/services/stockpile.service';
+import { Controller, Get, Post, Put, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
 
+// Import commands (these would need to be created)
+import { ApproveRequestCommand } from '../../application/commands/approve-request.command';
+import { RejectRequestCommand } from '../../application/commands/reject-request.command';
+import { GenerateDocumentCommand } from '../../application/commands/generate-document.command';
+import { SendNotificationCommand } from '../../application/commands/send-notification.command';
+import { CheckInCommand } from '../../application/commands/check-in.command';
+import { CheckOutCommand } from '../../application/commands/check-out.command';
+import { CreateApprovalFlowCommand } from '../../application/commands/create-approval-flow.command';
+import { UpdateApprovalFlowCommand } from '../../application/commands/update-approval-flow.command';
+
+// Import queries (these would need to be created)
+import { GetApprovalsQuery } from '../../application/queries/get-approvals.query';
+import { GetApprovalByIdQuery } from '../../application/queries/get-approval-by-id.query';
+import { GetApprovalFlowsQuery } from '../../application/queries/get-approval-flows.query';
+import { GetNotificationTemplatesQuery } from '../../application/queries/get-notification-templates.query';
+import { GetCheckInStatusQuery } from '../../application/queries/get-checkin-status.query';
+
+/**
+ * Stockpile Controller
+ * 
+ * Implements CQRS pattern for all approval workflow and validation operations.
+ * Follows Clean Architecture principles with CommandBus and QueryBus separation.
+ * 
+ * Coverage:
+ * - RF-20: Request validation and approval workflows
+ * - RF-21: Document generation (PDFs, letters)
+ * - RF-22: Automated notifications
+ * - RF-23: Security and access control
+ * - RF-24: Configurable approval flows
+ * - RF-25: Audit trail and traceability
+ * - RF-26: Check-in/check-out digital workflows
+ * - RF-27: Multi-channel messaging integration
+ */
 @ApiTags('Stockpile')
-@Controller('stockpile')
+@Controller(STOCKPILE_URLS.BASE)
 export class StockpileController {
-  constructor(private readonly stockpileService: StockpileService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
-  @Get('approvals')
-  @ApiOperation({ summary: 'Get all approval requests' })
+  @Get(STOCKPILE_URLS.APPROVAL_REQUESTS)
+  @ApiOperation({ 
+    summary: 'Get all approval requests (RF-20, RF-25)',
+    description: 'Retrieve approval requests with filtering and pagination for audit purposes'
+  })
+  @ApiQuery({ name: 'status', required: false, description: 'Filter by approval status' })
+  @ApiQuery({ name: 'requesterId', required: false, description: 'Filter by requester ID' })
+  @ApiQuery({ name: 'approverId', required: false, description: 'Filter by approver ID' })
+  @ApiQuery({ name: 'resourceId', required: false, description: 'Filter by resource ID' })
+  @ApiQuery({ name: 'startDate', required: false, description: 'Start date filter (ISO format)' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'End date filter (ISO format)' })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
   @ApiResponse({ status: 200, description: 'Approval requests retrieved successfully' })
-  async findAllApprovals() {
-    return this.stockpileService.findAllApprovals();
+  async findAllApprovals(
+    @Query('status') status?: string,
+    @Query('requesterId') requesterId?: string,
+    @Query('approverId') approverId?: string,
+    @Query('resourceId') resourceId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number
+  ) {
+    const query = new GetApprovalsQuery(
+      status,
+      approverId,
+      requesterId,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
+      page || 1,
+      limit || 20
+    );
+    return await this.queryBus.execute(query);
   }
 
-  @Get('approvals/:id')
-  @ApiOperation({ summary: 'Get approval request by ID' })
+  @Get(STOCKPILE_URLS.APPROVAL_REQUEST_STATUS)
+  @ApiOperation({ 
+    summary: 'Get approval request by ID (RF-20)',
+    description: 'Retrieve detailed information for a specific approval request'
+  })
+  @ApiParam({ name: 'id', description: 'Approval request ID' })
   @ApiResponse({ status: 200, description: 'Approval request retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Approval request not found' })
   async findApprovalById(@Param('id') id: string) {
-    return this.stockpileService.findApprovalById(id);
+    const query = new GetApprovalByIdQuery(id);
+    return await this.queryBus.execute(query);
   }
 
-  @Post('approvals/:id/approve')
-  @ApiOperation({ summary: 'Approve a request' })
+  @Post(STOCKPILE_URLS.APPROVAL_REQUEST_APPROVE)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Approve a request (RF-20, RF-21, RF-22)',
+    description: 'Approve a reservation request, generate approval document, and send notifications'
+  })
+  @ApiParam({ name: 'id', description: 'Approval request ID' })
+  @ApiBody({
+    description: 'Approval data',
+    schema: {
+      type: 'object',
+      properties: {
+        approverId: { type: 'string', description: 'Approver user ID' },
+        comments: { type: 'string', description: 'Optional approval comments' },
+        conditions: { type: 'array', items: { type: 'string' }, description: 'Approval conditions' },
+        notificationChannels: { type: 'array', items: { type: 'string' }, description: 'Notification channels to use' }
+      },
+      required: ['approverId']
+    }
+  })
   @ApiResponse({ status: 200, description: 'Request approved successfully' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Approval request not found' })
   async approveRequest(
     @Param('id') id: string,
-    @Body() data: { approverId: string; comments?: string }
+    @Body() data: { 
+      approverId: string; 
+      comments?: string;
+      conditions?: string[];
+      notificationChannels?: string[];
+    }
   ) {
-    return this.stockpileService.approveRequest(id, data.approverId, data.comments);
+    const command = new ApproveRequestCommand(
+      id,
+      data.approverId,
+      data.comments,
+      data.conditions
+    );
+    return await this.commandBus.execute(command);
   }
 
-  @Post('approvals/:id/reject')
-  @ApiOperation({ summary: 'Reject a request' })
+  @Post(STOCKPILE_URLS.APPROVAL_REQUEST_REJECT)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Reject a request (RF-20, RF-21, RF-22)',
+    description: 'Reject a reservation request, generate rejection document, and send notifications'
+  })
+  @ApiParam({ name: 'id', description: 'Approval request ID' })
+  @ApiBody({
+    description: 'Rejection data',
+    schema: {
+      type: 'object',
+      properties: {
+        approverId: { type: 'string', description: 'Approver user ID' },
+        comments: { type: 'string', description: 'Required rejection reason' },
+        rejectionCategory: { type: 'string', description: 'Category of rejection' },
+        notificationChannels: { type: 'array', items: { type: 'string' }, description: 'Notification channels to use' }
+      },
+      required: ['approverId', 'comments']
+    }
+  })
   @ApiResponse({ status: 200, description: 'Request rejected successfully' })
+  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Approval request not found' })
   async rejectRequest(
     @Param('id') id: string,
-    @Body() data: { approverId: string; comments?: string }
+    @Body() data: { 
+      approverId: string; 
+      comments: string;
+      rejectionCategory?: string;
+      notificationChannels?: string[];
+    }
   ) {
-    return this.stockpileService.rejectRequest(id, data.approverId, data.comments);
+    const command = new RejectRequestCommand(
+      id,
+      data.approverId,
+      data.rejectionCategory || 'General rejection',
+      data.comments
+    );
+    return await this.commandBus.execute(command);
   }
 
-  @Post('approvals/:id/document')
-  @ApiOperation({ summary: 'Generate approval document' })
+  @Post(STOCKPILE_URLS.APPROVAL_REQUEST_DOCUMENT)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Generate approval document (RF-21)',
+    description: 'Generate PDF document for approved or rejected requests'
+  })
+  @ApiParam({ name: 'id', description: 'Approval request ID' })
+  @ApiBody({
+    description: 'Document generation options',
+    schema: {
+      type: 'object',
+      properties: {
+        templateId: { type: 'string', description: 'Document template ID (optional)' },
+        format: { type: 'string', enum: ['PDF', 'WORD'], description: 'Document format' },
+        includeQrCode: { type: 'boolean', description: 'Include QR code for verification' },
+        language: { type: 'string', description: 'Document language (es/en)' }
+      }
+    }
+  })
   @ApiResponse({ status: 200, description: 'Document generated successfully' })
-  async generateDocument(@Param('id') id: string) {
-    return this.stockpileService.generateApprovalDocument(id);
+  @ApiResponse({ status: 404, description: 'Approval request not found' })
+  async generateDocument(
+    @Param('id') id: string,
+    @Body() options?: {
+      documentType?: 'APPROVAL_LETTER' | 'REJECTION_LETTER' | 'CONDITIONAL_APPROVAL';
+      templateId?: string;
+      format?: string;
+      includeQrCode?: boolean;
+      language?: string;
+    }
+  ) {
+    const command = new GenerateDocumentCommand(
+      id,
+      options?.documentType || 'APPROVAL_LETTER',
+      options?.templateId,
+      { ...options }
+    );
+    return await this.commandBus.execute(command);
   }
 
-  @Post('notifications')
-  @ApiOperation({ summary: 'Send notification to user' })
-  @ApiResponse({ status: 200, description: 'Notification sent successfully' })
-  async sendNotification(@Body() data: { userId: string; message: string }) {
-    return this.stockpileService.sendNotification(data.userId, data.message);
+  @Post(STOCKPILE_URLS.NOTIFICATION_SEND)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ 
+    summary: 'Send notification to user (RF-22, RF-27)',
+    description: 'Send notifications via multiple channels (email, SMS, WhatsApp, push)'
+  })
+  @ApiBody({
+    description: 'Notification data',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', description: 'Target user ID' },
+        message: { type: 'string', description: 'Notification message' },
+        channels: { type: 'array', items: { type: 'string' }, description: 'Notification channels' },
+        priority: { type: 'string', enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'], description: 'Message priority' },
+        templateId: { type: 'string', description: 'Notification template ID (optional)' },
+        data: { type: 'object', description: 'Template data variables' }
+      },
+      required: ['userId', 'message']
+    }
+  })
+  @ApiResponse({ status: 201, description: 'Notification sent successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid notification data' })
+  async sendNotification(@Body() data: { 
+    userId: string; 
+    message: string;
+    channels?: string[];
+    templateId?: string;
+    data?: any;
+    priority?: string;
+  }) {
+    const command = new SendNotificationCommand(
+      data.userId,
+      (data.channels?.[0] as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'PUSH') || 'EMAIL',
+      data.templateId,
+      data.data,
+      (data.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium'
+    );
+    return await this.commandBus.execute(command);
   }
 
-  @Post('check-in/:reservationId')
-  @ApiOperation({ summary: 'Check-in for reservation' })
+  @Post(STOCKPILE_URLS.CHECKIN_RESERVATION)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Check-in for reservation (RF-26)',
+    description: 'Digital check-in process with QR code verification and access control'
+  })
+  @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
+  @ApiBody({
+    description: 'Check-in data',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', description: 'User performing check-in' },
+        qrCode: { type: 'string', description: 'QR code for verification' },
+        location: { type: 'string', description: 'Check-in location' },
+        timestamp: { type: 'string', description: 'Check-in timestamp (ISO format)' },
+        deviceInfo: { type: 'object', description: 'Device information' }
+      },
+      required: ['userId']
+    }
+  })
   @ApiResponse({ status: 200, description: 'Check-in completed successfully' })
-  async checkIn(@Param('reservationId') reservationId: string) {
-    return this.stockpileService.checkIn(reservationId);
+  @ApiResponse({ status: 403, description: 'Check-in not authorized or invalid QR code' })
+  @ApiResponse({ status: 404, description: 'Reservation not found' })
+  async checkIn(
+    @Param('reservationId') reservationId: string,
+    @Body() data: {
+      userId: string;
+      qrCode?: string;
+      location?: string;
+      timestamp?: string;
+      deviceInfo?: any;
+    }
+  ) {
+    const command = new CheckInCommand(
+      reservationId,
+      data.userId,
+      data.timestamp ? new Date(data.timestamp) : new Date(),
+      data.location
+    );
+    return await this.commandBus.execute(command);
   }
 
-  @Post('check-out/:reservationId')
-  @ApiOperation({ summary: 'Check-out for reservation' })
+  @Post(STOCKPILE_URLS.CHECKOUT_RESERVATION)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ 
+    summary: 'Check-out for reservation (RF-26)',
+    description: 'Digital check-out process with resource condition verification'
+  })
+  @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
+  @ApiBody({
+    description: 'Check-out data',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string', description: 'User performing check-out' },
+        resourceCondition: { type: 'string', enum: ['GOOD', 'DAMAGED', 'MISSING_ITEMS'], description: 'Resource condition' },
+        notes: { type: 'string', description: 'Check-out notes' },
+        timestamp: { type: 'string', description: 'Check-out timestamp (ISO format)' },
+        photos: { type: 'array', items: { type: 'string' }, description: 'Photo URLs for condition documentation' }
+      },
+      required: ['userId', 'resourceCondition']
+    }
+  })
   @ApiResponse({ status: 200, description: 'Check-out completed successfully' })
-  async checkOut(@Param('reservationId') reservationId: string) {
-    return this.stockpileService.checkOut(reservationId);
+  @ApiResponse({ status: 404, description: 'Reservation not found' })
+  async checkOut(
+    @Param('reservationId') reservationId: string,
+    @Body() data: {
+      userId: string;
+      resourceCondition: string;
+      notes?: string;
+      timestamp?: string;
+      photos?: string[];
+    }
+  ) {
+    const command = new CheckOutCommand(
+      reservationId,
+      data.userId,
+      data.timestamp ? new Date(data.timestamp) : new Date(),
+      data.notes,
+      data.resourceCondition
+    );
+    return await this.commandBus.execute(command);
+  }
+
+  @Get(STOCKPILE_URLS.APPROVAL_FLOWS + '/search')
+  @ApiOperation({ 
+    summary: 'Get approval flows (RF-24)',
+    description: 'Retrieve configured approval workflows with differentiated flows by resource type'
+  })
+  @ApiQuery({ name: 'resourceType', required: false, description: 'Filter by resource type' })
+  @ApiQuery({ name: 'programId', required: false, description: 'Filter by program ID' })
+  @ApiQuery({ name: 'isActive', required: false, type: Boolean, description: 'Filter by active status' })
+  @ApiResponse({ status: 200, description: 'Approval flows retrieved successfully' })
+  async getApprovalFlows(
+    @Query('resourceType') resourceType?: string,
+    @Query('programId') programId?: string,
+    @Query('isActive') isActive?: boolean
+  ) {
+    const query = new GetApprovalFlowsQuery(
+      isActive,
+      resourceType,
+      undefined, // isDefault
+      undefined, // page
+      undefined  // limit
+    );
+    return await this.queryBus.execute(query);
+  }
+
+  @Get(STOCKPILE_URLS.CHECKIN_STATUS)
+  @ApiOperation({ 
+    summary: 'Get check-in status (RF-26)',
+    description: 'Check current check-in/check-out status for a reservation'
+  })
+  @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
+  @ApiResponse({ status: 200, description: 'Check-in status retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Reservation not found' })
+  async getCheckInStatus(@Param('reservationId') reservationId: string) {
+    const query = new GetCheckInStatusQuery(reservationId);
+    return await this.queryBus.execute(query);
   }
 }

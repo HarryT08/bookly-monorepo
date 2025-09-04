@@ -15,6 +15,8 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ClientProxy } from '@nestjs/microservices';
 import { EventBusService, DomainEvent } from '@libs/event-bus/services/event-bus.service';
 import { LoggingService } from '@libs/logging/logging.service';
 import {
@@ -22,6 +24,7 @@ import {
   RoomSubscriptionDto,
   ConnectionState,
   ReservationEventDto,
+  ReservationCreatedEventDto,
   ResourceEventDto,
   NotificationSentEventDto,
   SystemEventDto,
@@ -31,6 +34,7 @@ import {
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
+  userEmail?: string;
   roles?: string[];
   customRooms?: Set<string>;
 }
@@ -72,8 +76,11 @@ export class BooklyWebSocketGateway implements OnGatewayConnection, OnGatewayDis
     private readonly jwtService: JwtService,
     private readonly eventBus: EventBusService,
     private readonly loggingService: LoggingService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {
     this.setupEventHandlers();
+    this.startMetricsCollection();
   }
 
   /**
@@ -381,6 +388,358 @@ export class BooklyWebSocketGateway implements OnGatewayConnection, OnGatewayDis
       default:
         return false;
     }
+  }
+
+  // ========================================
+  // CQRS WebSocket Message Handlers
+  // ========================================
+
+  /**
+   * Handle real-time resource availability check via WebSocket
+   */
+  @SubscribeMessage('check-availability')
+  async handleCheckAvailability(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: {
+      resourceId: string;
+      startDate: string;
+      endDate: string;
+    }
+  ) {
+    try {
+      this.metrics.messagesCount++;
+      
+      // Use CQRS to query availability service
+      const result = await this.queryBus.execute({
+        type: 'CheckAvailabilityQuery',
+        service: 'availability-service',
+        data: {
+          resourceId: data.resourceId,
+          startDate: new Date(data.startDate),
+          endDate: new Date(data.endDate),
+        }
+      });
+
+      client.emit('availability-result', {
+        requestId: `check-${Date.now()}`,
+        result,
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      this.logger.error(`Availability check failed for client ${client.id}:`, error);
+      this.sendError(client, 'AVAILABILITY_CHECK_FAILED', 'Failed to check availability');
+    }
+  }
+
+  /**
+   * Handle real-time reservation creation via WebSocket
+   */
+  @SubscribeMessage('create-reservation')
+  async handleCreateReservation(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: {
+      resourceId: string;
+      startDate: string;
+      endDate: string;
+      title: string;
+      description?: string;
+    }
+  ) {
+    try {
+      this.metrics.messagesCount++;
+
+      if (!client.userId) {
+        this.sendError(client, 'AUTH_REQUIRED', 'User authentication required');
+        return;
+      }
+
+      // Use CQRS to create reservation via availability service
+      const result = await this.commandBus.execute({
+        type: 'CreateReservationCommand',
+        service: 'availability-service',
+        data: {
+          ...data,
+          userId: client.userId,
+          startDate: new Date(data.startDate),
+          endDate: new Date(data.endDate),
+        }
+      });
+
+      client.emit('reservation-created', {
+        requestId: `create-${Date.now()}`,
+        result,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Broadcast to resource room
+      const reservationCreatedEvent: ReservationCreatedEventDto = {
+        type: 'reservation.created',
+        reservationId: result.id || `temp-${Date.now()}`,
+        resourceId: data.resourceId,
+        resourceName: result.resourceName || 'Unknown Resource',
+        userId: client.userId,
+        purpose: data.title,
+        status: 'PENDING',
+        startTime: new Date(data.startDate).toISOString(),
+        endTime: new Date(data.endDate).toISOString(),
+        timestamp: new Date().toISOString(),
+        eventId: `ws-${Date.now()}`,
+        source: 'websocket'
+      };
+      this.broadcastToRoom(`resource:${data.resourceId}`, reservationCreatedEvent);
+
+    } catch (error) {
+      this.logger.error(`Reservation creation failed for client ${client.id}:`, error);
+      this.sendError(client, 'RESERVATION_CREATION_FAILED', 'Failed to create reservation');
+    }
+  }
+
+  /**
+   * Handle real-time resource search via WebSocket
+   */
+  @SubscribeMessage('search-resources')
+  async handleSearchResources(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: {
+      query?: string;
+      type?: string;
+      location?: string;
+      isActive?: boolean;
+      page?: number;
+      limit?: number;
+    }
+  ) {
+    try {
+      this.metrics.messagesCount++;
+
+      // Use CQRS to search resources via resources service
+      const result = await this.queryBus.execute({
+        type: 'SearchResourcesQuery',
+        service: 'resources-service',
+        data: {
+          query: data.query,
+          filters: {
+            type: data.type,
+            location: data.location,
+            isActive: data.isActive,
+          },
+          pagination: {
+            page: data.page || 1,
+            limit: data.limit || 10,
+          }
+        }
+      });
+
+      client.emit('search-results', {
+        requestId: `search-${Date.now()}`,
+        result,
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      this.logger.error(`Resource search failed for client ${client.id}:`, error);
+      this.sendError(client, 'SEARCH_FAILED', 'Failed to search resources');
+    }
+  }
+
+  /**
+   * Handle real-time approval request via WebSocket
+   */
+  @SubscribeMessage('request-approval')
+  async handleRequestApproval(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: {
+      reservationId: string;
+      requestType: string;
+      comments?: string;
+    }
+  ) {
+    try {
+      this.metrics.messagesCount++;
+
+      if (!client.userId) {
+        this.sendError(client, 'AUTH_REQUIRED', 'User authentication required');
+        return;
+      }
+
+      // Use CQRS to request approval via stockpile service
+      const result = await this.commandBus.execute({
+        type: 'RequestApprovalCommand',
+        service: 'stockpile-service',
+        data: {
+          ...data,
+          requesterId: client.userId,
+        }
+      });
+
+      client.emit('approval-requested', {
+        requestId: `approval-${Date.now()}`,
+        result,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Notify admin rooms
+      this.broadcastToRoom('admin', {
+        type: 'approval.requested',
+        requesterId: client.userId,
+        reservationId: data.reservationId,
+        timestamp: new Date().toISOString(),
+        eventId: `ws-${Date.now()}`,
+        source: 'websocket'
+      });
+
+    } catch (error) {
+      this.logger.error(`Approval request failed for client ${client.id}:`, error);
+      this.sendError(client, 'APPROVAL_REQUEST_FAILED', 'Failed to request approval');
+    }
+  }
+
+  /**
+   * Handle real-time metrics query via WebSocket
+   */
+  @SubscribeMessage('get-metrics')
+  async handleGetMetrics(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: {
+      type: 'dashboard' | 'usage' | 'performance';
+      timeRange?: string;
+      filters?: any;
+    }
+  ) {
+    try {
+      this.metrics.messagesCount++;
+
+      // Check if user has admin permissions
+      const hasAdminRole = client.roles?.some(role => 
+        ['ADMIN_GENERAL', 'ADMIN_PROGRAMA'].includes(role)
+      );
+
+      if (!hasAdminRole) {
+        this.sendError(client, 'INSUFFICIENT_PERMISSIONS', 'Admin permissions required');
+        return;
+      }
+
+      // Use CQRS to get metrics via reports service
+      const result = await this.queryBus.execute({
+        type: 'GetMetricsQuery',
+        service: 'reports-service',
+        data: {
+          type: data.type,
+          timeRange: data.timeRange || '24h',
+          filters: data.filters,
+        }
+      });
+
+      client.emit('metrics-result', {
+        requestId: `metrics-${Date.now()}`,
+        result,
+        timestamp: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      this.logger.error(`Metrics query failed for client ${client.id}:`, error);
+      this.sendError(client, 'METRICS_QUERY_FAILED', 'Failed to get metrics');
+    }
+  }
+
+  /**
+   * Handle real-time notification sending via WebSocket
+   */
+  @SubscribeMessage('send-notification')
+  async handleSendNotification(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: {
+      userId: string;
+      message: string;
+      channels?: string[];
+      priority?: string;
+    }
+  ) {
+    try {
+      this.metrics.messagesCount++;
+
+      // Check if user has permission to send notifications
+      const hasPermission = client.roles?.some(role => 
+        ['ADMIN_GENERAL', 'ADMIN_PROGRAMA', 'VIGILANTE'].includes(role)
+      );
+
+      if (!hasPermission) {
+        this.sendError(client, 'INSUFFICIENT_PERMISSIONS', 'Permission to send notifications required');
+        return;
+      }
+
+      // Use CQRS to send notification via stockpile service
+      const result = await this.commandBus.execute({
+        type: 'SendNotificationCommand',
+        service: 'stockpile-service',
+        data: {
+          ...data,
+          senderId: client.userId,
+        }
+      });
+
+      client.emit('notification-sent', {
+        requestId: `notification-${Date.now()}`,
+        result,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Broadcast to target user
+      this.broadcastToUser(data.userId, {
+        type: 'notification.sent',
+        notificationId: `notif-${Date.now()}`,
+        recipientId: data.userId,
+        channel: 'PUSH',
+        status: 'sent',
+        message: data.message,
+        timestamp: new Date().toISOString(),
+        eventId: `ws-${Date.now()}`,
+        source: 'websocket'
+      });
+
+    } catch (error) {
+      this.logger.error(`Notification sending failed for client ${client.id}:`, error);
+      this.sendError(client, 'NOTIFICATION_SEND_FAILED', 'Failed to send notification');
+    }
+  }
+
+  /**
+   * Handle WebSocket ping for connection health check
+   */
+  @SubscribeMessage('ping')
+  async handlePing(@ConnectedSocket() client: AuthenticatedSocket) {
+    client.emit('pong', {
+      timestamp: new Date().toISOString(),
+      connectionId: client.id,
+      userId: client.userId,
+    });
+  }
+
+  /**
+   * Handle WebSocket metrics request
+   */
+  @SubscribeMessage('get-connection-metrics')
+  async handleGetConnectionMetrics(@ConnectedSocket() client: AuthenticatedSocket) {
+    const hasAdminRole = client.roles?.some(role => 
+      ['ADMIN_GENERAL'].includes(role)
+    );
+
+    if (!hasAdminRole) {
+      this.sendError(client, 'INSUFFICIENT_PERMISSIONS', 'Admin permissions required');
+      return;
+    }
+
+    const metricsData: RealtimeMetricsDto = {
+      connectionsCount: this.metrics.connectionsCount,
+      messagesCount: this.metrics.messagesCount,
+      errorsCount: this.metrics.errorsCount,
+      eventsPerSecond: this.metrics.eventsPerSecond,
+      averageLatency: 0, // Default value for now
+      lastUpdated: this.metrics.lastUpdated,
+    };
+
+    client.emit('connection-metrics', metricsData);
   }
 
   /**

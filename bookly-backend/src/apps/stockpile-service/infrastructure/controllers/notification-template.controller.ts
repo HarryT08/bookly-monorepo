@@ -35,15 +35,16 @@ import {
   NotificationEventType
 } from '@dto/stockpile/notification-template.dto';
 import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
 
 @ApiTags('Notification Templates')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('notification-templates')
+@Controller(STOCKPILE_URLS.NOTIFICATION_TEMPLATES)
 export class NotificationTemplateController {
   constructor(private readonly notificationTemplateService: NotificationTemplateService) {}
 
-  @Post('channels')
+  @Post(STOCKPILE_URLS.NOTIFICATION_CHANNEL_CREATE)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Create notification channel' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification channel created successfully', type: NotificationChannelDto })
@@ -54,7 +55,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.createNotificationChannel(dto);
   }
 
-  @Get('channels')
+  @Get(STOCKPILE_URLS.NOTIFICATION_CHANNELS)
   @ApiOperation({ summary: 'Get notification channels' })
   @ApiQuery({ name: 'isActive', required: false, description: 'Filter by active status' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification channels retrieved successfully', type: [NotificationChannelDto] })
@@ -64,7 +65,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getNotificationChannels(isActive);
   }
 
-  @Get('channels/:id')
+  @Get(STOCKPILE_URLS.NOTIFICATION_CHANNEL_BY_ID)
   @ApiOperation({ summary: 'Get notification channel by ID' })
   @ApiParam({ name: 'id', description: 'Notification channel ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification channel retrieved successfully', type: NotificationChannelDto })
@@ -73,7 +74,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getNotificationChannelById(id);
   }
 
-  @Post()
+  @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_CREATE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Create notification template' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification template created successfully', type: NotificationTemplateDto })
@@ -86,7 +87,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.createNotificationTemplate(dto);
   }
 
-  @Put(':id')
+  @Put(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_UPDATE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Update notification template' })
   @ApiParam({ name: 'id', description: 'Notification template ID' })
@@ -99,7 +100,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.updateNotificationTemplate(id, dto);
   }
 
-  @Get()
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATES)
   @ApiOperation({ summary: 'Get notification templates' })
   @ApiQuery({ name: 'channelId', required: false, description: 'Filter by channel ID' })
   @ApiQuery({ name: 'eventType', required: false, enum: NotificationEventType, description: 'Filter by event type' })
@@ -129,7 +130,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get(':id')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_BY_ID)
   @ApiOperation({ summary: 'Get notification template by ID' })
   @ApiParam({ name: 'id', description: 'Notification template ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification template retrieved successfully', type: NotificationTemplateDto })
@@ -138,7 +139,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getNotificationTemplateById(id);
   }
 
-  @Get('default/search')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_DEFAULT_SEARCH)
   @ApiOperation({ summary: 'Get default notification template for scope' })
   @ApiQuery({ name: 'channelId', required: true, description: 'Channel ID' })
   @ApiQuery({ name: 'eventType', required: true, enum: NotificationEventType, description: 'Event type' })
@@ -159,7 +160,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get(':id/variables')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_VARIABLES)
   @ApiOperation({ summary: 'Get notification template variables' })
   @ApiParam({ name: 'id', description: 'Notification template ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification template variables retrieved successfully' })
@@ -167,7 +168,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getNotificationTemplateVariables(id);
   }
 
-  @Get('variables/available')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_AVAILABLE_VARIABLES)
   @ApiOperation({ summary: 'Get available notification variables' })
   @ApiQuery({ name: 'eventType', required: true, enum: NotificationEventType, description: 'Event type' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Resource type' })
@@ -179,7 +180,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getAvailableNotificationVariables(eventType, resourceType);
   }
 
-  @Post('configs')
+  @Post(STOCKPILE_URLS.NOTIFICATION_CONFIGS)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Create notification config' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification config created successfully', type: NotificationConfigDto })
@@ -192,7 +193,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.createNotificationConfig(dto);
   }
 
-  @Get('configs')
+  @Get(STOCKPILE_URLS.NOTIFICATION_CONFIGS)
   @ApiOperation({ summary: 'Get notification configs' })
   @ApiQuery({ name: 'programId', required: false, description: 'Filter by program ID' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Filter by resource type' })
@@ -216,7 +217,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get('configs/:id')
+  @Get(STOCKPILE_URLS.NOTIFICATION_CONFIGS_BY_ID)
   @ApiOperation({ summary: 'Get notification config by ID' })
   @ApiParam({ name: 'id', description: 'Notification config ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification config retrieved successfully', type: NotificationConfigDto })
@@ -225,7 +226,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getNotificationConfigById(id);
   }
 
-  @Post('send')
+  @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SEND)
   @ApiOperation({ summary: 'Send notification' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification sent successfully', type: SentNotificationDto })
   async sendNotification(
@@ -234,7 +235,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.sendNotification(dto);
   }
 
-  @Post('send-batch')
+  @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SEND_BATCH)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Send batch notifications' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Batch notifications sent successfully' })
@@ -244,7 +245,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.sendBatchNotifications(body.channelId, body.notificationIds);
   }
 
-  @Get('sent/reservation/:reservationId')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SENT_BY_RESERVATION)
   @ApiOperation({ summary: 'Get sent notifications by reservation' })
   @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Sent notifications retrieved successfully', type: [SentNotificationDto] })
@@ -254,7 +255,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getSentNotificationsByReservation(reservationId);
   }
 
-  @Get('sent/recipient/:recipientId')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SENT_BY_RECIPIENT)
   @ApiOperation({ summary: 'Get sent notifications by recipient' })
   @ApiParam({ name: 'recipientId', description: 'Recipient ID' })
   @ApiQuery({ name: 'channel', required: false, enum: NotificationChannelType, description: 'Filter by channel' })
@@ -278,7 +279,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get('pending')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_PENDING)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Get pending notifications' })
   @ApiQuery({ name: 'channelId', required: false, description: 'Filter by channel ID' })
@@ -289,7 +290,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getPendingNotifications(channelId);
   }
 
-  @Get('batch/:channelId')
+  @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_BATCH)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Get notifications for batch processing' })
   @ApiParam({ name: 'channelId', description: 'Channel ID' })
@@ -302,7 +303,7 @@ export class NotificationTemplateController {
     return await this.notificationTemplateService.getNotificationsForBatch(channelId, batchInterval);
   }
 
-  @Post('sent/:id/mark-read')
+  @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_MARK_READ)
   @ApiOperation({ summary: 'Mark notification as read' })
   @ApiParam({ name: 'id', description: 'Notification ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification marked as read successfully' })

@@ -28,6 +28,7 @@ import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
 import { UserEntity } from '../../../auth-service/domain/entities/user.entity';
+import { RESOURCES_URLS } from '../../utils/maps/urls.map';
 
 /**
  * HITO 6 - RF-02: ResourceCategory Controller
@@ -43,7 +44,7 @@ export class ResourceCategoryController {
   /**
    * Assigns a single category to a resource
    */
-  @Post(':resourceId/categories/:categoryId')
+  @Post(RESOURCES_URLS.RESOURCE_CATEGORY_ASSIGN)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -88,7 +89,7 @@ export class ResourceCategoryController {
   /**
    * Assigns multiple categories to a resource
    */
-  @Post(':resourceId/categories')
+  @Post(RESOURCES_URLS.RESOURCE_CATEGORY_ASSIGN_MULTIPLE)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -128,7 +129,7 @@ export class ResourceCategoryController {
   /**
    * Replaces all categories for a resource
    */
-  @Put(':resourceId/categories')
+  @Put(RESOURCES_URLS.RESOURCE_CATEGORY_REPLACE)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @ApiOperation({
     summary: 'Replace resource categories',
@@ -167,7 +168,7 @@ export class ResourceCategoryController {
   /**
    * Gets all categories assigned to a resource
    */
-  @Get(':resourceId/categories')
+  @Get(RESOURCES_URLS.RESOURCE_CATEGORY_GET)
   @ApiOperation({
     summary: 'Get resource categories',
     description: 'Retrieves all categories assigned to a specific resource.',
@@ -191,7 +192,7 @@ export class ResourceCategoryController {
   /**
    * Gets all resources assigned to a category with pagination
    */
-  @Get('categories/:categoryId/resources')
+  @Get(RESOURCES_URLS.CATEGORY_RESOURCES_GET)
   @ApiOperation({
     summary: 'Get resources by category',
     description: 'Retrieves all resources assigned to a specific category with pagination.',
@@ -245,7 +246,7 @@ export class ResourceCategoryController {
   /**
    * Checks if a resource is assigned to a specific category
    */
-  @Get(':resourceId/categories/:categoryId/exists')
+  @Get(RESOURCES_URLS.RESOURCE_CATEGORY_EXISTS)
   @ApiOperation({
     summary: 'Check resource-category assignment',
     description: 'Checks if a resource is assigned to a specific category.',
@@ -284,7 +285,7 @@ export class ResourceCategoryController {
   /**
    * Removes a category from a resource
    */
-  @Delete(':resourceId/categories/:categoryId')
+  @Delete(RESOURCES_URLS.RESOURCE_CATEGORY_REMOVE)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -324,7 +325,7 @@ export class ResourceCategoryController {
   /**
    * Removes all categories from a resource
    */
-  @Delete(':resourceId/categories')
+  @Delete(RESOURCES_URLS.RESOURCE_CATEGORY_REMOVE_ALL)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -354,7 +355,7 @@ export class ResourceCategoryController {
   /**
    * Bulk assigns a category to multiple resources
    */
-  @Post('categories/:categoryId/resources')
+  @Post(RESOURCES_URLS.CATEGORY_BULK_ASSIGN)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -394,7 +395,7 @@ export class ResourceCategoryController {
   /**
    * Validates resource-category assignment data
    */
-  @Post('validate')
+  @Post(RESOURCES_URLS.RESOURCE_CATEGORY_VALIDATE)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @ApiOperation({
     summary: 'Validate resource-category assignment',

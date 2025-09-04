@@ -29,13 +29,14 @@ import {
 } from '../../application/queries/usage-report.query';
 import { LoggingService } from '@logging/logging.service';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
+import { REPORTS_URLS } from '../../utils/maps/urls.map';
 
 /**
  * RF-31: Usage Reports Controller
  * Handles endpoints for generating usage reports by program, period, and resource type
  */
 @ApiTags('Usage Reports')
-@Controller('reports/usage')
+@Controller(REPORTS_URLS.USAGE_REPORTS)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class UsageReportsController {
@@ -48,7 +49,7 @@ export class UsageReportsController {
    * Generate usage report with filters
    * RF-31: Reports about resource utilization by academic program, period, and resource type
    */
-  @Get()
+  @Get(REPORTS_URLS.USAGE_REPORTS)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
   @ApiOperation({ 
     summary: 'Generate usage report',
@@ -135,7 +136,7 @@ export class UsageReportsController {
   /**
    * Get usage report summary statistics
    */
-  @Get('summary')
+  @Get(REPORTS_URLS.USAGE_SUMMARY)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
   @ApiOperation({ 
     summary: 'Get usage report summary',
@@ -205,7 +206,7 @@ export class UsageReportsController {
   /**
    * Get available filter options for usage reports
    */
-  @Get('filter-options/:filterType')
+  @Get(REPORTS_URLS.FILTER_OPTIONS + '/:filterType')
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
   @ApiOperation({ 
     summary: 'Get filter options',

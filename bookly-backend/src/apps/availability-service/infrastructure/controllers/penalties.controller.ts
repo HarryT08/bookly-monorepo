@@ -32,6 +32,7 @@ import { RolesGuard } from "@libs/common/guards/roles.guard";
 import { Roles } from "@apps/auth-service/infrastructure/decorators/roles.decorator";
 import { CurrentUser } from '@libs/common';
 import { UserRole } from '@libs/common';
+import { AVAILABILITY_URLS } from '../../utils/maps/urls.map';
 
 // DTOs (to be created)
 import { CreatePenaltyEventDto } from "../dtos/create-penalty-event.dto";
@@ -54,7 +55,7 @@ export class PenaltiesController {
   constructor(private readonly penaltyService: PenaltyService) {}
 
   // Penalty Events Management
-  @Post("events")
+  @Post(AVAILABILITY_URLS.PENALTY_EVENTS)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Create penalty event",
@@ -81,7 +82,7 @@ export class PenaltiesController {
     });
   }
 
-  @Get("events")
+  @Get(AVAILABILITY_URLS.PENALTY_EVENTS)
   @ApiOperation({
     summary: "Get penalty events",
     description: "Retrieves penalty events with optional filtering",
@@ -130,7 +131,7 @@ export class PenaltiesController {
     });
   }
 
-  @Put("events/:id")
+  @Put(AVAILABILITY_URLS.PENALTY_EVENTS + "/:id")
   @ApiOperation({
     summary: "Update penalty event",
     description: "Updates a penalty event configuration",
@@ -156,7 +157,7 @@ export class PenaltiesController {
     return await this.penaltyService.updatePenaltyEvent(id, updateDto, user.id);
   }
 
-  @Delete("events/:id")
+  @Delete(AVAILABILITY_URLS.PENALTY_EVENTS + "/:id")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: "Deactivate penalty event",
@@ -181,7 +182,7 @@ export class PenaltiesController {
   }
 
   // Penalty Configurations Management
-  @Post("configurations")
+  @Post(AVAILABILITY_URLS.PENALTY_CONFIGURATIONS)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Create penalty configuration",
@@ -204,7 +205,7 @@ export class PenaltiesController {
     });
   }
 
-  @Get("configurations")
+  @Get(AVAILABILITY_URLS.PENALTY_CONFIGURATIONS)
   @ApiOperation({
     summary: "Get penalty configurations",
     description: "Retrieves penalty configurations with optional filtering",
@@ -224,7 +225,7 @@ export class PenaltiesController {
   }
 
   // User Penalties Management
-  @Post("apply")
+  @Post(AVAILABILITY_URLS.PENALTY_APPLY)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Apply penalty to user",
@@ -251,7 +252,7 @@ export class PenaltiesController {
     });
   }
 
-  @Get("user/:userId")
+  @Get(AVAILABILITY_URLS.USER_PENALTIES)
   @ApiOperation({
     summary: "Get user penalties",
     description: "Retrieves all penalties for a specific user",
@@ -293,7 +294,7 @@ export class PenaltiesController {
     );
   }
 
-  @Get("my-penalties")
+  @Get(AVAILABILITY_URLS.PENALTY_MY_PENALTIES)
   @ApiOperation({
     summary: "Get current user penalties",
     description: "Retrieves all penalties for the current user",
@@ -322,7 +323,7 @@ export class PenaltiesController {
     return await this.penaltyService.getUserPenalties(user.id, UserPenaltyStatus.ACTIVE, includeExpired);
   }
 
-  @Delete("user-penalties/:id")
+  @Delete(AVAILABILITY_URLS.PENALTY_USER_PENALTIES)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: "Remove user penalty",

@@ -1,0 +1,31 @@
+Endpoint,Método,Tipo,Descripción,RF,Acceso,Guards,Params,Query,Body,Ejemplo
+/approval-flows,POST,Command,Crea nuevo flujo de aprobación,RF-24,Privado,"JwtAuthGuard, RolesGuard",No,No,"name, description, programId, resourceType, categoryId",POST /approval-flows
+/approval-flows/:id,PUT,Command,Actualiza flujo de aprobación existente,RF-24,Privado,"JwtAuthGuard, RolesGuard",id,No,"name, description, requiredApprovals",PUT /approval-flows/flow123
+/approval-flows,GET,Query,Obtiene flujos con filtros opcionales,RF-24,Privado,"JwtAuthGuard, RolesGuard",No,"programId, resourceType, categoryId, isActive",GET /approval-flows?programId=program123
+/approval-flows/:id,GET,Query,Obtiene flujo específico por ID,RF-24,Privado,"JwtAuthGuard, RolesGuard",id,No,No,GET /approval-flows/flow123
+/approval-flows/default/search,GET,Query,Busca flujo predeterminado para contexto,RF-24,Privado,"JwtAuthGuard, RolesGuard",No,"programId, resourceType, categoryId",GET /approval-flows/default/search?programId=program123
+/approval-flows/:id/levels,POST,Command,Crea nivel de aprobación en flujo,RF-24,Privado,"JwtAuthGuard, RolesGuard",id,No,"levelNumber, name, requiredApproverId, isRequired",POST /approval-flows/flow123/levels
+/approval-flows/:id/levels,GET,Query,Obtiene niveles de un flujo,RF-24,Privado,"JwtAuthGuard, RolesGuard",id,No,No,GET /approval-flows/flow123/levels
+/approval-flows/reservations/:reservationId/submit,POST,Command,Envía reserva a proceso de aprobación,RF-20,Privado,"JwtAuthGuard, RolesGuard",reservationId,No,"resourceId, resourceType, categoryId, programId",POST /approval-flows/reservations/reservation123/submit
+/approval-flows/requests/pending,GET,Query,Obtiene solicitudes pendientes con paginación,RF-20,Privado,"JwtAuthGuard, RolesGuard",No,"approverId, programId, resourceType, categoryId, page, limit",GET /approval-flows/requests/pending?page=1&limit=10
+/approval-flows/requests/:requestId/process,POST,Command,Procesa solicitud (aprobar/rechazar),"RF-18, RF-19",Privado,"JwtAuthGuard, RolesGuard",requestId,No,"action, comment, priority",POST /approval-flows/requests/request123/process
+/approval-flows/reservations/:reservationId/requests,GET,Query,Obtiene solicitudes de una reserva,RF-25,Privado,"JwtAuthGuard, RolesGuard",reservationId,No,No,GET /approval-flows/reservations/reservation123/requests
+/approval-flows/reservations/:reservationId/status,GET,Query,Obtiene estado de aprobación de reserva,RF-25,Privado,"JwtAuthGuard, RolesGuard",reservationId,No,No,GET /approval-flows/reservations/reservation123/status
+/approval-flows/reservations/:reservationId/cancel,POST,Command,Cancela reserva y proceso de aprobación,RF-25,Privado,"JwtAuthGuard, RolesGuard",reservationId,No,reason (opcional),POST /approval-flows/reservations/reservation123/cancel
+/document-templates,POST,Command,Crea plantilla de documento,RF-21,Privado,"JwtAuthGuard, RolesGuard",No,No,"name, type, eventType, templateContent",POST /document-templates
+/document-templates,GET,Query,Obtiene plantillas con filtros,RF-21,Privado,"JwtAuthGuard, RolesGuard",No,"type, eventType, isActive",GET /document-templates?type=APPROVAL_LETTER
+/document-templates/:id,GET,Query,Obtiene plantilla específica,RF-21,Privado,"JwtAuthGuard, RolesGuard",id,No,No,GET /document-templates/template123
+/document-templates/:id,PUT,Command,Actualiza plantilla existente,RF-21,Privado,"JwtAuthGuard, RolesGuard",id,No,"name, templateContent",PUT /document-templates/template123
+/document-templates/:id,DELETE,Command,Elimina plantilla de documento,RF-21,Privado,"JwtAuthGuard, RolesGuard",id,No,No,DELETE /document-templates/template123
+/document-templates/:id/upload,POST,Command,Carga archivo de plantilla,RF-21,Privado,"JwtAuthGuard, RolesGuard",id,No,file (multipart),POST /document-templates/template123/upload
+/document-templates/generate,POST,Command,Genera documento basado en plantilla,RF-21,Privado,"JwtAuthGuard, RolesGuard",No,No,"templateId, reservationId, format, deliveryMethod",POST /document-templates/generate
+/document-templates/generated/:documentId/download,GET,Query,Descarga documento generado,RF-21,Privado,"JwtAuthGuard, RolesGuard",documentId,No,No,GET /document-templates/generated/doc123/download
+/notification-templates,POST,Command,Crea plantilla de notificación,"RF-22, RF-27",Privado,"JwtAuthGuard, RolesGuard",No,No,"name, channel, eventType, subject, templateContent",POST /notification-templates
+/notification-templates,GET,Query,Obtiene plantillas con filtros,"RF-22, RF-27",Privado,"JwtAuthGuard, RolesGuard",No,"channel, eventType, isActive",GET /notification-templates?channel=WHATSAPP
+/notification-templates/:id,GET,Query,Obtiene plantilla específica,"RF-22, RF-27",Privado,"JwtAuthGuard, RolesGuard",id,No,No,GET /notification-templates/template123
+/notification-templates/:id,PUT,Command,Actualiza plantilla de notificación,"RF-22, RF-27",Privado,"JwtAuthGuard, RolesGuard",id,No,templateContent,PUT /notification-templates/template123
+/notification-templates/:id,DELETE,Command,Elimina plantilla de notificación,"RF-22, RF-27",Privado,"JwtAuthGuard, RolesGuard",id,No,No,DELETE /notification-templates/template123
+/notification-templates/send,POST,Command,Envía notificación usando plantilla,"RF-22, RF-27, RF-28",Privado,"JwtAuthGuard, RolesGuard",No,No,"templateId, recipientId, reservationId, channel, priority",POST /notification-templates/send
+/notification-templates/history,GET,Query,Obtiene historial de notificaciones,RF-25,Privado,"JwtAuthGuard, RolesGuard",No,"recipientId, channel, status, page, limit",GET /notification-templates/history?recipientId=user123
+/stockpile/health,GET,Query,Verifica estado de salud del servicio,Operacional,Público,Ninguno,No,No,No,GET /stockpile/health
+/stockpile/metrics,GET,Query,Obtiene métricas del servicio,Operacional,Privado,"JwtAuthGuard, RolesGuard",No,No,No,GET /stockpile/metrics

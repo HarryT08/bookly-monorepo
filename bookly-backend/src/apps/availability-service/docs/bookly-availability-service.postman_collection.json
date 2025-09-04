@@ -1,0 +1,311 @@
+{
+  "info": {
+    "name": "Bookly Availability Service API v2.0",
+    "description": "Sistema de Gestión de Disponibilidad, Reservas y WebSocket - Bookly UFPS\n\nCaracterísticas principales:\n- RF-07 al RF-16: Gestión completa de disponibilidad y reservas\n- Reservas simples y recurrentes\n- Lista de espera automática\n- Integración con calendarios externos\n- WebSocket events en tiempo real\n- Búsqueda avanzada y reasignación\n- Event-driven architecture",
+    "version": "2.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "ws_url", 
+      "value": "ws://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resource_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "test_start_date",
+      "value": "2024-01-15T09:00:00Z",
+      "type": "string"
+    },
+    {
+      "key": "test_end_date",
+      "value": "2024-01-15T11:00:00Z", 
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Reservation Management",
+      "item": [
+        {
+          "name": "Create Reservation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"userId\": \"{{user_id}}\",\n  \"startDate\": \"{{test_start_date}}\",\n  \"endDate\": \"{{test_end_date}}\",\n  \"purpose\": \"Clase de Programación\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/api/v1/reservations/create",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "api", "v1", "reservations", "create"]
+            },
+            "description": "RF-12: Crear nueva reserva"
+          }
+        },
+        {
+          "name": "Check Availability",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/availability/api/v1/reservations/check-availability?resourceId={{resource_id}}&startDate={{test_start_date}}&endDate={{test_end_date}}",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "api", "v1", "reservations", "check-availability"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resource_id}}"
+                },
+                {
+                  "key": "startDate", 
+                  "value": "{{test_start_date}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{test_end_date}}"
+                }
+              ]
+            },
+            "description": "RF-16: Verificar disponibilidad"
+          }
+        },
+        {
+          "name": "Update Reservation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2024-01-15T10:00:00Z\",\n  \"endDate\": \"2024-01-15T12:00:00Z\",\n  \"reason\": \"Cambio de horario\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/api/v1/reservations/{{reservation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "api", "v1", "reservations", "{{reservation_id}}"]
+            },
+            "description": "RF-13: Modificar reserva"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Waiting List",
+      "item": [
+        {
+          "name": "Join Waiting List",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"userId\": \"{{user_id}}\",\n  \"preferredStartDate\": \"{{test_start_date}}\",\n  \"preferredEndDate\": \"{{test_end_date}}\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/api/v1/waiting-list/join",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "api", "v1", "waiting-list", "join"]
+            },
+            "description": "RF-14: Unirse a lista de espera"
+          }
+        },
+        {
+          "name": "Get My Waiting List",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/availability/api/v1/waiting-list/my-entries",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "api", "v1", "waiting-list", "my-entries"]
+            },
+            "description": "RF-14: Ver mis entradas en lista de espera"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calendar Integration", 
+      "item": [
+        {
+          "name": "Create Calendar Integration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"calendarType\": \"google\",\n  \"credentials\": {\n    \"accessToken\": \"token\",\n    \"refreshToken\": \"refresh\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/api/v1/calendar-integrations/create",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "api", "v1", "calendar-integrations", "create"]
+            },
+            "description": "RF-08: Crear integración calendario"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Advanced Search",
+      "item": [
+        {
+          "name": "Search Resources",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/availability/api/v1/advanced-search?startDate={{test_start_date}}&capacity=25&equipment=projector",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "api", "v1", "advanced-search"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{test_start_date}}"
+                },
+                {
+                  "key": "capacity",
+                  "value": "25"
+                },
+                {
+                  "key": "equipment",
+                  "value": "projector"
+                }
+              ]
+            },
+            "description": "RF-09: Búsqueda avanzada"
+          }
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Testing",
+      "item": [
+        {
+          "name": "Test WebSocket Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"test-availability-connection\",\n  \"data\": {\n    \"token\": \"{{access_token}}\",\n    \"userId\": \"{{user_id}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/websocket/test-connection",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "websocket", "test-connection"]
+            },
+            "description": "Test WebSocket connection"
+          }
+        },
+        {
+          "name": "Emit Reservation Created",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"reservation-created\",\n  \"data\": {\n    \"reservationId\": \"{{reservation_id}}\",\n    \"resourceId\": \"{{resource_id}}\",\n    \"userId\": \"{{user_id}}\",\n    \"startDate\": \"{{test_start_date}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/availability/websocket/emit",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "websocket", "emit"]
+            },
+            "description": "Test reservation created event"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:3002');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.info.requestName === 'Create Reservation' && pm.response.code === 201) {",
+          "    const responseJson = pm.response.json();",
+          "    if (responseJson.id) {",
+          "        pm.collectionVariables.set('reservation_id', responseJson.id);",
+          "    }",
+          "}",
+          "console.log('Response Status:', pm.response.code);"
+        ]
+      }
+    }
+  ]
+}

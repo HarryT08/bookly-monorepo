@@ -8,15 +8,15 @@ const getServiceURL = (service: string): string => {
 
 	switch (service) {
 		case 'auth':
-			return process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001/api';
+			return process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001';
 		case 'resources':
-			return process.env.NEXT_PUBLIC_RESOURCES_SERVICE_URL || 'http://localhost:3003/api';
+			return process.env.NEXT_PUBLIC_RESOURCES_SERVICE_URL || 'http://localhost:3003';
 		case 'availability':
-			return process.env.NEXT_PUBLIC_AVAILABILITY_SERVICE_URL || 'http://localhost:3002/api';
+			return process.env.NEXT_PUBLIC_AVAILABILITY_SERVICE_URL || 'http://localhost:3002';
 		case 'stockpile':
-			return process.env.NEXT_PUBLIC_STOCKPILE_SERVICE_URL || 'http://localhost:3004/api';
+			return process.env.NEXT_PUBLIC_STOCKPILE_SERVICE_URL || 'http://localhost:3004';
 		case 'reports':
-			return process.env.NEXT_PUBLIC_REPORTS_SERVICE_URL || 'http://localhost:3005/api';
+			return process.env.NEXT_PUBLIC_REPORTS_SERVICE_URL || 'http://localhost:3005';
 		default:
 			return baseURL;
 	}

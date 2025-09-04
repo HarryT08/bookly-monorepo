@@ -4,6 +4,8 @@ import { HttpModule } from '@nestjs/axios';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { CqrsModule } from '@nestjs/cqrs';
+import { APP_FILTER } from '@nestjs/core';
 
 // Configuration
 import gatewayConfig from './config/gateway.config';
@@ -36,6 +38,9 @@ import { GatewayController, GatewayManagementController } from './infrastructure
 // WebSocket Gateway
 import { BooklyWebSocketGateway } from './infrastructure/gateways/websocket.gateway';
 import { WebSocketTestController } from './infrastructure/controllers/websocket-test.controller';
+
+// Exception Filters
+import { ApiGatewayExceptionFilter } from './infrastructure/filters/api-gateway-exception.filter';
 
 // Legacy services (if they exist)
 import { ApiGatewayService } from './application/services/api-gateway.service';
@@ -88,6 +93,9 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
       inject: [ConfigService],
     }),
 
+    // CQRS Module (provides CommandBus and QueryBus)
+    CqrsModule,
+
     // Shared modules
     CommonModule,
     EventBusModule,
@@ -117,6 +125,12 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
 
     // WebSocket Gateway
     BooklyWebSocketGateway,
+
+    // Global Exception Filter
+    {
+      provide: APP_FILTER,
+      useClass: ApiGatewayExceptionFilter,
+    },
 
     // Legacy service (if exists)
     ApiGatewayService,

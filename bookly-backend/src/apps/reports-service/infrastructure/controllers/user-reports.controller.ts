@@ -29,13 +29,14 @@ import {
 } from '../../application/queries/user-report.query';
 import { LoggingService } from '@logging/logging.service';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
+import { REPORTS_URLS } from '../../utils/maps/urls.map';
 
 /**
  * RF-32: User Reports Controller
  * Handles endpoints for generating reports about reservations made by users/professors
  */
 @ApiTags('User Reports')
-@Controller('reports/users')
+@Controller(REPORTS_URLS.USER_REPORTS)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class UserReportsController {
@@ -48,7 +49,7 @@ export class UserReportsController {
    * Generate user reservations report with filters
    * RF-32: Reports about reservations made by specific users or professors
    */
-  @Get()
+  @Get(REPORTS_URLS.USER_REPORTS)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
   @ApiOperation({ 
     summary: 'Generate user reservations report',
@@ -135,7 +136,7 @@ export class UserReportsController {
   /**
    * Get user report summary statistics
    */
-  @Get('summary')
+  @Get(REPORTS_URLS.USER_SUMMARY)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
   @ApiOperation({ 
     summary: 'Get user report summary',
@@ -205,7 +206,7 @@ export class UserReportsController {
   /**
    * Get user's own report history
    */
-  @Get('history')
+  @Get(REPORTS_URLS.USER_HISTORY)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
   @ApiOperation({ 
     summary: 'Get user report history',
@@ -296,7 +297,7 @@ export class UserReportsController {
   /**
    * Get current user's own reservation statistics
    */
-  @Get('my-stats')
+  @Get(REPORTS_URLS.USER_STATS)
   @Roles('TEACHER', 'STUDENT', 'ADMINISTRATIVE', 'ADMIN', 'PROGRAM_ADMIN')
   @ApiOperation({ 
     summary: 'Get my reservation statistics',

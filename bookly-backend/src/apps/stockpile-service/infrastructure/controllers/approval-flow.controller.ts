@@ -59,15 +59,16 @@ import {
   ApprovalLevelDto,
   ApprovalRequestDto
 } from '@dto/stockpile/approval-flow.dto';
+import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
 
 @ApiTags('Approval Flow')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('approval-flows')
+@Controller(STOCKPILE_URLS.APPROVAL_FLOWS)
 export class ApprovalFlowController {
   constructor(private readonly approvalFlowService: ApprovalFlowService) {}
 
-  @Post()
+  @Post(STOCKPILE_URLS.APPROVAL_FLOW_CREATE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Create approval flow' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Approval flow created successfully', type: ApprovalFlowDto })
@@ -80,7 +81,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.createApprovalFlow(dto);
   }
 
-  @Put(':id')
+  @Put(STOCKPILE_URLS.APPROVAL_FLOW_UPDATE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Update approval flow' })
   @ApiParam({ name: 'id', description: 'Approval flow ID' })
@@ -93,7 +94,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.updateApprovalFlow(id, dto);
   }
 
-  @Get()
+  @Get(STOCKPILE_URLS.APPROVAL_FLOWS)
   @ApiOperation({ summary: 'Get approval flows' })
   @ApiQuery({ name: 'programId', required: false, description: 'Filter by program ID' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Filter by resource type' })
@@ -118,7 +119,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.getApprovalFlowById(id);
   }
 
-  @Get('default/search')
+  @Get(STOCKPILE_URLS.APPROVAL_FLOW_DEFAULT_SEARCH)
   @ApiOperation({ summary: 'Get default approval flow for scope' })
   @ApiQuery({ name: 'programId', required: false, description: 'Program ID' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Resource type' })
@@ -132,7 +133,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.getDefaultApprovalFlow(programId, resourceType, categoryId);
   }
 
-  @Post(':id/levels')
+  @Post(STOCKPILE_URLS.APPROVAL_FLOW_LEVELS)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Create approval level' })
   @ApiParam({ name: 'id', description: 'Approval flow ID' })
@@ -145,7 +146,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.createApprovalLevel(dto);
   }
 
-  @Get(':id/levels')
+  @Get(STOCKPILE_URLS.APPROVAL_FLOW_LEVELS)
   @ApiOperation({ summary: 'Get approval levels by flow ID' })
   @ApiParam({ name: 'id', description: 'Approval flow ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Approval levels retrieved successfully', type: [ApprovalLevelDto] })
@@ -153,7 +154,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.getApprovalLevelsByFlowId(flowId);
   }
 
-  @Post('reservations/:reservationId/submit')
+  @Post(STOCKPILE_URLS.APPROVAL_FLOW_SUBMIT)
   @ApiOperation({ summary: 'Submit reservation for approval' })
   @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Reservation submitted for approval successfully' })
@@ -172,7 +173,7 @@ export class ApprovalFlowController {
     );
   }
 
-  @Get('requests/pending')
+  @Get(STOCKPILE_URLS.APPROVAL_FLOW_REQUESTS_PENDING)
   @ApiOperation({ summary: 'Get pending approval requests' })
   @ApiQuery({ name: 'approverId', required: false, description: 'Filter by approver ID' })
   @ApiQuery({ name: 'programId', required: false, description: 'Filter by program ID' })
@@ -199,7 +200,7 @@ export class ApprovalFlowController {
     );
   }
 
-  @Post('requests/:requestId/process')
+  @Post(STOCKPILE_URLS.APPROVAL_FLOW_REQUESTS_PROCESS)
   @Roles('APPROVER', 'COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Process approval request' })
   @ApiParam({ name: 'requestId', description: 'Approval request ID' })
@@ -213,7 +214,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.processApprovalRequest(requestId, dto);
   }
 
-  @Get('reservations/:reservationId/requests')
+  @Get(STOCKPILE_URLS.APPROVAL_FLOW_REQUESTS_BY_RESERVATION)
   @ApiOperation({ summary: 'Get approval requests by reservation' })
   @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Approval requests retrieved successfully', type: [ApprovalRequestDto] })
@@ -223,7 +224,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.getApprovalRequestsByReservation(reservationId);
   }
 
-  @Get('reservations/:reservationId/status')
+  @Get(STOCKPILE_URLS.APPROVAL_FLOW_REQUESTS_STATUS)
   @ApiOperation({ summary: 'Get reservation approval status' })
   @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Reservation status retrieved successfully' })
@@ -237,7 +238,7 @@ export class ApprovalFlowController {
     return await this.approvalFlowService.getReservationStatus(reservationId);
   }
 
-  @Post('reservations/:reservationId/cancel')
+  @Post(STOCKPILE_URLS.APPROVAL_FLOW_REQUESTS_CANCEL)
   @ApiOperation({ summary: 'Cancel reservation' })
   @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Reservation cancelled successfully' })

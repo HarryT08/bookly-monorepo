@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
+import { AVAILABILITY_URLS } from '../../utils/maps/urls.map';
 
 // Commands
 import { CreateAvailabilityCommand } from '../../application/commands/create-availability.command';
@@ -80,7 +81,7 @@ export class AvailabilityController {
   // RF-07: Availability Management
   // ========================================
 
-  @Post('basic')
+  @Post(AVAILABILITY_URLS.AVAILABILITY_BASIC)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
     summary: 'Create basic availability hours (RF-07)',
@@ -101,7 +102,7 @@ export class AvailabilityController {
     return await this.commandBus.execute(command);
   }
 
-  @Post('schedule')
+  @Post(AVAILABILITY_URLS.SCHEDULE_CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
     summary: 'Create complex schedule with restrictions (RF-07)',
@@ -125,7 +126,7 @@ export class AvailabilityController {
     return await this.commandBus.execute(command);
   }
 
-  @Get('basic')
+  @Get(AVAILABILITY_URLS.AVAILABILITY_GET)
   @ApiOperation({ 
     summary: 'Get basic availability (RF-07)',
     description: 'Retrieves basic availability hours with optional filtering'
@@ -151,7 +152,7 @@ export class AvailabilityController {
   // RF-10: Calendar Visualization
   // ========================================
 
-  @Get('calendar/:resourceId')
+  @Get(AVAILABILITY_URLS.AVAILABILITY_CALENDAR)
   @ApiOperation({ 
     summary: 'Get resource availability for calendar display (RF-10)',
     description: 'Retrieves comprehensive availability data for calendar visualization including reservations and restrictions'
@@ -180,7 +181,7 @@ export class AvailabilityController {
     return await this.queryBus.execute(query);
   }
 
-  @Post('check')
+  @Post(AVAILABILITY_URLS.AVAILABILITY_CHECK)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
     summary: 'Check availability for specific time slot (RF-10)',
@@ -202,7 +203,7 @@ export class AvailabilityController {
   // Reservation Management
   // ========================================
 
-  @Post('reservations')
+  @Post(AVAILABILITY_URLS.RESERVATIONS)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
     summary: 'Create new reservation',
@@ -232,7 +233,7 @@ export class AvailabilityController {
   // RF-11: Reservation History
   // ========================================
 
-  @Get('history')
+  @Get(AVAILABILITY_URLS.HISTORY)
   @ApiOperation({ 
     summary: 'Get reservation history (RF-11)',
     description: 'Retrieves reservation history with filtering and pagination for audit purposes'
@@ -267,7 +268,7 @@ export class AvailabilityController {
   // RF-08: Calendar Integration Endpoints
   // ========================================
 
-  @Post('calendar-integrations')
+  @Post(AVAILABILITY_URLS.CALENDAR_INTEGRATION_CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
     summary: 'Create calendar integration (RF-08)',
@@ -289,7 +290,7 @@ export class AvailabilityController {
     return await this.commandBus.execute(command);
   }
 
-  @Get('calendar-integrations')
+  @Get(AVAILABILITY_URLS.CALENDAR_INTEGRATIONS)
   @ApiOperation({ 
     summary: 'Get calendar integrations (RF-08)',
     description: 'Retrieve calendar integrations with optional filters'
@@ -311,7 +312,7 @@ export class AvailabilityController {
     return await this.queryBus.execute(query);
   }
 
-  @Post('calendar-integrations/:integrationId/sync')
+  @Post(AVAILABILITY_URLS.CALENDAR_SYNC)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
     summary: 'Sync calendar integration (RF-08)',
@@ -325,7 +326,7 @@ export class AvailabilityController {
     return await this.commandBus.execute(command);
   }
 
-  @Get('availability-with-conflicts')
+  @Get(AVAILABILITY_URLS.AVAILABILITY_WITH_CONFLICTS)
   @ApiOperation({ 
     summary: 'Get availability with calendar conflicts (RF-08)',
     description: 'Check resource availability considering external calendar conflicts'
@@ -354,7 +355,7 @@ export class AvailabilityController {
   // RF-10: Calendar View Endpoints
   // ========================================
 
-  @Get('calendar-view')
+  @Get(AVAILABILITY_URLS.CALENDAR_VIEW)
   @ApiOperation({ 
     summary: 'Get calendar view with events (RF-10)',
     description: 'Get calendar view showing reservations, schedules, availability, and external events'
@@ -399,7 +400,7 @@ export class AvailabilityController {
   // RF-11: Reservation History Endpoints
   // ========================================
 
-  @Post('reservation-history')
+  @Post(AVAILABILITY_URLS.RESERVATION_HISTORY)
   @ApiOperation({ 
     summary: 'Create reservation history entry (RF-11)',
     description: 'Create a new history entry for audit trail'
@@ -423,7 +424,7 @@ export class AvailabilityController {
     return await this.commandBus.execute(command);
   }
 
-  @Get('reservation-history/detailed')
+  @Get(AVAILABILITY_URLS.RESERVATION_HISTORY_DETAILED)
   @ApiOperation({ 
     summary: 'Get detailed reservation history (RF-11)',
     description: 'Get comprehensive audit trail with advanced filtering and analytics'
@@ -463,7 +464,7 @@ export class AvailabilityController {
     return await this.queryBus.execute(query);
   }
 
-  @Get('reservation-history/export')
+  @Get(AVAILABILITY_URLS.RESERVATION_HISTORY_EXPORT)
   @ApiOperation({ 
     summary: 'Export reservation history to CSV (RF-11)',
     description: 'Export filtered history data in CSV format for analysis'

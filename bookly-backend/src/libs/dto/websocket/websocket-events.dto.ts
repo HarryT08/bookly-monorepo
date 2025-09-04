@@ -106,6 +106,7 @@ export interface NotificationSentEventDto extends BaseEventDto {
   recipientId: string;
   channel: 'EMAIL' | 'WHATSAPP' | 'PUSH' | 'SMS';
   status: 'sent' | 'delivered' | 'failed';
+  message?: string;
 }
 
 export interface NotificationReadEventDto extends BaseEventDto {
@@ -138,6 +139,15 @@ export interface SystemErrorEventDto extends SystemEventDto {
   stackTrace?: string;
 }
 
+// Approval Events
+export interface ApprovalRequestedEventDto extends BaseEventDto {
+  type: 'approval.requested';
+  reservationId: string;
+  requesterId: string;
+  resourceId?: string;
+  approvalLevel?: string;
+}
+
 // Union types for all events
 export type BooklyEventDto = 
   | ReservationCreatedEventDto
@@ -152,6 +162,7 @@ export type BooklyEventDto =
   | ResourceMaintenanceEventDto
   | NotificationSentEventDto
   | NotificationReadEventDto
+  | ApprovalRequestedEventDto
   | SystemHealthEventDto
   | SystemErrorEventDto;
 
@@ -194,6 +205,8 @@ export interface RealtimeMetricsDto {
   eventsPerSecond: number;
   averageLatency: number;
   lastUpdated: string;
+  messagesCount?: number;
+  errorsCount?: number;
 }
 
 // WebSocket client configuration

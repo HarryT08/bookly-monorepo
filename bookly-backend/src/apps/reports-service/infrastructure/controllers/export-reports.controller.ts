@@ -37,13 +37,14 @@ import {
 import { LoggingService } from '@logging/logging.service';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
 import { Response as ExpressResponse } from 'express';
+import { REPORTS_URLS } from '../../utils/maps/urls.map';
 
 /**
  * RF-33: Export Reports Controller
  * Handles endpoints for exporting reports in CSV format and managing exports
  */
 @ApiTags('Export Reports')
-@Controller('reports/export')
+@Controller(REPORTS_URLS.EXPORT)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ExportReportsController {
@@ -56,7 +57,7 @@ export class ExportReportsController {
    * Export report to CSV format
    * RF-33: Export reports in CSV format with customizable options
    */
-  @Post('csv')
+  @Post(REPORTS_URLS.EXPORT_CSV)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
   @ApiOperation({ 
     summary: 'Export report to CSV',
@@ -145,7 +146,7 @@ export class ExportReportsController {
   /**
    * Download exported file
    */
-  @Get('download/:exportId')
+  @Get(REPORTS_URLS.EXPORT_DOWNLOAD)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
   @ApiOperation({ 
     summary: 'Download exported file',
@@ -255,7 +256,7 @@ export class ExportReportsController {
   /**
    * Get export history for current user
    */
-  @Get('history')
+  @Get(REPORTS_URLS.EXPORT_HISTORY)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
   @ApiOperation({ 
     summary: 'Get export history',
@@ -336,7 +337,7 @@ export class ExportReportsController {
   /**
    * Get cached report data (for quick re-export)
    */
-  @Get('cached/:reportId')
+  @Get(REPORTS_URLS.EXPORT_CACHED)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
   @ApiOperation({ 
     summary: 'Get cached report data',
@@ -424,7 +425,7 @@ export class ExportReportsController {
   /**
    * Get export status
    */
-  @Get('status/:exportId')
+  @Get(REPORTS_URLS.EXPORT_STATUS)
   @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
   @ApiOperation({ 
     summary: 'Get export status',

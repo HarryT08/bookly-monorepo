@@ -9,19 +9,22 @@ export const REPORTS_URLS = {
   API_VERSION: '/api/v1',
   
   // Usage Reports endpoints
-  USAGE_REPORTS: '/usage-reports',
-  USAGE_BY_RESOURCE: '/usage-reports/resource/:resourceId',
-  USAGE_BY_PROGRAM: '/usage-reports/program/:programId',
-  USAGE_BY_PERIOD: '/usage-reports/period',
-  USAGE_SUMMARY: '/usage-reports/summary',
+  USAGE_REPORTS: '/reports/usage',
+  USAGE_BY_RESOURCE: '/reports/usage/resource/:resourceId',
+  USAGE_BY_PROGRAM: '/reports/usage/program/:programId',
+  USAGE_BY_PERIOD: '/reports/usage/period',
+  USAGE_SUMMARY: '/reports/usage/summary',
   
   // User Reports endpoints
-  USER_REPORTS: '/user-reports',
-  USER_ACTIVITY: '/user-reports/user/:userId/activity',
-  PROFESSOR_REPORTS: '/user-reports/professors',
-  PROFESSOR_ACTIVITY: '/user-reports/professor/:professorId',
-  STUDENT_REPORTS: '/user-reports/students',
-  USER_BEHAVIOR_ANALYSIS: '/user-reports/behavior-analysis',
+  USER_REPORTS: '/reports/user',
+  USER_SUMMARY: '/reports/user/summary',
+  USER_HISTORY: '/reports/user/history',
+  USER_STATS: '/reports/user/stats',
+  USER_ACTIVITY: '/reports/user/:userId/activity',
+  PROFESSOR_REPORTS: '/reports/user/professors',
+  PROFESSOR_ACTIVITY: '/reports/user/professor/:professorId',
+  STUDENT_REPORTS: '/reports/user/students',
+  USER_BEHAVIOR_ANALYSIS: '/reports/user/behavior-analysis',
   
   // Dashboard endpoints
   DASHBOARD: '/dashboard',
@@ -53,10 +56,14 @@ export const REPORTS_URLS = {
   // Export endpoints
   EXPORT: '/export',
   EXPORT_CSV: '/export/csv',
+  EXPORT_CSV_REPORT: '/reports/export/csv',
   EXPORT_PDF: '/export/pdf',
   EXPORT_EXCEL: '/export/excel',
   EXPORT_JSON: '/export/json',
   EXPORT_STATUS: '/export/:exportId/status',
+  EXPORT_DOWNLOAD: '/export/download/:exportId',
+  EXPORT_HISTORY: '/export/history',
+  EXPORT_CACHED: '/export/cached/:reportId',
   
   // Scheduled Reports endpoints
   SCHEDULED_REPORTS: '/scheduled-reports',
@@ -74,10 +81,12 @@ export const REPORTS_URLS = {
   CUSTOM_REPORT_EXECUTE: '/custom-reports/:id/execute',
   
   // Data Processing endpoints
+  DATA_PROCESSING: '/data-processing',
   DATA_AGGREGATION: '/data-processing/aggregation',
   DATA_VALIDATION: '/data-processing/validation',
   DATA_CLEANSING: '/data-processing/cleansing',
   DATA_REFRESH: '/data-processing/refresh',
+  DATA_PROCESSING_STATUS: '/data-processing/status',
   
   // Performance Monitoring endpoints
   PERFORMANCE: '/performance',
@@ -87,18 +96,19 @@ export const REPORTS_URLS = {
   
   // Alert Management endpoints
   ALERTS: '/alerts',
-  ALERT_CREATE: '/alerts/create',
-  ALERT_UPDATE: '/alerts/:id',
-  ALERT_DELETE: '/alerts/:id',
-  ALERT_HISTORY: '/alerts/history',
-  THRESHOLD_CONFIG: '/alerts/thresholds',
+  ALERTS_LIST: '/alerts/list',
+  ALERTS_CREATE: '/alerts/create',
+  ALERTS_UPDATE: '/alerts/:id',
+  ALERTS_DELETE: '/alerts/:id',
+  ALERTS_HISTORY: '/alerts/history',
+  ALERTS_THRESHOLD_CONFIG: '/alerts/thresholds',
   
   // Report Templates endpoints
-  TEMPLATES: '/templates',
-  TEMPLATE_CREATE: '/templates/create',
-  TEMPLATE_UPDATE: '/templates/:id',
-  TEMPLATE_DELETE: '/templates/:id',
-  TEMPLATE_PREVIEW: '/templates/:id/preview',
+  REPORT_TEMPLATES: '/report-templates',
+  REPORT_TEMPLATE_CREATE: '/report-templates/create',
+  REPORT_TEMPLATE_UPDATE: '/report-templates/:id',
+  REPORT_TEMPLATE_DELETE: '/report-templates/:id',
+  REPORT_TEMPLATE_PREVIEW: '/report-templates/:id/preview',
   
   // Audit endpoints
   AUDIT_LOGS: '/audit-logs',

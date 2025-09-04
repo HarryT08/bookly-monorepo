@@ -1,0 +1,775 @@
+{
+  "info": {
+    "name": "Bookly Reports Service API v2.0",
+    "description": "Sistema de Reportes, Analytics y Dashboard - Bookly UFPS\n\nServicio de reportes que implementa:\n- RF-31: Reportes de uso por recurso/programa/período\n- RF-32: Reportes personalizados por usuario/profesor\n- RF-33: Exportación masiva en múltiples formatos\n- RF-34: Sistema de feedback y evaluación integrado\n- RF-35: Evaluación bidireccional staff-usuarios\n- RF-36: Dashboards interactivos en tiempo real\n- RF-37: Análisis de demanda insatisfecha\n\nCaracterísticas principales:\n- Business Intelligence avanzado\n- Exportación en CSV, Excel, PDF\n- Dashboards con métricas en tiempo real\n- Sistema de feedback integrado\n- Análisis predictivo de demanda\n- Event-driven architecture con RabbitMQ\n- Observabilidad completa (Winston, Sentry, OpenTelemetry)",
+    "version": "2.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3005",
+      "type": "string"
+    },
+    {
+      "key": "ws_url",
+      "value": "ws://localhost:3005",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "program_id",
+      "value": "ING-SIS",
+      "type": "string"
+    },
+    {
+      "key": "resource_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "report_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "export_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "feedback_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "test_start_date",
+      "value": "2024-01-01",
+      "type": "string"
+    },
+    {
+      "key": "test_end_date",
+      "value": "2024-01-31",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Usage Reports (RF-31)",
+      "item": [
+        {
+          "name": "Generate Usage Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"programId\": \"{{program_id}}\",\n  \"resourceType\": \"SALON\",\n  \"startDate\": \"{{test_start_date}}\",\n  \"endDate\": \"{{test_end_date}}\",\n  \"buildingId\": \"sistemas\",\n  \"includeMetrics\": true,\n  \"groupBy\": \"resource\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/usage/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "usage", "generate"]
+            },
+            "description": "RF-31: Generar reporte detallado de uso con métricas avanzadas"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Usage Reports",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/usage?programId={{program_id}}&startDate={{test_start_date}}&endDate={{test_end_date}}&resourceType=SALON&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "usage"],
+              "query": [
+                {
+                  "key": "programId",
+                  "value": "{{program_id}}"
+                },
+                {
+                  "key": "startDate",
+                  "value": "{{test_start_date}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{test_end_date}}"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "SALON"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "RF-31: Obtener reportes de uso existentes con paginación"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Usage Report Summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/usage/summary?programId={{program_id}}&period=monthly",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "usage", "summary"],
+              "query": [
+                {
+                  "key": "programId",
+                  "value": "{{program_id}}"
+                },
+                {
+                  "key": "period",
+                  "value": "monthly"
+                }
+              ]
+            },
+            "description": "RF-31: Resumen ejecutivo de métricas de uso"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Specific Usage Report",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/usage/{{report_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "usage", "{{report_id}}"]
+            },
+            "description": "RF-31: Obtener reporte específico por ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Reports (RF-32)",
+      "item": [
+        {
+          "name": "Generate User Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"startDate\": \"{{test_start_date}}\",\n  \"endDate\": \"{{test_end_date}}\",\n  \"includeReservations\": true,\n  \"includeFeedback\": true,\n  \"includeStatistics\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/users/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "users", "generate"]
+            },
+            "description": "RF-32: Generar reporte completo de usuario específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Report",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/users/me?startDate={{test_start_date}}&endDate={{test_end_date}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "users", "me"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{test_start_date}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{test_end_date}}"
+                }
+              ]
+            },
+            "description": "RF-32: Obtener mi propio reporte de uso"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Report by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/users/{{user_id}}?includeHistory=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "users", "{{user_id}}"],
+              "query": [
+                {
+                  "key": "includeHistory",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "RF-32: Obtener reporte de usuario específico (requiere permisos)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Statistics Summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/users/{{user_id}}/summary?period=semester",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "users", "{{user_id}}", "summary"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "semester"
+                }
+              ]
+            },
+            "description": "RF-32: Resumen de estadísticas del usuario"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Export Reports (RF-33)",
+      "item": [
+        {
+          "name": "Request Report Export",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportType\": \"usage\",\n  \"format\": \"excel\",\n  \"filters\": {\n    \"programId\": \"{{program_id}}\",\n    \"startDate\": \"{{test_start_date}}\",\n    \"endDate\": \"{{test_end_date}}\"\n  },\n  \"includeCharts\": true,\n  \"locale\": \"es\",\n  \"title\": \"Reporte de Uso - Enero 2024\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "export"]
+            },
+            "description": "RF-33: Solicitar exportación de reporte en formato específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Export Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/export/{{export_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "export", "{{export_id}}", "status"]
+            },
+            "description": "RF-33: Verificar estado de la exportación"
+          },
+          "response": []
+        },
+        {
+          "name": "Download Export File",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/export/{{export_id}}/download",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "export", "{{export_id}}", "download"]
+            },
+            "description": "RF-33: Descargar archivo exportado"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Export History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/export/history?status=completed,processing&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "export", "history"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed,processing"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "RF-33: Historial de mis exportaciones"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard Analytics (RF-36)",
+      "item": [
+        {
+          "name": "Get Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/dashboard?includeRealtime=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "dashboard"],
+              "query": [
+                {
+                  "key": "includeRealtime",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "RF-36: Dashboard principal con métricas generales"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Real-time Metrics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/dashboard/realtime",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "dashboard", "realtime"]
+            },
+            "description": "RF-36: Métricas en tiempo real del sistema"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dashboard Charts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/dashboard/charts?chartType=trends,occupancy&period=weekly",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "dashboard", "charts"],
+              "query": [
+                {
+                  "key": "chartType",
+                  "value": "trends,occupancy"
+                },
+                {
+                  "key": "period",
+                  "value": "weekly"
+                }
+              ]
+            },
+            "description": "RF-36: Datos para gráficos interactivos"
+          },
+          "response": []
+        },
+        {
+          "name": "Get System Health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/dashboard/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "dashboard", "health"]
+            },
+            "description": "RF-36: Estado de salud del sistema"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feedback System (RF-34/RF-35)",
+      "item": [
+        {
+          "name": "Create Feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"reservationId\": \"res-123\",\n  \"rating\": 4,\n  \"category\": \"resource_quality\",\n  \"comment\": \"Excelente recurso, pero el proyector necesita calibración\",\n  \"isAnonymous\": false,\n  \"tags\": [\"projector\", \"maintenance_needed\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "feedback"]
+            },
+            "description": "RF-34: Crear nuevo feedback sobre recurso o experiencia"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Feedback",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/feedback?category=resource_quality&rating_min=3&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "feedback"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "resource_quality"
+                },
+                {
+                  "key": "rating_min",
+                  "value": "3"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "RF-34: Obtener feedback con filtros (solo ADMIN/ADMINISTRATIVE)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Feedback",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/feedback/my-feedback?includeResponses=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "feedback", "my-feedback"],
+              "query": [
+                {
+                  "key": "includeResponses",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "RF-34: Mi feedback proporcionado"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Feedback",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Comentario actualizado - problema resuelto\",\n  \"tags\": [\"resolved\", \"improved\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/feedback/{{feedback_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "feedback", "{{feedback_id}}"]
+            },
+            "description": "RF-34: Actualizar mi feedback (solo dentro de 48 horas)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Feedback Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/feedback/statistics?resourceId={{resource_id}}&groupBy=rating",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "feedback", "statistics"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resource_id}}"
+                },
+                {
+                  "key": "groupBy",
+                  "value": "rating"
+                }
+              ]
+            },
+            "description": "RF-35: Estadísticas de feedback agregadas"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Demand Analysis (RF-37)",
+      "item": [
+        {
+          "name": "Generate Demand Analysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"{{test_start_date}}\",\n  \"endDate\": \"{{test_end_date}}\",\n  \"programId\": \"{{program_id}}\",\n  \"includeRecommendations\": true,\n  \"includePredictions\": true,\n  \"analysisType\": \"comprehensive\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/demand-analysis/generate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "demand-analysis", "generate"]
+            },
+            "description": "RF-37: Generar análisis de demanda insatisfecha"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Demand Analysis",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/demand-analysis?startDate={{test_start_date}}&endDate={{test_end_date}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "demand-analysis"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "{{test_start_date}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{test_end_date}}"
+                }
+              ]
+            },
+            "description": "RF-37: Obtener análisis de demanda existente"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Demand Predictions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/demand-analysis/predictions?horizon=monthly&programId={{program_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "demand-analysis", "predictions"],
+              "query": [
+                {
+                  "key": "horizon",
+                  "value": "monthly"
+                },
+                {
+                  "key": "programId",
+                  "value": "{{program_id}}"
+                }
+              ]
+            },
+            "description": "RF-37: Predicciones de demanda futura"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Testing",
+      "item": [
+        {
+          "name": "Test WebSocket Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"test-reports-connection\",\n  \"data\": {\n    \"token\": \"{{access_token}}\",\n    \"userId\": \"{{user_id}}\",\n    \"subscriptions\": [\"dashboard-updates\", \"export-notifications\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/websocket/test-connection",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "websocket", "test-connection"]
+            },
+            "description": "Test WebSocket connection for real-time dashboard"
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Dashboard Update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"dashboard-update\",\n  \"data\": {\n    \"dashboardId\": \"main-dashboard\",\n    \"updatedSections\": [\"occupancy\", \"realtime-metrics\"],\n    \"timestamp\": \"2024-01-15T10:30:00Z\",\n    \"metrics\": {\n      \"currentOccupancy\": 68.5,\n      \"activeUsers\": 123,\n      \"systemHealth\": \"healthy\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/websocket/emit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "websocket", "emit"]
+            },
+            "description": "Test dashboard update event emission"
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Export Completed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"export-completed\",\n  \"data\": {\n    \"exportId\": \"{{export_id}}\",\n    \"userId\": \"{{user_id}}\",\n    \"reportType\": \"usage\",\n    \"format\": \"excel\",\n    \"fileSize\": 2456789,\n    \"downloadUrl\": \"/api/v1/reports/export/{{export_id}}/download\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/reports/websocket/emit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "reports", "websocket", "emit"]
+            },
+            "description": "Test export completion notification"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set base URL if not set",
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:3005');",
+          "}",
+          "",
+          "// Set test dates if not set",
+          "if (!pm.collectionVariables.get('test_start_date')) {",
+          "    const startDate = new Date();",
+          "    startDate.setMonth(startDate.getMonth() - 1);",
+          "    pm.collectionVariables.set('test_start_date', startDate.toISOString().split('T')[0]);",
+          "}",
+          "",
+          "if (!pm.collectionVariables.get('test_end_date')) {",
+          "    const endDate = new Date();",
+          "    pm.collectionVariables.set('test_end_date', endDate.toISOString().split('T')[0]);",
+          "}",
+          "",
+          "// Common headers",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});",
+          "",
+          "pm.request.headers.add({",
+          "    key: 'User-Agent',",
+          "    value: 'Bookly-Reports-API-Client/2.0'",
+          "});"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common tests for all requests",
+          "pm.test('Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+          "});",
+          "",
+          "pm.test('Content-Type is JSON', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "// Extract IDs from successful creation requests",
+          "if (pm.response.code === 201 || pm.response.code === 200) {",
+          "    const responseJson = pm.response.json();",
+          "    ",
+          "    // Extract report ID",
+          "    if (pm.info.requestName.includes('Generate') && responseJson.reportId) {",
+          "        pm.collectionVariables.set('report_id', responseJson.reportId);",
+          "        console.log('Report ID extracted:', responseJson.reportId);",
+          "    }",
+          "    ",
+          "    // Extract export ID",
+          "    if (pm.info.requestName.includes('Export') && responseJson.exportId) {",
+          "        pm.collectionVariables.set('export_id', responseJson.exportId);",
+          "        console.log('Export ID extracted:', responseJson.exportId);",
+          "    }",
+          "    ",
+          "    // Extract feedback ID",
+          "    if (pm.info.requestName.includes('Feedback') && responseJson.id) {",
+          "        pm.collectionVariables.set('feedback_id', responseJson.id);",
+          "        console.log('Feedback ID extracted:', responseJson.id);",
+          "    }",
+          "}",
+          "",
+          "// Log response for debugging",
+          "console.log('Response Status:', pm.response.code);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');"
+        ]
+      }
+    }
+  ]
+}

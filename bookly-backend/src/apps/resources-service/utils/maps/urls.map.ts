@@ -18,6 +18,18 @@ export const RESOURCES_URLS = {
   RESOURCE_ARCHIVE: '/resources/:id/archive',
   RESOURCE_DETAILS: '/resources/:id/details',
   
+  // Resource Category Association endpoints
+  RESOURCE_CATEGORY_ASSIGN: '/:resourceId/categories/:categoryId',
+  RESOURCE_CATEGORY_ASSIGN_MULTIPLE: '/:resourceId/categories',
+  RESOURCE_CATEGORY_REPLACE: '/:resourceId/categories',
+  RESOURCE_CATEGORY_GET: '/:resourceId/categories',
+  CATEGORY_RESOURCES_GET: '/categories/:categoryId/resources',
+  RESOURCE_CATEGORY_EXISTS: '/:resourceId/categories/:categoryId/exists',
+  RESOURCE_CATEGORY_REMOVE: '/:resourceId/categories/:categoryId',
+  RESOURCE_CATEGORY_REMOVE_ALL: '/:resourceId/categories',
+  CATEGORY_BULK_ASSIGN: '/categories/:categoryId/resources',
+  RESOURCE_CATEGORY_VALIDATE: '/validate',
+  
   // Resource Categories
   CATEGORIES: '/categories',
   CATEGORY_CREATE: '/categories/create',

@@ -38,15 +38,16 @@ import {
   GeneratedDocumentDto,
   DocumentEventType
 } from '@dto/stockpile/document-template.dto';
+import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
 
 @ApiTags('Document Templates')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('document-templates')
+@Controller(STOCKPILE_URLS.DOCUMENT_TEMPLATES)
 export class DocumentTemplateController {
   constructor(private readonly documentTemplateService: DocumentTemplateService) {}
 
-  @Post()
+  @Post(STOCKPILE_URLS.DOCUMENT_TEMPLATE_CREATE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Create document template' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Document template created successfully', type: DocumentTemplateDto })
@@ -59,7 +60,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.createDocumentTemplate(dto);
   }
 
-  @Put(':id')
+  @Put(STOCKPILE_URLS.DOCUMENT_TEMPLATE_UPDATE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Update document template' })
   @ApiParam({ name: 'id', description: 'Document template ID' })
@@ -72,7 +73,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.updateDocumentTemplate(id, dto);
   }
 
-  @Delete(':id')
+  @Delete(STOCKPILE_URLS.DOCUMENT_TEMPLATE_DELETE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Delete document template' })
   @ApiParam({ name: 'id', description: 'Document template ID' })
@@ -85,7 +86,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.deleteDocumentTemplate(id, user.id);
   }
 
-  @Get()
+  @Get(STOCKPILE_URLS.DOCUMENT_TEMPLATES)
   @ApiOperation({ summary: 'Get document templates' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Filter by resource type' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category ID' })
@@ -121,7 +122,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.getDocumentTemplateById(id);
   }
 
-  @Get('default/search')
+  @Get(STOCKPILE_URLS.DOCUMENT_TEMPLATE_DEFAULT_SEARCH)
   @ApiOperation({ summary: 'Get default document template for scope' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Resource type' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Category ID' })
@@ -135,7 +136,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.getDefaultDocumentTemplate(resourceType, categoryId, eventType);
   }
 
-  @Post(':id/upload')
+  @Post(STOCKPILE_URLS.DOCUMENT_TEMPLATE_UPLOAD)
   @Roles('COORDINATOR', 'ADMIN')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -150,7 +151,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.uploadDocumentTemplate(id, file, user.id);
   }
 
-  @Get(':id/variables')
+  @Get(STOCKPILE_URLS.DOCUMENT_TEMPLATE_VARIABLES)
   @ApiOperation({ summary: 'Get document template variables' })
   @ApiParam({ name: 'id', description: 'Document template ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Document template variables retrieved successfully' })
@@ -158,7 +159,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.getDocumentTemplateVariables(id);
   }
 
-  @Get('variables/available')
+  @Get(STOCKPILE_URLS.DOCUMENT_TEMPLATE_AVAILABLE_VARIABLES)
   @ApiOperation({ summary: 'Get available document variables' })
   @ApiQuery({ name: 'eventType', required: true, enum: DocumentEventType, description: 'Event type' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Resource type' })
@@ -170,7 +171,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.getAvailableDocumentVariables(eventType, resourceType);
   }
 
-  @Post('generate')
+  @Post(STOCKPILE_URLS.DOCUMENT_GENERATE)
   @ApiOperation({ summary: 'Generate document from template' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Document generated successfully', type: GeneratedDocumentDto })
   async generateDocument(
@@ -181,7 +182,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.generateDocument(dto);
   }
 
-  @Get('generated/reservation/:reservationId')
+  @Get(STOCKPILE_URLS.DOCUMENT_GENERATED_BY_RESERVATION)
   @ApiOperation({ summary: 'Get generated documents by reservation' })
   @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Generated documents retrieved successfully', type: [GeneratedDocumentDto] })
@@ -191,7 +192,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.getGeneratedDocumentsByReservation(reservationId);
   }
 
-  @Get('generated/:id')
+  @Get(STOCKPILE_URLS.DOCUMENT_GENERATED_BY_ID)
   @ApiOperation({ summary: 'Get generated document by ID' })
   @ApiParam({ name: 'id', description: 'Generated document ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Generated document retrieved successfully', type: GeneratedDocumentDto })
@@ -200,7 +201,7 @@ export class DocumentTemplateController {
     return await this.documentTemplateService.getGeneratedDocumentById(id);
   }
 
-  @Get('generated/:id/download')
+  @Get(STOCKPILE_URLS.DOCUMENT_DOWNLOAD)
   @ApiOperation({ summary: 'Download generated document' })
   @ApiParam({ name: 'id', description: 'Generated document ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Document downloaded successfully' })

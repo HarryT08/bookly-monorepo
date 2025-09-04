@@ -32,7 +32,7 @@ export interface ErrorResponse {
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
+  protected readonly logger = new Logger(AllExceptionsFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -109,13 +109,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     response.status(status).json(errorResponse);
   }
 
-  private generateErrorCode(status: number, path: string): string {
+  protected generateErrorCode(status: number, path: string): string {
     const serviceCode = this.getServiceCode(path);
     const statusCode = status.toString().padStart(3, '0');
     return `${serviceCode}-${statusCode}`;
   }
 
-  private getServiceCode(path: string): string {
+  protected getServiceCode(path: string): string {
     if (path.includes('/auth')) return 'AUTH';
     if (path.includes('/resources')) return 'RSRC';
     if (path.includes('/availability')) return 'AVLB';
@@ -127,7 +127,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return 'GNRL';
   }
 
-  private generateExceptionCode(status: number): string {
+  protected generateExceptionCode(status: number): string {
     const codeMap: Record<number, string> = {
       400: 'E-01',
       401: 'E-02',
@@ -143,7 +143,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return codeMap[status] || 'E-99';
   }
 
-  private getErrorType(status: number): 'error' | 'warning' | 'info' {
+  protected getErrorType(status: number): 'error' | 'warning' | 'info' {
     if (status >= 500) return 'error';
     if (status >= 400) return 'warning';
     return 'info';

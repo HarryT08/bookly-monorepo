@@ -15,12 +15,21 @@ export const STOCKPILE_URLS = {
   APPROVAL_FLOW_DELETE: '/approval-flows/:id',
   APPROVAL_FLOW_ACTIVATE: '/approval-flows/:id/activate',
   APPROVAL_FLOW_DEACTIVATE: '/approval-flows/:id/deactivate',
+  APPROVAL_FLOW_DEFAULT_SEARCH: '/approval-flows/default/search',
+  APPROVAL_FLOW_LEVELS: '/approval-flows/:id/levels',
+  APPROVAL_FLOW_SUBMIT: '/reservations/:reservationId/submit',
+  APPROVAL_FLOW_REQUESTS_PENDING: '/approval-flow/requests/pending',
+  APPROVAL_FLOW_REQUESTS_PROCESS: '/approval-flow/requests/:requestId/process',
+  APPROVAL_FLOW_REQUESTS_BY_RESERVATION: '/approval-flow/reservations/:reservationId/requests',
+  APPROVAL_FLOW_REQUESTS_STATUS: '/approval-flow/reservations/:reservationId/status',
+  APPROVAL_FLOW_REQUESTS_CANCEL: '/approval-flow/reservations/:reservationId/cancel',
   
   // Approval Request endpoints
   APPROVAL_REQUESTS: '/approval-requests',
   APPROVAL_REQUEST_SUBMIT: '/approval-requests/submit',
   APPROVAL_REQUEST_APPROVE: '/approval-requests/:id/approve',
   APPROVAL_REQUEST_REJECT: '/approval-requests/:id/reject',
+  APPROVAL_REQUEST_DOCUMENT: '/approval-requests/:id/document',
   APPROVAL_REQUEST_CANCEL: '/approval-requests/:id/cancel',
   APPROVAL_REQUEST_DELEGATE: '/approval-requests/:id/delegate',
   APPROVAL_REQUEST_STATUS: '/approval-requests/:id/status',
@@ -39,10 +48,16 @@ export const STOCKPILE_URLS = {
   DOCUMENT_TEMPLATE_ACTIVATE: '/document-templates/:id/activate',
   DOCUMENT_TEMPLATE_DEACTIVATE: '/document-templates/:id/deactivate',
   DOCUMENT_TEMPLATE_PREVIEW: '/document-templates/:id/preview',
+  DOCUMENT_TEMPLATE_DEFAULT_SEARCH: '/document-templates/default/search',
+  DOCUMENT_TEMPLATE_UPLOAD: '/document-templates/:id/upload',
+  DOCUMENT_TEMPLATE_VARIABLES: '/document-templates/:id/variables',
+  DOCUMENT_TEMPLATE_AVAILABLE_VARIABLES: '/document-templates/variables/available',
   
   // Document Generation endpoints
   DOCUMENTS: '/documents',
   DOCUMENT_GENERATE: '/documents/generate',
+  DOCUMENT_GENERATED_BY_RESERVATION: '/documents/generated/reservation/:reservationId',
+  DOCUMENT_GENERATED_BY_ID: '/documents/generated/:id',
   DOCUMENT_DOWNLOAD: '/documents/:id/download',
   DOCUMENT_SIGN: '/documents/:id/sign',
   DOCUMENT_DELIVER: '/documents/:id/deliver',
@@ -50,12 +65,25 @@ export const STOCKPILE_URLS = {
   
   // Notification Template endpoints
   NOTIFICATION_TEMPLATES: '/notification-templates',
+  NOTIFICATION_TEMPLATE_BY_ID: '/notification-templates/:id',
+  NOTIFICATION_TEMPLATE_DEFAULT_SEARCH: '/notification-templates/default/search',
+  NOTIFICATION_TEMPLATE_VARIABLES: '/notification-templates/:id/variables',
+  NOTIFICATION_TEMPLATE_AVAILABLE_VARIABLES: '/notification-templates/variables/available',
   NOTIFICATION_TEMPLATE_CREATE: '/notification-templates/create',
   NOTIFICATION_TEMPLATE_UPDATE: '/notification-templates/:id',
   NOTIFICATION_TEMPLATE_DELETE: '/notification-templates/:id',
+  NOTIFICATION_TEMPLATE_PENDING: '/notification-templates/pending',
   NOTIFICATION_TEMPLATE_ACTIVATE: '/notification-templates/:id/activate',
   NOTIFICATION_TEMPLATE_DEACTIVATE: '/notification-templates/:id/deactivate',
   NOTIFICATION_TEMPLATE_TEST: '/notification-templates/:id/test',
+  NOTIFICATION_TEMPLATE_SEND: '/notification-templates/:id/send',
+  NOTIFICATION_TEMPLATE_SEND_BATCH: '/notification-templates/:id/send-batch',
+  NOTIFICATION_TEMPLATE_SENT_BY_RESERVATION: '/notification-templates/:id/sent/reservation/:reservationId',
+  NOTIFICATION_TEMPLATE_SENT_BY_RECIPIENT: '/notification-templates/:id/sent/recipient/:recipientId',
+  NOTIFICATION_CONFIGS: '/notification-templates/configs',
+  NOTIFICATION_CONFIGS_BY_ID: '/notification-templates/configs/:id',
+  NOTIFICATION_TEMPLATE_BATCH: '/notification-templates/batch/:channelId',
+  NOTIFICATION_TEMPLATE_MARK_READ: '/sent/:id/mark-read',
   
   // Notification endpoints
   NOTIFICATIONS: '/notifications',
@@ -65,18 +93,20 @@ export const STOCKPILE_URLS = {
   NOTIFICATION_PREFERENCES: '/users/:userId/notification-preferences',
   
   // Notification Channel endpoints
-  NOTIFICATION_CHANNELS: '/notification-channels',
-  NOTIFICATION_CHANNEL_CREATE: '/notification-channels/create',
-  NOTIFICATION_CHANNEL_UPDATE: '/notification-channels/:id',
-  NOTIFICATION_CHANNEL_DELETE: '/notification-channels/:id',
-  NOTIFICATION_CHANNEL_TEST: '/notification-channels/:id/test',
+  NOTIFICATION_CHANNELS: '/notification-templates/channels',
+  NOTIFICATION_CHANNEL_BY_ID: '/notification-templates/channels/:id',
+  NOTIFICATION_CHANNEL_CREATE: '/notification-templates/channels/create',
+  NOTIFICATION_CHANNEL_UPDATE: '/notification-templates/channels/:id',
+  NOTIFICATION_CHANNEL_DELETE: '/notification-templates/channels/:id',
+  NOTIFICATION_CHANNEL_TEST: '/notification-templates/channels/:id/test',
   
   // Check-in/Check-out endpoints
   CHECKIN: '/checkin',
+  CHECKIN_STATUS: '/check-in-status/:reservationId',
   CHECKOUT: '/checkout',
-  CHECKIN_RESERVATION: '/reservations/:id/checkin',
-  CHECKOUT_RESERVATION: '/reservations/:id/checkout',
-  DIGITAL_SIGNATURE: '/reservations/:id/signature',
+  CHECKIN_RESERVATION: '/reservations/:reservationId/checkin',
+  CHECKOUT_RESERVATION: '/reservations/:reservationId/checkout',
+  DIGITAL_SIGNATURE: '/reservations/:reservationId/signature',
   
   // Validation endpoints
   VALIDATE_RESERVATION: '/validate/reservation/:id',

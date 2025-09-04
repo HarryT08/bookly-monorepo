@@ -8,6 +8,20 @@ export const AVAILABILITY_URLS = {
   BASE: '/availability',
   API_VERSION: '/api/v1',
   
+  // Basic Availability endpoints
+  AVAILABILITY_BASIC: '/basic',
+  AVAILABILITY_GET: '/basic',
+  AVAILABILITY_CHECK: '/check',
+  AVAILABILITY_CALENDAR: '/calendar/:resourceId',
+  AVAILABILITY_WITH_CONFLICTS: '/availability-with-conflicts',
+  CALENDAR_VIEW: '/calendar-view',
+  
+  // History endpoints
+  HISTORY: '/history',
+  RESERVATION_HISTORY: '/reservation-history',
+  RESERVATION_HISTORY_DETAILED: '/reservation-history/detailed',
+  RESERVATION_HISTORY_EXPORT: '/reservation-history/export',
+  
   // Reservation endpoints
   RESERVATIONS: '/reservations',
   RESERVATION_CREATE: '/reservations/create',
@@ -69,15 +83,18 @@ export const AVAILABILITY_URLS = {
   CALENDAR_INTEGRATION_CREATE: '/calendar-integrations/create',
   CALENDAR_INTEGRATION_UPDATE: '/calendar-integrations/:id',
   CALENDAR_INTEGRATION_DELETE: '/calendar-integrations/:id',
-  CALENDAR_SYNC: '/calendar-integrations/:id/sync',
-  CALENDAR_EVENTS: '/calendar-integrations/:id/events',
+  CALENDAR_SYNC: '/calendar-integrations/:integrationId/sync',
+  CALENDAR_EVENTS: '/calendar-integrations/:integrationId/events',
   
   // Penalty endpoints
   PENALTIES: '/penalties',
   PENALTY_APPLY: '/penalties/apply',
   PENALTY_REMOVE: '/penalties/:id/remove',
-  PENALTY_EVENTS: '/penalty-events',
-  USER_PENALTIES: '/users/:userId/penalties',
+  PENALTY_EVENTS: '/penalties/events',
+  PENALTY_CONFIGURATIONS: '/penalties/configurations',
+  PENALTY_MY_PENALTIES: '/penalties/my-penalties',
+  PENALTY_USER_PENALTIES: '/penalties/user-penalties/:id',
+  USER_PENALTIES: '/penalties/user/:userId',
   PENALTY_HISTORY: '/users/:userId/penalty-history',
   
   // Resource Equivalence endpoints

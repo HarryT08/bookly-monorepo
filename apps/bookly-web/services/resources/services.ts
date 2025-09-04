@@ -3,7 +3,6 @@ import { mapPaginatedResources, mapSingleResource } from './models';
 import { CreateResourceDto, ResourceResponseDto, UpdateResourceDto, CategoryDto, ProgramDto } from './types';
 
 const base = 'resources';
-const RESOURCES_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_RESOURCES_SERVICE_URL || 'http://localhost:3003';
 
 export interface ResourceListFilters extends QueryParams {
 	type?: string;
@@ -91,12 +90,12 @@ export async function listCategories(
 
 	if (filters.isActive !== undefined) searchParams.set('isActive', String(filters.isActive));
 
-	const res = await http.get('categories', { searchParams }).json<{ success: boolean; data: CategoryDto[] }>();
+	const res = await http.get('resource-categories', { searchParams }).json<{ success: boolean; data: CategoryDto[] }>();
 	return mapSingleResource<CategoryDto[]>(res);
 }
 
 export async function getCategoryById(id: string): Promise<CategoryDto> {
-	const res = await http.get(`categories/${id}`).json<{ success: boolean; data: CategoryDto }>();
+	const res = await http.get(`resource-categories/${id}`).json<{ success: boolean; data: CategoryDto }>();
 	return mapSingleResource<CategoryDto>(res);
 }
 
