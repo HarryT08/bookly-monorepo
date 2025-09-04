@@ -240,7 +240,10 @@ export default function AcademicProgramsPage() {
 				<Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
 					<Card>
 						<CardContent>
-							<Box display="flex" alignItems="center">
+							<Box
+								display="flex"
+								alignItems="center"
+							>
 								<SchoolIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
 								<Box>
 									<Typography variant="h5">{stats.totalPrograms}</Typography>
@@ -253,7 +256,10 @@ export default function AcademicProgramsPage() {
 				<Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
 					<Card>
 						<CardContent>
-							<Box display="flex" alignItems="center">
+							<Box
+								display="flex"
+								alignItems="center"
+							>
 								<VisibilityIcon sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
 								<Box>
 									<Typography variant="h5">{stats.activePrograms}</Typography>
@@ -266,7 +272,10 @@ export default function AcademicProgramsPage() {
 				<Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
 					<Card>
 						<CardContent>
-							<Box display="flex" alignItems="center">
+							<Box
+								display="flex"
+								alignItems="center"
+							>
 								<GroupIcon sx={{ fontSize: 40, color: 'info.main', mr: 2 }} />
 								<Box>
 									<Typography variant="h5">{stats.totalStudents}</Typography>
@@ -410,8 +419,8 @@ export default function AcademicProgramsPage() {
 								<TextField
 									fullWidth
 									label="Código"
-								variant="outlined"
-							/>
+									variant="outlined"
+								/>
 							</Box>
 						</Box>
 						<Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>

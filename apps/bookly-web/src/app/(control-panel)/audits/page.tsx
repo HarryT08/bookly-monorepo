@@ -28,7 +28,7 @@ import {
 	DialogTitle,
 	DialogContent,
 	IconButton,
-	Tooltip,
+	Tooltip
 } from '@mui/material';
 import {
 	Search as SearchIcon,
