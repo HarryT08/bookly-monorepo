@@ -11,7 +11,7 @@ export interface ScheduledReport {
 	name: string;
 	type: 'USAGE' | 'USER' | 'CUSTOM';
 	schedule: 'DAILY' | 'WEEKLY' | 'MONTHLY';
-	filters: Record<string, any>;
+	filters: Record<string, unknown>;
 	recipients: string[];
 	format: 'PDF' | 'CSV' | 'EXCEL';
 	isActive: boolean;
@@ -39,7 +39,7 @@ export interface ReportTemplate {
 	type: 'USAGE' | 'USER' | 'CUSTOM';
 	layout: 'STANDARD' | 'COMPACT' | 'DETAILED';
 	sections: ReportSection[];
-	styling: Record<string, any>;
+	styling: Record<string, unknown>;
 	isDefault: boolean;
 	createdBy: string;
 }
@@ -48,7 +48,7 @@ export interface ReportSection {
 	id: string;
 	type: 'HEADER' | 'CHART' | 'TABLE' | 'TEXT' | 'FOOTER';
 	title: string;
-	content: Record<string, any>;
+	content: Record<string, unknown>;
 	order: number;
 }
 
@@ -57,7 +57,7 @@ export interface ReportParameter {
 	type: 'STRING' | 'NUMBER' | 'DATE' | 'SELECT';
 	label: string;
 	required: boolean;
-	defaultValue?: any;
+	defaultValue?: unknown;
 	options?: string[];
 }
 
@@ -100,34 +100,34 @@ export const scheduledReportsService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return reportsClient.get(`/scheduled-reports?${searchParams}`).json();
+		return reportsClient.get(`/scheduled-reports?${searchParams}`);
 	},
 
 	async createScheduledReport(data: {
 		name: string;
 		type: 'USAGE' | 'USER' | 'CUSTOM';
 		schedule: 'DAILY' | 'WEEKLY' | 'MONTHLY';
-		filters: Record<string, any>;
+		filters: Record<string, unknown>;
 		recipients: string[];
 		format: 'PDF' | 'CSV' | 'EXCEL';
 	}): Promise<ApiResponse<ScheduledReport>> {
-		return reportsClient.post('/scheduled-reports/create', { json: data }).json();
+		return reportsClient.post('/scheduled-reports/create', data);
 	},
 
 	async updateScheduledReport(id: string, data: Partial<ScheduledReport>): Promise<ApiResponse<ScheduledReport>> {
-		return reportsClient.put(`/scheduled-reports/${id}`, { json: data }).json();
+		return reportsClient.put(`/scheduled-reports/${id}`, data);
 	},
 
 	async deleteScheduledReport(id: string): Promise<ApiResponse<void>> {
-		return reportsClient.delete(`/scheduled-reports/${id}`).json();
+		return reportsClient.delete(`/scheduled-reports/${id}`);
 	},
 
 	async executeScheduledReport(id: string): Promise<ApiResponse<{ jobId: string }>> {
-		return reportsClient.post(`/scheduled-reports/${id}/execute`).json();
+		return reportsClient.post(`/scheduled-reports/${id}/execute`);
 	},
 
-	async getExecutionHistory(id: string): Promise<ApiResponse<any[]>> {
-		return reportsClient.get(`/scheduled-reports/${id}/history`).json();
+	async getExecutionHistory(id: string): Promise<ApiResponse<unknown[]>> {
+		return reportsClient.get(`/scheduled-reports/${id}/history`);
 	}
 };
 
@@ -149,7 +149,7 @@ export const customReportsService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return reportsClient.get(`/custom-reports?${searchParams}`).json();
+		return reportsClient.get(`/custom-reports?${searchParams}`);
 	},
 
 	async createCustomReport(data: {
@@ -159,19 +159,19 @@ export const customReportsService = {
 		parameters: ReportParameter[];
 		isPublic: boolean;
 	}): Promise<ApiResponse<CustomReport>> {
-		return reportsClient.post('/custom-reports/create', { json: data }).json();
+		return reportsClient.post('/custom-reports/create', data);
 	},
 
 	async updateCustomReport(id: string, data: Partial<CustomReport>): Promise<ApiResponse<CustomReport>> {
-		return reportsClient.put(`/custom-reports/${id}`, { json: data }).json();
+		return reportsClient.put(`/custom-reports/${id}`, data);
 	},
 
 	async deleteCustomReport(id: string): Promise<ApiResponse<void>> {
-		return reportsClient.delete(`/custom-reports/${id}`).json();
+		return reportsClient.delete(`/custom-reports/${id}`);
 	},
 
-	async executeCustomReport(id: string, parameters: Record<string, any>): Promise<ApiResponse<any>> {
-		return reportsClient.post(`/custom-reports/${id}/execute`, { json: { parameters } }).json();
+	async executeCustomReport(id: string, parameters: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+		return reportsClient.post(`/custom-reports/${id}/execute`, { parameters });
 	}
 };
 
@@ -179,7 +179,7 @@ export const customReportsService = {
 export const reportTemplatesService = {
 	async getTemplates(type?: string): Promise<ApiResponse<ReportTemplate[]>> {
 		const params = type ? `?type=${type}` : '';
-		return reportsClient.get(`/report-templates${params}`).json();
+		return reportsClient.get(`/report-templates${params}`);
 	},
 
 	async createTemplate(data: {
@@ -187,21 +187,21 @@ export const reportTemplatesService = {
 		type: 'USAGE' | 'USER' | 'CUSTOM';
 		layout: 'STANDARD' | 'COMPACT' | 'DETAILED';
 		sections: ReportSection[];
-		styling: Record<string, any>;
+		styling: Record<string, unknown>;
 	}): Promise<ApiResponse<ReportTemplate>> {
-		return reportsClient.post('/report-templates/create', { json: data }).json();
+		return reportsClient.post('/report-templates/create', data);
 	},
 
 	async updateTemplate(id: string, data: Partial<ReportTemplate>): Promise<ApiResponse<ReportTemplate>> {
-		return reportsClient.put(`/report-templates/${id}`, { json: data }).json();
+		return reportsClient.put(`/report-templates/${id}`, data);
 	},
 
 	async deleteTemplate(id: string): Promise<ApiResponse<void>> {
-		return reportsClient.delete(`/report-templates/${id}`).json();
+		return reportsClient.delete(`/report-templates/${id}`);
 	},
 
-	async previewTemplate(id: string, sampleData: Record<string, any>): Promise<ApiResponse<{ preview: string }>> {
-		return reportsClient.post(`/report-templates/${id}/preview`, { json: { sampleData } }).json();
+	async previewTemplate(id: string, sampleData: Record<string, unknown>): Promise<ApiResponse<{ preview: string }>> {
+		return reportsClient.post(`/report-templates/${id}/preview`, { sampleData });
 	}
 };
 
@@ -223,7 +223,7 @@ export const alertsService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return reportsClient.get(`/alerts/list?${searchParams}`).json();
+		return reportsClient.get(`/alerts/list?${searchParams}`);
 	},
 
 	async createAlert(data: {
@@ -234,38 +234,38 @@ export const alertsService = {
 		frequency: 'REAL_TIME' | 'HOURLY' | 'DAILY';
 		recipients: string[];
 	}): Promise<ApiResponse<AlertRule>> {
-		return reportsClient.post('/alerts/create', { json: data }).json();
+		return reportsClient.post('/alerts/create', data);
 	},
 
 	async updateAlert(id: string, data: Partial<AlertRule>): Promise<ApiResponse<AlertRule>> {
-		return reportsClient.put(`/alerts/${id}`, { json: data }).json();
+		return reportsClient.put(`/alerts/${id}`, data);
 	},
 
 	async deleteAlert(id: string): Promise<ApiResponse<void>> {
-		return reportsClient.delete(`/alerts/${id}`).json();
+		return reportsClient.delete(`/alerts/${id}`);
 	},
 
-	async getAlertHistory(id?: string): Promise<ApiResponse<any[]>> {
+	async getAlertHistory(id?: string): Promise<ApiResponse<unknown[]>> {
 		const url = id ? `/alerts/history?alertId=${id}` : '/alerts/history';
-		return reportsClient.get(url).json();
+		return reportsClient.get(url);
 	},
 
 	async configureThresholds(data: Record<string, number>): Promise<ApiResponse<void>> {
-		return reportsClient.post('/alerts/thresholds', { json: data }).json();
+		return reportsClient.post('/alerts/thresholds', data);
 	}
 };
 
 // Performance Monitoring Service
 export const performanceService = {
 	async getPerformanceMetrics(): Promise<ApiResponse<PerformanceMetrics>> {
-		return reportsClient.get('/performance').json();
+		return reportsClient.get('/performance');
 	},
 
 	async getQueryPerformance(params?: {
 		startDate?: string;
 		endDate?: string;
 		limit?: number;
-	}): Promise<ApiResponse<any[]>> {
+	}): Promise<ApiResponse<unknown[]>> {
 		const searchParams = new URLSearchParams();
 
 		if (params?.startDate) searchParams.append('startDate', params.startDate);
@@ -274,7 +274,7 @@ export const performanceService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return reportsClient.get(`/performance/queries?${searchParams}`).json();
+		return reportsClient.get(`/performance/queries?${searchParams}`);
 	},
 
 	async getCacheStatistics(): Promise<
@@ -286,7 +286,7 @@ export const performanceService = {
 			evictions: number;
 		}>
 	> {
-		return reportsClient.get('/performance/cache').json();
+		return reportsClient.get('/performance/cache');
 	},
 
 	async getSystemMetrics(): Promise<
@@ -298,7 +298,7 @@ export const performanceService = {
 			activeConnections: number;
 		}>
 	> {
-		return reportsClient.get('/performance/system').json();
+		return reportsClient.get('/performance/system');
 	}
 };
 
@@ -310,30 +310,26 @@ export const dataProcessingService = {
 		dimensions: string[];
 		timeRange: { start: string; end: string };
 		granularity: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
-	}): Promise<ApiResponse<any>> {
-		return reportsClient.post('/data-processing/aggregation', { json: data }).json();
+	}): Promise<ApiResponse<unknown>> {
+		return reportsClient.post('/data-processing/aggregation', data);
 	},
 
 	async validateData(
 		source: string,
-		rules: any[]
+		rules: unknown[]
 	): Promise<
 		ApiResponse<{
 			valid: boolean;
-			errors: any[];
-			warnings: any[];
+			errors: unknown[];
+			warnings: unknown[];
 		}>
 	> {
-		return reportsClient
-			.post('/data-processing/validation', {
-				json: { source, rules }
-			})
-			.json();
+		return reportsClient.post('/data-processing/validation', { source, rules });
 	},
 
 	async cleanseData(
 		source: string,
-		operations: any[]
+		operations: unknown[]
 	): Promise<
 		ApiResponse<{
 			processed: number;
@@ -341,23 +337,15 @@ export const dataProcessingService = {
 			removed: number;
 		}>
 	> {
-		return reportsClient
-			.post('/data-processing/cleansing', {
-				json: { source, operations }
-			})
-			.json();
+		return reportsClient.post('/data-processing/cleansing', { source, operations });
 	},
 
 	async refreshData(sources?: string[]): Promise<ApiResponse<{ jobId: string }>> {
-		return reportsClient
-			.post('/data-processing/refresh', {
-				json: { sources }
-			})
-			.json();
+		return reportsClient.post('/data-processing/refresh', { sources });
 	},
 
-	async getProcessingStatus(jobId?: string): Promise<ApiResponse<any>> {
+	async getProcessingStatus(jobId?: string): Promise<ApiResponse<unknown>> {
 		const url = jobId ? `/data-processing/status?jobId=${jobId}` : '/data-processing/status';
-		return reportsClient.get(url).json();
+		return reportsClient.get(url);
 	}
 };

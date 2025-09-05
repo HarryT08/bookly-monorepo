@@ -32,8 +32,8 @@ const AVAILABILITY_API_BASE = process.env.NEXT_PUBLIC_AVAILABILITY_API_URL || 'h
 export const availabilityService = {
 	// Basic Availability Operations
 	async createAvailability(data: Omit<WeeklySchedule, 'id' | 'createdAt' | 'updatedAt'>): Promise<WeeklySchedule> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/basic`, { json: data });
-		return response.json();
+		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/basic`, data);
+		return response.data as WeeklySchedule;
 	},
 
 	async getAvailability(params?: { resourceId?: string; dayOfWeek?: number }): Promise<WeeklySchedule[]> {
@@ -44,12 +44,23 @@ export const availabilityService = {
 		if (params?.dayOfWeek !== undefined) searchParams.append('dayOfWeek', params.dayOfWeek.toString());
 
 		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/basic?${searchParams}`);
-		return response.json();
+		return response.data as WeeklySchedule[];
+	},
+
+	async getConflicts(params?: { resourceId?: string; dayOfWeek?: number }): Promise<AvailabilityCheckResult[]> {
+		const searchParams = new URLSearchParams();
+
+		if (params?.resourceId) searchParams.append('resourceId', params.resourceId);
+
+		if (params?.dayOfWeek !== undefined) searchParams.append('dayOfWeek', params.dayOfWeek.toString());
+
+		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/conflicts?${searchParams}`);
+		return response.data as AvailabilityCheckResult[];
 	},
 
 	async updateAvailability(id: string, data: Partial<WeeklySchedule>): Promise<WeeklySchedule> {
-		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/basic/${id}`, { json: data });
-		return response.json();
+		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/basic/${id}`, data);
+		return response.data as WeeklySchedule;
 	},
 
 	async deleteAvailability(id: string): Promise<void> {
@@ -58,8 +69,8 @@ export const availabilityService = {
 
 	// Complex Schedule Operations
 	async createSchedule(data: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>): Promise<Schedule> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/schedule`, { json: data });
-		return response.json();
+		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/schedule`, data);
+		return response.data as Schedule;
 	},
 
 	async getSchedules(params?: { resourceId?: string; type?: string }): Promise<Schedule[]> {
@@ -70,12 +81,12 @@ export const availabilityService = {
 		if (params?.type) searchParams.append('type', params.type);
 
 		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/schedule?${searchParams}`);
-		return response.json();
+		return response.data as Schedule[];
 	},
 
 	async updateSchedule(id: string, data: Partial<Schedule>): Promise<Schedule> {
-		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/schedule/${id}`, { json: data });
-		return response.json();
+		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/schedule/${id}`, data);
+		return response.data as Schedule;
 	},
 
 	async deleteSchedule(id: string): Promise<void> {
@@ -84,8 +95,8 @@ export const availabilityService = {
 
 	// Availability Check
 	async checkAvailability(query: AvailabilityQuery): Promise<AvailabilityCheckResult> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/check`, { json: query });
-		return response.json();
+		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/check`, query);
+		return response.data as AvailabilityCheckResult;
 	}
 };
 
@@ -97,10 +108,8 @@ export const calendarIntegrationService = {
 	async createIntegration(
 		data: Omit<CalendarIntegration, 'id' | 'createdAt' | 'updatedAt'>
 	): Promise<CalendarIntegration> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/calendar-integrations`, {
-			json: data
-		});
-		return response.json();
+		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/calendar-integration`, data);
+		return response.data as CalendarIntegration;
 	},
 
 	async getIntegrations(params?: {
@@ -116,15 +125,13 @@ export const calendarIntegrationService = {
 
 		if (params?.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
 
-		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/calendar-integrations?${searchParams}`);
-		return response.json();
+		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/calendar-integration?${searchParams}`);
+		return response.data as CalendarIntegration[];
 	},
 
 	async updateIntegration(id: string, data: Partial<CalendarIntegration>): Promise<CalendarIntegration> {
-		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/calendar-integrations/${id}`, {
-			json: data
-		});
-		return response.json();
+		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/calendar-integrations/${id}`, data);
+		return response.data as CalendarIntegration;
 	},
 
 	async deleteIntegration(id: string): Promise<void> {
@@ -133,9 +140,9 @@ export const calendarIntegrationService = {
 
 	async syncIntegration(integrationId: string): Promise<{ success: boolean; eventsCount: number }> {
 		const response = await availabilityClient.post(
-			`${AVAILABILITY_API_BASE}/calendar-integrations/${integrationId}/sync`
+			`${AVAILABILITY_API_BASE}/calendar-integration/${integrationId}/sync-events`
 		);
-		return response.json();
+		return response.data as { success: boolean; eventsCount: number };
 	},
 
 	async getAvailabilityWithConflicts(params: {
@@ -154,7 +161,7 @@ export const calendarIntegrationService = {
 		const response = await availabilityClient.get(
 			`${AVAILABILITY_API_BASE}/availability-with-conflicts?${searchParams}`
 		);
-		return response.json();
+		return response.data as AvailabilityCheckResult;
 	}
 };
 
@@ -169,22 +176,23 @@ export const calendarViewService = {
 			endDate: query.endDate.toISOString()
 		});
 
-		if (query.resourceId) searchParams.append('resourceId', query.resourceId);
+		if (query.resourceIds) searchParams.append('resourceIds', query.resourceIds.join(','));
 
-		if (query.viewType) searchParams.append('viewType', query.viewType);
+		if (query.startDate) searchParams.append('startDate', query.startDate.toISOString());
 
-		if (query.eventTypes) query.eventTypes.forEach((type) => searchParams.append('eventTypes', type));
+		if (query.endDate) searchParams.append('endDate', query.endDate.toISOString());
+
+		if (query.includeSchedules !== undefined)
+			searchParams.append('includeSchedules', query.includeSchedules.toString());
 
 		if (query.includeAvailability !== undefined)
 			searchParams.append('includeAvailability', query.includeAvailability.toString());
 
-		if (query.includeExternalEvents !== undefined)
-			searchParams.append('includeExternalEvents', query.includeExternalEvents.toString());
+		if (query.includeReservations !== undefined)
+			searchParams.append('includeReservations', query.includeReservations.toString());
 
-		if (query.userId) searchParams.append('userId', query.userId);
-
-		const response = await availabilityClient.get(`availability/calendar?${searchParams}`);
-		return response.json();
+		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/calendar?${searchParams}`);
+		return response.data as CalendarViewData;
 	},
 
 	async getResourceCalendar(params: {
@@ -201,8 +209,10 @@ export const calendarViewService = {
 			includeScheduleRestrictions: (params.includeScheduleRestrictions ?? true).toString()
 		});
 
-		const response = await availabilityClient.get(`availability/${params.resourceId}/calendar?${searchParams}`);
-		return response.json();
+		const response = await availabilityClient.get(
+			`${AVAILABILITY_API_BASE}/calendar/resource/${params.resourceId}?${searchParams}`
+		);
+		return response.data as CalendarViewData;
 	}
 };
 
@@ -212,8 +222,8 @@ export const calendarViewService = {
 
 export const reservationService = {
 	async createReservation(data: CreateReservationRequest): Promise<Reservation> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/reservations`, { json: data });
-		return response.json();
+		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/reservations`, data);
+		return response.data as Reservation;
 	},
 
 	async getReservations(params?: {
@@ -242,26 +252,22 @@ export const reservationService = {
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
 		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/reservations?${searchParams}`);
-		return response.json();
+		return response.data as PaginatedResponse<Reservation>;
 	},
 
 	async getReservationById(id: string): Promise<Reservation> {
 		const response = await availabilityClient.get(`${AVAILABILITY_API_BASE}/reservations/${id}`);
-		return response.json();
+		return response.data as Reservation;
 	},
 
-	async updateReservation(data: UpdateReservationRequest): Promise<Reservation> {
-		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/reservations/${data.id}`, {
-			json: data
-		});
-		return response.json();
+	async updateReservation(id: string, data: UpdateReservationRequest): Promise<Reservation> {
+		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/reservations/${id}`, data);
+		return response.data as Reservation;
 	},
 
 	async cancelReservation(id: string, reason?: string): Promise<Reservation> {
-		const response = await availabilityClient.patch(`${AVAILABILITY_API_BASE}/reservations/${id}/cancel`, {
-			json: { reason }
-		});
-		return response.json();
+		const response = await availabilityClient.put(`${AVAILABILITY_API_BASE}/reservations/${id}/cancel`, { reason });
+		return response.data as Reservation;
 	},
 
 	async deleteReservation(id: string): Promise<void> {
@@ -283,9 +289,7 @@ export const reservationHistoryService = {
 
 		if (query?.resourceId) searchParams.append('resourceId', query.resourceId);
 
-		if (query?.actions) query.actions.forEach((action) => searchParams.append('actions', action));
-
-		if (query?.sources) query.sources.forEach((source) => searchParams.append('sources', source));
+		if (query?.action) searchParams.append('action', query.action);
 
 		if (query?.startDate) searchParams.append('startDate', query.startDate.toISOString());
 
@@ -295,19 +299,15 @@ export const reservationHistoryService = {
 
 		if (query?.limit) searchParams.append('limit', query.limit.toString());
 
-		if (query?.sortBy) searchParams.append('sortBy', query.sortBy);
-
-		if (query?.sortOrder) searchParams.append('sortOrder', query.sortOrder);
-
 		const response = await availabilityClient.get(
 			`${AVAILABILITY_API_BASE}/reservation-history/detailed?${searchParams}`
 		);
-		return response.json();
+		return response.data as PaginatedResponse<ReservationHistory>;
 	},
 
 	async createHistoryEntry(data: Omit<ReservationHistory, 'id' | 'createdAt'>): Promise<ReservationHistory> {
-		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/reservation-history`, { json: data });
-		return response.json();
+		const response = await availabilityClient.post(`${AVAILABILITY_API_BASE}/reservation-history`, data);
+		return response.data as ReservationHistory;
 	},
 
 	async exportHistory(query?: ReservationHistoryQuery): Promise<Blob> {
@@ -326,7 +326,7 @@ export const reservationHistoryService = {
 		const response = await availabilityClient.get(
 			`${AVAILABILITY_API_BASE}/reservation-history/export?${searchParams}`
 		);
-		return response.blob();
+		return response.data as Blob;
 	}
 };
 
@@ -334,10 +334,12 @@ export const reservationHistoryService = {
 // Unified Export
 // ========================================
 
-export default {
+const servicesExport = {
 	availability: availabilityService,
 	calendarIntegration: calendarIntegrationService,
 	calendarView: calendarViewService,
 	reservation: reservationService,
 	history: reservationHistoryService
 };
+
+export default servicesExport;

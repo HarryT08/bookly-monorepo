@@ -30,7 +30,7 @@ export interface ImportError {
 
 export interface ImportPreview {
 	headers: string[];
-	sample: Record<string, any>[];
+	sample: Record<string, unknown>[];
 	totalRows: number;
 	validationErrors: ImportError[];
 }
@@ -38,7 +38,7 @@ export interface ImportPreview {
 export interface ImportTemplate {
 	type: 'RESOURCES' | 'USERS' | 'PROGRAMS';
 	fields: ImportField[];
-	sampleData: Record<string, any>[];
+	sampleData: Record<string, unknown>[];
 }
 
 export interface ImportField {
@@ -59,7 +59,7 @@ export const importService = {
 		formData.append('file', file);
 		formData.append('type', type);
 
-		return resourcesClient.post('/resources/import/validate', { body: formData }).json();
+		return resourcesClient.post('/resources/import/validate', formData);
 	},
 
 	/**
@@ -81,14 +81,14 @@ export const importService = {
 		formData.append('mapping', JSON.stringify(data.mapping));
 		formData.append('options', JSON.stringify(data.options));
 
-		return resourcesClient.post('/resources/import/csv', { body: formData }).json();
+		return resourcesClient.post('/resources/import/csv', formData);
 	},
 
 	/**
 	 * Get import job status
 	 */
 	async getImportStatus(jobId: string): Promise<ApiResponse<ImportJob>> {
-		return resourcesClient.get(`/resources/import/status/${jobId}`).json();
+		return resourcesClient.get(`/resources/import/status/${jobId}`);
 	},
 
 	/**
@@ -113,37 +113,41 @@ export const importService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return resourcesClient.get(`/resources/import/history?${searchParams}`).json();
+		return resourcesClient.get(`/resources/import/history?${searchParams}`);
 	},
 
 	/**
 	 * Cancel import job
 	 */
 	async cancelImport(jobId: string): Promise<ApiResponse<void>> {
-		return resourcesClient.post(`/resources/import/${jobId}/cancel`).json();
+		return resourcesClient.post(`/resources/import/${jobId}/cancel`);
 	},
 
 	/**
 	 * Download import template - RF-04
 	 */
 	async downloadTemplate(type: 'RESOURCES' | 'USERS' | 'PROGRAMS'): Promise<Blob> {
+		// Note: This should use a different client method for blob responses
+		// For now, we'll cast the response appropriately
 		const response = await resourcesClient.get(`/resources/export/template?type=${type}`);
-		return response.blob();
+		return response.data as Blob;
 	},
 
 	/**
 	 * Get import template metadata
 	 */
 	async getTemplate(type: 'RESOURCES' | 'USERS' | 'PROGRAMS'): Promise<ApiResponse<ImportTemplate>> {
-		return resourcesClient.get(`/resources/import/templates/${type}`).json();
+		return resourcesClient.get(`/resources/import/templates/${type}`);
 	},
 
 	/**
 	 * Download import results
 	 */
 	async downloadResults(jobId: string, format: 'csv' | 'excel' = 'csv'): Promise<Blob> {
+		// Note: This should use a different client method for blob responses
+		// For now, we'll cast the response appropriately
 		const response = await resourcesClient.get(`/resources/import/${jobId}/results?format=${format}`);
-		return response.blob();
+		return response.data as Blob;
 	}
 };
 
@@ -152,11 +156,7 @@ export const googleWorkspaceService = {
 	 * Sync with Google Workspace - RF-04 (Google integration)
 	 */
 	async syncWithGoogleWorkspace(domain: string = 'ufps.edu.co'): Promise<ApiResponse<ImportJob>> {
-		return resourcesClient
-			.post('/resources/import/google-workspace', {
-				json: { domain }
-			})
-			.json();
+		return resourcesClient.post('/resources/import/google-workspace', { domain });
 	},
 
 	/**
@@ -171,7 +171,7 @@ export const googleWorkspaceService = {
 			errors: string[];
 		}>
 	> {
-		return resourcesClient.get('/resources/import/google-workspace/status').json();
+		return resourcesClient.get('/resources/import/google-workspace/status');
 	},
 
 	/**
@@ -183,10 +183,6 @@ export const googleWorkspaceService = {
 		autoSync: boolean;
 		syncInterval: number; // hours
 	}): Promise<ApiResponse<void>> {
-		return resourcesClient
-			.put('/resources/import/google-workspace/config', {
-				json: config
-			})
-			.json();
+		return resourcesClient.put('/resources/import/google-workspace/config', config);
 	}
 };

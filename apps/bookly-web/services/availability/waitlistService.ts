@@ -180,7 +180,13 @@ export const mockWaitlistEntries: WaitlistEntry[] = [
 		priority: 'MEDIUM',
 		status: WaitlistStatus.ACTIVE,
 		position: 1,
+		notificationPreferences: {
+			email: true,
+			sms: false,
+			push: true
+		},
 		createdAt: new Date('2024-01-10T10:00:00'),
+		updatedAt: new Date('2024-01-10T10:00:00'),
 		notificationSent: false
 	},
 	{
@@ -197,7 +203,13 @@ export const mockWaitlistEntries: WaitlistEntry[] = [
 		priority: 'HIGH',
 		status: WaitlistStatus.ACTIVE,
 		position: 2,
-		createdAt: new Date('2024-01-11T14:30:00'),
+		notificationPreferences: {
+			email: true,
+			sms: true,
+			push: false
+		},
+		createdAt: new Date('2024-01-10T11:00:00'),
+		updatedAt: new Date('2024-01-10T11:00:00'),
 		notificationSent: false
 	},
 	{
@@ -211,10 +223,16 @@ export const mockWaitlistEntries: WaitlistEntry[] = [
 		requestedEndDate: new Date('2024-01-16T12:00:00'),
 		title: 'Research Session',
 		description: 'Data collection for research project',
-		priority: 'HIGH',
+		priority: 'LOW',
 		status: WaitlistStatus.NOTIFIED,
-		position: 1,
-		createdAt: new Date('2024-01-12T08:00:00'),
+		position: 3,
+		notificationPreferences: {
+			email: false,
+			sms: false,
+			push: true
+		},
+		createdAt: new Date('2024-01-10T12:00:00'),
+		updatedAt: new Date('2024-01-10T12:30:00'),
 		notificationSent: true,
 		expiresAt: new Date('2024-01-14T18:00:00')
 	}
@@ -224,15 +242,20 @@ export const mockWaitlistNotifications: WaitlistNotification[] = [
 	{
 		id: 'notif-1',
 		waitlistEntryId: 'wait-3',
-		availableSlot: {
-			id: 'slot-1',
-			resourceId: 'resource-2',
-			start: new Date('2024-01-16T10:00:00'),
-			end: new Date('2024-01-16T12:00:00'),
-			isAvailable: true
-		},
-		sentAt: new Date('2024-01-14T12:00:00'),
+		userId: 'user-1',
+		type: 'RESOURCE_AVAILABLE',
+		title: 'Resource Available',
+		message: 'Laboratory B is now available for your requested time slot',
+		resourceId: 'resource-2',
+		resourceName: 'Laboratory B',
+		availableStartDate: new Date('2024-01-16T10:00:00'),
+		availableEndDate: new Date('2024-01-16T12:00:00'),
 		expiresAt: new Date('2024-01-14T18:00:00'),
-		status: 'SENT'
+		isRead: false,
+		createdAt: new Date('2024-01-14T12:00:00'),
+		actionRequired: true,
+		actionData: {
+			confirmationDeadline: new Date('2024-01-14T18:00:00')
+		}
 	}
 ];

@@ -33,7 +33,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 
-import { DataTable } from '@components/molecules';
+import { DataTable } from '@components/organisms';
 import { PageTitle } from '@components/atoms';
 import { ReassignmentDialog } from '@components/molecules/ReassignmentDialog';
 import { useReservation, useReservationHistory } from '@hooks/useAvailability';

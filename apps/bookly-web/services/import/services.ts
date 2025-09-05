@@ -1,5 +1,4 @@
 import { resourcesClient } from '../http';
-import type { ApiResponse } from '@services/http/types';
 import type {
 	ImportJob,
 	ImportTemplate,
@@ -23,20 +22,16 @@ export const importService = {
 	 * Get available import templates
 	 */
 	async getTemplates(): Promise<ImportTemplate[]> {
-		const response = await resourcesClient
-			.get(`${IMPORT_BASE_URL}/templates`)
-			.json<ApiResponse<ImportTemplate[]>>();
-		return response.data;
+		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/templates`);
+		return response.data as ImportTemplate[];
 	},
 
 	/**
 	 * Get import template by type
 	 */
 	async getTemplateByType(type: ImportType): Promise<ImportTemplate> {
-		const response = await resourcesClient
-			.get(`${IMPORT_BASE_URL}/templates/${type}`)
-			.json<ApiResponse<ImportTemplate>>();
-		return response.data;
+		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/templates/${type}`);
+		return response.data as ImportTemplate;
 	},
 
 	/**
@@ -47,10 +42,8 @@ export const importService = {
 		formData.append('file', file);
 		formData.append('type', type);
 
-		const response = await resourcesClient
-			.post(`${IMPORT_BASE_URL}/preview`, { body: formData })
-			.json<ImportPreviewResponse>();
-		return response;
+		const response = await resourcesClient.post(`${IMPORT_BASE_URL}/preview`, formData);
+		return response.data as ImportPreviewResponse;
 	},
 
 	/**
@@ -61,48 +54,40 @@ export const importService = {
 		formData.append('file', file);
 		formData.append('config', JSON.stringify(request));
 
-		const response = await resourcesClient
-			.post(`${IMPORT_BASE_URL}/jobs`, { body: formData })
-			.json<ImportJobResponse>();
-		return response;
+		const response = await resourcesClient.post(`${IMPORT_BASE_URL}/jobs`, formData);
+		return response.data as ImportJobResponse;
 	},
 
 	/**
 	 * Get import job details
 	 */
 	async getJob(jobId: string): Promise<ImportJob> {
-		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/jobs/${jobId}`).json<ApiResponse<ImportJob>>();
-		return response.data;
+		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/jobs/${jobId}`);
+		return response.data as ImportJob;
 	},
 
 	/**
 	 * Update import job configuration
 	 */
 	async updateJob(jobId: string, request: UpdateImportJobRequest): Promise<ImportJob> {
-		const response = await resourcesClient
-			.put(`${IMPORT_BASE_URL}/jobs/${jobId}`, { json: request })
-			.json<ApiResponse<ImportJob>>();
-		return response.data;
+		const response = await resourcesClient.put(`${IMPORT_BASE_URL}/jobs/${jobId}`, request);
+		return response.data as ImportJob;
 	},
 
 	/**
 	 * Validate import data
 	 */
 	async validateJob(jobId: string): Promise<ImportValidationResult> {
-		const response = await resourcesClient
-			.post(`${IMPORT_BASE_URL}/jobs/${jobId}/validate`)
-			.json<ApiResponse<ImportValidationResult>>();
-		return response.data;
+		const response = await resourcesClient.post(`${IMPORT_BASE_URL}/jobs/${jobId}/validate`);
+		return response.data as ImportValidationResult;
 	},
 
 	/**
 	 * Process import job
 	 */
 	async processJob(request: ProcessImportRequest): Promise<ImportJob> {
-		const response = await resourcesClient
-			.post(`${IMPORT_BASE_URL}/jobs/${request.jobId}/process`, { json: request })
-			.json<ApiResponse<ImportJob>>();
-		return response.data;
+		const response = await resourcesClient.post(`${IMPORT_BASE_URL}/jobs/${request.jobId}/process`, request);
+		return response.data as ImportJob;
 	},
 
 	/**
@@ -121,10 +106,8 @@ export const importService = {
 			offset: offset.toString()
 		});
 
-		const response = await resourcesClient
-			.get(`${IMPORT_BASE_URL}/history?${params}`)
-			.json<ApiResponse<{ data: ImportHistory[]; total: number }>>();
-		return response.data;
+		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/history?${params}`);
+		return response.data as { data: ImportHistory[]; total: number };
 	},
 
 	/**
@@ -132,7 +115,7 @@ export const importService = {
 	 */
 	async downloadTemplate(type: ImportType): Promise<Blob> {
 		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/templates/${type}/download`);
-		return await response.blob();
+		return response.data as Blob;
 	},
 
 	/**
@@ -140,16 +123,14 @@ export const importService = {
 	 */
 	async downloadResults(jobId: string, format: 'csv' | 'excel' = 'csv'): Promise<Blob> {
 		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/jobs/${jobId}/download?format=${format}`);
-		return await response.blob();
+		return response.data as Blob;
 	},
 
 	/**
 	 * Get job progress
 	 */
 	async getJobProgress(jobId: string): Promise<{ progress: number; status: string; message?: string }> {
-		const response = await resourcesClient
-			.get(`${IMPORT_BASE_URL}/jobs/${jobId}/progress`)
-			.json<ApiResponse<{ progress: number; status: string; message?: string }>>();
-		return response.data;
+		const response = await resourcesClient.get(`${IMPORT_BASE_URL}/jobs/${jobId}/progress`);
+		return response.data as { progress: number; status: string; message?: string };
 	}
 };

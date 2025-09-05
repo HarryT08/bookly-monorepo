@@ -55,7 +55,8 @@ export const maintenanceService = {
 	 * Create maintenance record - RF-06
 	 */
 	async createMaintenance(data: CreateMaintenanceRequest): Promise<ApiResponse<MaintenanceRecord>> {
-		return resourcesClient.post('/resources/maintenance', { json: data }).json();
+		const response = await resourcesClient.post<ApiResponse<MaintenanceRecord>>('/resources/maintenance', data);
+		return response.data;
 	},
 
 	/**
@@ -92,14 +93,16 @@ export const maintenanceService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return resourcesClient.get(`/resources/maintenance?${searchParams}`).json();
+		const response = await resourcesClient.get<ApiResponse<MaintenanceRecord[]>>(`/resources/maintenance?${searchParams}`);
+		return response.data;
 	},
 
 	/**
 	 * Get maintenance record by ID
 	 */
 	async getMaintenanceById(id: string): Promise<ApiResponse<MaintenanceRecord>> {
-		return resourcesClient.get(`/resources/maintenance/${id}`).json();
+		const response = await resourcesClient.get<ApiResponse<MaintenanceRecord>>(`/resources/maintenance/${id}`);
+		return response.data;
 	},
 
 	/**
@@ -109,14 +112,16 @@ export const maintenanceService = {
 		id: string,
 		data: Partial<CreateMaintenanceRequest>
 	): Promise<ApiResponse<MaintenanceRecord>> {
-		return resourcesClient.put(`/resources/maintenance/${id}`, { json: data }).json();
+		const response = await resourcesClient.put<ApiResponse<MaintenanceRecord>>(`/resources/maintenance/${id}`, data);
+		return response.data;
 	},
 
 	/**
 	 * Delete maintenance record
 	 */
 	async deleteMaintenance(id: string): Promise<ApiResponse<void>> {
-		return resourcesClient.delete(`/resources/maintenance/${id}`).json();
+		const response = await resourcesClient.delete<ApiResponse<void>>(`/resources/maintenance/${id}`);
+		return response.data;
 	},
 
 	/**
@@ -124,7 +129,8 @@ export const maintenanceService = {
 	 */
 	async getPendingMaintenance(resourceId?: string): Promise<ApiResponse<MaintenanceRecord[]>> {
 		const params = resourceId ? `?resourceId=${resourceId}&status=SCHEDULED` : '?status=SCHEDULED';
-		return resourcesClient.get(`/resources/maintenance/pending${params}`).json();
+		const response = await resourcesClient.get<ApiResponse<MaintenanceRecord[]>>(`/resources/maintenance/pending${params}`);
+		return response.data;
 	},
 
 	/**
@@ -138,7 +144,8 @@ export const maintenanceService = {
 			notes?: string;
 		}
 	): Promise<ApiResponse<MaintenanceRecord>> {
-		return resourcesClient.put(`/resources/maintenance/${id}/complete`, { json: data }).json();
+		const response = await resourcesClient.put<ApiResponse<MaintenanceRecord>>(`/resources/maintenance/${id}/complete`, data);
+		return response.data;
 	},
 
 	/**
@@ -159,7 +166,8 @@ export const maintenanceService = {
 
 		if (dateRange?.endDate) searchParams.append('endDate', dateRange.endDate);
 
-		return resourcesClient.get(`/resources/maintenance/stats?${searchParams}`).json();
+		const response = await resourcesClient.get<ApiResponse<MaintenanceStats>>(`/resources/maintenance/stats?${searchParams}`);
+		return response.data;
 	}
 };
 
@@ -174,7 +182,8 @@ export const incidentService = {
 		severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 		images?: string[];
 	}): Promise<ApiResponse<MaintenanceRecord>> {
-		return resourcesClient.post('/resources/incidents/report', { json: data }).json();
+		const response = await resourcesClient.post<ApiResponse<MaintenanceRecord>>('/resources/incidents/report', data);
+		return response.data;
 	},
 
 	/**
@@ -193,6 +202,7 @@ export const incidentService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return resourcesClient.get(`/resources/incidents/my?${searchParams}`).json();
+		const response = await resourcesClient.get<ApiResponse<MaintenanceRecord[]>>(`/resources/incidents/my?${searchParams}`);
+		return response.data;
 	}
 };

@@ -3,7 +3,7 @@
     "baseUrl": ".",
     "paths": {
       "@auth/*": [
-        "./src/@auth/*"
+        "./auth/*"
       ],
       "@i18n": [
         "./i18n/index"
@@ -14,14 +14,8 @@
       "@fuse/*": [
         "./lib/fuse/*"
       ],
-      "@history*": [
-        "./src/@history"
-      ],
       "@mock-utils/*": [
-        "./src/@mock-utils/*"
-      ],
-      "@schema": [
-        "./src/@schema"
+        "./mock-utils/*"
       ],
       "@services/*": [
         "./services/*"
@@ -40,6 +34,15 @@
       ],
       "@components/*": [
         "./components/*"
+      ],
+      "@contexts/*": [
+        "./contexts/*"
+      ],
+      "@styles/*": [
+        "./styles/*"
+      ],
+      "@configs/*": [
+        "./configs/*"
       ],
       "@/*": [
         "./src/*"
@@ -83,7 +86,7 @@
   "include": [
     "./src/**/*.ts",
     "./src/**/*.tsx",
-    "./src/global.d.ts",
+    "./global.d.ts",
     "./services/**/*.ts",
     "./hooks/**/*.ts",
     "./store/**/*.ts",
@@ -91,11 +94,16 @@
     "./types/**/*.ts",
     "./components/**/*.ts",
     "./components/**/*.tsx",
+    "./contexts/**/*.ts",
+    "./contexts/**/*.tsx",
+    "./auth/**/*.ts",
+    "./auth/**/*.tsx",
+    "./mock-utils/**/*.ts",
+    "./styles/**/*.ts",
+    "./configs/**/*.ts",
     "./i18n/**/*.ts",
     "./lib/**/*.ts",
     "./lib/**/*.tsx",
-    "./contexts/**/*.ts",
-    "./contexts/**/*.tsx",
     "tailwind.config.ts",
     "next-env.d.ts",
     ".next/types/**/*.ts",

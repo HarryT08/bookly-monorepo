@@ -89,9 +89,11 @@ export function useWaitlist(): UseWaitlistReturn {
 						userId: 'current-user-id',
 						userName: 'Current User',
 						userEmail: 'current.user@university.edu',
+						resourceName: `Resource ${request.resourceId}`,
 						status: WaitlistStatus.ACTIVE,
 						position: state.resourceEntries.filter((e) => e.resourceId === request.resourceId).length + 1,
 						createdAt: new Date(),
+						updatedAt: new Date(),
 						notificationSent: false
 					};
 

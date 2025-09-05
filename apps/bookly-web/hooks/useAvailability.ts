@@ -564,11 +564,11 @@ export function useReservation() {
 	);
 
 	const updateReservation = useCallback(
-		async (data: UpdateReservationRequest): Promise<Reservation | null> => {
+		async (id: string, data: UpdateReservationRequest): Promise<Reservation | null> => {
 			try {
 				setLoading(true);
 				clearError();
-				const result = await reservationService.updateReservation(data);
+				const result = await reservationService.updateReservation(id, data);
 				enqueueSnackbar('Reservation updated successfully', { variant: 'success' });
 				return result;
 			} catch (error) {

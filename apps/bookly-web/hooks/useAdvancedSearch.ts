@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { availabilityService } from '../src/services/availability/availabilityService';
+import { availabilityService } from '../services/availability/availabilityService';
 import { useSnackbar } from 'notistack';
 import type {
 	AdvancedSearchFilters,
@@ -8,7 +8,7 @@ import type {
 	PopularResourcesResponse,
 	SearchHistoryResponse,
 	QuickSearchResponse
-} from '../src/services/availability/types';
+} from '../services/availability/types';
 
 interface UseAdvancedSearchState {
 	searchResults: AdvancedSearchResponse | null;

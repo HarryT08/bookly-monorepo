@@ -32,7 +32,7 @@ export interface SystemSettings {
 
 export interface SettingsFormProps {
 	settings: SystemSettings;
-	onSettingChange: (key: keyof SystemSettings, value: any) => void;
+	onSettingChange: (key: keyof SystemSettings, value: string | number | boolean) => void;
 	onSave: () => Promise<void>;
 }
 

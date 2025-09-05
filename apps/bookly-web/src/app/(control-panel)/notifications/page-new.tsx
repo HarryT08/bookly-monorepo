@@ -169,7 +169,10 @@ export default function NotificationsPage() {
 			label: 'Destinatario',
 			minWidth: 180,
 			render: (notification) => (
-				<Typography variant="body2" fontWeight="medium">
+				<Typography
+					variant="body2"
+					fontWeight="medium"
+				>
 					{notification.recipientId}
 				</Typography>
 			)
@@ -179,7 +182,10 @@ export default function NotificationsPage() {
 			label: 'Asunto',
 			minWidth: 200,
 			render: (notification) => (
-				<Typography variant="body2" noWrap>
+				<Typography
+					variant="body2"
+					noWrap
+				>
 					{notification.subject || 'Sin asunto'}
 				</Typography>
 			)
@@ -221,17 +227,27 @@ export default function NotificationsPage() {
 			minWidth: 100,
 			align: 'center',
 			render: (notification) => (
-				<Stack direction="row" spacing={1}>
+				<Stack
+					direction="row"
+					spacing={1}
+				>
 					{notification.status === NotificationStatus.DELIVERED && (
 						<Tooltip title="Marcar como leído">
-							<IconButton size="small" onClick={() => handleMarkAsRead(notification)}>
+							<IconButton
+								size="small"
+								onClick={() => handleMarkAsRead(notification)}
+							>
 								<ViewIcon />
 							</IconButton>
 						</Tooltip>
 					)}
 					{notification.status === NotificationStatus.FAILED && (
 						<Tooltip title="Reenviar">
-							<IconButton size="small" color="primary" onClick={() => handleResend(notification)}>
+							<IconButton
+								size="small"
+								color="primary"
+								onClick={() => handleResend(notification)}
+							>
 								<SendIcon />
 							</IconButton>
 						</Tooltip>

@@ -31,7 +31,7 @@ export interface BulkOperation {
 	type: 'APPROVE' | 'REJECT' | 'UPDATE' | 'DELETE';
 	entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS';
 	entityIds: string[];
-	parameters: Record<string, any>;
+	parameters: Record<string, unknown>;
 	status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 	progress: number;
 	results: BulkOperationResult[];
@@ -56,7 +56,7 @@ export interface CalendarOptimization {
 		maxConsecutiveHours?: number;
 		minBreakBetweenReservations?: number;
 		preferredTimeSlots?: string[];
-		blackoutPeriods?: Array<{ start: string; end: string }>;
+		blackoutPeriods?: { start: string; end: string }[];
 	};
 	optimization: {
 		utilization: number;
@@ -79,21 +79,21 @@ export const advancedSessionService = {
 	 * Get active sessions for current user
 	 */
 	async getActiveSessions(): Promise<ApiResponse<SessionInfo[]>> {
-		return availabilityClient.get('/auth/sessions/active').json();
+		return availabilityClient.get('/auth/sessions/active');
 	},
 
 	/**
 	 * Terminate specific session
 	 */
 	async terminateSession(sessionId: string): Promise<ApiResponse<void>> {
-		return availabilityClient.delete(`/auth/sessions/${sessionId}`).json();
+		return availabilityClient.delete(`/auth/sessions/${sessionId}`);
 	},
 
 	/**
 	 * Terminate all other sessions (keep current)
 	 */
 	async terminateAllOtherSessions(): Promise<ApiResponse<void>> {
-		return availabilityClient.post('/auth/sessions/terminate-others').json();
+		return availabilityClient.post('/auth/sessions/terminate-others');
 	},
 
 	/**
@@ -104,14 +104,18 @@ export const advancedSessionService = {
 		endDate?: string;
 		page?: number;
 		limit?: number;
-	}): Promise<ApiResponse<any[]>> {
+	}): Promise<ApiResponse<unknown[]>> {
 		const searchParams = new URLSearchParams();
+
 		if (params?.startDate) searchParams.append('startDate', params.startDate);
+
 		if (params?.endDate) searchParams.append('endDate', params.endDate);
+
 		if (params?.page) searchParams.append('page', params.page.toString());
+
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return availabilityClient.get(`/auth/audit-logs?${searchParams}`).json();
+		return availabilityClient.get(`/auth/audit-logs?${searchParams}`);
 	}
 };
 
@@ -121,35 +125,35 @@ export const twoFactorService = {
 	 * Enable 2FA for current user
 	 */
 	async enable2FA(): Promise<ApiResponse<TwoFactorSetup>> {
-		return availabilityClient.post('/auth/2fa/enable').json();
+		return availabilityClient.post('/auth/2fa/enable');
 	},
 
 	/**
 	 * Verify 2FA setup with code
 	 */
 	async verify2FA(code: string): Promise<ApiResponse<{ success: boolean; backupCodes: string[] }>> {
-		return availabilityClient.post('/auth/2fa/verify', { json: { code } }).json();
+		return availabilityClient.post('/auth/2fa/verify', { code });
 	},
 
 	/**
 	 * Disable 2FA
 	 */
 	async disable2FA(password: string): Promise<ApiResponse<void>> {
-		return availabilityClient.post('/auth/2fa/disable', { json: { password } }).json();
+		return availabilityClient.post('/auth/2fa/disable', { password });
 	},
 
 	/**
 	 * Generate new backup codes
 	 */
 	async generateBackupCodes(): Promise<ApiResponse<{ backupCodes: string[] }>> {
-		return availabilityClient.post('/auth/2fa/backup-codes/generate').json();
+		return availabilityClient.post('/auth/2fa/backup-codes/generate');
 	},
 
 	/**
 	 * Verify backup code
 	 */
 	async verifyBackupCode(code: string): Promise<ApiResponse<{ success: boolean }>> {
-		return availabilityClient.post('/auth/2fa/backup-codes/verify', { json: { code } }).json();
+		return availabilityClient.post('/auth/2fa/backup-codes/verify', { code });
 	}
 };
 
@@ -158,44 +162,51 @@ export const bulkOperationsService = {
 	/**
 	 * Start bulk approval operation
 	 */
-	async bulkApprove(entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS', entityIds: string[], parameters?: Record<string, any>): Promise<ApiResponse<BulkOperation>> {
-		return availabilityClient.post('/bulk-operations/approve', { 
-			json: { entityType, entityIds, parameters } 
-		}).json();
+	async bulkApprove(
+		entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS',
+		entityIds: string[],
+		parameters?: Record<string, unknown>
+	): Promise<ApiResponse<BulkOperation>> {
+		return availabilityClient.post('/bulk-operations/approve', { entityType, entityIds, parameters });
 	},
 
 	/**
 	 * Start bulk rejection operation
 	 */
-	async bulkReject(entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS', entityIds: string[], reason?: string): Promise<ApiResponse<BulkOperation>> {
-		return availabilityClient.post('/bulk-operations/reject', { 
-			json: { entityType, entityIds, parameters: { reason } } 
-		}).json();
+	async bulkReject(
+		entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS',
+		entityIds: string[],
+		reason?: string
+	): Promise<ApiResponse<BulkOperation>> {
+		return availabilityClient.post('/bulk-operations/reject', { entityType, entityIds, parameters: { reason } });
 	},
 
 	/**
 	 * Start bulk update operation
 	 */
-	async bulkUpdate(entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS', entityIds: string[], updates: Record<string, any>): Promise<ApiResponse<BulkOperation>> {
-		return availabilityClient.post('/bulk-operations/update', { 
-			json: { entityType, entityIds, parameters: updates } 
-		}).json();
+	async bulkUpdate(
+		entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS',
+		entityIds: string[],
+		updates: Record<string, unknown>
+	): Promise<ApiResponse<BulkOperation>> {
+		return availabilityClient.post('/bulk-operations/update', { entityType, entityIds, parameters: updates });
 	},
 
 	/**
 	 * Start bulk delete operation
 	 */
-	async bulkDelete(entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS', entityIds: string[]): Promise<ApiResponse<BulkOperation>> {
-		return availabilityClient.post('/bulk-operations/delete', { 
-			json: { entityType, entityIds } 
-		}).json();
+	async bulkDelete(
+		entityType: 'RESERVATIONS' | 'RESOURCES' | 'USERS',
+		entityIds: string[]
+	): Promise<ApiResponse<BulkOperation>> {
+		return availabilityClient.post('/bulk-operations/delete', { entityType, entityIds });
 	},
 
 	/**
 	 * Get bulk operation status
 	 */
 	async getBulkOperationStatus(operationId: string): Promise<ApiResponse<BulkOperation>> {
-		return availabilityClient.get(`/bulk-operations/${operationId}/status`).json();
+		return availabilityClient.get(`/bulk-operations/${operationId}/status`);
 	},
 
 	/**
@@ -209,20 +220,25 @@ export const bulkOperationsService = {
 		limit?: number;
 	}): Promise<ApiResponse<BulkOperation[]>> {
 		const searchParams = new URLSearchParams();
+
 		if (params?.type) searchParams.append('type', params.type);
+
 		if (params?.entityType) searchParams.append('entityType', params.entityType);
+
 		if (params?.status) searchParams.append('status', params.status);
+
 		if (params?.page) searchParams.append('page', params.page.toString());
+
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return availabilityClient.get(`/bulk-operations/history?${searchParams}`).json();
+		return availabilityClient.get(`/bulk-operations/history?${searchParams}`);
 	},
 
 	/**
 	 * Cancel bulk operation
 	 */
 	async cancelBulkOperation(operationId: string): Promise<ApiResponse<void>> {
-		return availabilityClient.post(`/bulk-operations/${operationId}/cancel`).json();
+		return availabilityClient.post(`/bulk-operations/${operationId}/cancel`);
 	}
 };
 
@@ -231,31 +247,36 @@ export const calendarOptimizationService = {
 	/**
 	 * Analyze calendar for optimization opportunities
 	 */
-	async analyzeCalendarOptimization(resourceId: string, period: {
-		startDate: string;
-		endDate: string;
-	}, constraints?: {
-		maxConsecutiveHours?: number;
-		minBreakBetweenReservations?: number;
-		preferredTimeSlots?: string[];
-		blackoutPeriods?: Array<{ start: string; end: string }>;
-	}): Promise<ApiResponse<CalendarOptimization>> {
-		return availabilityClient.post('/calendar/optimize', { 
-			json: { resourceId, period, constraints } 
-		}).json();
+	async analyzeCalendarOptimization(
+		resourceId: string,
+		period: {
+			startDate: string;
+			endDate: string;
+		},
+		constraints?: {
+			maxConsecutiveHours?: number;
+			minBreakBetweenReservations?: number;
+			preferredTimeSlots?: string[];
+			blackoutPeriods?: { start: string; end: string }[];
+		}
+	): Promise<ApiResponse<CalendarOptimization>> {
+		return availabilityClient.post('/calendar/optimize', { resourceId, period, constraints });
 	},
 
 	/**
 	 * Apply optimization suggestions
 	 */
-	async applyOptimizationSuggestions(resourceId: string, suggestionIds: string[]): Promise<ApiResponse<{
-		applied: number;
-		failed: number;
-		results: Array<{ suggestionId: string; success: boolean; error?: string }>;
-	}>> {
-		return availabilityClient.post('/calendar/optimize/apply', { 
-			json: { resourceId, suggestionIds } 
-		}).json();
+	async applyOptimizationSuggestions(
+		resourceId: string,
+		suggestionIds: string[]
+	): Promise<
+		ApiResponse<{
+			applied: number;
+			failed: number;
+			results: { suggestionId: string; success: boolean; error?: string }[];
+		}>
+	> {
+		return availabilityClient.post('/calendar/optimize/apply', { resourceId, suggestionIds });
 	},
 
 	/**
@@ -263,21 +284,22 @@ export const calendarOptimizationService = {
 	 */
 	async getOptimizationHistory(resourceId?: string): Promise<ApiResponse<CalendarOptimization[]>> {
 		const params = resourceId ? `?resourceId=${resourceId}` : '';
-		return availabilityClient.get(`/calendar/optimize/history${params}`).json();
+		return availabilityClient.get(`/calendar/optimize/history${params}`);
 	},
 
 	/**
 	 * Schedule automatic optimization
 	 */
-	async scheduleAutoOptimization(resourceId: string, schedule: {
-		frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
-		time: string; // HH:MM format
-		constraints?: any;
-		autoApply: boolean;
-	}): Promise<ApiResponse<{ scheduleId: string }>> {
-		return availabilityClient.post('/calendar/optimize/schedule', { 
-			json: { resourceId, schedule } 
-		}).json();
+	async scheduleAutoOptimization(
+		resourceId: string,
+		schedule: {
+			frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+			time: string; // HH:MM format
+			constraints?: unknown;
+			autoApply: boolean;
+		}
+	): Promise<ApiResponse<{ scheduleId: string }>> {
+		return availabilityClient.post('/calendar/optimize/schedule', { resourceId, schedule });
 	}
 };
 
@@ -290,30 +312,29 @@ export const advancedUserService = {
 		reason?: string;
 		page?: number;
 		limit?: number;
-	}): Promise<ApiResponse<any[]>> {
+	}): Promise<ApiResponse<unknown[]>> {
 		const searchParams = new URLSearchParams();
+
 		if (params?.reason) searchParams.append('reason', params.reason);
+
 		if (params?.page) searchParams.append('page', params.page.toString());
+
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return availabilityClient.get(`/users/blocked?${searchParams}`).json();
+		return availabilityClient.get(`/users/blocked?${searchParams}`);
 	},
 
 	/**
 	 * Unblock user
 	 */
 	async unblockUser(userId: string, reason?: string): Promise<ApiResponse<void>> {
-		return availabilityClient.post(`/users/${userId}/unblock`, { 
-			json: reason ? { reason } : {} 
-		}).json();
+		return availabilityClient.post(`/users/${userId}/unblock`, reason ? { reason } : {});
 	},
 
 	/**
 	 * Block user
 	 */
 	async blockUser(userId: string, reason: string, duration?: string): Promise<ApiResponse<void>> {
-		return availabilityClient.post(`/users/${userId}/block`, { 
-			json: { reason, duration } 
-		}).json();
+		return availabilityClient.post(`/users/${userId}/block`, { reason, duration });
 	}
 };

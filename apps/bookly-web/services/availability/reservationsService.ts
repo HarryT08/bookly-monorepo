@@ -66,7 +66,7 @@ export const reservationsService = {
 	 * Create a new reservation - RF-12
 	 */
 	async createReservation(data: CreateReservationRequest): Promise<ApiResponse<Reservation>> {
-		return availabilityClient.post('reservations', { json: data }).json();
+		return availabilityClient.post('reservations', data);
 	},
 
 	/**
@@ -97,46 +97,48 @@ export const reservationsService = {
 
 		if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-		return availabilityClient.get(`reservations?${searchParams}`).json();
+		return availabilityClient.get(`reservations?${searchParams}`);
 	},
 
 	/**
 	 * Get single reservation by ID
 	 */
 	async getReservationById(id: string): Promise<ApiResponse<Reservation>> {
-		return availabilityClient.get(`reservations/${id}`).json();
+		return availabilityClient.get(`reservations/${id}`);
 	},
 
 	/**
 	 * Update reservation - RF-13
 	 */
 	async updateReservation(id: string, data: Partial<CreateReservationRequest>): Promise<ApiResponse<Reservation>> {
-		return availabilityClient.put(`reservations/${id}`, { json: data }).json();
+		return availabilityClient.put(`reservations/${id}`, data);
 	},
 
 	/**
 	 * Cancel reservation - RF-13
 	 */
 	async cancelReservation(id: string, reason?: string): Promise<ApiResponse<void>> {
-		return availabilityClient
-			.delete(`reservations/${id}`, {
-				json: reason ? { reason } : undefined
-			})
-			.json();
+		if (reason) {
+			return availabilityClient.put(`reservations/${id}/cancel`, { reason });
+		}
+
+		return availabilityClient.delete(`reservations/${id}`);
 	},
 
 	/**
 	 * Create recurring reservations - RF-12
 	 */
 	async createRecurringReservation(data: CreateReservationRequest): Promise<ApiResponse<Reservation[]>> {
-		return availabilityClient.post('recurring-reservations', { json: data }).json();
+		return availabilityClient.post('recurring-reservations', data);
 	},
 
 	/**
 	 * Advanced search with filters - RF-09
 	 */
-	async advancedSearch(filters: AdvancedSearchFilters): Promise<ApiResponse<any>> {
-		return availabilityClient.post('search/advanced', { json: filters }).json();
+	async advancedSearch(
+		filters: AdvancedSearchFilters
+	): Promise<ApiResponse<{ resources: unknown[]; totalCount: number }>> {
+		return availabilityClient.post('search/advanced', filters);
 	}
 };
 
@@ -149,7 +151,7 @@ export const waitingListService = {
 		requestedStartTime: string;
 		requestedEndTime: string;
 	}): Promise<ApiResponse<WaitingListEntry>> {
-		return availabilityClient.post('waiting-list', { json: data }).json();
+		return availabilityClient.post('waiting-list', data);
 	},
 
 	/**
@@ -157,14 +159,14 @@ export const waitingListService = {
 	 */
 	async getWaitingList(resourceId?: string): Promise<ApiResponse<WaitingListEntry[]>> {
 		const params = resourceId ? `?resourceId=${resourceId}` : '';
-		return availabilityClient.get(`waiting-list${params}`).json();
+		return availabilityClient.get(`waiting-list${params}`);
 	},
 
 	/**
 	 * Remove from waiting list
 	 */
 	async removeFromWaitingList(id: string): Promise<ApiResponse<void>> {
-		return availabilityClient.delete(`waiting-list/${id}`).json();
+		return availabilityClient.delete(`waiting-list/${id}`);
 	}
 };
 
@@ -179,7 +181,7 @@ export const calendarService = {
 			endDate?: string;
 			view?: 'day' | 'week' | 'month';
 		}
-	): Promise<ApiResponse<any>> {
+	): Promise<ApiResponse<{ events: unknown[]; availability: unknown[] }>> {
 		const searchParams = new URLSearchParams();
 
 		if (params?.startDate) searchParams.append('startDate', params.startDate);
@@ -188,7 +190,7 @@ export const calendarService = {
 
 		if (params?.view) searchParams.append('view', params.view);
 
-		return availabilityClient.get(`availability/${resourceId}/calendar?${searchParams}`).json();
+		return availabilityClient.get(`availability/${resourceId}/calendar?${searchParams}`);
 	},
 
 	/**
@@ -199,7 +201,7 @@ export const calendarService = {
 		startTime: string;
 		endTime: string;
 		excludeReservationId?: string;
-	}): Promise<ApiResponse<{ hasConflicts: boolean; conflicts: any[] }>> {
-		return availabilityClient.post('/calendar/conflicts', { json: data }).json();
+	}): Promise<ApiResponse<{ hasConflicts: boolean; conflicts: unknown[] }>> {
+		return availabilityClient.post('/calendar/conflicts', data);
 	}
 };

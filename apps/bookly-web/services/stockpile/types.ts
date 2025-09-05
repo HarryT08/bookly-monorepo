@@ -409,6 +409,16 @@ export interface NotificationFilter {
 	limit?: number;
 }
 
+export interface GetNotificationTemplatesRequest {
+	channel?: NotificationChannelType;
+	eventType?: NotificationEventType;
+	isActive?: boolean;
+	resourceType?: string;
+	categoryId?: string;
+	page?: number;
+	limit?: number;
+}
+
 // ================================
 // Response Types
 // ================================

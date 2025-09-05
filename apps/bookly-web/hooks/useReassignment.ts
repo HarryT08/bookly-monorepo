@@ -94,11 +94,11 @@ export function useReassignment(): UseReassignmentReturn {
 					requests,
 					sentRequests:
 						type === 'sent' || type === 'all'
-							? requests.filter((r) => r.requesterId === 'current-user-id')
+							? requests.filter((r) => r.requestedBy === 'current-user-id')
 							: prev.sentRequests,
 					receivedRequests:
 						type === 'received' || type === 'all'
-							? requests.filter((r) => r.targetUserId === 'current-user-id')
+							? requests.filter((r) => r.targetResourceId === 'current-user-id')
 							: prev.receivedRequests
 				}));
 			} catch (error) {
@@ -143,7 +143,7 @@ export function useReassignment(): UseReassignmentReturn {
 				setState((prev) => ({ ...prev, currentValidation: validation }));
 
 				if (!validation.isValid) {
-					enqueueSnackbar(`Validation failed: ${validation.conflicts.map((c) => c.message).join(', ')}`, {
+					enqueueSnackbar(`Validation failed: ${validation.conflicts.map((c) => c.details).join(', ')}`, {
 						variant: 'warning'
 					});
 				} else if (validation.warnings.length > 0) {

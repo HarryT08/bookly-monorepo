@@ -8,7 +8,7 @@ import {
 	ReservationSettingsSection,
 	SystemSettingsSection,
 	SystemActionsSection
-} from '../../organisms';
+} from '@components/organisms';
 import { SystemSettings } from '../../../types/settings';
 import { BackupDialog, UpdateDialog } from '..';
 

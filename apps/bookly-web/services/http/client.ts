@@ -1,85 +1,96 @@
-import ky from 'ky';
+// HTTP Client for Bookly API
+export interface ApiResponse<T = unknown> {
+	data: T;
+	success: boolean;
+	message?: string;
+	errors?: string[];
+}
 
-/**
- * Service URLs from environment variables
- */
-const getServiceURL = (service: string): string => {
-	const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+export interface ApiError {
+	message: string;
+	code: string;
+	status?: number;
+}
 
-	switch (service) {
-		case 'auth':
-			return process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:3001';
-		case 'resources':
-			return process.env.NEXT_PUBLIC_RESOURCES_SERVICE_URL || 'http://localhost:3003';
-		case 'availability':
-			return process.env.NEXT_PUBLIC_AVAILABILITY_SERVICE_URL || 'http://localhost:3002';
-		case 'stockpile':
-			return process.env.NEXT_PUBLIC_STOCKPILE_SERVICE_URL || 'http://localhost:3004';
-		case 'reports':
-			return process.env.NEXT_PUBLIC_REPORTS_SERVICE_URL || 'http://localhost:3005';
-		default:
-			return baseURL;
+class HttpClient {
+	private baseURL: string;
+
+	constructor() {
+		this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 	}
-};
 
-/**
- * Create HTTP client for specific microservice
- */
-const createServiceClient = (service: string) => {
-	return ky.create({
-		prefixUrl: getServiceURL(service),
-		timeout: 30000,
-		headers: {
-			'Content-Type': 'application/json'
-		},
-		hooks: {
-			beforeRequest: [
-				(request) => {
-					// Add auth token if available
-					const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+	async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+		const response = await fetch(`${this.baseURL}${endpoint}`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
 
-					if (token) {
-						request.headers.set('Authorization', `Bearer ${token}`);
-					}
-				}
-			],
-			afterResponse: [
-				async (request, options, response) => {
-					// Handle auth errors
-					if (response.status === 401) {
-						if (typeof window !== 'undefined') {
-							localStorage.removeItem('auth_token');
-							// Dispatch logout action if using Redux
-							window.location.href = '/sign-in';
-						}
-					}
-
-					return response;
-				}
-			],
-			beforeError: [
-				(error) => {
-					// Log errors for monitoring
-					console.error(`HTTP Error in ${service} service:`, error);
-					return error;
-				}
-			]
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
 		}
-	});
-};
 
-/**
- * Microservice clients
- */
-export const authClient = createServiceClient('auth');
-export const resourcesClient = createServiceClient('resources');
-export const availabilityClient = createServiceClient('availability');
-export const stockpileClient = createServiceClient('stockpile');
-export const reportsClient = createServiceClient('reports');
+		return response.json();
+	}
 
-/**
- * Default client (API Gateway)
- */
-export const httpClient = createServiceClient('gateway');
+	async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
+		const response = await fetch(`${this.baseURL}${endpoint}`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: data ? JSON.stringify(data) : undefined
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		return response.json();
+	}
+
+	async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
+		const response = await fetch(`${this.baseURL}${endpoint}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: data ? JSON.stringify(data) : undefined
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		return response.json();
+	}
+
+	async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+		const response = await fetch(`${this.baseURL}${endpoint}`, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json'
+			}
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		return response.json();
+	}
+}
+
+export const httpClient = new HttpClient();
+export const apiClient = httpClient; // Alias for compatibility
+export const client = httpClient; // Additional alias for compatibility
+
+// Service-specific clients
+export const authClient = httpClient;
+export const resourcesClient = httpClient;
+export const availabilityClient = httpClient;
+export const stockpileClient = httpClient;
+export const reportsClient = httpClient;
 
 export default httpClient;

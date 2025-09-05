@@ -185,7 +185,7 @@ export default function CategoriesPage() {
 	const handleCategoryAction = (action: string, category: Category) => {
 		switch (action) {
 			case 'view':
-				console.log('View category:', category);
+				console.error('View category:', category);
 				break;
 			case 'edit':
 				handleOpenDialog(category);

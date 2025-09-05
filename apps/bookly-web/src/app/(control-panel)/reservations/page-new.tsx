@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { StatusChip, Chip } from '../../../components/atoms';
 import { ActionMenu } from '../../../components/molecules';
 import { CancelReservationDialog, DataTableColumn, PageHeaderProps } from '../../../components/organisms';
-import { Box, Typography, Avatar } from '@mui/material';
+import { Box, Typography, Avatar, Button } from '@mui/material';
 import {
 	CalendarToday,
 	Room,
@@ -15,7 +15,8 @@ import {
 	Visibility,
 	CheckCircle,
 	Block,
-	EventAvailable
+	EventAvailable,
+	Add as AddIcon
 } from '@mui/icons-material';
 import { DataTablePageTemplate } from '@/components/templates';
 
@@ -553,11 +554,15 @@ export default function ReservationsPage() {
 	const pageHeaderProps: PageHeaderProps = {
 		title: 'Gestión de Reservas',
 		subtitle: 'Administra las reservas de recursos institucionales',
-		actionButton: {
-			label: 'Nueva Reserva',
-			onClick: () => console.log('Navigate to create reservation'),
-			icon: 'add'
-		}
+		actions: (
+			<Button
+				variant="contained"
+				startIcon={<AddIcon />}
+				onClick={() => {/* TODO: Navigate to create reservation */}}
+			>
+				Nueva Reserva
+			</Button>
+		)
 	};
 
 	return (
