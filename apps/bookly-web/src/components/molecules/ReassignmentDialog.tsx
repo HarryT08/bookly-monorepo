@@ -377,7 +377,7 @@ export function ReassignmentDialog({
 										<Typography>
 											Validation {currentValidation.isValid ? 'Passed' : 'Failed'}
 										</Typography>
-										{currentValidation.requiresApproval && (
+										{currentValidation.requiredApprovals && (
 											<Chip
 												label="Requires Approval"
 												color="warning"
@@ -403,7 +403,7 @@ export function ReassignmentDialog({
 															key={index}
 															variant="body2"
 														>
-															• {conflict.message}
+															• {conflict.details}
 														</Typography>
 													))}
 												</Stack>
@@ -449,7 +449,7 @@ export function ReassignmentDialog({
 										)}
 
 										{/* Alternative Suggestions */}
-										{currentValidation.alternativeSuggestions.length > 0 && (
+										{currentValidation.alternatives.length > 0 && (
 											<Box>
 												<Typography
 													variant="subtitle2"
@@ -458,24 +458,22 @@ export function ReassignmentDialog({
 													Alternative Suggestions:
 												</Typography>
 												<Stack spacing={1}>
-													{currentValidation.alternativeSuggestions.map(
-														(suggestion, index) => (
-															<Card
-																key={index}
-																variant="outlined"
-																sx={{ p: 1 }}
-															>
-																<Typography variant="body2">
-																	<strong>{suggestion.resourceName}</strong>
-																	<br />
-																	{formatDateTime(suggestion.startTime)} -{' '}
-																	{formatDateTime(suggestion.endTime)}
-																	<br />
-																	Status: {suggestion.availability}
-																</Typography>
-															</Card>
-														)
-													)}
+													{currentValidation.alternatives.map((suggestion, index) => (
+														<Card
+															key={index}
+															variant="outlined"
+															sx={{ p: 1 }}
+														>
+															<Typography variant="body2">
+																<strong>{suggestion.resourceName}</strong>
+																<br />
+																{formatDateTime(suggestion.startDate)} -{' '}
+																{formatDateTime(suggestion.endDate)}
+																<br />
+																Score: {suggestion.score}
+															</Typography>
+														</Card>
+													))}
 												</Stack>
 											</Box>
 										)}

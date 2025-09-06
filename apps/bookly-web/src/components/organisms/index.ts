@@ -10,7 +10,7 @@ export type { CreateProgramDialogData } from './CreateProgramDialog';
 export { CategoryDialog } from './CategoryDialog';
 export type { CategoryDialogData, Category } from './CategoryDialog';
 export { RoleDialog } from './RoleDialog';
-export type { RoleDialogData, RoleDialogProps, Permission } from './RoleDialog';
+export type { RoleDialogData, RoleDialogProps } from './RoleDialog';
 export { AuditDetailsDialog } from './AuditDetailsDialog';
 export type { AuditDetailsDialogProps } from './AuditDetailsDialog';
 export { GeneralSettingsSection } from './GeneralSettingsSection';

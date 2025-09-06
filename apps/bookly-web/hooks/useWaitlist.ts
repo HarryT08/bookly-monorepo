@@ -10,7 +10,8 @@ import {
 	WaitlistQuery,
 	JoinWaitlistRequest,
 	WaitlistNotification,
-	WaitlistStatus
+	WaitlistStatus,
+	NotificationStatus
 } from '@services/availability/types';
 import {
 	waitlistService,
@@ -332,7 +333,13 @@ export function useWaitlist(): UseWaitlistReturn {
 						...prev,
 						notifications: prev.notifications.map((notif) =>
 							notif.id === notificationId
-								? { ...notif, status: (response === 'ACCEPT' ? 'ACCEPTED' : 'DECLINED') as 'SENT' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' }
+								? {
+										...notif,
+										status:
+											response === 'ACCEPT'
+												? NotificationStatus.ACCEPTED
+												: NotificationStatus.DECLINED
+									}
 								: notif
 						)
 					}));

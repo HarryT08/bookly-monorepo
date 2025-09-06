@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
 	Dialog,
 	DialogTitle,
@@ -79,7 +79,7 @@ export function UserRoleDialog({ open, user, onClose, onSave, loading = false }:
 					sx={{ mt: 2 }}
 				>
 					<InputLabel>Roles</InputLabel>
-					<Select
+					<Select<string[]>
 						multiple
 						value={selectedRoles}
 						onChange={handleRoleChange}

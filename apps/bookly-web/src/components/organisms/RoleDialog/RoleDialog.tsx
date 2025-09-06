@@ -15,7 +15,7 @@ import {
 	Checkbox
 } from '@mui/material';
 import { Button, TextField } from '@components/atoms';
-import type { RoleWithPermissions } from '@services/auth/types';
+import type { RoleWithPermissions, PermissionWithDetails } from '@services/auth/types';
 
 export interface RoleDialogData {
 	name: string;
@@ -24,19 +24,10 @@ export interface RoleDialogData {
 	permissions: string[];
 }
 
-export interface Permission {
-	id: string;
-	name: string;
-	resource: string;
-	action: string;
-	scope: string;
-	isActive: boolean;
-}
-
 export interface RoleDialogProps {
 	open: boolean;
 	role?: RoleWithPermissions | null;
-	permissions: Permission[];
+	permissions: PermissionWithDetails[];
 	onClose: () => void;
 	onSubmit: (data: RoleDialogData) => void;
 	loading?: boolean;
@@ -219,7 +210,8 @@ export function RoleDialog({ open, role, permissions, onClose, onSubmit, loading
 														color="text.secondary"
 														sx={{ display: 'block' }}
 													>
-														{permission.resource}:{permission.action}:{permission.scope}
+														{permission.resource}:{permission.action}:
+														{permission.scope || 'all'}
 													</Typography>
 												</Box>
 											}

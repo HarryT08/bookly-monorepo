@@ -12,7 +12,7 @@ import {
 	PersonOutline as PersonOutlineIcon,
 	Security as SecurityIcon
 } from '@mui/icons-material';
-import { StatusChip, Chip } from '../../../components/atoms';
+import { StatusChip, Chip, Button } from '../../../components/atoms';
 import { ActionMenu } from '../../../components/molecules';
 import { StatCardProps } from '../../../components/molecules/StatCard/StatCard';
 import { DataTableColumn, UserRoleDialog } from '@/components/organisms';
@@ -205,14 +205,15 @@ export default function UsersPage() {
 	// Page header configuration
 	const pageHeaderProps: PageHeaderProps = {
 		title: 'Gestión de Usuarios',
-		actions: [
-			{
-				label: 'Agregar Usuario',
-				variant: 'contained',
-				startIcon: <PersonAddIcon />,
-				onClick: () => console.log('Navigate to create user')
-			}
-		]
+		actions: (
+			<Button
+				variant="contained"
+				startIcon={<PersonAddIcon />}
+				onClick={() => console.log('Navigate to create user')}
+			>
+				Agregar Usuario
+			</Button>
+		)
 	};
 
 	// Stats configuration
@@ -287,6 +288,7 @@ export default function UsersPage() {
 
 	const formatLastLogin = (lastLoginAt?: string) => {
 		if (!lastLoginAt) return 'Nunca';
+
 		return new Date(lastLoginAt).toLocaleDateString('es-CO', {
 			year: 'numeric',
 			month: 'short',

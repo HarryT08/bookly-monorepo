@@ -11,7 +11,7 @@ import {
 	Delete as DeleteIcon,
 	CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
-import { StatusChip } from '../../../components/atoms';
+import { StatusChip, Button } from '../../../components/atoms';
 import { ActionMenu } from '../../../components/molecules';
 import { StatCardProps } from '../../../components/molecules/StatCard/StatCard';
 import { DataTableColumn, CreateProgramDialog } from '@/components/organisms';
@@ -232,14 +232,15 @@ export default function AcademicProgramsPage() {
 	// Page header configuration
 	const pageHeaderProps: PageHeaderProps = {
 		title: 'Programas Académicos',
-		actions: [
-			{
-				label: 'Crear Programa',
-				variant: 'contained',
-				startIcon: <AddIcon />,
-				onClick: () => setCreateDialogOpen(true)
-			}
-		]
+		actions: (
+			<Button
+				variant="contained"
+				startIcon={<AddIcon />}
+				onClick={() => setCreateDialogOpen(true)}
+			>
+				Crear Programa
+			</Button>
+		)
 	};
 
 	// Stats configuration

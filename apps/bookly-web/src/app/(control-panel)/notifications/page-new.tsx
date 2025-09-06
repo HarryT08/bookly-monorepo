@@ -99,7 +99,7 @@ export default function NotificationsPage() {
 
 	// Filtering logic
 	useEffect(() => {
-		let filtered = notifications.filter((notification) => {
+		const filtered = notifications.filter((notification) => {
 			const matchesSearch =
 				notification.recipientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				(notification.subject && notification.subject.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -329,15 +329,13 @@ export default function NotificationsPage() {
 	return (
 		<DataTablePageTemplate
 			pageHeader={pageHeaderProps}
-			statsCards={statsCards}
+			statsData={statsCards}
 			data={filteredNotifications}
 			columns={columns}
 			loading={loading}
 			searchPlaceholder="Buscar por destinatario o asunto..."
-			onSearch={handleSearch}
-			filterOptions={filterOptions}
+			onSearchChange={handleSearch}
 			emptyMessage="No se encontraron notificaciones"
-			emptyDescription="No hay notificaciones que coincidan con los criterios de búsqueda."
 		/>
 	);
 }

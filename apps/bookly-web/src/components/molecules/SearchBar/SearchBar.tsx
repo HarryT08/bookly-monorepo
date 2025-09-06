@@ -9,12 +9,12 @@ export interface SearchBarProps {
 	variant?: 'outlined' | 'filled' | 'standard';
 }
 
-export function SearchBar({ 
-	value, 
-	onChange, 
-	placeholder = "Buscar...", 
+export function SearchBar({
+	value,
+	onChange,
+	placeholder = 'Buscar...',
 	fullWidth = true,
-	variant = "outlined" 
+	variant = 'outlined'
 }: SearchBarProps) {
 	return (
 		<TextField

@@ -17,6 +17,9 @@ export interface FilterBarProps {
 		options: FilterOption[];
 		onChange: (value: string) => void;
 	}[];
+	filterOptions?: any[];
+	filterValues?: any;
+	onFilterChange?: (filters: any) => void;
 	onClearFilters?: () => void;
 	showClearButton?: boolean;
 }
@@ -26,6 +29,9 @@ export function FilterBar({
 	onSearchChange,
 	searchPlaceholder,
 	filters = [],
+	filterOptions,
+	filterValues,
+	onFilterChange,
 	onClearFilters,
 	showClearButton = true
 }: FilterBarProps) {

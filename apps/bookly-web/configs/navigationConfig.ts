@@ -1,16 +1,25 @@
-import { FuseNavItemType } from '@fuse/core/FuseNavigation/types/FuseNavItemType';
+import { FuseNavItemType } from '../lib/fuse/core/FuseNavigation/types/FuseNavItemType';
+import { ROUTES } from '../constants';
 
 /**
  * The navigationConfig object is an array of navigation items for the Fuse application.
  */
 const navigationConfig: FuseNavItemType[] = [
 	{
+		id: 'dashboard',
+		title: 'Panel Principal',
+		translate: 'DASHBOARD',
+		type: 'item',
+		icon: 'heroicons-outline:home',
+		url: ROUTES.DASHBOARD
+	},
+	{
 		id: 'users',
 		title: 'Usuarios',
 		translate: 'USERS',
 		type: 'item',
 		icon: 'heroicons-outline:user-group',
-		url: '/users'
+		url: ROUTES.USERS
 	},
 	{
 		id: 'roles',
@@ -18,7 +27,7 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'ROLES',
 		type: 'item',
 		icon: 'heroicons-outline:users',
-		url: '/roles'
+		url: ROUTES.ROLES
 	},
 	{
 		id: 'permissions',
@@ -26,7 +35,7 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'PERMISSIONS',
 		type: 'item',
 		icon: 'heroicons-outline:key',
-		url: '/permissions'
+		url: ROUTES.PERMISSIONS
 	},
 	{
 		id: 'resources',
@@ -34,7 +43,7 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'RESOURCES',
 		type: 'item',
 		icon: 'heroicons-outline:cube',
-		url: '/resources'
+		url: ROUTES.RESOURCES
 	},
 	{
 		id: 'reservations',
@@ -42,7 +51,7 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'RESERVATIONS',
 		type: 'item',
 		icon: 'heroicons-outline:rectangle-group',
-		url: '/reservations'
+		url: ROUTES.RESERVATIONS
 	},
 	{
 		id: 'reports',
@@ -50,7 +59,7 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'REPORTS',
 		type: 'item',
 		icon: 'heroicons-outline:chart-bar',
-		url: '/reports'
+		url: ROUTES.REPORTS
 	},
 	{
 		id: 'control-panel',
@@ -64,7 +73,7 @@ const navigationConfig: FuseNavItemType[] = [
 				translate: 'APPROVALS',
 				type: 'item',
 				icon: 'heroicons-outline:clipboard-document-check',
-				url: '/control-panel/approvals'
+				url: ROUTES.CONTROL_PANEL.APPROVALS
 			},
 			{
 				id: 'surveillance',
@@ -72,7 +81,31 @@ const navigationConfig: FuseNavItemType[] = [
 				translate: 'SURVEILLANCE',
 				type: 'item',
 				icon: 'heroicons-outline:eye',
-				url: '/control-panel/surveillance'
+				url: ROUTES.CONTROL_PANEL.SURVEILLANCE
+			},
+			{
+				id: 'categories',
+				title: 'Categorías',
+				translate: 'CATEGORIES',
+				type: 'item',
+				icon: 'heroicons-outline:tag',
+				url: ROUTES.CONTROL_PANEL.CATEGORIES
+			},
+			{
+				id: 'import',
+				title: 'Importar Datos',
+				translate: 'IMPORT',
+				type: 'item',
+				icon: 'heroicons-outline:arrow-up-tray',
+				url: ROUTES.CONTROL_PANEL.IMPORT
+			},
+			{
+				id: 'documents',
+				title: 'Documentos',
+				translate: 'DOCUMENTS',
+				type: 'item',
+				icon: 'heroicons-outline:document-text',
+				url: ROUTES.CONTROL_PANEL.DOCUMENTS
 			},
 			{
 				id: 'notifications',
@@ -80,7 +113,7 @@ const navigationConfig: FuseNavItemType[] = [
 				translate: 'NOTIFICATIONS',
 				type: 'item',
 				icon: 'heroicons-outline:bell',
-				url: '/control-panel/notifications'
+				url: ROUTES.CONTROL_PANEL.NOTIFICATIONS
 			},
 			{
 				id: 'maintenance',
@@ -94,16 +127,24 @@ const navigationConfig: FuseNavItemType[] = [
 						title: 'Incidentes',
 						translate: 'INCIDENTS',
 						type: 'item',
-						url: '/control-panel/maintenance/incidents'
+						url: ROUTES.CONTROL_PANEL.MAINTENANCE.INCIDENTS
 					},
 					{
 						id: 'maintenance-schedules',
 						title: 'Programación',
 						translate: 'SCHEDULES',
 						type: 'item',
-						url: '/control-panel/maintenance/schedules'
+						url: ROUTES.CONTROL_PANEL.MAINTENANCE.SCHEDULES
 					}
 				]
+			},
+			{
+				id: 'reassignment',
+				title: 'Reasignaciones',
+				translate: 'REASSIGNMENT',
+				type: 'item',
+				icon: 'heroicons-outline:arrow-path-rounded-square',
+				url: ROUTES.CONTROL_PANEL.REASSIGNMENT
 			}
 		]
 	},
@@ -113,15 +154,15 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'ACADEMIC_PROGRAMS',
 		type: 'item',
 		icon: 'heroicons-outline:academic-cap',
-		url: '/academic-programs'
+		url: ROUTES.ACADEMIC_PROGRAMS
 	},
 	{
 		id: 'audits',
 		title: 'Auditorías',
 		translate: 'AUDITS',
 		type: 'item',
-		icon: 'heroicons-outline:document-text',
-		url: '/audits'
+		icon: 'heroicons-outline:shield-check',
+		url: ROUTES.AUDITS
 	},
 	{
 		id: 'calendar',
@@ -129,15 +170,15 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'CALENDAR',
 		type: 'item',
 		icon: 'heroicons-outline:calendar',
-		url: '/calendar'
+		url: ROUTES.CALENDAR
 	},
 	{
 		id: 'settings',
 		title: 'Configuración',
 		translate: 'SETTINGS',
 		type: 'item',
-		icon: 'heroicons-outline:cog',
-		url: '/settings'
+		icon: 'heroicons-outline:cog-6-tooth',
+		url: ROUTES.SETTINGS
 	}
 ];
 

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { IconButton, Menu, MenuItem, Tooltip, ListItemIcon, ListItemText } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { ReactElement, SvgIconProps } from 'react';
+import { ReactElement } from 'react';
+import { SvgIconProps } from '@mui/material';
 
 export interface ActionMenuItem {
+	key?: string;
 	label: string;
 	onClick: () => void;
 	icon?: ReactElement<SvgIconProps>;

@@ -147,10 +147,8 @@ export default function CreateReservationPage() {
 						frequency: formData.recurrence.frequency as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY',
 						interval: formData.recurrence.interval,
 						endDate: formData.recurrence.endDate,
-						count: formData.recurrence.occurrences,
-						byWeekDay: formData.recurrence.daysOfWeek,
-						byMonthDay: formData.recurrence.dayOfMonth ? [formData.recurrence.dayOfMonth] : undefined,
-						exceptions: formData.recurrence.exceptions
+						occurrences: formData.recurrence.occurrences,
+						daysOfWeek: formData.recurrence.daysOfWeek
 					}
 				})
 			};

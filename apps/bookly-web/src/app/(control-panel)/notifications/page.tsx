@@ -15,7 +15,6 @@ import {
 	TableHead,
 	TableRow,
 	Paper,
-	Alert,
 	Stack,
 	Pagination,
 	IconButton,
@@ -64,13 +63,8 @@ export default function NotificationsPage() {
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [filter, setFilter] = useState<NotificationFilter>({});
-	
-	const { 
-		getNotifications, 
-		getNotificationStats, 
-		retryNotification, 
-		deleteNotification 
-	} = useNotification();
+
+	const { getNotifications, getNotificationStats, retryNotification, deleteNotification } = useNotification();
 
 	const loadNotifications = useCallback(async () => {
 		setLoading(true);
@@ -261,7 +255,12 @@ export default function NotificationsPage() {
 												<TableCell>
 													<Chip
 														label={notification.status}
-														color={statusColors[notification.status] as 'success' | 'warning' | 'info'}
+														color={
+															statusColors[notification.status] as
+																| 'success'
+																| 'warning'
+																| 'info'
+														}
 														size="small"
 													/>
 												</TableCell>

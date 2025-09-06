@@ -1,5 +1,5 @@
 import NextAuth from 'next-auth';
-import { User } from '@auth/user';
+// User type is available from authServices types
 import { createStorage } from 'unstorage';
 import memoryDriver from 'unstorage/drivers/memory';
 import vercelKVDriver from 'unstorage/drivers/vercel-kv';
@@ -9,7 +9,7 @@ import type { Provider } from 'next-auth/providers';
 import Credentials from 'next-auth/providers/credentials';
 import Facebook from 'next-auth/providers/facebook';
 import Google from 'next-auth/providers/google';
-import { authGetDbUserByEmail, authCreateDbUser } from './authApi';
+import { authServices } from '@services/auth/services';
 
 const storage = createStorage({
 	driver: process.env.VERCEL
@@ -23,37 +23,69 @@ const storage = createStorage({
 
 export const providers: Provider[] = [
 	Credentials({
-		authorize(formInput) {
-			/**
-			 * !! This is just for demonstration purposes
-			 * You can create your own validation logic here
-			 * !! Do not use this in production
-			 */
+		async authorize(credentials) {
+			try {
+				/**
+				 * Sign in with Bookly backend
+				 */
+				if (credentials?.formType === 'signin') {
+					const loginResponse = await authServices.login({
+						email: credentials.email as string,
+						password: credentials.password as string
+					});
 
-			/**
-			 * Sign in
-			 */
-			if (formInput.formType === 'signin') {
-				if (formInput.password === '' || formInput.email !== 'admin@fusetheme.com') {
-					return null;
+					if (loginResponse.success && loginResponse.data) {
+						const user = loginResponse.data.user;
+						return {
+							id: user.id,
+							email: user.email,
+							name: user.fullName || `${user.firstName} ${user.lastName}`,
+							image: user.avatar,
+							accessToken: loginResponse.data.access_token,
+							permissions: loginResponse.data.user.permissions,
+							roles: loginResponse.data.user.roles
+						};
+					}
 				}
-			}
 
-			/**
-			 * Sign up
-			 */
-			if (formInput.formType === 'signup') {
-				if (formInput.password === '' || formInput.email === '') {
-					return null;
+				/**
+				 * Sign up with Bookly backend
+				 */
+				if (credentials?.formType === 'signup') {
+					const registerResponse = await authServices.register({
+						email: credentials.email as string,
+						password: credentials.password as string,
+						firstName: (credentials.firstName as string) || (credentials.email as string).split('@')[0],
+						lastName: (credentials.lastName as string) || 'Usuario',
+						acceptTerms: true
+					});
+
+					if (registerResponse.success && registerResponse.data) {
+						// After successful registration, attempt to login
+						const loginResponse = await authServices.login({
+							email: credentials.email as string,
+							password: credentials.password as string
+						});
+
+						if (loginResponse.success && loginResponse.data) {
+							return {
+								id: loginResponse.data.user.id,
+								email: loginResponse.data.user.email,
+								name:
+									loginResponse.data.user.fullName ||
+									`${loginResponse.data.user.firstName} ${loginResponse.data.user.lastName}`,
+								image: loginResponse.data.user.avatar,
+								accessToken: loginResponse.data.token
+							};
+						}
+					}
 				}
-			}
 
-			/**
-			 * Response Success with email
-			 */
-			return {
-				email: formInput?.email as string
-			};
+				return null;
+			} catch (error) {
+				console.error('Auth error:', error);
+				return null;
+			}
 		}
 	}),
 	Google,
@@ -81,6 +113,10 @@ const config = {
 				token.name = user.name;
 			}
 
+			if (account?.provider === 'credentials' && user && 'accessToken' in user) {
+				return { ...token, accessToken: (user as { accessToken: string }).accessToken };
+			}
+
 			if (account?.provider === 'keycloak') {
 				return { ...token, accessToken: account.access_token };
 			}
@@ -95,41 +131,22 @@ const config = {
 			if (session) {
 				try {
 					/**
-					 * Get the session user from database
+					 * Get the session user profile from Bookly backend
 					 */
-					const response = await authGetDbUserByEmail(session.user.email);
+					const profileResponse = await authServices.getProfile();
 
-					const userDbData = (await response.json()) as User;
-
-					session.db = userDbData;
-
-					return session;
-				} catch (error) {
-					const errorStatus = error?.status;
-
-					/** If user not found, create a new user */
-					if (errorStatus === 404) {
-						const newUserResponse = await authCreateDbUser({
-							email: session.user.email,
-							role: ['admin'],
-							displayName: session.user.name,
-							photoURL: session.user.image
-						});
-
-						const newUser = (await newUserResponse.json()) as User;
-
-						console.error('Error fetching user data:', error);
-
-						session.db = newUser;
-
+					if (profileResponse.success && profileResponse.data) {
+						session.db = profileResponse.data;
 						return session;
 					}
-
-					throw error;
+				} catch (error) {
+					console.error('Error fetching user profile:', error);
+					// Return session without db data if profile fetch fails
+					return session;
 				}
 			}
 
-			return null;
+			return session;
 		}
 	},
 	experimental: {

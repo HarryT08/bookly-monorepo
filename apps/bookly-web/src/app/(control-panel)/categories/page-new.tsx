@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Switch } from '@mui/material';
+import { Box, Switch, Button } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 
 import { DataTablePageTemplate } from '../../../components/templates';
 import { DataTableColumn, CategoryDialog, CategoryDialogData, Category } from '../../../components/organisms';
-import { StatusChip, Chip } from '../../../components/atoms';
+import { Chip } from '../../../components/atoms';
 import { ActionMenu } from '../../../components/molecules';
 import { StatCardProps } from '../../../components/molecules/StatCard/StatCard';
-import { PageHeaderProps } from '@components/molecules/page-form-header';
+import { PageHeaderProps } from '../../../components/organisms/PageHeader/PageHeader';
 
 const CATEGORY_TYPES = ['RESOURCE_TYPE', 'MAINTENANCE_TYPE', 'APPROVAL_STATUS', 'INCIDENT_TYPE', 'USER_ROLE'];
 const SERVICES = ['RESOURCES_SERVICE', 'AUTH_SERVICE', 'STOCKPILE_SERVICE', 'REPORTS_SERVICE'];
@@ -206,7 +206,14 @@ export default function CategoriesPage() {
 			render: (category) => (
 				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
 					{category.name}
-					{category.isDefault && <Chip label="Por defecto" size="small" color="primary" variant="outlined" />}
+					{category.isDefault && (
+						<Chip
+							label="Por defecto"
+							size="small"
+							color="primary"
+							variant="outlined"
+						/>
+					)}
 				</Box>
 			)
 		},
@@ -351,14 +358,15 @@ export default function CategoriesPage() {
 	const pageHeaderProps: PageHeaderProps = {
 		title: 'Gestión de Categorías',
 		subtitle: 'Administra las categorías del sistema para recursos, mantenimiento y más',
-		actions: [
-			{
-				label: 'Nueva Categoría',
-				variant: 'contained',
-				startIcon: <AddIcon />,
-				onClick: () => handleOpenDialog()
-			}
-		]
+		actions: (
+			<Button
+				variant="contained"
+				startIcon={<AddIcon />}
+				onClick={() => handleOpenDialog()}
+			>
+				Nueva Categoría
+			</Button>
+		)
 	};
 
 	return (
@@ -370,10 +378,8 @@ export default function CategoriesPage() {
 				columns={columns}
 				loading={loading}
 				searchPlaceholder="Buscar por nombre, código o tipo..."
-				onSearch={handleSearch}
-				filterOptions={filterOptions}
+				onSearchChange={handleSearch}
 				emptyMessage="No se encontraron categorías"
-				emptyDescription="No hay categorías que coincidan con los criterios de búsqueda."
 			/>
 
 			<CategoryDialog

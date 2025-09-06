@@ -501,7 +501,8 @@ export default function CalendarPage() {
 								startDate: selectedDateForCreate || new Date(),
 								endDate: selectedDateForCreate || new Date(),
 								resourceId: '',
-								userId: user.id
+								userId: user.id,
+								purpose: 'Reunión general'
 							})
 						}
 						variant="contained"

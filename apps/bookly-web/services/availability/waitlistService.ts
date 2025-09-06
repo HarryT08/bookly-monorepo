@@ -4,7 +4,14 @@
  */
 
 import { ApiResponse, PaginatedResponse } from '../common/types';
-import { WaitlistEntry, WaitlistQuery, JoinWaitlistRequest, WaitlistNotification, WaitlistStatus } from './types';
+import {
+	WaitlistEntry,
+	WaitlistQuery,
+	JoinWaitlistRequest,
+	WaitlistNotification,
+	WaitlistStatus,
+	NotificationStatus
+} from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -241,6 +248,7 @@ export const mockWaitlistEntries: WaitlistEntry[] = [
 export const mockWaitlistNotifications: WaitlistNotification[] = [
 	{
 		id: 'notif-1',
+		status: NotificationStatus.SENT,
 		waitlistEntryId: 'wait-3',
 		userId: 'user-1',
 		type: 'RESOURCE_AVAILABLE',

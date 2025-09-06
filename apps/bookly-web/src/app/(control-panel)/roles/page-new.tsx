@@ -69,24 +69,20 @@ export default function RolesPage() {
 		});
 	};
 
-	const handlePageChange = async (_event: unknown, newPage: number) => {
-		const page = newPage + 1;
-		await getAllRoles({
-			page,
-			limit: pagination.limit,
-			search: searchTerm
-		});
-		setPagination((prev) => ({ ...prev, page }));
+	const _handlePageChange = (_: unknown, newPage: number) => {
+		setPagination((prev) => ({
+			...prev,
+			page: newPage + 1
+		}));
 	};
 
-	const handleRowsPerPageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-		const limit = parseInt(event.target.value, 10);
-		await getAllRoles({
-			page: 1,
-			limit,
-			search: searchTerm
-		});
-		setPagination((prev) => ({ ...prev, limit, page: 1 }));
+	const _handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const newLimit = parseInt(event.target.value, 10);
+		setPagination((prev) => ({
+			...prev,
+			limit: newLimit,
+			page: 1
+		}));
 	};
 
 	// Dialog handlers
@@ -215,6 +211,7 @@ export default function RolesPage() {
 	// Table columns
 	const columns: DataTableColumn<RoleWithPermissions>[] = [
 		{
+			id: 'displayName',
 			key: 'displayName',
 			label: 'Nombre',
 			render: (role) => (
@@ -225,6 +222,7 @@ export default function RolesPage() {
 			)
 		},
 		{
+			id: 'description',
 			key: 'description',
 			label: 'Descripción',
 			render: (role) => (
@@ -237,6 +235,7 @@ export default function RolesPage() {
 			)
 		},
 		{
+			id: 'category',
 			key: 'category',
 			label: 'Categoría',
 			render: (role) => (
@@ -248,16 +247,19 @@ export default function RolesPage() {
 			)
 		},
 		{
+			id: 'permissions',
 			key: 'permissions',
 			label: 'Permisos',
 			render: (role) => <Typography variant="body2">{role.permissions?.length || 0} permisos</Typography>
 		},
 		{
+			id: 'userCount',
 			key: 'userCount',
 			label: 'Usuarios',
 			render: (role) => <Typography variant="body2">{role.userCount || 0} usuarios</Typography>
 		},
 		{
+			id: 'isActive',
 			key: 'isActive',
 			label: 'Estado',
 			render: (role) => (
@@ -269,6 +271,7 @@ export default function RolesPage() {
 			)
 		},
 		{
+			id: 'isPredefined',
 			key: 'isPredefined',
 			label: 'Tipo',
 			render: (role) => (
@@ -280,6 +283,7 @@ export default function RolesPage() {
 			)
 		},
 		{
+			id: 'actions',
 			key: 'actions',
 			label: 'Acciones',
 			align: 'center',
@@ -320,42 +324,32 @@ export default function RolesPage() {
 		}
 	];
 
-	// Page header props
-	const pageHeaderProps = {
-		title: 'Gestión de Roles',
-		subtitle: 'Administra roles y permisos del sistema',
-		icon: <GroupIcon />,
-		actions: (
-			<Button
-				variant="contained"
-				onClick={handleCreateRole}
-				startIcon={<GroupIcon />}
-			>
-				Nuevo Rol
-			</Button>
-		)
-	};
-
 	return (
 		<>
 			<DataTablePageTemplate
-				pageHeader={pageHeaderProps}
-				statsCards={statsCards}
-				data={roles}
-				columns={columns}
-				loading={loading}
-				searchPlaceholder="Buscar roles..."
-				onSearch={handleSearch}
-				filterOptions={filterOptions}
-				pagination={{
-					count: pagination.total,
-					page: pagination.page - 1,
-					rowsPerPage: pagination.limit,
-					onPageChange: handlePageChange,
-					onRowsPerPageChange: handleRowsPerPageChange
+				title="Gestión de Roles"
+				subtitle="Administra roles y permisos del sistema"
+				actions={
+					<Button
+						variant="contained"
+						onClick={handleCreateRole}
+						startIcon={<GroupIcon />}
+					>
+						Nuevo Rol
+					</Button>
+				}
+				stats={statsCards}
+				table={{
+					columns,
+					data: roles,
+					loading,
+					emptyMessage: 'No se encontraron roles'
 				}}
-				emptyMessage="No se encontraron roles"
-				emptyDescription="No hay roles que coincidan con los criterios de búsqueda."
+				filterBar={{
+					searchPlaceholder: 'Buscar roles...',
+					onSearchChange: handleSearch,
+					filters: filterOptions
+				}}
 			/>
 
 			{/* Create/Edit Role Dialog */}

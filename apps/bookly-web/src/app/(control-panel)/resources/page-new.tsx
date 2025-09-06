@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Typography, Link } from '@mui/material';
+import { Box, Typography, Link, Button } from '@mui/material';
 import NextLink from 'next/link';
 import {
 	Add as AddIcon,
@@ -226,14 +226,15 @@ export default function ResourcesPage() {
 	// Page header configuration
 	const pageHeaderProps: PageHeaderProps = {
 		title: 'Recursos',
-		actions: [
-			{
-				label: 'Crear Recurso',
-				variant: 'contained',
-				startIcon: <AddIcon />,
-				onClick: () => console.log('Navigate to create resource') // In real app: router.push('/resources/create')
-			}
-		]
+		actions: (
+			<Button
+				variant="contained"
+				startIcon={<AddIcon />}
+				onClick={() => console.log('Navigate to create resource')} // In real app: router.push('/resources/create')
+			>
+				Crear Recurso
+			</Button>
+		)
 	};
 
 	// Stats configuration

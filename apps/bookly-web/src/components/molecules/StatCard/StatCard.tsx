@@ -1,10 +1,10 @@
 import { Card, CardContent, Box, Typography, SvgIconProps } from '@mui/material';
-import { ReactElement } from 'react';
+import { ReactElement, JSXElementConstructor } from 'react';
 
 export interface StatCardProps {
 	title: string;
 	value: string | number;
-	icon?: ReactElement<SvgIconProps>;
+	icon?: ReactElement<SvgIconProps, string | JSXElementConstructor<any>> | any;
 	iconColor?: string;
 	description?: string;
 	trend?: {

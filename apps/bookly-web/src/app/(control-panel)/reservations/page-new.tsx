@@ -425,8 +425,7 @@ export default function ReservationsPage() {
 				<Box>
 					<StatusChip
 						status={reservation.status}
-						color={statusColors[reservation.status]}
-						label={statusLabels[reservation.status]}
+						statusLabels={statusLabels}
 					/>
 					{reservation.approvedBy && (
 						<Typography
@@ -448,7 +447,7 @@ export default function ReservationsPage() {
 			align: 'center',
 			render: (reservation) => (
 				<ActionMenu
-					items={[
+					actions={[
 						{
 							key: 'view',
 							label: 'Ver Detalles',
@@ -558,7 +557,9 @@ export default function ReservationsPage() {
 			<Button
 				variant="contained"
 				startIcon={<AddIcon />}
-				onClick={() => {/* TODO: Navigate to create reservation */}}
+				onClick={() => {
+					/* TODO: Navigate to create reservation */
+				}}
 			>
 				Nueva Reserva
 			</Button>
@@ -569,15 +570,13 @@ export default function ReservationsPage() {
 		<>
 			<DataTablePageTemplate
 				pageHeader={pageHeaderProps}
-				statsCards={statsCards}
+				statsData={statsCards}
 				data={filteredReservations}
 				columns={columns}
 				loading={loading}
 				searchPlaceholder="Buscar por título, recurso o solicitante..."
-				onSearch={handleSearch}
-				filterOptions={filterOptions}
+				onSearchChange={handleSearch}
 				emptyMessage="No se encontraron reservas"
-				emptyDescription="No hay reservas que coincidan con los criterios de búsqueda."
 			/>
 
 			<CancelReservationDialog

@@ -108,7 +108,7 @@ function ResponseDialog({ open, onClose, request, onSubmit, loading }: ResponseD
 									variant="body2"
 									color="text.secondary"
 								>
-									From: {request.requesterName} ({request.requesterEmail})
+									From: {request.requestedByName} ({request.requesterEmail})
 								</Typography>
 								<Typography
 									variant="body2"
@@ -120,8 +120,8 @@ function ResponseDialog({ open, onClose, request, onSubmit, loading }: ResponseD
 									variant="body2"
 									color="text.secondary"
 								>
-									Time: {new Date(request.originalStartTime).toLocaleString()} -{' '}
-									{new Date(request.originalEndTime).toLocaleString()}
+									Time: {new Date(request.originalStartDate).toLocaleString()} -{' '}
+									{new Date(request.originalEndDate).toLocaleString()}
 								</Typography>
 							</CardContent>
 						</Card>
@@ -280,7 +280,7 @@ export default function ReassignmentPage() {
 							alignItems="center"
 							sx={{ mb: 1 }}
 						>
-							{getTypeIcon(request.type)}
+							{getTypeIcon(request.type || ReassignmentType.TRANSFER)}
 							<Typography
 								variant="h6"
 								gutterBottom
@@ -312,7 +312,7 @@ export default function ReassignmentPage() {
 										fontSize="small"
 										sx={{ mr: 1, verticalAlign: 'middle' }}
 									/>
-									{showActions ? request.requesterName : request.targetUserName}
+									{showActions ? request.requestedByName : request.targetResourceName}
 								</Typography>
 							</Box>
 							<Box>
@@ -344,13 +344,13 @@ export default function ReassignmentPage() {
 										fontSize="small"
 										sx={{ mr: 1, verticalAlign: 'middle' }}
 									/>
-									{formatDateTime(request.originalStartTime)} -{' '}
-									{formatDateTime(request.originalEndTime)}
+									{formatDateTime(request.originalStartDate)} -{' '}
+									{formatDateTime(request.originalEndDate)}
 								</Typography>
 							</Box>
 						</Stack>
 
-						{request.newStartTime && request.newEndTime && (
+						{request.newStartDate && request.newEndDate && (
 							<Stack
 								direction="row"
 								spacing={3}
@@ -369,7 +369,7 @@ export default function ReassignmentPage() {
 											fontSize="small"
 											sx={{ mr: 1, verticalAlign: 'middle' }}
 										/>
-										{request.newResourceName || request.originalResourceName}
+										{request.targetResourceName || request.originalResourceName}
 									</Typography>
 								</Box>
 								<Box>
@@ -385,7 +385,7 @@ export default function ReassignmentPage() {
 											fontSize="small"
 											sx={{ mr: 1, verticalAlign: 'middle' }}
 										/>
-										{formatDateTime(request.newStartTime)} - {formatDateTime(request.newEndTime)}
+										{formatDateTime(request.newStartDate)} - {formatDateTime(request.newEndDate)}
 									</Typography>
 								</Box>
 							</Stack>
@@ -396,10 +396,10 @@ export default function ReassignmentPage() {
 							color="text.secondary"
 						>
 							<strong>Requested:</strong> {formatDateTime(request.requestedAt)}
-							{request.processedAt && (
+							{request.approvedAt && (
 								<>
 									{' '}
-									• <strong>Processed:</strong> {formatDateTime(request.processedAt)}
+									• <strong>Processed:</strong> {formatDateTime(request.approvedAt)}
 								</>
 							)}
 						</Typography>

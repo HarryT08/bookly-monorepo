@@ -16,6 +16,7 @@ import type {
 	SSOLoginResponse,
 	AuthAuditLog
 } from './types';
+import { auditClient, permissionsClient, rolesClient, usersClient } from '@services/http/client';
 
 /**
  * Authentication API services
@@ -25,70 +26,70 @@ export const authServices = {
 	 * Login user
 	 */
 	async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
-		return authClient.post('auth/login', credentials);
+		return authClient.post('login', credentials);
 	},
 
 	/**
 	 * Register new user
 	 */
 	async register(userData: RegisterRequest): Promise<ApiResponse<User>> {
-		return authClient.post('auth/register', userData);
+		return authClient.post('register', userData);
 	},
 
 	/**
 	 * Logout user
 	 */
 	async logout(): Promise<ApiResponse<void>> {
-		return authClient.post('auth/logout');
+		return authClient.post('logout');
 	},
 
 	/**
 	 * Get current user profile
 	 */
 	async getProfile(): Promise<ApiResponse<User>> {
-		return authClient.get('auth/profile');
+		return authClient.get('profile');
 	},
 
 	/**
 	 * Refresh token
 	 */
 	async refreshToken(): Promise<ApiResponse<LoginResponse>> {
-		return authClient.post('auth/refresh');
+		return authClient.post('refresh');
 	},
 
 	/**
 	 * Update user profile
 	 */
 	async updateProfile(userData: Partial<User>): Promise<ApiResponse<User>> {
-		return authClient.put('auth/profile', userData);
+		return authClient.put('profile', userData);
 	},
 
 	/**
 	 * Forgot password
 	 */
 	async forgotPassword(email: string): Promise<ApiResponse<void>> {
-		return authClient.post('auth/forgot-password', { email });
+		return authClient.post('forgot-password', { email });
 	},
 
 	/**
 	 * Reset password with token
 	 */
 	async resetPassword(token: string, password: string): Promise<ApiResponse<void>> {
-		return authClient.post('auth/reset-password', { token, password });
+		return authClient.post('reset-password', { token, password });
 	},
 
 	/**
 	 * SSO Google Login
 	 */
 	async ssoGoogleLogin(): Promise<void> {
-		window.location.href = `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/auth/oauth/google`;
+		window.location.href = `${process.env.NEXT_PUBLIC_AUTH_SERVICE_URL}/oauth/google`;
 	},
 
 	/**
 	 * SSO Google Callback
 	 */
 	async ssoCallback(token: string): Promise<ApiResponse<SSOLoginResponse>> {
-		return authClient.get(`auth/oauth/google/callback?token=${token}`);
+		return authClient.get(`oauth/google/callback?token=${token}`);
 	}
 };
 
@@ -112,56 +113,56 @@ export const roleServices = {
 
 		if (params?.search) searchParams.set('search', params.search);
 
-		return authClient.get(`roles?${searchParams.toString()}`);
+		return rolesClient.get(`?${searchParams.toString()}`);
 	},
 
 	/**
 	 * Get active roles
 	 */
 	async getActiveRoles(): Promise<ApiResponse<RoleWithPermissions[]>> {
-		return authClient.get('roles/active');
+		return rolesClient.get('roles/active');
 	},
 
 	/**
 	 * Get role by ID
 	 */
 	async getRoleById(id: string): Promise<ApiResponse<RoleWithPermissions>> {
-		return authClient.get(`roles/${id}`);
+		return rolesClient.get(`/${id}`);
 	},
 
 	/**
 	 * Create role
 	 */
 	async createRole(data: CreateRoleRequest): Promise<ApiResponse<RoleWithPermissions>> {
-		return authClient.post('roles', data);
+		return rolesClient.post('', data);
 	},
 
 	/**
 	 * Update role
 	 */
 	async updateRole(id: string, data: UpdateRoleRequest): Promise<ApiResponse<RoleWithPermissions>> {
-		return authClient.put(`roles/${id}`, data);
+		return rolesClient.put(`/${id}`, data);
 	},
 
 	/**
 	 * Delete role
 	 */
 	async deleteRole(id: string): Promise<ApiResponse<void>> {
-		return authClient.delete(`roles/${id}`);
+		return rolesClient.delete(`/${id}`);
 	},
 
 	/**
 	 * Assign role to user
 	 */
 	async assignRole(data: AssignRoleRequest): Promise<ApiResponse<UserRoleAssignment>> {
-		return authClient.post('users/roles/assign', data);
+		return usersClient.post('/assign', data);
 	},
 
 	/**
 	 * Remove role from user
 	 */
 	async removeRole(userId: string, roleId: string): Promise<ApiResponse<void>> {
-		return authClient.delete(`users/${userId}/roles/${roleId}`);
+		return usersClient.delete(`/${userId}/roles/${roleId}`);
 	}
 };
 
@@ -188,14 +189,14 @@ export const permissionServices = {
 
 		if (filters?.isActive !== undefined) searchParams.set('isActive', filters.isActive.toString());
 
-		return authClient.get(`permissions?${searchParams.toString()}`);
+		return permissionsClient.get(`?${searchParams.toString()}`);
 	},
 
 	/**
 	 * Get active permissions
 	 */
 	async getActivePermissions(): Promise<ApiResponse<PermissionWithDetails[]>> {
-		return authClient.get('permissions/active');
+		return permissionsClient.get('active');
 	},
 
 	/**
@@ -212,56 +213,56 @@ export const permissionServices = {
 
 		if (scope) searchParams.set('scope', scope);
 
-		return authClient.get(`permissions/resource/${resource}?${searchParams.toString()}`);
+		return permissionsClient.get(`resource/${resource}?${searchParams.toString()}`);
 	},
 
 	/**
 	 * Get permission by ID
 	 */
 	async getPermissionById(id: string): Promise<ApiResponse<PermissionWithDetails>> {
-		return authClient.get(`permissions/${id}`);
+		return permissionsClient.get(`/${id}`);
 	},
 
 	/**
 	 * Create permission
 	 */
 	async createPermission(data: CreatePermissionRequest): Promise<ApiResponse<PermissionWithDetails>> {
-		return authClient.post('permissions', data);
+		return permissionsClient.post('', data);
 	},
 
 	/**
 	 * Update permission
 	 */
 	async updatePermission(id: string, data: UpdatePermissionRequest): Promise<ApiResponse<PermissionWithDetails>> {
-		return authClient.put(`permissions/${id}`, data);
+		return permissionsClient.put(`/${id}`, data);
 	},
 
 	/**
 	 * Activate permission
 	 */
 	async activatePermission(id: string): Promise<ApiResponse<PermissionWithDetails>> {
-		return authClient.put(`permissions/${id}/activate`);
+		return permissionsClient.put(`/${id}/activate`);
 	},
 
 	/**
 	 * Deactivate permission
 	 */
 	async deactivatePermission(id: string): Promise<ApiResponse<PermissionWithDetails>> {
-		return authClient.put(`permissions/${id}/deactivate`);
+		return permissionsClient.put(`/${id}/deactivate`);
 	},
 
 	/**
 	 * Delete permission
 	 */
 	async deletePermission(id: string): Promise<ApiResponse<void>> {
-		return authClient.delete(`permissions/${id}`);
+		return permissionsClient.delete(`/${id}`);
 	},
 
 	/**
 	 * Create default system permissions
 	 */
 	async seedDefaultPermissions(): Promise<ApiResponse<PermissionWithDetails[]>> {
-		return authClient.post('permissions/seed-defaults');
+		return permissionsClient.post('seed-defaults');
 	}
 };
 
@@ -281,42 +282,42 @@ export const userServices = {
 
 		if (params?.search) searchParams.set('search', params.search);
 
-		return authClient.get(`users?${searchParams.toString()}`);
+		return usersClient.get(`?${searchParams.toString()}`);
 	},
 
 	/**
 	 * Get user by ID
 	 */
 	async getUserById(id: string): Promise<ApiResponse<User>> {
-		return authClient.get(`users/${id}`);
+		return usersClient.get(`/${id}`);
 	},
 
 	/**
 	 * Update user
 	 */
 	async updateUser(id: string, data: Partial<User>): Promise<ApiResponse<User>> {
-		return authClient.put(`users/${id}`, data);
+		return usersClient.put(`/${id}`, data);
 	},
 
 	/**
 	 * Get user roles
 	 */
 	async getUserRoles(userId: string): Promise<ApiResponse<UserRoleAssignment[]>> {
-		return authClient.get(`users/${userId}/roles`);
+		return usersClient.get(`/${userId}/roles`);
 	},
 
 	/**
 	 * Activate user
 	 */
 	async activateUser(id: string): Promise<ApiResponse<User>> {
-		return authClient.put(`users/${id}/activate`);
+		return usersClient.put(`/${id}/activate`);
 	},
 
 	/**
 	 * Deactivate user
 	 */
 	async deactivateUser(id: string): Promise<ApiResponse<User>> {
-		return authClient.put(`users/${id}/deactivate`);
+		return usersClient.put(`/${id}/deactivate`);
 	}
 };
 
@@ -352,7 +353,7 @@ export const auditServices = {
 
 		if (params?.dateTo) searchParams.set('dateTo', params.dateTo);
 
-		return authClient.get(`audit/logs?${searchParams.toString()}`);
+		return auditClient.get(`logs?${searchParams.toString()}`);
 	}
 };
 

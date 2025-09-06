@@ -289,8 +289,11 @@ export enum CalendarViewType {
 
 export enum EventType {
 	RESERVATION = 'RESERVATION',
-	MAINTENANCE = 'MAINTENANCE',
+	SCHEDULE = 'SCHEDULE',
+	AVAILABILITY = 'AVAILABILITY',
+	EXTERNAL = 'EXTERNAL',
 	BLOCKED = 'BLOCKED',
+	MAINTENANCE = 'MAINTENANCE',
 	HOLIDAY = 'HOLIDAY',
 	SPECIAL = 'SPECIAL'
 }
@@ -298,7 +301,10 @@ export enum EventType {
 export enum NotificationStatus {
 	SENT = 'SENT',
 	READ = 'READ',
-	UNREAD = 'UNREAD'
+	UNREAD = 'UNREAD',
+	EXPIRED = 'EXPIRED',
+	ACCEPTED = 'ACCEPTED',
+	DECLINED = 'DECLINED'
 }
 
 // Reassignment types
@@ -422,6 +428,10 @@ export interface WaitlistNotification {
 	resourceName: string;
 	availableStartDate?: Date;
 	availableEndDate?: Date;
+	availableSlot?: {
+		start: Date;
+		end: Date;
+	};
 	newPosition?: number;
 	expiresAt: Date;
 	isRead: boolean;
@@ -439,16 +449,17 @@ export interface CalendarEventDisplay {
 	title: string;
 	start: Date;
 	end: Date;
-	type: 'RESERVATION' | 'SCHEDULE' | 'AVAILABILITY' | 'EXTERNAL' | 'BLOCKED';
-	color?: string;
+	type: EventType;
 	resourceId?: string;
+	status?: string;
+	color?: string;
+	isEditable?: boolean;
 	resourceName?: string;
 	userId?: string;
 	userName?: string;
 	description?: string;
 	allDay?: boolean;
 	recurring?: boolean;
-	status?: string;
 }
 
 export interface AvailabilitySlot {
@@ -547,17 +558,23 @@ export interface AvailabilityQuery {
 }
 
 export interface CreateReservationRequest {
+	title?: string;
+	description?: string;
 	resourceId: string;
+	userId?: string;
 	startDate: Date;
 	endDate: Date;
-	purpose: string;
-	attendees?: number;
+	purpose?: string;
 	notes?: string;
+	priority?: string;
+	isPrivate?: boolean;
+	isRecurring?: boolean;
 	recurrence?: {
-		frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
-		interval: number;
-		endDate: Date;
+		frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+		interval?: number;
 		daysOfWeek?: number[];
+		endDate?: Date;
+		occurrences?: number;
 	};
 	notificationPreferences?: {
 		email: boolean;
@@ -704,6 +721,7 @@ export interface ReassignmentHistory {
 	reason: string;
 	requestedBy: string;
 	requestedByName?: string;
+	requesterEmail?: string;
 	requestedAt: Date;
 	status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 	approvedBy?: string;
@@ -718,6 +736,9 @@ export interface ReassignmentHistory {
 	cancelledAt?: Date;
 	cancellationReason?: string;
 	priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+	type?: ReassignmentType;
+	processedAt?: Date;
+	comments?: string;
 	notificationsSent: {
 		type: 'EMAIL' | 'SMS' | 'PUSH' | 'SYSTEM';
 		recipient: string;

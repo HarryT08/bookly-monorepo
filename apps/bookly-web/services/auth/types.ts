@@ -17,6 +17,7 @@ export interface RegisterRequest {
 }
 
 export interface LoginResponse {
+	access_token: string;
 	user: User;
 	token: string;
 	refreshToken: string;
@@ -155,6 +156,7 @@ export interface PermissionWithDetails extends Permission {
 	createdAt: string;
 	updatedAt: string;
 	roleCount?: number;
+	scope: string;
 }
 
 // User role assignment types

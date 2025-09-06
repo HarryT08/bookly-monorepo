@@ -33,11 +33,13 @@ import {
 import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 
-import { DataTable } from '@components/organisms';
+import { DataTable, DataTableColumn } from '@components/organisms';
 import { PageTitle } from '@components/atoms';
 import { ReassignmentDialog } from '@components/molecules/ReassignmentDialog';
 import { useReservation, useReservationHistory } from '@hooks/useAvailability';
-import { Reservation, ReservationStatus } from '@services/availability/types';
+import { Reservation } from '@services/availability/types';
+
+type ReservationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed';
 
 interface FilterState {
 	status: ReservationStatus | 'ALL';
@@ -123,46 +125,54 @@ export default function ReservationsPage() {
 	}, [reservations]);
 
 	// Table columns configuration
-	const columns = [
+	const columns: DataTableColumn<Reservation>[] = [
 		{
-			accessorKey: 'title',
-			header: 'Title',
-			size: 200
+			id: 'resource',
+			key: 'resourceId',
+			label: 'Resource',
+			minWidth: 200,
+			render: (value, row) => row.resourceId || 'N/A'
 		},
 		{
-			accessorKey: 'resourceName',
-			header: 'Resource',
-			size: 150
+			id: 'user',
+			key: 'userId',
+			label: 'Reserved By',
+			minWidth: 150,
+			render: (value, row) => row.userId || 'N/A'
 		},
 		{
-			accessorKey: 'userName',
-			header: 'User',
-			size: 150
-		},
-		{
-			accessorKey: 'startDate',
-			header: 'Start Date',
-			size: 150,
-			Cell: ({ cell }: any) => {
-				const date = new Date(cell.getValue());
+			id: 'startDate',
+			key: 'startDate',
+			label: 'Start Date',
+			minWidth: 150,
+			render: (value, row) => {
+				const date = new Date(row.startDate);
 				return date.toLocaleString();
 			}
 		},
 		{
-			accessorKey: 'endDate',
-			header: 'End Date',
-			size: 150,
-			Cell: ({ cell }: any) => {
-				const date = new Date(cell.getValue());
+			id: 'endDate',
+			key: 'endDate',
+			label: 'End Date',
+			minWidth: 150,
+			render: (value, row) => {
+				const date = new Date(row.endDate);
 				return date.toLocaleString();
 			}
 		},
 		{
-			accessorKey: 'status',
-			header: 'Status',
-			size: 120,
-			Cell: ({ cell }: { cell: { getValue: () => ReservationStatus } }) => {
-				const status = cell.getValue() as ReservationStatus;
+			id: 'purpose',
+			key: 'purpose',
+			label: 'Purpose',
+			minWidth: 200
+		},
+		{
+			id: 'status',
+			key: 'status',
+			label: 'Status',
+			minWidth: 120,
+			render: (value, row) => {
+				const status = row.status as ReservationStatus;
 				return (
 					<Chip
 						label={STATUS_LABELS[status]}
@@ -182,26 +192,13 @@ export default function ReservationsPage() {
 			}
 		},
 		{
-			accessorKey: 'isRecurring',
-			header: 'Recurring',
-			size: 100,
-			Cell: ({ cell }: { cell: { getValue: () => boolean } }) => (
-				<Chip
-					label={cell.getValue() ? 'Yes' : 'No'}
-					color={cell.getValue() ? 'primary' : 'default'}
-					size="small"
-					variant="outlined"
-				/>
-			)
-		},
-		{
 			id: 'actions',
-			header: 'Actions',
-			size: 80,
-			Cell: ({ row }: { row: { original: Reservation } }) => (
+			label: 'Actions',
+			minWidth: 80,
+			render: (value, row) => (
 				<IconButton
 					size="small"
-					onClick={(e) => handleActionMenuOpen(e, row.original)}
+					onClick={(e) => handleActionMenuOpen(e, row)}
 				>
 					<MoreVertIcon />
 				</IconButton>
@@ -368,27 +365,15 @@ export default function ReservationsPage() {
 			<DataTable
 				data={reservations?.data || []}
 				columns={columns}
-				state={{
-					isLoading: loading,
-					pagination: {
-						pageIndex: pagination.page,
-						pageSize: pagination.pageSize
-					}
+				loading={loading}
+				page={pagination.page}
+				rowsPerPage={pagination.pageSize}
+				totalRows={pagination.total}
+				onPageChange={(page: number) => {
+					setPagination((prev) => ({ ...prev, page }));
 				}}
-				manualPagination
-				rowCount={pagination.total}
-				onPaginationChange={(updater) => {
-					if (typeof updater === 'function') {
-						const newState = updater({
-							pageIndex: pagination.page,
-							pageSize: pagination.pageSize
-						});
-						setPagination((prev) => ({
-							...prev,
-							page: newState.pageIndex,
-							pageSize: newState.pageSize
-						}));
-					}
+				onRowsPerPageChange={(rowsPerPage: number) => {
+					setPagination((prev) => ({ ...prev, pageSize: rowsPerPage, page: 0 }));
 				}}
 			/>
 
@@ -403,7 +388,7 @@ export default function ReservationsPage() {
 					Edit
 				</MenuItem>
 
-				{(selectedReservation?.status === 'CONFIRMED' || selectedReservation?.status === 'PENDING') && (
+				{(selectedReservation?.status === 'approved' || selectedReservation?.status === 'pending') && (
 					<>
 						<MenuItem onClick={handleReassignReservation}>
 							<ReassignIcon sx={{ mr: 1 }} />

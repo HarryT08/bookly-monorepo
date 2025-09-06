@@ -5,6 +5,7 @@ import { ReactElement } from 'react';
 import { SvgIconProps } from '@mui/material';
 
 export interface ActionMenuItem {
+	key?: string;
 	label: string;
 	onClick: () => void;
 	icon?: ReactElement<SvgIconProps>;

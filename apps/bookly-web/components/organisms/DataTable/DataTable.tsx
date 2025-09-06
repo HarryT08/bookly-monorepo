@@ -14,16 +14,18 @@ import { ReactNode } from 'react';
 import { LoadingSpinner } from '../../atoms/LoadingSpinner';
 import { ErrorMessage } from '../../atoms/ErrorMessage';
 
-export interface DataTableColumn {
+export interface DataTableColumn<T = any> {
 	id: string;
+	key?: string;
 	label: string;
 	align?: 'left' | 'center' | 'right';
 	minWidth?: number;
 	format?: (value: any) => ReactNode;
+	render?: (value: any, row: T) => ReactNode;
 }
 
 export interface DataTableProps<T = any> {
-	columns: DataTableColumn[];
+	columns: DataTableColumn<T>[];
 	data: T[];
 	loading?: boolean;
 	error?: string | null;
@@ -119,7 +121,11 @@ export function DataTable<T extends Record<string, any>>({
 											key={column.id}
 											align={column.align}
 										>
-											{column.format ? column.format(value) : value}
+											{column.render
+												? column.render(value, row)
+												: column.format
+													? column.format(value)
+													: value}
 										</TableCell>
 									);
 								})}

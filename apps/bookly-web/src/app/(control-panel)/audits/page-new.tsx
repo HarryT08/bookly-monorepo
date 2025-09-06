@@ -255,12 +255,18 @@ export default function AuditsPage() {
 		{
 			id: 'user',
 			label: 'Usuario',
-			format: (_, row: AuditLog) => (
+			render: (_, row: AuditLog) => (
 				<Box>
-					<Typography variant="body2" fontWeight="bold">
+					<Typography
+						variant="body2"
+						fontWeight="bold"
+					>
 						{row.userName}
 					</Typography>
-					<Typography variant="caption" color="text.secondary">
+					<Typography
+						variant="caption"
+						color="text.secondary"
+					>
 						{row.userEmail}
 					</Typography>
 				</Box>
@@ -269,10 +275,16 @@ export default function AuditsPage() {
 		{
 			id: 'action',
 			label: 'Acción',
-			format: (_, row: AuditLog) => (
-				<Box display="flex" alignItems="center">
+			render: (_, row: AuditLog) => (
+				<Box
+					display="flex"
+					alignItems="center"
+				>
 					{getCategoryIcon(row.category)}
-					<Typography variant="body2" sx={{ ml: 1 }}>
+					<Typography
+						variant="body2"
+						sx={{ ml: 1 }}
+					>
 						{row.action.replace(/_/g, ' ')}
 					</Typography>
 				</Box>
@@ -285,7 +297,7 @@ export default function AuditsPage() {
 		{
 			id: 'severity',
 			label: 'Severidad',
-			format: (value: AuditLog['severity']) => (
+			render: (value: AuditLog['severity']) => (
 				<StatusChip
 					status={value.toLowerCase() as any}
 					statusLabels={{
@@ -300,8 +312,11 @@ export default function AuditsPage() {
 		{
 			id: 'ipAddress',
 			label: 'IP',
-			format: (value: string) => (
-				<Typography variant="body2" fontFamily="monospace">
+			render: (value: string) => (
+				<Typography
+					variant="body2"
+					fontFamily="monospace"
+				>
 					{value}
 				</Typography>
 			)
@@ -310,9 +325,12 @@ export default function AuditsPage() {
 			id: 'actions',
 			label: 'Detalles',
 			align: 'center',
-			format: (_, row: AuditLog) => (
+			render: (_, row: AuditLog) => (
 				<Tooltip title="Ver detalles">
-					<IconButton onClick={() => handleViewDetails(row)} size="small">
+					<IconButton
+						onClick={() => handleViewDetails(row)}
+						size="small"
+					>
 						<VisibilityIcon />
 					</IconButton>
 				</Tooltip>
@@ -323,45 +341,26 @@ export default function AuditsPage() {
 	return (
 		<>
 			<DataTablePageTemplate
-				title="Auditoría del Sistema"
-				actions={
-					<Button variant="outlined" startIcon={<DownloadIcon />}>
-						Exportar Logs
-					</Button>
-				}
-				stats={pageStats}
-				filterBar={{
-					searchValue: searchTerm,
-					onSearchChange: setSearchTerm,
-					searchPlaceholder: "Buscar logs...",
-					filters: [
-						{
-							label: 'Categoría',
-							value: categoryFilter,
-							options: categoryOptions,
-							onChange: setCategoryFilter
-						},
-						{
-							label: 'Severidad',
-							value: severityFilter,
-							options: severityOptions,
-							onChange: setSeverityFilter
-						}
-					],
-					onClearFilters: handleClearFilters
+				pageHeader={{
+					title: 'Auditoría del Sistema',
+					actions: (
+						<Button
+							variant="outlined"
+							startIcon={<DownloadIcon />}
+						>
+							Exportar Logs
+						</Button>
+					)
 				}}
-				table={{
-					columns,
-					data: filteredLogs,
-					loading,
-					error,
-					page,
-					rowsPerPage,
-					totalRows: filteredLogs.length,
-					onPageChange: setPage,
-					onRowsPerPageChange: setRowsPerPage,
-					getRowId: (row: AuditLog) => row.id
-				}}
+				statsData={pageStats}
+				searchValue={searchTerm}
+				onSearchChange={setSearchTerm}
+				searchPlaceholder="Buscar logs..."
+				columns={columns}
+				data={filteredLogs}
+				loading={loading}
+				error={error}
+				emptyMessage="No se encontraron logs de auditoría"
 			/>
 
 			<AuditDetailsDialog

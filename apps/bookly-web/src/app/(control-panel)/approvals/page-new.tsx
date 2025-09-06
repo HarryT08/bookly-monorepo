@@ -450,6 +450,7 @@ export default function ApprovalsPage() {
 	// Table columns
 	const columns: DataTableColumn<ApprovalRequest>[] = [
 		{
+			id: 'reservation',
 			key: 'reservation',
 			label: 'Reservation',
 			render: (request) => (
@@ -462,6 +463,7 @@ export default function ApprovalsPage() {
 			)
 		},
 		{
+			id: 'requester',
 			key: 'requester',
 			label: 'Requester',
 			render: (request) => (
@@ -477,11 +479,13 @@ export default function ApprovalsPage() {
 			)
 		},
 		{
+			id: 'resource',
 			key: 'resource',
 			label: 'Resource',
 			render: (request) => <Typography variant="body2">{request.reservation?.resourceName || 'N/A'}</Typography>
 		},
 		{
+			id: 'datetime',
 			key: 'datetime',
 			label: 'Date & Time',
 			render: (request) =>
@@ -500,6 +504,7 @@ export default function ApprovalsPage() {
 				)
 		},
 		{
+			id: 'level',
 			key: 'level',
 			label: 'Level',
 			render: (request) => (
@@ -511,6 +516,7 @@ export default function ApprovalsPage() {
 			)
 		},
 		{
+			id: 'status',
 			key: 'status',
 			label: 'Status',
 			render: (request) => (
@@ -518,15 +524,18 @@ export default function ApprovalsPage() {
 					label={statusLabels[request.status]}
 					color={statusColors[request.status] as 'warning' | 'success' | 'error' | 'default'}
 					size="small"
+					variant="outlined"
 				/>
 			)
 		},
 		{
+			id: 'requestedAt',
 			key: 'requestedAt',
 			label: 'Requested At',
 			render: (request) => <Typography variant="caption">{formatDate(request.requestedAt)}</Typography>
 		},
 		{
+			id: 'actions',
 			key: 'actions',
 			label: 'Actions',
 			align: 'center',
@@ -632,22 +641,12 @@ export default function ApprovalsPage() {
 		<>
 			<DataTablePageTemplate
 				pageHeader={pageHeaderProps}
-				statsCards={statsCards}
+				statsData={statsCards}
 				data={requests}
 				columns={columns}
 				loading={loading}
 				error={requestError}
 				searchPlaceholder="Search approval requests..."
-				filterOptions={filterOptions}
-				pagination={{
-					count: totalCount,
-					page: page - 1,
-					rowsPerPage: filter.limit || 10,
-					onPageChange: handlePageChange,
-					onRowsPerPageChange: handleRowsPerPageChange
-				}}
-				emptyMessage="No approval requests found"
-				emptyDescription="No requests match the current filter criteria."
 			/>
 
 			{/* Process Request Dialog */}

@@ -8,36 +8,72 @@ import { ErrorMessage } from '../../atoms/ErrorMessage';
 import { StatCardProps } from '../../molecules/StatCard';
 
 export interface DataTablePageTemplateProps {
-	title: string;
-	subtitle?: string;
-	actions?: ReactNode;
-	breadcrumbs?: ReactNode;
-	stats?: StatCardProps[];
-	filterBar?: FilterBarProps;
-	table: DataTableProps;
+	pageHeader?: {
+		title: string;
+		subtitle?: string;
+		actions?: ReactNode;
+		breadcrumbs?: ReactNode;
+	};
+	statsData?: StatCardProps[];
+	searchPlaceholder?: string;
+	searchValue?: string;
+	onSearchChange?: (value: string) => void;
+	filterOptions?: any[];
+	filterValues?: any;
+	onFilterChange?: (filters: any) => void;
+	columns: any[];
+	data: any[];
+	loading?: boolean;
 	error?: string | null;
+	emptyMessage?: string;
+	onRowClick?: (row: any) => void;
 	additionalContent?: ReactNode;
 }
 
 export function DataTablePageTemplate({
-	title,
-	subtitle,
-	actions,
-	breadcrumbs,
-	stats,
-	filterBar,
-	table,
+	pageHeader,
+	statsData,
+	searchPlaceholder,
+	searchValue,
+	onSearchChange,
+	filterOptions,
+	filterValues,
+	onFilterChange,
+	columns,
+	data,
+	loading,
 	error,
+	emptyMessage,
+	onRowClick,
 	additionalContent
 }: DataTablePageTemplateProps) {
+	const filterBarProps: FilterBarProps = {
+		searchPlaceholder,
+		searchValue,
+		onSearchChange,
+		filterOptions,
+		filterValues,
+		onFilterChange
+	};
+
+	const tableProps: DataTableProps = {
+		columns,
+		data,
+		loading,
+		emptyMessage,
+		onRowClick
+	};
+
 	return (
 		<Box sx={{ p: 3 }}>
-			<PageHeader
-				title={title}
-				subtitle={subtitle}
-				actions={actions}
-				breadcrumbs={breadcrumbs}
-			/>
+			{pageHeader && (
+				<PageHeader
+					title={pageHeader.title}
+					subtitle={pageHeader.subtitle}
+					actions={pageHeader.actions}
+					breadcrumbs={pageHeader.breadcrumbs}
+				/>
+			)}
 
 			{error && (
 				<ErrorMessage
@@ -46,15 +82,15 @@ export function DataTablePageTemplate({
 				/>
 			)}
 
-			{stats && stats.length > 0 && <StatsGrid stats={stats} />}
+			{statsData && statsData.length > 0 && <StatsGrid stats={statsData} />}
 
-			{filterBar && (
+			{(searchPlaceholder || filterOptions) && (
 				<Paper sx={{ mb: 2 }}>
-					<FilterBar {...filterBar} />
+					<FilterBar {...filterBarProps} />
 				</Paper>
 			)}
 
-			<DataTable {...table} />
+			<DataTable {...tableProps} />
 
 			{additionalContent}
 		</Box>

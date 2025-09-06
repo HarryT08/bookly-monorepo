@@ -14,16 +14,22 @@ import { ReactNode } from 'react';
 import { LoadingSpinner } from '../../atoms/LoadingSpinner';
 import { ErrorMessage } from '../../atoms/ErrorMessage';
 
-export interface DataTableColumn {
+export interface DataTableColumn<T = any> {
 	id: string;
+	key?: string;
+	accessorKey?: string;
 	label: string;
+	header?: string;
 	align?: 'left' | 'center' | 'right';
 	minWidth?: number;
+	size?: number;
 	format?: (value: any) => ReactNode;
+	render?: (value: any, row: T) => ReactNode;
+	Cell?: (props: { cell: { getValue: () => any } }) => ReactNode;
 }
 
 export interface DataTableProps<T = any> {
-	columns: DataTableColumn[];
+	columns: DataTableColumn<T>[];
 	data: T[];
 	loading?: boolean;
 	error?: string | null;

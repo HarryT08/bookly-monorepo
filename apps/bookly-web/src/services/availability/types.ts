@@ -291,3 +291,43 @@ export interface PaginatedResponse<T> {
 	data: T[];
 	pagination: PaginationResponse;
 }
+
+// Calendar Event Types
+export enum EventType {
+	RESERVATION = 'RESERVATION',
+	SCHEDULE = 'SCHEDULE',
+	AVAILABILITY = 'AVAILABILITY',
+	EXTERNAL = 'EXTERNAL',
+	BLOCKED = 'BLOCKED'
+}
+
+// Calendar View Types
+export enum CalendarViewType {
+	MONTH = 'month',
+	WEEK = 'week',
+	DAY = 'day'
+}
+
+// Calendar Event Display interface
+export interface CalendarEventDisplay {
+	id: string;
+	title: string;
+	start: Date;
+	end: Date;
+	type: EventType;
+	resourceId?: string;
+	status?: string;
+	color?: string;
+	isEditable?: boolean;
+}
+
+// Create Reservation Request
+export interface CreateReservationRequest {
+	title?: string;
+	description?: string;
+	resourceId: string;
+	startDate: Date;
+	endDate: Date;
+	purpose: string;
+	notes?: string;
+}

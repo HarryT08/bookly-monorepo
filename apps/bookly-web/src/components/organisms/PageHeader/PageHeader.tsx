@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { ReactNode } from 'react';
 
 export interface PageHeaderProps {
@@ -6,9 +6,15 @@ export interface PageHeaderProps {
 	subtitle?: string;
 	actions?: ReactNode;
 	breadcrumbs?: ReactNode;
+	actionButton?: {
+		label: string;
+		onClick: () => void;
+		icon?: string;
+		variant?: 'contained' | 'outlined' | 'text';
+	};
 }
 
-export function PageHeader({ title, subtitle, actions, breadcrumbs }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, actions, breadcrumbs, actionButton }: PageHeaderProps) {
 	return (
 		<Box sx={{ mb: 3 }}>
 			{breadcrumbs && <Box sx={{ mb: 1 }}>{breadcrumbs}</Box>}
@@ -20,23 +26,38 @@ export function PageHeader({ title, subtitle, actions, breadcrumbs }: PageHeader
 				gap={2}
 			>
 				<Box>
-					<Typography
-						variant="h4"
-						component="h1"
-						gutterBottom={!!subtitle}
-					>
-						{title}
-					</Typography>
-					{subtitle && (
+					<Box>
 						<Typography
-							variant="body1"
-							color="text.secondary"
+							variant="h4"
+							fontWeight="bold"
 						>
-							{subtitle}
+							{title}
 						</Typography>
-					)}
+						{subtitle && (
+							<Typography
+								variant="body2"
+								color="text.secondary"
+								sx={{ mt: 0.5 }}
+							>
+								{subtitle}
+							</Typography>
+						)}
+					</Box>
+					<Box
+						display="flex"
+						gap={1}
+					>
+						{actionButton && (
+							<Button
+								variant={actionButton.variant || 'contained'}
+								onClick={actionButton.onClick}
+							>
+								{actionButton.label}
+							</Button>
+						)}
+						{actions && <Box>{actions}</Box>}
+					</Box>
 				</Box>
-				{actions && <Box>{actions}</Box>}
 			</Box>
 		</Box>
 	);
