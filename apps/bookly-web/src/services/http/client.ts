@@ -152,11 +152,6 @@ export const buildServiceUrl = (service: string, endpoint?: string): string => {
 export const api = {
   // GET request
   get: async <T = any>(url: string, options?: any): Promise<ApiResponse<T>> => {
-
-    console.log("----------------")
-    console.log("url: ",url);
-    console.log("options: ",options);
-    console.log("----------------")
     const response = await client.get(url, options);
     return response.json() as Promise<ApiResponse<T>>;
   },
