@@ -82,12 +82,17 @@ async function bootstrap() {
 
     // CORS configuration
     const corsConfig = configService.get('gateway.security.cors');
-    app.enableCors({
+    // Debug: Log loaded CORS configuration
+    logger.log('🔧 CORS Debug - Raw config loaded:', JSON.stringify(corsConfig, null, 2));
+    const corsSettings = {
       origin: corsConfig?.origin || ['http://localhost:3000'],
       credentials: corsConfig?.credentials ?? true,
       methods: corsConfig?.methods || ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: corsConfig?.allowedHeaders || ['Content-Type', 'Authorization', 'X-Requested-With'],
-    });
+    };
+    // Debug: Log final CORS settings being applied
+    logger.log('🌐 CORS Applied Settings:', JSON.stringify(corsSettings, null, 2));
+    app.enableCors(corsSettings);
 
     // Global validation pipe
     app.useGlobalPipes(

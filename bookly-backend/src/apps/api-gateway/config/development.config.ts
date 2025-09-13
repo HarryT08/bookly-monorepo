@@ -144,10 +144,17 @@ export default registerAs('development', () => ({
       expiresIn: '24h',
     },
     cors: {
-      origin: ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:4200'],
+      origin: [
+        'http://localhost:3000', 
+        'http://localhost:8080', 
+        'http://localhost:4200',
+        'https://localhost:4200',
+        'http://127.0.0.1:4200',
+        'https://127.0.0.1:4200'
+      ],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     },
   },
 

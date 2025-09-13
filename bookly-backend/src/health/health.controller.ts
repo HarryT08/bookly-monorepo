@@ -31,7 +31,7 @@ export class HealthController {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', heapThresholdMB * 1024 * 1024),
       () => this.memory.checkRSS('memory_rss', rssThresholdMB * 1024 * 1024),
-      () => this.disk.checkStorage('storage', { path: '/', threshold: 250 * 1024 * 1024 * 1024 }),
+      () => this.disk.checkStorage('storage', { path: '/', threshold: 500 * 1024 * 1024 * 1024 }),
       () => this.healthService.checkDatabase('database'),
       () => this.healthService.checkRedis('redis'),
       () => this.healthService.checkRabbitMQ('rabbitmq'),

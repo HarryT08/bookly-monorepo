@@ -501,13 +501,13 @@ restart_service() {
             start_microservice "auth-service" "3001" "start:auth"
             service_port="3001"
             ;;
-        "resources-service")
-            start_microservice "resources-service" "3003" "start:resources"
-            service_port="3003"
-            ;;
         "availability-service")
             start_microservice "availability-service" "3002" "start:availability"
             service_port="3002"
+            ;;
+        "resources-service")
+            start_microservice "resources-service" "3003" "start:resources"
+            service_port="3003"
             ;;
         "stockpile-service")
             start_microservice "stockpile-service" "3004" "start:stockpile"
