@@ -1,47 +1,61 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { getUserProfile, refreshTokenThunk } from '@/store/slices/authSlice';
+import { useAuthContext } from '@/components/providers/AuthProvider';
 
 export const useAuth = (requireAuth: boolean = true) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, token, isAuthenticated, isLoading } = useAppSelector((state) => state.auth);
+  const { isInitialized } = useAuthContext();
 
   useEffect(() => {
+    // Don't run auth check until AuthProvider has finished initialization
+    if (!isInitialized) {
+      console.log('[useAuth] Waiting for AuthProvider initialization...');
+      return;
+    }
+
     const checkAuth = async () => {
+      console.log('[useAuth] Checking auth state:', { 
+        token: !!token, 
+        user: !!user, 
+        isAuthenticated, 
+        isLoading,
+        requireAuth,
+        currentPath: router.pathname
+      });
+
       if (token && !user) {
-        // We have a token but no user data, try to get profile
         try {
           await dispatch(getUserProfile()).unwrap();
         } catch (error) {
-          // Token might be expired, try to refresh
           try {
             await dispatch(refreshTokenThunk()).unwrap();
             await dispatch(getUserProfile()).unwrap();
           } catch (refreshError) {
-            // Both failed, redirect to login if auth is required
             if (requireAuth) {
               router.push('/auth/login');
             }
           }
         }
       } else if (requireAuth && !isAuthenticated && !isLoading) {
-        // No authentication but required, redirect to login
         router.push('/auth/login');
       } else if (!requireAuth && isAuthenticated && router.pathname.startsWith('/auth')) {
-        // Authenticated user trying to access auth pages, redirect to dashboard
         router.push('/dashboard');
+      } else {
+        console.log('[useAuth] Auth check complete, no action needed');
       }
     };
 
     checkAuth();
-  }, [token, user, isAuthenticated, requireAuth, router, dispatch, isLoading]);
+  }, [token, user, isAuthenticated, requireAuth, router, dispatch, isLoading, isInitialized]);
 
   return {
     user,
     isAuthenticated,
-    isLoading,
+    isLoading: isLoading || !isInitialized,
     hasRole: (roleCode: string) => {
       return user?.roles?.some(role => role.categoryCode === roleCode) || false;
     },

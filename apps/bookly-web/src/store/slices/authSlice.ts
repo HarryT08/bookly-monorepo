@@ -136,12 +136,13 @@ const authSlice = createSlice({
         const refreshToken = localStorage.getItem('bookly_refresh_token');
         const user = localStorage.getItem('bookly_user');
 
-        if (token && refreshToken && user) {
+        if (token && user) {
           try {
             state.token = token;
             state.refreshToken = refreshToken;
             state.user = JSON.parse(user);
             state.isAuthenticated = true;
+            state.lastActivity = Date.now();
           } catch (error) {
             // Clear invalid data
             localStorage.removeItem('bookly_token');
