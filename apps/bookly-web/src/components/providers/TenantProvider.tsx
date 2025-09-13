@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTenant } from '@/hooks/useTenant';
-import { LoadingSpinner } from '@/components/molecules';
+import { LoadingSpinner } from '@/components/atoms';
 
 interface TenantProviderProps {
   children: React.ReactNode;

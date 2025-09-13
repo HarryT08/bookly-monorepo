@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { initializeAuth, getUserProfile } from '@/store/slices/authSlice';
+import { useAuthSync } from '@/hooks/useAuthSync';
 
 interface AuthContextType {
   isInitialized: boolean;
@@ -21,6 +22,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { token, user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [isInitialized, setIsInitialized] = useState(false);
   const hasInitialized = useRef(false);
+  
+  // Initialize auth synchronization with HTTP client
+  useAuthSync();
 
   useEffect(() => {
     if (hasInitialized.current) return;

@@ -1,6 +1,19 @@
 import ky from 'ky';
 import type { ApiResponse, ApiError } from './types';
 
+// Function to get current token (can be overridden by store)
+let getAuthToken: () => string | null = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('bookly_token');
+  }
+  return null;
+};
+
+// Function to set token getter (to be called by auth system)
+export const setAuthTokenGetter = (getter: () => string | null) => {
+  getAuthToken = getter;
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 
@@ -17,11 +30,9 @@ const client = ky.create({
     beforeRequest: [
       (request) => {
         // Add auth token if available
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('bookly_token');
-          if (token) {
-            request.headers.set('Authorization', `Bearer ${token}`);
-          }
+        const token = getAuthToken();
+        if (token) {
+          request.headers.set('Authorization', `Bearer ${token}`);
         }
 
         // Add common headers
@@ -33,6 +44,14 @@ const client = ky.create({
           ? localStorage.getItem('bookly_language') || 'es'
           : 'es';
         request.headers.set('Accept-Language', language);
+        
+        // Debug log for requests (only in development)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🚀 API Request: ${request.method} ${request.url}`);
+          if (token) {
+            console.log(`🔐 Authorization: Bearer ${token.substring(0, 20)}...`);
+          }
+        }
       },
     ],
     beforeError: [
@@ -59,47 +78,59 @@ const client = ky.create({
     afterResponse: [
       async (request, options, response) => {
         // Handle 401 Unauthorized - try to refresh token
-        if (response.status === 401) {
-          if (typeof window !== 'undefined') {
-            const refreshToken = localStorage.getItem('bookly_refresh_token');
-            
-            if (refreshToken) {
-              try {
-                // Try to refresh the token
-                const refreshResponse = await ky.post('auth/refresh', {
-                  prefixUrl: `${API_BASE_URL}/${API_VERSION}`,
-                  json: { refreshToken },
-                });
-                
-                const { accessToken, refreshToken: newRefreshToken } = await refreshResponse.json() as any;
-                
-                // Update tokens in localStorage
-                localStorage.setItem('bookly_token', accessToken);
-                localStorage.setItem('bookly_refresh_token', newRefreshToken);
-                
-                // Retry original request with new token
-                const retryResponse = await ky(request, {
-                  ...options,
-                  headers: {
-                    ...options.headers,
-                    Authorization: `Bearer ${accessToken}`,
-                  },
-                });
-                
-                return retryResponse;
-              } catch (refreshError) {
-                // Refresh failed, clear tokens and redirect to login
-                localStorage.removeItem('bookly_token');
-                localStorage.removeItem('bookly_refresh_token');
-                localStorage.removeItem('bookly_user');
-                
-                if (typeof window !== 'undefined' && window.location.pathname !== '/auth/login') {
+        if (response && response.status === 401) {
+          // Token expired, try to refresh
+          const refreshToken = localStorage.getItem('bookly_refresh_token');
+          
+          if (refreshToken) {
+            try {
+              const refreshResponse = await ky.post('auth/refresh', {
+                prefixUrl: `${API_BASE_URL}/${API_VERSION}`,
+                json: { refreshToken },
+              });
+              
+              const { accessToken, refreshToken: newRefreshToken } = await refreshResponse.json() as any;
+              
+              // Update tokens in localStorage
+              localStorage.setItem('bookly_token', accessToken);
+              localStorage.setItem('bookly_refresh_token', newRefreshToken);
+              
+              // Dispatch event to update Redux store
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('auth-token-refreshed', {
+                  detail: { accessToken, refreshToken: newRefreshToken }
+                }));
+              }
+              
+              // Retry original request with new token
+              const retryResponse = await ky(request, {
+                ...options,
+                headers: {
+                  ...options.headers,
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              });
+              
+              return retryResponse;
+            } catch (refreshError) {
+              // Refresh failed, clear tokens and redirect to login
+              localStorage.removeItem('bookly_token');
+              localStorage.removeItem('bookly_refresh_token');
+              localStorage.removeItem('bookly_user');
+              
+              // Dispatch logout event
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('auth-logout'));
+                if (window.location.pathname !== '/auth/login') {
                   window.location.href = '/auth/login';
                 }
               }
-            } else {
-              // No refresh token, redirect to login
-              if (typeof window !== 'undefined' && window.location.pathname !== '/auth/login') {
+            }
+          } else {
+            // No refresh token, redirect to login
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('auth-logout'));
+              if (window.location.pathname !== '/auth/login') {
                 window.location.href = '/auth/login';
               }
             }
@@ -113,14 +144,19 @@ const client = ky.create({
 });
 
 // Helper function to build service URLs
-export const buildServiceUrl = (service: string, endpoint: string): string => {
-  return `${service}/${endpoint}`;
+export const buildServiceUrl = (service: string, endpoint?: string): string => {
+  return service + (endpoint?`/${endpoint}`:'');
 };
 
 // Typed API client methods
 export const api = {
   // GET request
   get: async <T = any>(url: string, options?: any): Promise<ApiResponse<T>> => {
+
+    console.log("----------------")
+    console.log("url: ",url);
+    console.log("options: ",options);
+    console.log("----------------")
     const response = await client.get(url, options);
     return response.json() as Promise<ApiResponse<T>>;
   },

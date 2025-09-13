@@ -18,22 +18,22 @@ export const Navigation: React.FC<NavigationProps> = ({
   const navigationItems = [
     {
       href: '/dashboard',
-      label: 'Dashboard',
+      label: t('dashboard.overview'),
       requiresAuth: true
     },
     {
-      href: '/reservas',
+      href: '/resources',
+      label: t('resources.title'),
+      requiresAuth: true
+    },
+    {
+      href: '/reservations',
       label: 'Reservas',
       requiresAuth: true
     },
     {
-      href: '/recursos',
-      label: 'Recursos',
-      requiresAuth: true
-    },
-    {
-      href: '/reportes',
-      label: 'Reportes',
+      href: '/reports',
+      label: t('reports.view'),
       requiresAuth: true,
       roles: ['admin', 'admin_programa']
     }
@@ -42,7 +42,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   const visibleItems = navigationItems.filter(item => {
     if (item.requiresAuth && !isAuthenticated) return false;
     if (item.roles && (!user?.roles || !item.roles.some(role => 
-      user.roles?.some(userRole => userRole.name.toLowerCase().includes(role))
+      user.roles?.some(userRole => userRole.name?.toLowerCase().includes(role))
     ))) return false;
     return true;
   });

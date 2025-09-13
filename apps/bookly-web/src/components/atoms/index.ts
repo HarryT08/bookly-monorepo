@@ -27,3 +27,12 @@ export type { SpinnerProps } from './Spinner/Spinner';
 
 export { NavLink } from './NavLink/NavLink';
 export type { NavLinkProps } from './NavLink/NavLink';
+
+export { Select } from './Select/Select';
+export type { SelectProps } from './Select/Select';
+
+export { Badge } from './Badge/Badge';
+export type { BadgeProps } from './Badge/Badge';
+
+export { LoadingSpinner } from './LoadingSpinner/LoadingSpinner';
+export type { LoadingSpinnerProps } from './LoadingSpinner/LoadingSpinner';
