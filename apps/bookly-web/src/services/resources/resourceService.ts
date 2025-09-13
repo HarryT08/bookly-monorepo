@@ -33,10 +33,7 @@ export const resourceService = {
       ? `${buildServiceUrl(RESOURCES_SERVICE, '')}?${queryString}`
       : buildServiceUrl(RESOURCES_SERVICE, '');
     const response = await api.get<ResourceListResponse>(url);
-    console.log("-----------------");
-    console.log("response: ",response);
-    console.log("-----------------");
-    return response;
+    return response.data!;
   },
 
   async getResourceById(id: string): Promise<Resource> {
