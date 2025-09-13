@@ -52,6 +52,12 @@ import { RecurringReservationPriority } from "../../utils";
 
 @Injectable()
 export class RecurringReservationService {
+  constructor(
+    private readonly loggingService: LoggingService,
+    private readonly prisma: PrismaService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
+  ) {}
   async create(data: {
     userId: string;
     createdBy: string;
@@ -78,11 +84,11 @@ export class RecurringReservationService {
     reminderHours?: number;
     customRule?: string;
   }): Promise<RecurringReservationResponseDto> {
-    this.logger.log('Creating recurring reservation', {
+    this.loggingService.log('Creating recurring reservation', {
       userId: data.userId,
       resourceId: data.resourceId,
       title: data.title
-    });
+    }, 'RecurringReservationService');
 
     try {
       // Validate resource exists
@@ -178,11 +184,11 @@ export class RecurringReservationService {
       // Generate initial instances
       await this.generateInstancesForRecurringReservation(created.id, startDate, endDate);
 
-      this.logger.log('Recurring reservation created successfully', { id: created.id });
+      this.loggingService.log('Recurring reservation created successfully', { id: created.id });
 
       return this.mapToResponseDto(created);
     } catch (error) {
-      this.logger.error('Error creating recurring reservation', error);
+      this.loggingService.error('Error creating recurring reservation', error, 'RecurringReservationService');
       throw error;
     }
   }
@@ -204,7 +210,7 @@ export class RecurringReservationService {
     page: number;
     limit: number;
   }> {
-    this.logger.log('Finding all recurring reservations', { filters });
+    this.loggingService.log('Finding all recurring reservations', { filters });
 
     try {
       const page = filters.page || 1;
@@ -251,11 +257,11 @@ export class RecurringReservationService {
 
       const data = items.map(item => this.mapToResponseDto(item));
 
-      this.logger.log('Found recurring reservations', { total, page, limit });
+      this.loggingService.log('Found recurring reservations', { total, page, limit });
 
       return { data, total, page, limit };
     } catch (error) {
-      this.logger.error('Error finding recurring reservations', error);
+      this.loggingService.error('Error finding recurring reservations', error);
       throw error;
     }
   }
@@ -267,7 +273,7 @@ export class RecurringReservationService {
       userId?: string;
     } = {}
   ): Promise<RecurringReservationResponseDto> {
-    this.logger.log('Finding recurring reservation by ID', { id, options });
+    this.loggingService.log('Finding recurring reservation by ID', { id, options });
 
     try {
       const recurringReservation = await this.prisma.recurringReservation.findUnique({
@@ -300,10 +306,10 @@ export class RecurringReservationService {
         responseDto.stats = stats;
       }
 
-      this.logger.log('Found recurring reservation', { id });
+      this.loggingService.log('Found recurring reservation', { id });
       return responseDto;
     } catch (error) {
-      this.logger.error('Error finding recurring reservation by ID', error);
+      this.loggingService.error('Error finding recurring reservation by ID', error);
       throw error;
     }
   }
@@ -312,7 +318,7 @@ export class RecurringReservationService {
     updateDto: UpdateRecurringReservationDto,
     userId: string
   ): Promise<RecurringReservationResponseDto> {
-    this.logger.log('Updating recurring reservation', { id, userId, updateScope: updateDto.updateScope });
+    this.loggingService.log('Creating recurring reservation', { id, userId, updateScope: updateDto.updateScope });
 
     try {
       // Find existing recurring reservation
@@ -398,10 +404,10 @@ export class RecurringReservationService {
         );
       }
 
-      this.logger.log('Recurring reservation updated successfully', { id });
+      this.loggingService.log('Recurring reservation updated successfully', { id });
       return this.mapToResponseDto(updated);
     } catch (error) {
-      this.logger.error('Error updating recurring reservation', error);
+      this.loggingService.error('Error updating recurring reservation', error);
       throw error;
     }
   }
@@ -411,7 +417,7 @@ export class RecurringReservationService {
     cancelScope: 'FUTURE_ONLY' | 'ALL_INSTANCES' = 'FUTURE_ONLY',
     userId: string
   ): Promise<void> {
-    this.logger.log('Cancelling recurring reservation', { id, reason, cancelScope, userId });
+    this.loggingService.log('Cancelling recurring reservation', { id, reason, cancelScope, userId });
 
     try {
       // Find existing recurring reservation
@@ -460,9 +466,9 @@ export class RecurringReservationService {
         }
       });
 
-      this.logger.log('Recurring reservation cancelled successfully', { id, cancelScope });
+      this.loggingService.log('Recurring reservation cancelled successfully', { id, cancelScope });
     } catch (error) {
-      this.logger.error('Error cancelling recurring reservation', error);
+      this.loggingService.error('Error cancelling recurring reservation', error);
       throw error;
     }
   }
@@ -521,7 +527,7 @@ export class RecurringReservationService {
     estimatedInstances: number;
     conflicts: any[];
   }> {
-    this.logger.log('Validating recurring reservation', {
+    this.loggingService.log('Validating recurring reservation', {
       userId: data.userId,
       resourceId: data.resourceId,
       title: data.title
@@ -610,7 +616,7 @@ export class RecurringReservationService {
 
       const isValid = violations.length === 0;
 
-      this.logger.log('Validation completed', {
+      this.loggingService.log('Validation completed', {
         isValid,
         violationsCount: violations.length,
         warningsCount: warnings.length,
@@ -626,7 +632,7 @@ export class RecurringReservationService {
         conflicts
       };
     } catch (error) {
-      this.logger.error('Error validating recurring reservation', error);
+      this.loggingService.error('Error validating recurring reservation', error);
       return {
         isValid: false,
         violations: ['Validation error occurred'],
@@ -646,7 +652,7 @@ export class RecurringReservationService {
     failed: Array<{ id: string; error: string }>;
     totalProcessed: number;
   }> {
-    this.logger.log('Bulk cancelling recurring reservations', {
+    this.loggingService.log('Bulk cancelling recurring reservations', {
       reservationIds,
       reason,
       cancelScope,
@@ -670,7 +676,7 @@ export class RecurringReservationService {
         }
       }
 
-      this.logger.log('Bulk cancel completed', {
+      this.loggingService.log('Bulk cancel completed', {
         successful: successful.length,
         failed: failed.length,
         total: reservationIds.length
@@ -682,7 +688,7 @@ export class RecurringReservationService {
         totalProcessed: reservationIds.length
       };
     } catch (error) {
-      this.logger.error('Error in bulk cancel operation', error);
+      this.loggingService.error('Error in bulk cancel operation', error);
       
       // If there's a general error, mark all as failed
       const allFailed = reservationIds.map(id => ({
@@ -697,12 +703,6 @@ export class RecurringReservationService {
       };
     }
   }
-  constructor(
-    private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
-    private readonly logger: LoggingService,
-    private readonly prisma: PrismaService
-  ) {}
 
   // Private Helper Methods
 
@@ -718,7 +718,7 @@ export class RecurringReservationService {
     dayOfMonth?: number,
     excludeId?: string
   ): Promise<any[]> {
-    this.logger.log('Checking for conflicts', { resourceId, startDate, endDate });
+    this.loggingService.log('Checking for conflicts', { resourceId, startDate, endDate });
 
     try {
       // Create entity to generate occurrences
@@ -799,7 +799,7 @@ export class RecurringReservationService {
 
       return conflicts;
     } catch (error) {
-      this.logger.error('Error checking for conflicts', error);
+      this.loggingService.error('Error checking for conflicts', error);
       return [];
     }
   }
@@ -809,7 +809,7 @@ export class RecurringReservationService {
     startDate: Date,
     endDate: Date
   ): Promise<void> {
-    this.logger.log('Generating instances for recurring reservation', {
+    this.loggingService.log('Generating instances for recurring reservation', {
       recurringReservationId,
       startDate,
       endDate
@@ -869,12 +869,12 @@ export class RecurringReservationService {
         });
       }
 
-      this.logger.log('Generated instances successfully', {
+      this.loggingService.log('Generated instances successfully', {
         recurringReservationId,
         instanceCount: instances.length
       });
     } catch (error) {
-      this.logger.error('Error generating instances', error);
+      this.loggingService.error('Error generating instances', error);
       throw error;
     }
   }
@@ -930,7 +930,7 @@ export class RecurringReservationService {
   }
 
   private async calculateStats(recurringReservationId: string): Promise<any> {
-    this.logger.log('Calculating stats for recurring reservation', { recurringReservationId });
+    this.loggingService.log('Calculating stats for recurring reservation', { recurringReservationId });
 
     try {
       const instances = await this.prisma.recurringReservationInstance.findMany({
@@ -954,7 +954,7 @@ export class RecurringReservationService {
         averageConfirmationTime: 0
       };
     } catch (error) {
-      this.logger.error('Error calculating stats', error);
+      this.loggingService.error('Error calculating stats', error);
       return {
         totalInstances: 0,
         confirmedInstances: 0,
@@ -975,7 +975,7 @@ export class RecurringReservationService {
     dto: CreateRecurringReservationDto,
     userId: string
   ): Promise<RecurringReservationEntity> {
-    this.logger.log("Creating recurring reservation via application service", {
+    this.loggingService.log("Creating recurring reservation via application service", {
       userId,
       title: dto.title,
       resourceId: dto.resourceId,
@@ -1016,7 +1016,7 @@ export class RecurringReservationService {
     dto: UpdateRecurringReservationDto,
     userId: string
   ): Promise<RecurringReservationEntity> {
-    this.logger.log("Updating recurring reservation via application service", {
+    this.loggingService.log("Updating recurring reservation via application service", {
       id,
       userId,
       updateScope: dto.updateScope,
@@ -1074,7 +1074,7 @@ export class RecurringReservationService {
     cancelScope: "FUTURE_ONLY" | "ALL_INSTANCES" = "FUTURE_ONLY",
     notifyUsers: boolean = true
   ): Promise<void> {
-    this.logger.log(
+    this.loggingService.log(
       "Cancelling recurring reservation via application service",
       {
         id,
@@ -1103,7 +1103,7 @@ export class RecurringReservationService {
     userId: string,
     notifyUsers: boolean = true
   ): Promise<void> {
-    this.logger.log(
+    this.loggingService.log(
       "Cancelling recurring reservation instance via application service",
       {
         recurringReservationId,
@@ -1132,7 +1132,7 @@ export class RecurringReservationService {
     maxInstances?: number,
     skipConflicts: boolean = true
   ): Promise<{ generatedCount: number; totalInstances: number }> {
-    this.logger.log(
+    this.loggingService.log(
       "Generating recurring reservation instances via application service",
       {
         id,
@@ -1160,7 +1160,7 @@ export class RecurringReservationService {
     userId: string,
     notes?: string
   ): Promise<void> {
-    this.logger.log(
+    this.loggingService.log(
       "Confirming recurring reservation instance via application service",
       {
         recurringReservationId,
@@ -1184,7 +1184,7 @@ export class RecurringReservationService {
     dto: CreateRecurringReservationDto,
     userId: string
   ): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> {
-    this.logger.log(
+    this.loggingService.log(
       "Validating recurring reservation via application service",
       {
         userId,
@@ -1220,7 +1220,7 @@ export class RecurringReservationService {
     cancelScope: "FUTURE_ONLY" | "ALL_INSTANCES" = "FUTURE_ONLY",
     notifyUsers: boolean = true
   ): Promise<{ cancelled: number; failed: string[] }> {
-    this.logger.log(
+    this.loggingService.log(
       "Bulk cancelling recurring reservations via application service",
       {
         reservationIds,
@@ -1254,7 +1254,7 @@ export class RecurringReservationService {
       stats?: any;
     }
   > {
-    this.logger.log("Getting recurring reservation via application service", {
+    this.loggingService.log("Getting recurring reservation via application service", {
       id,
       userId,
       includeInstances,
@@ -1299,7 +1299,7 @@ export class RecurringReservationService {
     page: number;
     limit: number;
   }> {
-    this.logger.log("Getting recurring reservations via application service", {
+    this.loggingService.log("Getting recurring reservations via application service", {
       filters,
       pagination,
       requestingUserId,
@@ -1350,7 +1350,7 @@ export class RecurringReservationService {
     page: number;
     limit: number;
   }> {
-    this.logger.log(
+    this.loggingService.log(
       "Getting recurring reservation instances via application service",
       {
         recurringReservationId,
@@ -1384,7 +1384,7 @@ export class RecurringReservationService {
     includeProjections: boolean = false,
     includeComparisons: boolean = false
   ): Promise<any> {
-    this.logger.log(
+    this.loggingService.log(
       "Getting recurring reservation stats via application service",
       {
         id,
@@ -1408,7 +1408,7 @@ export class RecurringReservationService {
     userId: string,
     excludeId?: string
   ): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> {
-    this.logger.log(
+    this.loggingService.log(
       "Validating recurring reservation query via application service",
       {
         userId,
@@ -1445,7 +1445,7 @@ export class RecurringReservationService {
     checkFutureOnly: boolean = true,
     includeResolutions: boolean = true
   ): Promise<any> {
-    this.logger.log(
+    this.loggingService.log(
       "Getting recurring reservation conflicts via application service",
       {
         id,
@@ -1472,7 +1472,7 @@ export class RecurringReservationService {
     limit: number = 10,
     requestingUserId: string = userId
   ): Promise<any> {
-    this.logger.log(
+    this.loggingService.log(
       "Getting user recurring reservations via application service",
       {
         userId,
@@ -1508,7 +1508,7 @@ export class RecurringReservationService {
     },
     requestingUserId: string
   ): Promise<any> {
-    this.logger.log(
+    this.loggingService.log(
       "Getting recurring reservation analytics via application service",
       {
         filters,
@@ -1542,7 +1542,7 @@ export class RecurringReservationService {
     limit: number = 20,
     requestingUserId: string
   ): Promise<RecurringReservationInstanceEntity[]> {
-    this.logger.log(
+    this.loggingService.log(
       "Getting upcoming recurring instances via application service",
       {
         filters,

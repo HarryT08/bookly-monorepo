@@ -3,12 +3,19 @@ import { LoggingService } from '@logging/logging.service';
 import { EventBusService, DomainEvent } from '@libs/event-bus/services/event-bus.service';
 import { NotificationService } from '@libs/notification/notification.service';
 import { AvailabilityRepository } from '../../domain/repositories/availability.repository';
-import { AvailabilityEntity } from '../../domain/entities/availability.entity';
 import { ReservationRepository } from '../../domain/repositories/reservation.repository';
 import { ScheduleRepository } from '../../domain/repositories/schedule.repository';
 import { ReservationHistoryRepository } from '../../domain/repositories/reservation-history.repository';
+import { AvailabilityEntity } from '../../domain/entities/availability.entity';
 import { ReservationEntity, ReservationStatus } from '../../domain/entities/reservation.entity';
-import { ReservationAction } from '../../../../libs/dto/availability/reservation-history.dto';
+import { ReservationAction } from '@libs/dto/availability/reservation-history.dto';
+import { 
+  StandardizedDomainEvent, 
+  createStandardizedEvent, 
+  EventAction, 
+  AVAILABILITY_EVENTS,
+  RESERVATION_EVENTS 
+} from '@libs/event-bus/interfaces/standardized-domain-event.interface';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -27,14 +34,98 @@ export class AvailabilityService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async findAll(): Promise<any[]> {
+  async findAll(): Promise<AvailabilityEntity[]> {
     this.loggingService.log('Finding all availability slots', 'AvailabilityService');
-    return [];
+    
+    try {
+      const availabilities = await this.availabilityRepository.findByResourceId('');
+      
+      this.loggingService.log(
+        `Found ${availabilities.length} availability slots`,
+        { count: availabilities.length },
+        'AvailabilityService'
+      );
+      
+      return availabilities;
+    } catch (error) {
+      this.loggingService.error('Failed to find all availability slots', error, 'AvailabilityService');
+      throw error;
+    }
   }
 
-  async findByResourceId(resourceId: string): Promise<any[]> {
+  async findByResourceId(resourceId: string): Promise<AvailabilityEntity[]> {
     this.loggingService.log(`Finding availability for resource: ${resourceId}`, 'AvailabilityService');
-    return [];
+    
+    try {
+      const availabilities = await this.availabilityRepository.findByResourceId(resourceId);
+      
+      this.loggingService.log(
+        `Found ${availabilities.length} availability slots for resource`,
+        { resourceId, count: availabilities.length },
+        'AvailabilityService'
+      );
+      
+      return availabilities;
+    } catch (error) {
+      this.loggingService.error(`Failed to find availability for resource: ${resourceId}`, error, 'AvailabilityService');
+      throw error;
+    }
+  }
+
+  async findReservations(filters?: {
+    resourceId?: string;
+    userId?: string;
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<ReservationEntity[]> {
+    this.loggingService.log('Finding reservations with filters', { filters }, 'AvailabilityService');
+    
+    try {
+      const reservations = await this.reservationRepository.findByResourceAndDateRange(
+        filters?.resourceId || '',
+        filters?.startDate || new Date(),
+        filters?.endDate || new Date()
+      );
+      
+      this.loggingService.log(
+        `Found ${reservations.length} reservations`,
+        { count: reservations.length, filters },
+        'AvailabilityService'
+      );
+      
+      return reservations;
+    } catch (error) {
+      this.loggingService.error('Failed to find reservations', error, 'AvailabilityService');
+      throw error;
+    }
+  }
+
+  async findReservationById(id: string): Promise<ReservationEntity | null> {
+    this.loggingService.log(`Finding reservation by id: ${id}`, 'AvailabilityService');
+    
+    try {
+      const reservation = await this.reservationRepository.findById(id);
+      
+      if (reservation) {
+        this.loggingService.log(
+          'Reservation found',
+          { reservationId: id, userId: reservation.userId },
+          'AvailabilityService'
+        );
+      } else {
+        this.loggingService.log(
+          'Reservation not found',
+          { reservationId: id },
+          'AvailabilityService'
+        );
+      }
+      
+      return reservation;
+    } catch (error) {
+      this.loggingService.error(`Failed to find reservation by id: ${id}`, error, 'AvailabilityService');
+      throw error;
+    }
   }
 
   /**
@@ -83,22 +174,24 @@ export class AvailabilityService {
         isActive: true
       });
 
-      // Publish domain event
-      const domainEvent: DomainEvent = {
-        eventId: uuidv4(),
-        eventType: 'availability.created',
-        aggregateId: availability.id,
-        aggregateType: 'Availability',
-        eventData: {
+      // Business Logic 4: Publish standardized domain event
+      const domainEvent = createStandardizedEvent(
+        AVAILABILITY_EVENTS.CREATED,
+        availability.id,
+        'Availability',
+        EventAction.CREATED,
+        {
           availabilityId: availability.id,
           resourceId: availability.resourceId,
           dayOfWeek: availability.dayOfWeek,
           startTime: availability.startTime,
           endTime: availability.endTime
         },
-        timestamp: new Date(),
-        version: 1
-      };
+        {
+          service: 'availability-service',
+          correlationId: uuidv4()
+        }
+      );
 
       await this.eventBusService.publishEvent(domainEvent);
 
@@ -226,24 +319,29 @@ export class AvailabilityService {
         newData: savedReservation
       });
 
-      // Business Logic 7: Publish domain event
-      const domainEvent: DomainEvent = {
-        eventId: uuidv4(),
-        eventType: 'reservation.created',
-        aggregateId: savedReservation.id,
-        aggregateType: 'Reservation',
-        eventData: {
+      // Business Logic 7: Publish standardized domain event
+      const domainEvent = createStandardizedEvent(
+        RESERVATION_EVENTS.CREATED,
+        savedReservation.id,
+        'Reservation',
+        EventAction.CREATED,
+        {
           reservationId: savedReservation.id,
           userId: savedReservation.userId,
           resourceId: savedReservation.resourceId,
-          startTime: savedReservation.startTime,
-          endTime: savedReservation.endTime,
-          status: savedReservation.status
+          startDate: savedReservation.startDate.toISOString(),
+          endDate: savedReservation.endDate.toISOString(),
+          title: savedReservation.title,
+          description: savedReservation.description,
+          status: savedReservation.status,
+          isRecurring: savedReservation.isRecurring
         },
-        timestamp: new Date(),
-        version: 1,
-        userId: data.userId
-      };
+        {
+          userId: data.userId,
+          service: 'availability-service',
+          correlationId: uuidv4()
+        }
+      );
 
       await this.eventBusService.publishEvent(domainEvent);
 
@@ -369,6 +467,363 @@ export class AvailabilityService {
   async checkAvailability(resourceId: string, startDate: Date, endDate: Date): Promise<boolean> {
     this.loggingService.log(`Checking availability for resource: ${resourceId}`, 'AvailabilityService');
     return true;
+  }
+
+  /**
+   * New methods for handler delegation (Clean Architecture compliance)
+   */
+
+  async findByResourceAndDay(resourceId: string, dayOfWeek: number): Promise<AvailabilityEntity[]> {
+    this.loggingService.log(`Finding availability for resource ${resourceId} on day ${dayOfWeek}`, 'AvailabilityService');
+    
+    try {
+      const availabilities = await this.availabilityRepository.findByResourceAndDay(resourceId, dayOfWeek);
+      
+      this.loggingService.log(
+        `Found ${availabilities.length} availability slots for resource on specific day`,
+        { resourceId, dayOfWeek, count: availabilities.length },
+        'AvailabilityService'
+      );
+      
+      return availabilities;
+    } catch (error) {
+      this.loggingService.error(`Failed to find availability for resource ${resourceId} on day ${dayOfWeek}`, error, 'AvailabilityService');
+      throw error;
+    }
+  }
+
+  async findAllActive(): Promise<AvailabilityEntity[]> {
+    this.loggingService.log('Finding all active availability slots', 'AvailabilityService');
+    
+    try {
+      const availabilities = await this.availabilityRepository.findAllActive();
+      
+      this.loggingService.log(
+        `Found ${availabilities.length} active availability slots`,
+        { count: availabilities.length },
+        'AvailabilityService'
+      );
+      
+      return availabilities;
+    } catch (error) {
+      this.loggingService.error('Failed to find all active availability slots', error, 'AvailabilityService');
+      throw error;
+    }
+  }
+
+  async getResourceAvailabilityComprehensive(query: {
+    resourceId: string;
+    startDate: Date;
+    endDate: Date;
+    includeReservations?: boolean;
+    includeScheduleRestrictions?: boolean;
+  }): Promise<any> {
+    this.loggingService.log(
+      `Getting comprehensive availability for resource ${query.resourceId} from ${query.startDate} to ${query.endDate}`,
+      'AvailabilityService'
+    );
+
+    try {
+      const result: any = {
+        resourceId: query.resourceId,
+        startDate: query.startDate,
+        endDate: query.endDate,
+        availability: [],
+        reservations: [],
+        schedules: [],
+        timeSlots: []
+      };
+
+      // Get basic availability
+      result.availability = await this.availabilityRepository.findByResourceId(query.resourceId);
+
+      // Get reservations if requested
+      if (query.includeReservations) {
+        result.reservations = await this.reservationRepository.findByResourceAndDateRange(
+          query.resourceId,
+          query.startDate,
+          query.endDate
+        );
+      }
+
+      // Get schedule restrictions if requested
+      if (query.includeScheduleRestrictions) {
+        result.schedules = await this.scheduleRepository.findActiveByResourceAndDateRange(
+          query.resourceId,
+          query.startDate,
+          query.endDate
+        );
+      }
+
+      // Generate time slots for calendar display
+      result.timeSlots = this.generateTimeSlots(
+        query.startDate,
+        query.endDate,
+        result.availability,
+        result.reservations,
+        result.schedules
+      );
+
+      this.loggingService.log(
+        `Generated comprehensive availability data`,
+        { 
+          resourceId: query.resourceId,
+          availabilityCount: result.availability.length,
+          reservationsCount: result.reservations.length,
+          schedulesCount: result.schedules.length,
+          timeSlotsCount: result.timeSlots.length
+        },
+        'AvailabilityService'
+      );
+
+      return result;
+
+    } catch (error) {
+      this.loggingService.error(
+        `Failed to get comprehensive availability for resource ${query.resourceId}`,
+        error,
+        'AvailabilityService'
+      );
+      throw error;
+    }
+  }
+
+  async checkAvailabilityDetailed(query: {
+    resourceId: string;
+    startDate: Date;
+    endDate: Date;
+  }): Promise<{ available: boolean; conflicts: string[]; restrictions: string[] }> {
+    this.loggingService.log(
+      `Checking detailed availability for resource ${query.resourceId} from ${query.startDate} to ${query.endDate}`,
+      'AvailabilityService'
+    );
+
+    try {
+      const conflicts: string[] = [];
+      const restrictions: string[] = [];
+
+      // Check basic availability hours
+      const dayOfWeek = query.startDate.getDay();
+      const availabilityRecords = await this.availabilityRepository.findByResourceAndDay(
+        query.resourceId,
+        dayOfWeek
+      );
+
+      const startTime = query.startDate.toTimeString().substring(0, 5);
+      const endTime = query.endDate.toTimeString().substring(0, 5);
+
+      const hasBasicAvailability = availabilityRecords.some(avail => 
+        avail.isActive &&
+        avail.isTimeWithinAvailability &&
+        avail.isTimeWithinAvailability(startTime) &&
+        avail.isTimeWithinAvailability(endTime)
+      );
+
+      if (!hasBasicAvailability) {
+        conflicts.push('Time slot is outside basic availability hours');
+      }
+
+      // Check for reservation conflicts
+      const conflictingReservations = await this.reservationRepository.findConflictingReservations(
+        query.resourceId,
+        query.startDate,
+        query.endDate
+      );
+
+      if (conflictingReservations.length > 0) {
+        conflicts.push(`Conflicts with ${conflictingReservations.length} existing reservation(s)`);
+      }
+
+      // Check schedule restrictions
+      const affectingSchedules = await this.scheduleRepository.findByResourceAndDate(
+        query.resourceId,
+        query.startDate
+      );
+
+      for (const schedule of affectingSchedules) {
+        if (!schedule.isActive) continue;
+
+        if (schedule.isDateWithinSchedule && !schedule.isDateWithinSchedule(query.startDate)) {
+          restrictions.push(`Outside allowed schedule period: ${schedule.name || 'Schedule restriction'}`);
+        }
+
+        // Check advance notice if method exists
+        if (schedule.getMinimumAdvanceNotice) {
+          const minimumAdvanceNotice = schedule.getMinimumAdvanceNotice();
+          if (minimumAdvanceNotice > 0) {
+            const now = new Date();
+            const hoursUntilStart = (query.startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+            
+            if (hoursUntilStart < minimumAdvanceNotice) {
+              restrictions.push(`Requires ${minimumAdvanceNotice} hours advance notice`);
+            }
+          }
+        }
+      }
+
+      const available = conflicts.length === 0 && restrictions.length === 0;
+
+      this.loggingService.log(
+        `Availability check completed`,
+        { 
+          resourceId: query.resourceId,
+          available,
+          conflictsCount: conflicts.length,
+          restrictionsCount: restrictions.length
+        },
+        'AvailabilityService'
+      );
+
+      return {
+        available,
+        conflicts,
+        restrictions
+      };
+
+    } catch (error) {
+      this.loggingService.error(
+        `Failed to check detailed availability for resource ${query.resourceId}`,
+        error,
+        'AvailabilityService'
+      );
+      throw error;
+    }
+  }
+
+  private generateTimeSlots(
+    startDate: Date,
+    endDate: Date,
+    availability: any[],
+    reservations: any[],
+    schedules: any[]
+  ): any[] {
+    const timeSlots: any[] = [];
+    const current = new Date(startDate);
+
+    while (current <= endDate) {
+      const dayOfWeek = current.getDay();
+      const dayAvailability = availability.filter(a => a.dayOfWeek === dayOfWeek && a.isActive);
+
+      for (const avail of dayAvailability) {
+        const slotStart = new Date(current);
+        const [startHour, startMinute] = avail.startTime.split(':').map(Number);
+        slotStart.setHours(startHour, startMinute, 0, 0);
+
+        const slotEnd = new Date(current);
+        const [endHour, endMinute] = avail.endTime.split(':').map(Number);
+        slotEnd.setHours(endHour, endMinute, 0, 0);
+
+        // Check if slot is blocked by reservations
+        const isBlocked = reservations.some(reservation => 
+          reservation.startDate < slotEnd && reservation.endDate > slotStart &&
+          ['PENDING', 'APPROVED'].includes(reservation.status)
+        );
+
+        // Check if slot is affected by schedule restrictions
+        const affectingSchedules = schedules.filter(schedule =>
+          schedule.isDateWithinSchedule && schedule.isDateWithinSchedule(current)
+        );
+
+        timeSlots.push({
+          start: slotStart,
+          end: slotEnd,
+          available: !isBlocked,
+          blocked: isBlocked,
+          scheduleRestrictions: affectingSchedules,
+          dayOfWeek: dayOfWeek
+        });
+      }
+
+      current.setDate(current.getDate() + 1);
+    }
+
+    return timeSlots;
+  }
+
+  /**
+   * Get reservation history with filters and pagination (RF-11)
+   */
+  async getReservationHistory(filters: {
+    reservationId?: string;
+    userId?: string;
+    resourceId?: string;
+    action?: string;
+    startDate?: Date;
+    endDate?: Date;
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
+    this.loggingService.log(
+      `Getting reservation history with filters`,
+      { filters },
+      'AvailabilityService'
+    );
+
+    try {
+      const result = await this.reservationHistoryRepository.findWithFilters(filters as any);
+
+      this.loggingService.log(
+        `Retrieved ${result.total} reservation history records (page ${filters.page}, limit ${filters.limit})`,
+        { 
+          total: result.total,
+          page: filters.page,
+          limit: filters.limit,
+          filtersApplied: Object.keys(filters).length
+        },
+        'AvailabilityService'
+      );
+
+      return result;
+
+    } catch (error) {
+      this.loggingService.error(
+        'Failed to get reservation history',
+        error,
+        'AvailabilityService'
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Export reservation history to CSV (RF-11)
+   */
+  async exportReservationHistoryToCsv(filters: {
+    reservationId?: string;
+    userId?: string;
+    resourceId?: string;
+    action?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<string> {
+    this.loggingService.log(
+      `Exporting reservation history to CSV with filters`,
+      { filters },
+      'AvailabilityService'
+    );
+
+    try {
+      const csvData = await this.reservationHistoryRepository.exportToCsv(filters as any);
+
+      this.loggingService.log(
+        `Exported ${csvData.length} characters of reservation history data`,
+        { 
+          csvLength: csvData.length,
+          filtersApplied: Object.keys(filters).length
+        },
+        'AvailabilityService'
+      );
+
+      return csvData;
+
+    } catch (error) {
+      this.loggingService.error(
+        'Failed to export reservation history to CSV',
+        error,
+        'AvailabilityService'
+      );
+      throw error;
+    }
   }
 
   /**

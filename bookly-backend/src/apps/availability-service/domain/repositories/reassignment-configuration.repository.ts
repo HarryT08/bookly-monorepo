@@ -38,7 +38,7 @@ export interface ReassignmentConfigurationRepository {
   /**
    * Find configuration by program ID
    */
-  findByProgramId(programId: string): Promise<ReassignmentConfigurationEntity | null>;
+  findByProgramId(programId: string): Promise<ReassignmentConfigurationEntity | null | ReassignmentConfigurationEntity[]>;
 
   /**
    * Find all configurations
@@ -175,7 +175,7 @@ export interface ReassignmentConfigurationRepository {
   }): Promise<{
     isValid: boolean;
     errors: string[];
-    warnings: string[];
+    warnings?: string[];
   }>;
 
   /**

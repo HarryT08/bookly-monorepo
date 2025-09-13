@@ -206,8 +206,8 @@ export class ReassignmentController {
   ): Promise<ProcessReassignmentResponseDto> {
     return await this.reassignmentService.processUserResponse(
       id,
-      response,
       user.id,
+      response,
       selectedResourceId,
       reason
     );
@@ -339,10 +339,18 @@ export class ReassignmentController {
     existingRequests: any[];
     suggestedResources: number;
   }> {
-    return await this.reassignmentService.validateRequest({
+    const validation = await this.reassignmentService.validateRequest({
       ...createDto,
       requestedBy: user.id
     });
+    
+    return {
+      canCreate: validation.isValid,
+      violations: validation.errors,
+      warnings: validation.warnings,
+      existingRequests: [],
+      suggestedResources: 0
+    };
   }
 
   @Delete('requests/:id')
@@ -446,15 +454,14 @@ export class ReassignmentController {
     enum: ['7d', '30d', '90d']
   })
   @ApiResponse({
-    status: HttpStatus.OK,
     description: 'Analytics retrieved successfully',
     type: ReassignmentAnalyticsDto
   })
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
-  async getReassignmentAnalytics(
+  async getAnalytics(
     @CurrentUser() user: any,
     @Query('programId') programId?: string,
-    @Query('timeRange') timeRange: string = '30d',
+    @Query('timeRange') timeRangeParam: string = '30d',
   ): Promise<ReassignmentAnalyticsDto> {
     const timeRangeMap = {
       '7d': { start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), end: new Date() },
@@ -462,10 +469,12 @@ export class ReassignmentController {
       '90d': { start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), end: new Date() }
     };
 
-    return await this.reassignmentService.generateAnalytics(
+    const selectedRange = timeRangeMap[timeRangeParam] || timeRangeMap['30d'];
+    return await this.reassignmentService.generateAnalytics({
       programId,
-      timeRangeMap[timeRange] || timeRangeMap['30d']
-    );
+      startDate: selectedRange.start,
+      endDate: selectedRange.end
+    });
   }
 
   @Post('bulk-process')

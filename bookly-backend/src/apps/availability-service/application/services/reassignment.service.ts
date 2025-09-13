@@ -742,27 +742,63 @@ export class ReassignmentService {
     return await this.queryBus.execute(query);
   }
 
-  async searchReassignmentRequests(
-    searchTerm: string,
-    filters: any,
-    includeEquivalentResources: boolean = false,
-    includeStats: boolean = false,
+  async getReassignmentRequestHistory(
+    reassignmentRequestId: string,
+    includeProcessingSteps: boolean = true,
+    includeNotifications: boolean = true,
+    includeUserInteractions: boolean = true,
     page: number = 1,
-    limit: number = 10,
-    requestingUserId: string
-  ): Promise<{ items: ReassignmentRequestEntity[]; total: number; page: number; limit: number }> {
-    this.logger.log('Searching reassignment requests via application service', {
-      searchTerm,
-      filters,
+    limit: number = 50,
+    requestingUserId?: string
+  ): Promise<{ items: any[]; total: number; page: number; limit: number }> {
+    this.logger.log('Getting reassignment request history via application service', {
+      reassignmentRequestId,
+      includeProcessingSteps,
+      includeNotifications,
+      includeUserInteractions,
+      page,
+      limit
+    });
+
+    const query = new GetReassignmentRequestHistoryQuery(
+      reassignmentRequestId,
+      includeProcessingSteps,
+      includeNotifications,
+      includeUserInteractions,
       page,
       limit,
       requestingUserId
+    );
+
+    return await this.queryBus.execute(query);
+  }
+
+  async getResourceReassignmentRequests(
+    resourceId: string,
+    status?: string,
+    reason?: any,
+    startDate?: Date,
+    endDate?: Date,
+    includeStats: boolean = true,
+    page: number = 1,
+    limit: number = 10,
+    requestingUserId?: string
+  ): Promise<{ items: ReassignmentRequestEntity[]; total: number; stats?: any }> {
+    this.logger.log('Getting resource reassignment requests via application service', {
+      resourceId,
+      status,
+      reason,
+      includeStats,
+      page,
+      limit
     });
 
-    const query = new SearchReassignmentRequestsQuery(
-      searchTerm,
-      filters,
-      includeEquivalentResources,
+    const query = new GetResourceReassignmentRequestsQuery(
+      resourceId,
+      status,
+      reason,
+      startDate,
+      endDate,
       includeStats,
       page,
       limit,
@@ -772,124 +808,259 @@ export class ReassignmentService {
     return await this.queryBus.execute(query);
   }
 
-  // Controller-specific methods (aliases and wrappers)
+  async getProgramReassignmentRequests(
+    programId: string,
+    status?: string,
+    reason?: any,
+    includeStats: boolean = true,
+    page: number = 1,
+    limit: number = 10,
+    requestingUserId?: string
+  ): Promise<{ items: ReassignmentRequestEntity[]; total: number; stats?: any }> {
+    this.logger.log('Getting program reassignment requests via application service', {
+      programId,
+      status,
+      reason,
+      includeStats,
+      page,
+      limit
+    });
 
-  async createRequest(data: any): Promise<any> {
-    return await this.createReassignmentRequest(data, data.requestedBy);
-  }
-
-  async findAll(queryDto: ReassignmentQueryDto): Promise<any> {
-    // Use the correct structure for getReassignmentRequests
-    const filters = {
-      status: queryDto.status,
-      reason: queryDto.reason,
-      priority: queryDto.priority,
-      userId: queryDto.userId,
-      originalResourceId: queryDto.originalResourceId,
-      programId: queryDto.programId,
-      createdFrom: queryDto.createdFrom ? new Date(queryDto.createdFrom) : undefined,
-      createdTo: queryDto.createdTo ? new Date(queryDto.createdTo) : undefined,
-      resourceType: queryDto.resourceType,
-      minCapacity: queryDto.minCapacity
-    };
-
-    const pagination = {
-      page: queryDto.page || 1,
-      limit: queryDto.limit || 20,
-      sortBy: queryDto.sortBy,
-      sortOrder: queryDto.sortOrder
-    };
-
-    const options = {
-      includeEquivalentResources: true,
-      includeStats: false,
-      includeProcessingHistory: false
-    };
-
-    return await this.getReassignmentRequests(
-      filters,
-      pagination,
-      options,
-      queryDto.userId || 'system'
+    const query = new GetProgramReassignmentRequestsQuery(
+      programId,
+      status,
+      reason,
+      includeStats,
+      page,
+      limit,
+      requestingUserId
     );
+
+    return await this.queryBus.execute(query);
   }
 
-  async findById(id: string, userId: string): Promise<any> {
-    return await this.getReassignmentRequest(id, userId);
-  }
-
-  async processUserResponse(
-    id: string,
-    response: 'ACCEPT' | 'REJECT',
+  async getUserReassignmentHistory(
     userId: string,
-    selectedResourceId?: string,
-    reason?: string
-  ): Promise<any> {
-    await this.respondToReassignmentRequest(
-      id,
+    includeStats: boolean = true,
+    includePatterns: boolean = true,
+    startDate?: Date,
+    endDate?: Date,
+    page: number = 1,
+    limit: number = 20,
+    requestingUserId?: string
+  ): Promise<{ items: any[]; total: number; stats?: any; patterns?: any }> {
+    this.logger.log('Getting user reassignment history via application service', {
       userId,
-      response === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED',
-      selectedResourceId,
-      reason
+      includeStats,
+      includePatterns,
+      page,
+      limit
+    });
+
+    const query = new GetUserReassignmentHistoryQuery(
+      userId,
+      includeStats,
+      includePatterns,
+      startDate,
+      endDate,
+      page,
+      limit,
+      requestingUserId
     );
-    return { success: true, message: `Request ${response.toLowerCase()}ed successfully` };
+
+    return await this.queryBus.execute(query);
   }
 
-  async validateRequest(data: any): Promise<any> {
-    return await this.validateReassignmentRequestQuery(
+  async getReassignmentTrends(
+    resourceId?: string,
+    programId?: string,
+    timeframe: 'week' | 'month' | 'quarter' | 'year' = 'month',
+    metrics: string[] = ['requests', 'success_rate', 'response_times'],
+    compareWithPrevious: boolean = true,
+    requestingUserId?: string
+  ): Promise<any> {
+    this.logger.log('Getting reassignment trends via application service', {
+      resourceId,
+      programId,
+      timeframe,
+      metrics,
+      compareWithPrevious
+    });
+
+    const query = new GetReassignmentTrendsQuery(
+      resourceId,
+      programId,
+      timeframe,
+      metrics,
+      compareWithPrevious,
+      requestingUserId
+    );
+
+    return await this.queryBus.execute(query);
+  }
+
+  // Additional methods required by controllers
+
+  async validateRequest(data: {
+    originalReservationId: string;
+    reason: any;
+    suggestedResourceId?: string;
+    acceptEquivalentResources?: boolean;
+    capacityTolerancePercent?: number;
+    requiredFeatures?: string[];
+    requestedBy?: string;
+  }): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> {
+    this.logger.log('Validating reassignment request', data);
+    
+    return await this.validateReassignmentRequest(
       data.originalReservationId,
       data.reason,
       data.suggestedResourceId,
-      data.acceptEquivalentResources,
+      data.acceptEquivalentResources || true,
       data.capacityTolerancePercent,
       data.requiredFeatures,
-      data.requestingUserId
+      data.requestedBy
     );
   }
 
-  async cancelRequest(id: string, userId: string, reason: string): Promise<void> {
-    await this.cancelReassignmentRequest(id, userId, reason);
+  async cancelRequest(reassignmentRequestId: string, userId: string, reason: string): Promise<void> {
+    this.logger.log('Cancelling reassignment request', { reassignmentRequestId, userId, reason });
+    
+    await this.cancelReassignmentRequest(reassignmentRequestId, userId, reason);
   }
 
-  async autoProcessRequest(id: string, hoursUntilEvent: number): Promise<any> {
-    // TODO: Implement auto-processing logic
-    return {
-      autoApproved: false,
-      selectedResource: null,
-      reason: 'Auto-processing not yet implemented',
-      notificationsSent: false
-    };
+  async autoProcessRequest(reassignmentRequestId: string, hoursUntilEvent: number): Promise<any> {
+    this.logger.log('Auto processing reassignment request', { reassignmentRequestId, hoursUntilEvent });
+    
+    return await this.autoProcessReassignmentRequests(
+      { reassignmentRequestId, hoursUntilEvent },
+      'system',
+      false,
+      1
+    );
   }
 
-  async generateAnalytics(programId?: string, timeRange: string = '30d'): Promise<any> {
-    const filters = { programId, timeRange };
-    return await this.getReassignmentAnalytics(filters, ['total_requests', 'success_rate'], 'day', programId || 'system');
+  async generateAnalytics(filters: {
+    resourceId?: string;
+    programId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    groupBy?: string;
+  }): Promise<any> {
+    this.logger.log('Generating reassignment analytics', filters);
+    
+    return await this.getReassignmentAnalytics(
+      filters,
+      ['total_requests', 'success_rate', 'average_response_time'],
+      (filters.groupBy as 'hour' | 'day' | 'week' | 'month') || 'day',
+      'system'
+    );
   }
 
   async processBulkReassignment(operations: any[]): Promise<any> {
-    // TODO: Implement bulk processing logic
-    return {
-      successful: [],
-      failed: [],
-      summary: { total: operations.length, processed: 0, errors: operations.length }
-    };
+    this.logger.log('Processing bulk reassignment', { operationsCount: operations.length });
+    
+    const reassignmentRequestIds = operations.map(op => op.reassignmentRequestId);
+    const action = operations[0]?.action || 'PROCESS';
+    const parameters = operations[0]?.parameters || {};
+    
+    return await this.bulkProcessReassignmentRequests(
+      reassignmentRequestIds,
+      action,
+      parameters,
+      'system'
+    );
   }
 
-  async predictSuccess(id: string): Promise<any> {
-    return await this.getReassignmentSuccessPrediction(id);
+  async predictSuccess(reassignmentRequestId: string): Promise<any> {
+    this.logger.log('Predicting reassignment success', { reassignmentRequestId });
+    
+    return await this.getReassignmentSuccessPrediction(
+      reassignmentRequestId,
+      undefined,
+      true,
+      true,
+      'system'
+    );
   }
 
-  async getUserHistory(userId: string, limit: number): Promise<any[]> {
-    const result = await this.getUserReassignmentRequests(userId, undefined, undefined, true);
-    return result.items || [];
+  async getUserHistory(userId: string, limit: number = 10): Promise<any> {
+    this.logger.log('Getting user reassignment history', { userId, limit });
+    
+    return await this.getUserReassignmentHistory(
+      userId,
+      true,
+      true,
+      undefined,
+      undefined,
+      1,
+      limit,
+      'system'
+    );
   }
 
-  async optimizeConfiguration(programId: string): Promise<any> {
-    // TODO: Implement configuration optimization logic
-    return {
-      currentConfig: {},
-      recommendedChanges: [],
-      testResults: {}
-    };
+  async optimizeConfiguration(programId?: string): Promise<any> {
+    this.logger.log('Optimizing reassignment configuration', { programId });
+    
+    return await this.optimizeReassignmentQueue(
+      'RESOURCE_UTILIZATION',
+      'system',
+      false,
+      100,
+      false
+    );
+  }
+
+  // Additional methods required by controllers
+
+  async createRequest(data: any): Promise<any> {
+    this.logger.log('Creating reassignment request', data);
+    
+    return await this.createReassignmentRequest(data, data.requestedBy || 'system');
+  }
+
+  async findAll(query: any): Promise<any> {
+    this.logger.log('Finding all reassignment requests', query);
+    
+    return await this.getReassignmentRequests(
+      query.filters || {},
+      {
+        page: query.page || 1,
+        limit: query.limit || 10,
+        sortBy: query.sortBy,
+        sortOrder: query.sortOrder
+      },
+      {
+        includeEquivalentResources: query.includeEquivalentResources,
+        includeStats: query.includeStats,
+        includeProcessingHistory: query.includeProcessingHistory
+      },
+      query.requestingUserId || 'system'
+    );
+  }
+
+  async findById(reassignmentRequestId: string, userId: string): Promise<any> {
+    this.logger.log('Finding reassignment request by ID', { reassignmentRequestId, userId });
+    
+    return await this.getReassignmentRequest(
+      reassignmentRequestId,
+      userId,
+      true,
+      false,
+      true,
+      false
+    );
+  }
+
+  async processUserResponse(reassignmentRequestId: string, userId: string, response: any, selectedResourceId?: string, responseNotes?: string): Promise<any> {
+    this.logger.log('Processing user response', { reassignmentRequestId, userId, response });
+    
+    return await this.respondToReassignmentRequest(
+      reassignmentRequestId,
+      userId,
+      response,
+      selectedResourceId,
+      responseNotes
+    );
   }
 }

@@ -19,12 +19,8 @@ import {
   GetRecurringReservationAnalyticsQuery,
   GetUpcomingRecurringInstancesQuery} from '../queries/recurring-reservation.queries';
 
-// Domain Services
-import { RecurringReservationDomainService } from '../../domain/services/recurring-reservation-domain.service';
-
-// Repositories
-import { RecurringReservationRepository } from '../../domain/repositories/recurring-reservation.repository';
-import { RecurringReservationInstanceRepository } from '../../domain/repositories/recurring-reservation-instance.repository';
+// Application Services
+import { RecurringReservationService } from '../services/recurring-reservation.service';
 
 // Entities
 import { RecurringReservationEntity } from '../../domain/entities/recurring-reservation.entity';
@@ -36,14 +32,12 @@ import { RecurrenceFrequency, RecurringReservationStatus } from '../../utils';
 @QueryHandler(GetRecurringReservationQuery)
 export class GetRecurringReservationHandler implements IQueryHandler<GetRecurringReservationQuery> {
   constructor(
-    private readonly recurringReservationRepository: RecurringReservationRepository,
-    private readonly recurringReservationInstanceRepository: RecurringReservationInstanceRepository,
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetRecurringReservationQuery): Promise<RecurringReservationEntity & { instances?: RecurringReservationInstanceEntity[]; stats?: any }> {
-    this.logger.log('Getting recurring reservation', {
+    this.logger.log('Orchestrating get recurring reservation query', {
       id: query.id,
       userId: query.userId,
       includeInstances: query.includeInstances,
@@ -51,41 +45,16 @@ export class GetRecurringReservationHandler implements IQueryHandler<GetRecurrin
     });
 
     try {
-      const reservation = await this.recurringReservationRepository.findById(query.id);
-      if (!reservation) {
-        throw new NotFoundException(`Recurring reservation with ID ${query.id} not found`);
-      }
-
-      // Check permissions (users can only see their own reservations unless admin)
-      if (reservation.userId !== query.userId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only view your own reservations');
-      }
-
-      const result: any = { ...reservation };
-
-      // Include instances if requested
-      if (query.includeInstances) {
-        result.instances = await this.recurringReservationInstanceRepository.findByRecurringReservationId(query.id);
-      }
-
-      // Include stats if requested
-      if (query.includeStats) {
-        result.stats = await this.recurringReservationService.getRecurringReservationStats(query.id);
-      }
-
-      this.logger.log('Recurring reservation retrieved successfully', {
-        id: query.id,
-        title: reservation.title
-      });
-
+      const result = await this.recurringReservationService.getRecurringReservation(
+        query.id,
+        query.userId,
+        query.includeInstances,
+        query.includeStats
+      );
+      this.logger.log('Recurring reservation retrieved successfully', { id: query.id });
       return result;
-
     } catch (error) {
-      this.logger.error('Failed to get recurring reservation', error, LoggingHelper.logParams({
-        id: query.id,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to orchestrate get recurring reservation query', error);
       throw error;
     }
   }
@@ -95,16 +64,14 @@ export class GetRecurringReservationHandler implements IQueryHandler<GetRecurrin
 @QueryHandler(GetRecurringReservationsQuery)
 export class GetRecurringReservationsHandler implements IQueryHandler<GetRecurringReservationsQuery> {
   constructor(
-    private readonly recurringReservationRepository: RecurringReservationRepository,
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetRecurringReservationsQuery): Promise<{ items: RecurringReservationEntity[]; total: number; page: number; limit: number }> {
-    this.logger.log('Getting recurring reservations', {
+    this.logger.log('Orchestrating get recurring reservations query', {
       userId: query.userId,
       resourceId: query.resourceId,
-      programId: query.programId,
       page: query.page,
       limit: query.limit
     });
@@ -115,57 +82,38 @@ export class GetRecurringReservationsHandler implements IQueryHandler<GetRecurri
         resourceId: query.resourceId,
         programId: query.programId,
         status: query.status,
-        frequency: query.frequency,
         startDate: query.startDate,
-        endDate: query.endDate,
-        priority: query.priority,
-        tags: query.tags
+        endDate: query.endDate
       };
 
-      const { items, total } = await this.recurringReservationRepository.findMany(
+      const pagination = {
+        page: query.page || 1,
+        limit: Math.min(query.limit || 10, 100),
+        sortBy: query.sortBy || 'createdAt',
+        sortOrder: query.sortOrder || 'DESC'
+      };
+
+      const options = {
+        includeStats: query.includeStats,
+        includeInstances: query.includeInstances
+      };
+
+      const result = await this.recurringReservationService.getRecurringReservations(
         filters,
-        query.page,
-        query.limit,
-        query.sortBy,
-        query.sortOrder
+        pagination,
+        options,
+        query.userId
       );
-
-      // Enhance with stats and instances if requested
-      const enhancedItems = await Promise.all(
-        items.map(async (item) => {
-          const enhanced: any = { ...item };
-
-          if (query.includeStats) {
-            enhanced.stats = await this.recurringReservationService.getRecurringReservationStats(item.id);
-          }
-
-          if (query.includeInstances) {
-            enhanced.recentInstances = await this.recurringReservationService.getRecentInstances(item.id, 5);
-            enhanced.upcomingInstances = await this.recurringReservationService.getUpcomingInstances(item.userId, item.resourceId, item.programId, 5, false, 5);
-          }
-
-          return enhanced;
-        })
-      );
-
+      
       this.logger.log('Recurring reservations retrieved successfully', {
-        count: items.length,
-        total,
-        page: query.page
+        total: result.total,
+        page: result.page,
+        limit: result.limit
       });
-
-      return {
-        items: enhancedItems,
-        total,
-        page: query.page,
-        limit: query.limit
-      };
-
+      
+      return result;
     } catch (error) {
-      this.logger.error('Failed to get recurring reservations', error, LoggingHelper.logParams({
-        userId: query.userId,
-        resourceId: query.resourceId
-      }));
+      this.logger.error('Failed to orchestrate get recurring reservations query', error);
       throw error;
     }
   }
@@ -175,68 +123,48 @@ export class GetRecurringReservationsHandler implements IQueryHandler<GetRecurri
 @QueryHandler(GetRecurringReservationInstancesQuery)
 export class GetRecurringReservationInstancesHandler implements IQueryHandler<GetRecurringReservationInstancesQuery> {
   constructor(
-    private readonly recurringReservationRepository: RecurringReservationRepository,
-    private readonly recurringReservationInstanceRepository: RecurringReservationInstanceRepository,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetRecurringReservationInstancesQuery): Promise<{ items: RecurringReservationInstanceEntity[]; total: number; page: number; limit: number }> {
-    this.logger.log('Getting recurring reservation instances', {
+    this.logger.log('Orchestrating get recurring reservation instances query', {
       recurringReservationId: query.recurringReservationId,
-      userId: query.userId,
       status: query.status,
       page: query.page,
       limit: query.limit
     });
 
     try {
-      // Verify the recurring reservation exists and user has access
-      const reservation = await this.recurringReservationRepository.findById(query.recurringReservationId);
-      if (!reservation) {
-        throw new NotFoundException(`Recurring reservation with ID ${query.recurringReservationId} not found`);
-      }
-
-      if (reservation.userId !== query.userId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only view instances of your own reservations');
-      }
-
       const filters = {
-        recurringReservationId: query.recurringReservationId,
         status: query.status,
-        startDate: query.startDate,
-        endDate: query.endDate,
-        includeConfirmed: query.includeConfirmed,
-        includePending: query.includePending,
-        includeCancelled: query.includeCancelled
+        fromDate: query.startDate,
+        toDate: query.endDate
       };
 
-      const { items, total } = await this.recurringReservationInstanceRepository.findMany(
+      const pagination = {
+        page: query.page || 1,
+        limit: Math.min(query.limit || 10, 100),
+        sortBy: query.sortBy || 'scheduledDate',
+        sortOrder: query.sortOrder || 'ASC'
+      };
+
+      const result = await this.recurringReservationService.getRecurringReservationInstances(
+        query.recurringReservationId,
+        query.userId,
         filters,
-        query.page,
-        query.limit,
-        query.sortBy,
-        query.sortOrder
+        pagination
       );
-
+      
       this.logger.log('Recurring reservation instances retrieved successfully', {
-        recurringReservationId: query.recurringReservationId,
-        count: items.length,
-        total
+        total: result.total,
+        page: result.page,
+        limit: result.limit
       });
-
-      return {
-        items,
-        total,
-        page: query.page,
-        limit: query.limit
-      };
-
+      
+      return result;
     } catch (error) {
-      this.logger.error('Failed to get recurring reservation instances', error, LoggingHelper.logParams({
-        recurringReservationId: query.recurringReservationId,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to orchestrate get recurring reservation instances query', error);
       throw error;
     }
   }
@@ -246,13 +174,12 @@ export class GetRecurringReservationInstancesHandler implements IQueryHandler<Ge
 @QueryHandler(GetRecurringReservationStatsQuery)
 export class GetRecurringReservationStatsHandler implements IQueryHandler<GetRecurringReservationStatsQuery> {
   constructor(
-    private readonly recurringReservationRepository: RecurringReservationRepository,
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetRecurringReservationStatsQuery): Promise<any> {
-    this.logger.log('Getting recurring reservation stats', {
+    this.logger.log('Orchestrating get recurring reservation stats query', {
       id: query.id,
       userId: query.userId,
       includeProjections: query.includeProjections,
@@ -260,42 +187,18 @@ export class GetRecurringReservationStatsHandler implements IQueryHandler<GetRec
     });
 
     try {
-      // Verify the recurring reservation exists and user has access
-      const reservation = await this.recurringReservationRepository.findById(query.id);
-      if (!reservation) {
-        throw new NotFoundException(`Recurring reservation with ID ${query.id} not found`);
-      }
-
-      if (reservation.userId !== query.userId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only view stats of your own reservations');
-      }
-
-      const stats = await this.recurringReservationService.getRecurringReservationStats(query.id);
-
-      // Add projections if requested
-      if (query.includeProjections) {
-        stats.projections = await this.recurringReservationService.getProjections(query.id);
-      }
-
-      // Add comparisons if requested
-      if (query.includeComparisons) {
-        stats.comparisons = await this.recurringReservationService.getComparisons(query.id, query.userId);
-      }
-
-      this.logger.log('Recurring reservation stats retrieved successfully', {
-        id: query.id,
-        totalInstances: stats.totalInstances,
-        confirmedInstances: stats.confirmedInstances
-      });
-
-      return stats;
+      const result = await this.recurringReservationService.getRecurringReservationStats(
+        query.id,
+        query.userId,
+        query.includeProjections,
+        query.includeComparisons
+      );
+      
+      this.logger.log('Recurring reservation stats retrieved successfully', { id: query.id });
+      return result;
 
     } catch (error) {
-      this.logger.error('Failed to get recurring reservation stats', error, LoggingHelper.logParams({
-        id: query.id,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to orchestrate get recurring reservation stats query', error);
       throw error;
     }
   }
@@ -305,57 +208,46 @@ export class GetRecurringReservationStatsHandler implements IQueryHandler<GetRec
 @QueryHandler(ValidateRecurringReservationQuery)
 export class ValidateRecurringReservationQueryHandler implements IQueryHandler<ValidateRecurringReservationQuery> {
   constructor(
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: ValidateRecurringReservationQuery): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> {
-    this.logger.log('Validating recurring reservation query', {
+    this.logger.log('Orchestrating validate recurring reservation query', {
       userId: query.userId,
       resourceId: query.resourceId,
       frequency: query.frequency
     });
 
     try {
-      // Create temporary entity for validation
-      const tempReservation = RecurringReservationEntity.create({
-        excludeId: query.excludeId || 'temp-id',
+      const createDto = {
         title: query.title,
         resourceId: query.resourceId,
-        userId: query.userId,
-        startDate: query.startDate,
-        endDate: query.endDate,
+        startDate: query.startDate.toISOString(),
+        endDate: query.endDate.toISOString(),
         startTime: query.startTime,
         endTime: query.endTime,
-        frequency: query.frequency || RecurrenceFrequency.WEEKLY,
+        frequency: query.frequency,
         interval: query.interval,
         daysOfWeek: query.daysOfWeek,
-        dayOfMonth: query.dayOfMonth,
-        programId: query.programId,
-        status: RecurringReservationStatus.ACTIVE,
-        totalInstances: 0,
-        confirmedInstances: 0
-      });
+        dayOfMonth: query.dayOfMonth
+      };
 
-      const validation = await this.recurringReservationService.validateRecurringReservation(
-        tempReservation,
-        query.maxInstances,
-        query.allowOverlap
+      const result = await this.recurringReservationService.validateRecurringReservationQuery(
+        createDto,
+        query.userId,
+        query.excludeId
       );
-
-      this.logger.log('Recurring reservation validation query completed', LoggingHelper.logParams({
-        isValid: validation.isValid,
-        errorsCount: validation.errors.length,
-        warningsCount: validation.warnings.length
-      }));
-
-      return validation;
-
+      
+      this.logger.log('Recurring reservation validation completed', {
+        isValid: result.isValid,
+        errorsCount: result.errors.length,
+        warningsCount: result.warnings.length
+      });
+      
+      return result;
     } catch (error) {
-      this.logger.error('Failed to validate recurring reservation query', error, LoggingHelper.logParams({
-        userId: query.userId,
-        resourceId: query.resourceId
-      }));
+      this.logger.error('Failed to orchestrate validate recurring reservation query', error);
       throw error;
     }
   }
@@ -365,48 +257,32 @@ export class ValidateRecurringReservationQueryHandler implements IQueryHandler<V
 @QueryHandler(GetRecurringReservationConflictsQuery)
 export class GetRecurringReservationConflictsHandler implements IQueryHandler<GetRecurringReservationConflictsQuery> {
   constructor(
-    private readonly recurringReservationRepository: RecurringReservationRepository,
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetRecurringReservationConflictsQuery): Promise<any> {
-    this.logger.log('Getting recurring reservation conflicts', {
+    this.logger.log('Orchestrating get recurring reservation conflicts query', {
       id: query.id,
       userId: query.userId,
       checkFutureOnly: query.checkFutureOnly
     });
 
     try {
-      // Verify the recurring reservation exists and user has access
-      const reservation = await this.recurringReservationRepository.findById(query.id);
-      if (!reservation) {
-        throw new NotFoundException(`Recurring reservation with ID ${query.id} not found`);
-      }
-
-      if (reservation.userId !== query.userId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only view conflicts of your own reservations');
-      }
-
-      const conflicts = await this.recurringReservationService.getConflicts(
+      const result = await this.recurringReservationService.getRecurringReservationConflicts(
         query.id,
+        query.userId,
         query.checkFutureOnly,
         query.includeResolutions
       );
-
+      
       this.logger.log('Recurring reservation conflicts retrieved successfully', {
-        id: query.id,
-        conflictsCount: conflicts.length
+        id: query.id
       });
-
-      return conflicts;
-
+      
+      return result;
     } catch (error) {
-      this.logger.error('Failed to get recurring reservation conflicts', error, LoggingHelper.logParams({
-        id: query.id,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to orchestrate get recurring reservation conflicts query', error);
       throw error;
     }
   }
@@ -416,57 +292,34 @@ export class GetRecurringReservationConflictsHandler implements IQueryHandler<Ge
 @QueryHandler(GetUserRecurringReservationsQuery)
 export class GetUserRecurringReservationsHandler implements IQueryHandler<GetUserRecurringReservationsQuery> {
   constructor(
-    private readonly recurringReservationRepository: RecurringReservationRepository,
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetUserRecurringReservationsQuery): Promise<any> {
-    this.logger.log('Getting user recurring reservations', {
+    this.logger.log('Orchestrating get user recurring reservations query', {
       userId: query.userId,
       status: query.status,
       limit: query.limit
     });
 
     try {
-      // Check permissions (users can only see their own reservations unless admin)
-      if (query.userId !== query.requestingUserId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only view your own reservations');
-      }
-
-      const reservations = await this.recurringReservationRepository.findByUserId(
+      const result = await this.recurringReservationService.getUserRecurringReservations(
         query.userId,
         query.status,
-        query.limit
+        query.includeStats,
+        query.includeUpcoming,
+        query.limit,
+        query.userId
       );
-
-      const result: any = { reservations };
-
-      // Include stats if requested
-      if (query.includeStats) {
-        result.stats = await this.recurringReservationService.getUserStats(query.userId);
-      }
-
-      // Include upcoming instances if requested
-      if (query.includeUpcoming) {
-        result.upcomingInstances = await this.recurringReservationService.getUserUpcomingInstances(
-          query.userId,
-          7 // next 7 days
-        );
-      }
-
+      
       this.logger.log('User recurring reservations retrieved successfully', {
-        userId: query.userId,
-        count: reservations.length
-      });
-
-      return result;
-
-    } catch (error) {
-      this.logger.error('Failed to get user recurring reservations', error, LoggingHelper.logParams({
         userId: query.userId
-      }));
+      });
+      
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to orchestrate get user recurring reservations query', error);
       throw error;
     }
   }
@@ -476,12 +329,12 @@ export class GetUserRecurringReservationsHandler implements IQueryHandler<GetUse
 @QueryHandler(GetRecurringReservationAnalyticsQuery)
 export class GetRecurringReservationAnalyticsHandler implements IQueryHandler<GetRecurringReservationAnalyticsQuery> {
   constructor(
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetRecurringReservationAnalyticsQuery): Promise<any> {
-    this.logger.log('Getting recurring reservation analytics', {
+    this.logger.log('Orchestrating get recurring reservation analytics query', {
       userId: query.userId,
       resourceId: query.resourceId,
       programId: query.programId,
@@ -490,28 +343,34 @@ export class GetRecurringReservationAnalyticsHandler implements IQueryHandler<Ge
     });
 
     try {
-      const analytics = await this.recurringReservationService.getAnalytics({
+      const filters = {
         userId: query.userId,
         resourceId: query.resourceId,
         programId: query.programId,
         startDate: query.startDate,
-        endDate: query.endDate,
+        endDate: query.endDate
+      };
+
+      const options = {
         groupBy: query.groupBy,
         metrics: query.metrics
-      });
+      };
 
+      const result = await this.recurringReservationService.getRecurringReservationAnalytics(
+        filters,
+        options,
+        query.userId
+      );
+      
       this.logger.log('Recurring reservation analytics retrieved successfully', {
-        dataPoints: analytics.dataPoints?.length || 0,
-        metrics: query.metrics
-      });
-
-      return analytics;
-
-    } catch (error) {
-      this.logger.error('Failed to get recurring reservation analytics', error, LoggingHelper.logParams({
         userId: query.userId,
-        resourceId: query.resourceId
-      }));
+        resourceId: query.resourceId,
+        groupBy: query.groupBy
+      });
+      
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to orchestrate get recurring reservation analytics query', error);
       throw error;
     }
   }
@@ -521,12 +380,12 @@ export class GetRecurringReservationAnalyticsHandler implements IQueryHandler<Ge
 @QueryHandler(GetUpcomingRecurringInstancesQuery)
 export class GetUpcomingRecurringInstancesHandler implements IQueryHandler<GetUpcomingRecurringInstancesQuery> {
   constructor(
-    private readonly recurringReservationService: RecurringReservationDomainService,
+    private readonly recurringReservationService: RecurringReservationService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetUpcomingRecurringInstancesQuery): Promise<RecurringReservationInstanceEntity[]> {
-    this.logger.log('Getting upcoming recurring instances', {
+    this.logger.log('Orchestrating get upcoming recurring instances query', {
       userId: query.userId,
       resourceId: query.resourceId,
       programId: query.programId,
@@ -535,27 +394,29 @@ export class GetUpcomingRecurringInstancesHandler implements IQueryHandler<GetUp
     });
 
     try {
-      const instances = await this.recurringReservationService.getUpcomingInstances(
-        query.userId,
-        query.resourceId,
-        query.programId,
+      const filters = {
+        userId: query.userId,
+        resourceId: query.resourceId,
+        programId: query.programId
+      };
+
+      const result = await this.recurringReservationService.getUpcomingRecurringInstances(
+        filters,
         query.days,
         query.includeUnconfirmed,
-        query.limit
+        query.limit,
+        query.userId
       );
-
+      
       this.logger.log('Upcoming recurring instances retrieved successfully', {
-        count: instances.length,
-        days: query.days
-      });
-
-      return instances;
-
-    } catch (error) {
-      this.logger.error('Failed to get upcoming recurring instances', error, LoggingHelper.logParams({
         userId: query.userId,
-        resourceId: query.resourceId
-      }));
+        resourceId: query.resourceId,
+        instancesCount: result.length
+      });
+      
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to orchestrate get upcoming recurring instances query', error);
       throw error;
     }
   }

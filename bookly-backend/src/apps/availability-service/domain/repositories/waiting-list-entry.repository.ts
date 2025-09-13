@@ -286,4 +286,14 @@ export interface WaitingListEntryRepository {
     averageWaitTime: number;
     averageConfirmationTime: number;
   }>;
+
+  /**
+   * Find all entries (needed for statistics)
+   */
+  findAll(): Promise<WaitingListEntryEntity[]>;
+
+  /**
+   * Find entries by resource ID
+   */
+  findByResourceId(resourceId: string): Promise<WaitingListEntryEntity[]>;
 }

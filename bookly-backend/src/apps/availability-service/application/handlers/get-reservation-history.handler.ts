@@ -1,8 +1,8 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { GetReservationHistoryQuery, ExportReservationHistoryQuery } from '../queries/get-reservation-history.query';
-import { ReservationHistoryRepository } from '../../domain/repositories/reservation-history.repository';
 import { LoggingService } from '../../../../libs/logging/logging.service';
+import { AvailabilityService } from '../services/availability.service';
 
 /**
  * Get Reservation History Query Handler (RF-11)
@@ -12,14 +12,13 @@ import { LoggingService } from '../../../../libs/logging/logging.service';
 @QueryHandler(GetReservationHistoryQuery)
 export class GetReservationHistoryHandler implements IQueryHandler<GetReservationHistoryQuery> {
   constructor(
-    @Inject('ReservationHistoryRepository')
-    private readonly reservationHistoryRepository: ReservationHistoryRepository,
+    private readonly availabilityService: AvailabilityService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetReservationHistoryQuery): Promise<any> {
     this.logger.log(
-      `Getting reservation history for reservation ${query.reservationId || 'all'} by user ${query.userId || 'all'}`,
+      `Orchestrating reservation history query for reservation ${query.reservationId || 'all'} by user ${query.userId || 'all'}`,
       'GetReservationHistoryHandler'
     );
 
@@ -35,18 +34,11 @@ export class GetReservationHistoryHandler implements IQueryHandler<GetReservatio
         limit: query.limit
       };
 
-      const result = await this.reservationHistoryRepository.findWithFilters(filters);
-
-      this.logger.log(
-        `Retrieved ${result.total} reservation history records (page ${query.page}, limit ${query.limit})`,
-        'GetReservationHistoryHandler'
-      );
-
-      return result;
+      return await this.availabilityService.getReservationHistory(filters);
 
     } catch (error) {
       this.logger.error(
-        `Failed to get reservation history for reservation ${query.reservationId || 'all'}`,
+        `Failed to orchestrate reservation history query for reservation ${query.reservationId || 'all'}`,
         'GetReservationHistoryHandler',
         error
       );
@@ -63,14 +55,13 @@ export class GetReservationHistoryHandler implements IQueryHandler<GetReservatio
 @QueryHandler(ExportReservationHistoryQuery)
 export class ExportReservationHistoryHandler implements IQueryHandler<ExportReservationHistoryQuery> {
   constructor(
-    @Inject('ReservationHistoryRepository')
-    private readonly reservationHistoryRepository: ReservationHistoryRepository,
+    private readonly availabilityService: AvailabilityService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: ExportReservationHistoryQuery): Promise<string> {
     this.logger.log(
-      `Exporting reservation history for reservation ${query.reservationId || 'all'} by user ${query.userId || 'all'}`,
+      `Orchestrating reservation history CSV export for reservation ${query.reservationId || 'all'} by user ${query.userId || 'all'}`,
       'ExportReservationHistoryHandler'
     );
 
@@ -84,18 +75,11 @@ export class ExportReservationHistoryHandler implements IQueryHandler<ExportRese
         endDate: query.endDate
       };
 
-      const csvData = await this.reservationHistoryRepository.exportToCsv(filters);
-
-      this.logger.log(
-        `Exported ${csvData.length} characters of reservation history data`,
-        'ExportReservationHistoryHandler'
-      );
-
-      return csvData;
+      return await this.availabilityService.exportReservationHistoryToCsv(filters);
 
     } catch (error) {
       this.logger.error(
-        `Failed to export reservation history for reservation ${query.reservationId || 'all'}`,
+        `Failed to orchestrate reservation history CSV export for reservation ${query.reservationId || 'all'}`,
         'ExportReservationHistoryHandler',
         error
       );

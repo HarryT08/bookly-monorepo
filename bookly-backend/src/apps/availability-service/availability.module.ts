@@ -9,9 +9,18 @@ import { AdvancedSearchController } from './infrastructure/controllers/advanced-
 import { AvailabilityService } from './application/services/availability.service';
 import { CalendarIntegrationService } from './application/services/calendar-integration.service';
 import { AdvancedSearchService } from './application/services/advanced-search.service';
+import { ScheduleService } from './application/services/schedule.service';
+import { ReassignmentService } from './application/services/reassignment.service';
+import { WaitingListService } from './application/services/waiting-list.service';
+import { RecurringReservationService } from './application/services/recurring-reservation.service';
 
 // Domain Services
 import { AdvancedSearchDomainService } from './domain/services/advanced-search-domain.service';
+import { RecurringReservationDomainServiceImpl } from './domain/services/recurring-reservation-domain.service';
+import { ReservationLimitsDomainServiceImpl } from './domain/services/reservation-limits-domain.service';
+import { WaitingListDomainServiceImpl } from './domain/services/waiting-list-domain.service';
+import { PenaltyDomainServiceImpl } from './domain/services/penalty-domain.service';
+import { ReassignmentDomainServiceImpl } from './domain/services/reassignment-domain.service';
 
 // Command Handlers
 import { CreateCalendarIntegrationHandler } from './application/commands/create-calendar-integration.handler';
@@ -70,11 +79,16 @@ import {
   GetEquivalentResourcesHandler,
   GetReassignmentRequestStatsHandler,
   GetReassignmentAnalyticsHandler,
-  ValidateReassignmentRequestQueryHandler,
+  ValidateReassignmentRequestHandler,
   GetReassignmentSuggestionsHandler,
   GetPendingReassignmentRequestsHandler,
   GetReassignmentSuccessPredictionHandler,
-  SearchReassignmentRequestsHandler
+  SearchReassignmentRequestsHandler,
+  GetReassignmentRequestHistoryHandler,
+  GetResourceReassignmentRequestsHandler,
+  GetProgramReassignmentRequestsHandler,
+  GetUserReassignmentHistoryHandler,
+  GetReassignmentTrendsHandler
 } from './application/handlers/reassignment.query-handlers';
 
 // Recurring Reservation Query Handlers  
@@ -113,13 +127,25 @@ import {
   QuickSearchHandler
 } from './application/handlers/advanced-search.query-handlers';
 
-// Repository Implementations
+// Repository implementations (Prisma-based)
 import { PrismaAvailabilityRepository } from './infrastructure/repositories/prisma-availability.repository';
 import { PrismaScheduleRepository } from './infrastructure/repositories/prisma-schedule.repository';
 import { PrismaReservationRepository } from './infrastructure/repositories/prisma-reservation.repository';
-import { PrismaReservationHistoryRepository } from './infrastructure/repositories/prisma-reservation-history.repository';
-import { PrismaCalendarIntegrationRepository } from './infrastructure/repositories/prisma-calendar-integration.repository';
 import { PrismaCalendarEventRepository } from './infrastructure/repositories/prisma-calendar-event.repository';
+import { PrismaCalendarIntegrationRepository } from './infrastructure/repositories/prisma-calendar-integration.repository';
+import { PrismaReservationHistoryRepository } from './infrastructure/repositories/prisma-reservation-history.repository';
+
+// Simple stub repository implementations (temporary)
+import { SimpleRecurringReservationRepository } from './infrastructure/repositories/simple-recurring-reservation.repository';
+import { SimpleRecurringReservationInstanceRepository } from './infrastructure/repositories/simple-recurring-reservation-instance.repository';
+import { SimpleReservationLimitRepository } from './infrastructure/repositories/simple-reservation-limit.repository';
+import { SimpleWaitingListEntryRepository } from './infrastructure/repositories/simple-waiting-list-entry.repository';
+import { SimplePenaltyRepository } from './infrastructure/repositories/simple-penalty.repository';
+import { SimplePenaltyEventRepository } from './infrastructure/repositories/simple-penalty-event.repository';
+import { SimpleUserPenaltyRepository } from './infrastructure/repositories/simple-user-penalty.repository';
+import { SimpleReassignmentRequestRepository } from './infrastructure/repositories/simple-reassignment-request.repository';
+import { SimpleResourceEquivalenceRepository } from './infrastructure/repositories/simple-resource-equivalence.repository';
+import { SimpleReassignmentConfigurationRepository } from './infrastructure/repositories/simple-reassignment-configuration.repository';
 
 // Infrastructure Services
 import { GoogleCalendarService } from './infrastructure/services/google-calendar.service';
@@ -194,11 +220,16 @@ const queryHandlers = [
   GetEquivalentResourcesHandler,
   GetReassignmentRequestStatsHandler,
   GetReassignmentAnalyticsHandler,
-  ValidateReassignmentRequestQueryHandler,
+  ValidateReassignmentRequestHandler,
   GetReassignmentSuggestionsHandler,
   GetPendingReassignmentRequestsHandler,
   GetReassignmentSuccessPredictionHandler,
   SearchReassignmentRequestsHandler,
+  GetReassignmentRequestHistoryHandler,
+  GetResourceReassignmentRequestsHandler,
+  GetProgramReassignmentRequestsHandler,
+  GetUserReassignmentHistoryHandler,
+  GetReassignmentTrendsHandler,
   // Recurring Reservation Query Handlers
   GetRecurringReservationHandler,
   GetRecurringReservationsHandler,
@@ -247,6 +278,47 @@ const repositories = [
     provide: 'CalendarEventRepository',
     useClass: PrismaCalendarEventRepository,
   },
+  // New repositories - using simple stubs for now
+  {
+    provide: 'RecurringReservationRepository',
+    useClass: SimpleRecurringReservationRepository,
+  },
+  {
+    provide: 'RecurringReservationInstanceRepository',
+    useClass: SimpleRecurringReservationInstanceRepository,
+  },
+  {
+    provide: 'ReservationLimitRepository',
+    useClass: SimpleReservationLimitRepository,
+  },
+  {
+    provide: 'WaitingListEntryRepository',
+    useClass: SimpleWaitingListEntryRepository,
+  },
+  {
+    provide: 'PenaltyRepository',
+    useClass: SimplePenaltyRepository,
+  },
+  {
+    provide: 'PenaltyEventRepository',
+    useClass: SimplePenaltyEventRepository,
+  },
+  {
+    provide: 'UserPenaltyRepository',
+    useClass: SimpleUserPenaltyRepository,
+  },
+  {
+    provide: 'ReassignmentRequestRepository',
+    useClass: SimpleReassignmentRequestRepository,
+  },
+  {
+    provide: 'ResourceEquivalenceRepository',
+    useClass: SimpleResourceEquivalenceRepository,
+  },
+  {
+    provide: 'ReassignmentConfigurationRepository',
+    useClass: SimpleReassignmentConfigurationRepository,
+  },
 ];
 
 const infrastructureServices = [
@@ -275,7 +347,25 @@ const infrastructureServices = [
     AvailabilityService,
     CalendarIntegrationService,
     AdvancedSearchService,
+    ScheduleService,
     AdvancedSearchDomainService,
+    ReassignmentService,
+    WaitingListService,
+    RecurringReservationService,
+    {
+      provide: 'RecurringReservationDomainService',
+      useClass: RecurringReservationDomainServiceImpl,
+    },
+    {
+      provide: 'ReservationLimitsDomainService',
+      useClass: ReservationLimitsDomainServiceImpl,
+    },
+    {
+      provide: 'WaitingListDomainService',
+      useClass: WaitingListDomainServiceImpl,
+    },
+    PenaltyDomainServiceImpl,
+    ReassignmentDomainServiceImpl,
     ...commandHandlers,
     ...queryHandlers,
     ...repositories,

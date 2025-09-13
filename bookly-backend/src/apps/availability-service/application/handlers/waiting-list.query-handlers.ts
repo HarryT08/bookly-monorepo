@@ -32,27 +32,22 @@ import {
   GetWaitingListConflictsQuery
 } from '../queries/waiting-list.queries';
 
-// Domain Services
-import { WaitingListDomainService } from '../../domain/services/waiting-list-domain.service';
-
-// Repositories
-import { WaitingListEntryRepository } from '../../domain/repositories/waiting-list-entry.repository';
+// Application Services
+import { WaitingListService } from '../services/waiting-list.service';
 
 // Entities
 import { WaitingListEntryEntity } from '../../domain/entities/waiting-list-entry.entity';
-import { LoggingHelper } from '@/libs/logging/logging.helper';
 
 @Injectable()
 @QueryHandler(GetWaitingListQuery)
 export class GetWaitingListHandler implements IQueryHandler<GetWaitingListQuery> {
   constructor(
-    private readonly waitingListEntryRepository: WaitingListEntryRepository,
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetWaitingListQuery): Promise<WaitingListEntryEntity & { entries?: WaitingListEntryEntity[]; stats?: any; alternatives?: any[] }> {
-    this.logger.log('Getting waiting list', {
+    this.logger.log('Orchestrating get waiting list query', {
       waitingListId: query.waitingListId,
       userId: query.userId,
       includeEntries: query.includeEntries,
@@ -60,34 +55,13 @@ export class GetWaitingListHandler implements IQueryHandler<GetWaitingListQuery>
     });
 
     try {
-      const waitingList = await this.waitingListEntryRepository.findByWaitingListId(query.waitingListId);
-      if (!waitingList) {
-        throw new NotFoundException(`Waiting list with ID ${query.waitingListId} not found`);
-      }
-
-      const result: any = { ...waitingList };
-
-      // Include entries if requested
-      if (query.includeEntries) {
-        result.entries = await this.waitingListEntryRepository.findByWaitingListId(query.waitingListId);
-      }
-
-      // Include stats if requested
-      if (query.includeStats) {
-        result.stats = await this.waitingListService.getWaitingListStats(query.waitingListId);
-      }
-
-      // Include alternatives if requested
-      if (query.includeAlternatives) {
-        result.alternatives = await Promise.all(waitingList.map(async (entry, index) => {
-          return await this.waitingListService.getAlternativeSlots(
-            entry.resourceId,
-            entry.requestedAt,
-            entry.expiredAt,
-            query.userId
-          );
-        }));
-      }
+      const result = await this.waitingListService.getWaitingList({
+        waitingListId: query.waitingListId,
+        userId: query.userId,
+        includeEntries: query.includeEntries,
+        includeStats: query.includeStats,
+        includeAlternatives: query.includeAlternatives
+      });
 
       this.logger.log('Waiting list retrieved successfully', {
         waitingListId: query.waitingListId,
@@ -97,10 +71,7 @@ export class GetWaitingListHandler implements IQueryHandler<GetWaitingListQuery>
       return result;
 
     } catch (error) {
-      this.logger.error('Failed to get waiting list', error, LoggingHelper.logParams({
-        waitingListId: query.waitingListId,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to orchestrate get waiting list query', error);
       throw error;
     }
   }
@@ -110,13 +81,12 @@ export class GetWaitingListHandler implements IQueryHandler<GetWaitingListQuery>
 @QueryHandler(GetWaitingListsQuery)
 export class GetWaitingListsHandler implements IQueryHandler<GetWaitingListsQuery> {
   constructor(
-    private readonly waitingListEntryRepository: WaitingListEntryRepository,
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetWaitingListsQuery): Promise<{ items: WaitingListEntryEntity[]; total: number; page: number; limit: number }> {
-    this.logger.log('Getting waiting lists', {
+    this.logger.log('Orchestrating get waiting lists query', {
       resourceId: query.resourceId,
       date: query.date,
       status: query.status,
@@ -125,55 +95,28 @@ export class GetWaitingListsHandler implements IQueryHandler<GetWaitingListsQuer
     });
 
     try {
-      const filters = {
+      const result = await this.waitingListService.getWaitingLists({
         resourceId: query.resourceId,
         date: query.date,
-        status: query.status
-      };
-
-      const { items, total } = await this.waitingListEntryRepository.findMany(
-        filters,
-        query.page,
-        query.limit,
-        query.sortBy,
-        query.sortOrder
-      );
-
-      // Enhance with entries and stats if requested
-      const enhancedItems = await Promise.all(
-        items.map(async (item) => {
-          const enhanced: any = { ...item };
-
-          if (query.includeEntries) {
-            enhanced.entries = await this.waitingListEntryRepository.findByWaitingListId(item.id);
-          }
-
-          if (query.includeStats) {
-            enhanced.stats = await this.waitingListService.getWaitingListStats(item.id);
-          }
-
-          return enhanced;
-        })
-      );
+        status: query.status,
+        page: query.page,
+        limit: query.limit,
+        sortBy: query.sortBy,
+        sortOrder: query.sortOrder,
+        includeEntries: query.includeEntries,
+        includeStats: query.includeStats
+      });
 
       this.logger.log('Waiting lists retrieved successfully', {
-        count: items.length,
-        total,
+        count: result.items.length,
+        total: result.total,
         page: query.page
       });
 
-      return {
-        items: enhancedItems,
-        total,
-        page: query.page,
-        limit: query.limit
-      };
+      return result;
 
     } catch (error) {
-      this.logger.error('Failed to get waiting lists', error, LoggingHelper.logParams({
-        resourceId: query.resourceId,
-        date: query.date
-      }));
+      this.logger.error('Failed to orchestrate get waiting lists query', error);
       throw error;
     }
   }
@@ -183,46 +126,26 @@ export class GetWaitingListsHandler implements IQueryHandler<GetWaitingListsQuer
 @QueryHandler(GetWaitingListEntryQuery)
 export class GetWaitingListEntryHandler implements IQueryHandler<GetWaitingListEntryQuery> {
   constructor(
-    private readonly waitingListEntryRepository: WaitingListEntryRepository,
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetWaitingListEntryQuery): Promise<WaitingListEntryEntity & { position?: number; estimatedWait?: number; alternatives?: any[] }> {
-    this.logger.log('Getting waiting list entry', {
+    this.logger.log('Orchestrating get waiting list entry query', {
       waitingListId: query.waitingListId,
       entryId: query.entryId,
       userId: query.userId
     });
 
     try {
-      const entry = await this.waitingListEntryRepository.findById(query.entryId);
-      if (!entry) {
-        throw new NotFoundException(`Waiting list entry with ID ${query.entryId} not found`);
-      }
-
-      // Check permissions (users can only see their own entries unless admin)
-      if (entry.userId !== query.userId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only view your own waiting list entries');
-      }
-
-      const result: any = { ...entry };
-
-      // Include position if requested
-      if (query.includePosition) {
-        result.position = await this.waitingListService.getEntryPosition(query.waitingListId, query.entryId);
-      }
-
-      // Include estimated wait time if requested
-      if (query.includeEstimatedWait) {
-        result.estimatedWait = await this.waitingListService.getEstimatedWaitTime(query.waitingListId, query.entryId);
-      }
-
-      // Include alternatives if requested
-      if (query.includeAlternatives) {
-        result.alternatives = await this.waitingListService.getEntryAlternatives(query.entryId);
-      }
+      const result = await this.waitingListService.getWaitingListEntry({
+        waitingListId: query.waitingListId,
+        entryId: query.entryId,
+        userId: query.userId,
+        includePosition: query.includePosition,
+        includeEstimatedWait: query.includeEstimatedWait,
+        includeAlternatives: query.includeAlternatives
+      });
 
       this.logger.log('Waiting list entry retrieved successfully', {
         entryId: query.entryId,
@@ -232,11 +155,7 @@ export class GetWaitingListEntryHandler implements IQueryHandler<GetWaitingListE
       return result;
 
     } catch (error) {
-      this.logger.error('Failed to get waiting list entry', error, LoggingHelper.logParams({
-        waitingListId: query.waitingListId,
-        entryId: query.entryId,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to orchestrate get waiting list entry query', error);
       throw error;
     }
   }
@@ -246,13 +165,12 @@ export class GetWaitingListEntryHandler implements IQueryHandler<GetWaitingListE
 @QueryHandler(GetUserWaitingListEntriesQuery)
 export class GetUserWaitingListEntriesHandler implements IQueryHandler<GetUserWaitingListEntriesQuery> {
   constructor(
-    private readonly waitingListEntryRepository: WaitingListEntryRepository,
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetUserWaitingListEntriesQuery): Promise<{ items: WaitingListEntryEntity[]; total: number; page: number; limit: number }> {
-    this.logger.log('Getting user waiting list entries', {
+    this.logger.log('Orchestrating get user waiting list entries query', {
       userId: query.userId,
       status: query.status,
       resourceId: query.resourceId,
@@ -261,59 +179,28 @@ export class GetUserWaitingListEntriesHandler implements IQueryHandler<GetUserWa
     });
 
     try {
-      // Check permissions (users can only see their own entries unless admin)
-      if (query.userId !== query.requestingUserId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only view your own waiting list entries');
-      }
-
-      const filters = {
+      const result = await this.waitingListService.getUserWaitingListEntries({
         userId: query.userId,
+        requestingUserId: query.requestingUserId,
         status: query.status,
         resourceId: query.resourceId,
         programId: query.programId,
-        includeExpired: query.includeExpired
-      };
-
-      const { items, total } = await this.waitingListEntryRepository.findByUser(
-        filters,
-        query.page,
-        query.limit
-      );
-
-      // Enhance with estimated wait times if requested
-      const enhancedItems = await Promise.all(
-        items.map(async (item) => {
-          const enhanced: any = { ...item };
-
-          if (query.includeEstimatedWait) {
-            enhanced.estimatedWait = await this.waitingListService.getEstimatedWaitTime(
-              item.waitingListId,
-              item.id
-            );
-          }
-
-          return enhanced;
-        })
-      );
+        includeExpired: query.includeExpired,
+        includeEstimatedWait: query.includeEstimatedWait,
+        page: query.page,
+        limit: query.limit
+      });
 
       this.logger.log('User waiting list entries retrieved successfully', {
         userId: query.userId,
-        count: items.length,
-        total
+        count: result.items.length,
+        total: result.total
       });
 
-      return {
-        items: enhancedItems,
-        total,
-        page: query.page,
-        limit: query.limit
-      };
+      return result;
 
     } catch (error) {
-      this.logger.error('Failed to get user waiting list entries', error, LoggingHelper.logParams({
-        userId: query.userId
-      }));
+      this.logger.error('Failed to orchestrate get user waiting list entries query', error);
       throw error;
     }
   }
@@ -323,12 +210,12 @@ export class GetUserWaitingListEntriesHandler implements IQueryHandler<GetUserWa
 @QueryHandler(GetWaitingListStatsQuery)
 export class GetWaitingListStatsHandler implements IQueryHandler<GetWaitingListStatsQuery> {
   constructor(
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetWaitingListStatsQuery): Promise<any> {
-    this.logger.log('Getting waiting list stats', {
+    this.logger.log('Orchestrating get waiting list stats query', {
       waitingListId: query.waitingListId,
       resourceId: query.resourceId,
       programId: query.programId,
@@ -336,7 +223,7 @@ export class GetWaitingListStatsHandler implements IQueryHandler<GetWaitingListS
     });
 
     try {
-      const stats = await this.waitingListService.getStats({
+      const stats = await this.waitingListService.getWaitingListStats({
         waitingListId: query.waitingListId,
         resourceId: query.resourceId,
         programId: query.programId,
@@ -347,17 +234,13 @@ export class GetWaitingListStatsHandler implements IQueryHandler<GetWaitingListS
       });
 
       this.logger.log('Waiting list stats retrieved successfully', {
-        waitingListId: query.waitingListId,
-        totalEntries: stats.totalEntries
+        waitingListId: query.waitingListId
       });
 
       return stats;
 
     } catch (error) {
-      this.logger.error('Failed to get waiting list stats', error, LoggingHelper.logParams({
-        waitingListId: query.waitingListId,
-        resourceId: query.resourceId
-      }));
+      this.logger.error('Failed to orchestrate get waiting list stats query', error);
       throw error;
     }
   }
@@ -367,12 +250,12 @@ export class GetWaitingListStatsHandler implements IQueryHandler<GetWaitingListS
 @QueryHandler(GetWaitingListAnalyticsQuery)
 export class GetWaitingListAnalyticsHandler implements IQueryHandler<GetWaitingListAnalyticsQuery> {
   constructor(
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetWaitingListAnalyticsQuery): Promise<any> {
-    this.logger.log('Getting waiting list analytics', {
+    this.logger.log('Orchestrating get waiting list analytics query', {
       resourceId: query.resourceId,
       programId: query.programId,
       groupBy: query.groupBy,
@@ -380,7 +263,7 @@ export class GetWaitingListAnalyticsHandler implements IQueryHandler<GetWaitingL
     });
 
     try {
-      const analytics = await this.waitingListService.getAnalytics({
+      const analytics = await this.waitingListService.getWaitingListAnalytics({
         resourceId: query.resourceId,
         programId: query.programId,
         startDate: query.startDate,
@@ -397,10 +280,7 @@ export class GetWaitingListAnalyticsHandler implements IQueryHandler<GetWaitingL
       return analytics;
 
     } catch (error) {
-      this.logger.error('Failed to get waiting list analytics', error, LoggingHelper.logParams({
-        resourceId: query.resourceId,
-        programId: query.programId
-      }));
+      this.logger.error('Failed to orchestrate get waiting list analytics query', error);
       throw error;
     }
   }
@@ -410,7 +290,7 @@ export class GetWaitingListAnalyticsHandler implements IQueryHandler<GetWaitingL
 @QueryHandler(ValidateWaitingListEntryQuery)
 export class ValidateWaitingListEntryQueryHandler implements IQueryHandler<ValidateWaitingListEntryQuery> {
   constructor(
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
@@ -447,10 +327,7 @@ export class ValidateWaitingListEntryQueryHandler implements IQueryHandler<Valid
       };
 
     } catch (error) {
-      this.logger.error('Failed to validate waiting list entry query', error, LoggingHelper.logParams({
-        resourceId: query.resourceId,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to validate waiting list entry query', error);
       throw error;
     }
   }
@@ -460,7 +337,7 @@ export class ValidateWaitingListEntryQueryHandler implements IQueryHandler<Valid
 @QueryHandler(GetWaitingListAlternativesQuery)
 export class GetWaitingListAlternativesHandler implements IQueryHandler<GetWaitingListAlternativesQuery> {
   constructor(
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
@@ -493,10 +370,7 @@ export class GetWaitingListAlternativesHandler implements IQueryHandler<GetWaiti
       return alternatives.alternatives;
 
     } catch (error) {
-      this.logger.error('Failed to get waiting list alternatives', error, LoggingHelper.logParams({
-        resourceId: query.resourceId,
-        userId: query.userId
-      }));
+      this.logger.error('Failed to get waiting list alternatives', error);
       throw error;
     }
   }
@@ -506,12 +380,12 @@ export class GetWaitingListAlternativesHandler implements IQueryHandler<GetWaiti
 @QueryHandler(GetExpiredWaitingListEntriesQuery)
 export class GetExpiredWaitingListEntriesHandler implements IQueryHandler<GetExpiredWaitingListEntriesQuery> {
   constructor(
-    private readonly waitingListEntryRepository: WaitingListEntryRepository,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: GetExpiredWaitingListEntriesQuery): Promise<{ items: WaitingListEntryEntity[]; total: number; page: number; limit: number }> {
-    this.logger.log('Getting expired waiting list entries', {
+    this.logger.log('Orchestrating get expired waiting list entries query', {
       waitingListId: query.waitingListId,
       resourceId: query.resourceId,
       expiredBefore: query.expiredBefore,
@@ -520,36 +394,24 @@ export class GetExpiredWaitingListEntriesHandler implements IQueryHandler<GetExp
     });
 
     try {
-      const filters = {
+      const result = await this.waitingListService.getExpiredWaitingListEntries({
         waitingListId: query.waitingListId,
         resourceId: query.resourceId,
         expiredBefore: query.expiredBefore,
-        includeProcessed: query.includeProcessed
-      };
-
-      const { items, total } = await this.waitingListEntryRepository.findExpired(
-        filters,
-        query.page,
-        query.limit
-      );
-
-      this.logger.log('Expired waiting list entries retrieved successfully', {
-        count: items.length,
-        total
-      });
-
-      return {
-        items,
-        total,
+        includeProcessed: query.includeProcessed,
         page: query.page,
         limit: query.limit
-      };
+      });
+
+      this.logger.log('Expired waiting list entries retrieved successfully', {
+        count: result.items.length,
+        total: result.total
+      });
+
+      return result;
 
     } catch (error) {
-      this.logger.error('Failed to get expired waiting list entries', error, LoggingHelper.logParams({
-        waitingListId: query.waitingListId,
-        resourceId: query.resourceId
-      }));
+      this.logger.error('Failed to orchestrate get expired waiting list entries query', error);
       throw error;
     }
   }
@@ -559,13 +421,12 @@ export class GetExpiredWaitingListEntriesHandler implements IQueryHandler<GetExp
 @QueryHandler(SearchWaitingListsQuery)
 export class SearchWaitingListsHandler implements IQueryHandler<SearchWaitingListsQuery> {
   constructor(
-    private readonly waitingListEntryRepository: WaitingListEntryRepository,
-    private readonly waitingListService: WaitingListDomainService,
+    private readonly waitingListService: WaitingListService,
     private readonly logger: LoggingService
   ) {}
 
   async execute(query: SearchWaitingListsQuery): Promise<{ items: WaitingListEntryEntity[]; total: number; page: number; limit: number }> {
-    this.logger.log('Searching waiting lists', {
+    this.logger.log('Orchestrating waiting lists search query', {
       searchTerm: query.searchTerm,
       filters: query.filters,
       page: query.page,
@@ -573,47 +434,25 @@ export class SearchWaitingListsHandler implements IQueryHandler<SearchWaitingLis
     });
 
     try {
-      const { items, total } = await this.waitingListEntryRepository.search(
-        query.searchTerm,
-        query.filters,
-        query.page,
-        query.limit
-      );
-
-      // Enhance with entries and stats if requested
-      const enhancedItems = await Promise.all(
-        items.map(async (item) => {
-          const enhanced: any = { ...item };
-
-          if (query.includeEntries) {
-            enhanced.entries = await this.waitingListService.getWaitingListEntries(item.id);
-          }
-
-          if (query.includeStats) {
-            enhanced.stats = await this.waitingListService.getWaitingListStats(item.id);
-          }
-
-          return enhanced;
-        })
-      );
+      const result = await this.waitingListService.searchWaitingLists({
+        searchTerm: query.searchTerm,
+        filters: query.filters,
+        page: query.page,
+        limit: query.limit,
+        includeEntries: query.includeEntries,
+        includeStats: query.includeStats
+      });
 
       this.logger.log('Waiting lists search completed successfully', {
         searchTerm: query.searchTerm,
-        count: items.length,
-        total
+        count: result.items.length,
+        total: result.total
       });
 
-      return {
-        items: enhancedItems,
-        total,
-        page: query.page,
-        limit: query.limit
-      };
+      return result;
 
     } catch (error) {
-      this.logger.error('Failed to search waiting lists', error, LoggingHelper.logParams({
-        searchTerm: query.searchTerm
-      }));
+      this.logger.error('Failed to orchestrate waiting lists search query', error);
       throw error;
     }
   }

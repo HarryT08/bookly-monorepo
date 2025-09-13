@@ -4,6 +4,7 @@ import { RabbitMQService } from './rabbitmq.service';
 import { RedisService } from './redis.service';
 import { LoggingService } from '@logging/logging.service';
 import { getCorrelationContext, getTracingHeaders } from '@libs/common/middleware/correlation-id.middleware';
+import { StandardizedDomainEvent } from '../interfaces/standardized-domain-event.interface';
 
 export interface DomainEvent {
   eventId: string;
@@ -20,6 +21,9 @@ export interface DomainEvent {
   parentSpanId?: string;
 }
 
+// Union type for backward compatibility during migration
+export type EventPayload = DomainEvent | StandardizedDomainEvent;
+
 @Injectable()
 export class EventBusService {
   constructor(
@@ -29,7 +33,7 @@ export class EventBusService {
     private readonly loggingService: LoggingService,
   ) {}
 
-  async publishEvent(event: DomainEvent): Promise<void> {
+  async publishEvent(event: EventPayload): Promise<void> {
     try {
       // Enrich event with correlation context
       const context = getCorrelationContext();
@@ -41,14 +45,17 @@ export class EventBusService {
         parentSpanId: context?.parentSpanId,
       };
 
+      // Convert StandardizedDomainEvent to DomainEvent for backward compatibility
+      const eventForProcessing = this.normalizeEvent(enrichedEvent);
+
       // Emit locally for immediate handlers
-      this.eventEmitter.emit(enrichedEvent.eventType, enrichedEvent);
+      this.eventEmitter.emit(eventForProcessing.eventType, eventForProcessing);
 
       // Publish to RabbitMQ for distributed processing
-      await this.rabbitMQService.publish(enrichedEvent.eventType, enrichedEvent);
+      await this.rabbitMQService.publish(eventForProcessing.eventType, eventForProcessing);
 
       // Cache event in Redis for replay capabilities
-      await this.redisService.cacheEvent(enrichedEvent);
+      await this.redisService.cacheEvent(eventForProcessing);
 
       this.loggingService.log(
         `Event published: ${enrichedEvent.eventType}`,
@@ -127,5 +134,32 @@ export class EventBusService {
       );
       throw error;
     }
+  }
+
+  /**
+   * Normalize events for backward compatibility
+   * Converts StandardizedDomainEvent to DomainEvent format
+   */
+  private normalizeEvent(event: any): DomainEvent {
+    // If it's already a DomainEvent, return as is
+    if ('version' in event && typeof event.version === 'number') {
+      return event as DomainEvent;
+    }
+
+    // Convert StandardizedDomainEvent to DomainEvent
+    return {
+      eventId: event.eventId,
+      eventType: event.eventType,
+      aggregateId: event.aggregateId,
+      aggregateType: event.aggregateType,
+      eventData: event.eventData,
+      timestamp: event.timestamp,
+      version: event.aggregateVersion || 1,
+      userId: event.userId,
+      correlationId: event.correlationId,
+      traceId: event.traceId,
+      spanId: event.spanId,
+      parentSpanId: event.parentSpanId
+    };
   }
 }

@@ -78,11 +78,18 @@ export class WaitingListController {
     @Body(ValidationPipe) joinDto: JoinWaitingListDto,
     @CurrentUser() user: any
   ): Promise<WaitingListEntryResponseDto> {
-    return await this.waitingListService.joinWaitingList({
-      ...joinDto,
+    const result = await this.waitingListService.joinWaitingList({
       userId: user.id,
-      userPriority: this.getUserPriority(user.role)
+      resourceId: joinDto.resourceId,
+      programId: joinDto.programId,
+      desiredStartTime: new Date(joinDto.desiredStartTime),
+      desiredEndTime: new Date(joinDto.desiredEndTime),
+      priority: this.getUserPriority(user.role),
+      confirmationTimeLimit: joinDto.confirmationTimeLimit,
+      requestedBy: user.id
     });
+    
+    return this.mapToResponseDto(result.entry);
   }
 
   @Get(AVAILABILITY_URLS.MY_WAITING_LIST)
@@ -106,7 +113,8 @@ export class WaitingListController {
     @CurrentUser() user: any,
     @Query('status') status?: string,
   ): Promise<WaitingListEntryResponseDto[]> {
-    return await this.waitingListService.getUserEntries(user.id, status);
+    const entries = await this.waitingListService.getUserEntries(user.id, status);
+    return entries.map(entry => this.mapToResponseDto(entry));
   }
 
   @Get(AVAILABILITY_URLS.WAITING_LIST_ENTRY_BY_ID)
@@ -134,7 +142,8 @@ export class WaitingListController {
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: any
   ): Promise<WaitingListEntryResponseDto> {
-    return await this.waitingListService.getEntry(id, user.id);
+    const entry = await this.waitingListService.getEntry(id, user.id);
+    return this.mapToResponseDto(entry);
   }
 
   @Post(AVAILABILITY_URLS.WAITING_LIST_ENTRY_CONFIRM)
@@ -269,12 +278,17 @@ export class WaitingListController {
     @Body(ValidationPipe) escalateDto: EscalatePriorityDto,
     @CurrentUser() user: any
   ): Promise<WaitingListEntryResponseDto> {
-    return await this.waitingListService.escalatePriority(
+    // Get the entry first to find waitingListId
+    const entry = await this.waitingListService.getEntry(id, user.id);
+    
+    await this.waitingListService.escalatePriority(
+      entry.waitingListId,
       id,
-      escalateDto.newPriority,
-      user.id,
-      escalateDto.escalationReason
+      escalateDto.newPriority
     );
+    
+    const updatedEntry = await this.waitingListService.getEntry(id, user.id);
+    return this.mapToResponseDto(updatedEntry);
   }
 
   @Post(AVAILABILITY_URLS.WAITING_LIST_PROCESS_AVAILABLE_SLOTS)
@@ -395,9 +409,11 @@ export class WaitingListController {
     estimatedWaitTime: number | null;
   }> {
     return await this.waitingListService.validateJoin({
-      ...joinDto,
+      resourceId: joinDto.resourceId,
       userId: user.id,
-      userPriority: this.getUserPriority(user.role)
+      desiredStartTime: new Date(joinDto.desiredStartTime),
+      desiredEndTime: new Date(joinDto.desiredEndTime),
+      priority: this.getUserPriority(user.role)
     });
   }
 
@@ -483,7 +499,7 @@ export class WaitingListController {
     failed: Array<{ id: string; error: string }>;
     totalProcessed: number;
   }> {
-    return await this.waitingListService.bulkNotify(entryIds, message, user.id);
+    return await this.waitingListService.bulkNotify(entryIds, message);
   }
 
   @Post(AVAILABILITY_URLS.WAITING_LIST_PROCESS_EXPIRED)
@@ -546,15 +562,29 @@ export class WaitingListController {
   }
 
   // Helper method to determine user priority based on role
-  private getUserPriority(role: UserRole): string {
+  private getUserPriority(role: string): string {
     const priorityMap = {
-      [UserRole.GENERAL_ADMIN]: 'ADMIN_GENERAL',
-      [UserRole.PROGRAM_ADMIN]: 'PROGRAM_DIRECTOR',
-      [UserRole.TEACHER]: 'TEACHER',
-      [UserRole.STUDENT]: 'STUDENT',
-      [UserRole.SECURITY]: 'EXTERNAL',
-      [UserRole.GENERAL_STAFF]: 'EXTERNAL'
+      [UserRole.GENERAL_ADMIN]: 'HIGH',
+      [UserRole.PROGRAM_ADMIN]: 'HIGH',
+      [UserRole.TEACHER]: 'MEDIUM',
+      [UserRole.STUDENT]: 'LOW'
     };
-    return priorityMap[role] || 'EXTERNAL';
+    return priorityMap[role] || 'LOW';
+  }
+
+  private mapToResponseDto(entry: any): WaitingListEntryResponseDto {
+    return {
+      id: entry.id,
+      userId: entry.userId,
+      resourceId: entry.resourceId,
+      requestedStartTime: entry.requestedAt?.toISOString() || new Date().toISOString(),
+      requestedEndTime: entry.requestedAt?.toISOString() || new Date().toISOString(),
+      priority: entry.priority || 'LOW',
+      status: entry.status || 'WAITING',
+      position: entry.position || 0,
+      estimatedWaitTime: 0,
+      createdAt: entry.requestedAt?.toISOString() || new Date().toISOString(),
+      updatedAt: entry.requestedAt?.toISOString() || new Date().toISOString()
+    };
   }
 }

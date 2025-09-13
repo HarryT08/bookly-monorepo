@@ -4,7 +4,7 @@
  */
 
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
 import { EventBusService } from '@libs/event-bus/services/event-bus.service';
 
@@ -18,31 +18,25 @@ import {
   ConfirmRecurringReservationInstanceCommand,
   ValidateRecurringReservationCommand,
   BulkCancelRecurringReservationsCommand
-} from '../commands/create-recurring-reservation.command';
+} from '@apps/availability-service/application/commands/create-recurring-reservation.command';
 
 // Domain Services
-import { RecurringReservationDomainService } from '../../domain/services/recurring-reservation-domain.service';
-import { ReservationLimitsDomainService } from '../../domain/services/reservation-limits-domain.service';
-
-// Repositories
-import { RecurringReservationRepository } from '../../domain/repositories/recurring-reservation.repository';
-import { ResourceRepository } from '@/apps/resources-service/domain/repositories/resource.repository';
-import { UserRepository } from '@/apps/auth-service/domain/repositories/user.repository';
+import { RecurringReservationDomainService } from '@apps/availability-service/domain/services/recurring-reservation-domain.service';
+import { ReservationLimitsDomainService } from '@apps/availability-service/domain/services/reservation-limits-domain.service';
 
 // Entities
-import { RecurringReservationEntity } from '../../domain/entities/recurring-reservation.entity';
-import { LoggingHelper } from '@/libs/logging/logging.helper';
-import { RecurringReservationStatus } from '../../utils/recurring-reservation-status.enum';
+import { RecurringReservationEntity } from '@apps/availability-service/domain/entities/recurring-reservation.entity';
+import { LoggingHelper } from '@libs/logging/logging.helper';
+import { RecurringReservationStatus } from '@apps/availability-service/utils/recurring-reservation-status.enum';
 
 @Injectable()
 @CommandHandler(CreateRecurringReservationCommand)
 export class CreateRecurringReservationHandler implements ICommandHandler<CreateRecurringReservationCommand> {
   constructor(
+    @Inject('RecurringReservationDomainService')
     private readonly recurringReservationService: RecurringReservationDomainService,
+    @Inject('ReservationLimitsDomainService')
     private readonly reservationLimitsService: ReservationLimitsDomainService,
-    private readonly recurringReservationRepository: RecurringReservationRepository,
-    private readonly resourceRepository: ResourceRepository,
-    private readonly userRepository: UserRepository,
     private readonly eventBus: EventBusService,
     private readonly logger: LoggingService
   ) {}
@@ -55,36 +49,32 @@ export class CreateRecurringReservationHandler implements ICommandHandler<Create
       frequency: command.frequency
     });
 
-    try {
-      // Validate resource exists
-      const resource = await this.resourceRepository.findById(command.resourceId);
-      if (!resource) {
-        throw new NotFoundException(`Resource with ID ${command.resourceId} not found`);
-      }
+    // Validate business rules for recurring reservations using domain service
+    const validation = await this.recurringReservationService.validateRecurringReservationCreation(
+      command.userId,
+      command.resourceId,
+      command.programId,
+      command.frequency,
+      command.startDate,
+      command.endDate
+    );
 
-      // Validate user exists
-      const user = await this.userRepository.findById(command.userId);
-      if (!user) {
-        throw new NotFoundException(`User with ID ${command.userId} not found`);
-      }
+    if (!validation.canCreate) {
+      throw new BadRequestException(`Cannot create recurring reservation: ${validation.violations.join(', ')}`);
+    }
 
-      // Check reservation limits
-      const canCreate = await this.reservationLimitsService.validateReservationLimits({
+    // Log warnings if any
+    if (validation.warnings.length > 0) {
+      this.logger.warn('Recurring reservation creation warnings', {
+        warnings: validation.warnings,
         userId: command.userId,
-        resourceId: command.resourceId,
-        programId: command.programId,
-        startDate: command.startDate,
-        endDate: command.endDate,
-        isRecurring: true,
-        recurringInstanceCount: command.maxInstances
+        resourceId: command.resourceId
       });
+    }
 
-      if (!canCreate.isValid) {
-        throw new BadRequestException(`Reservation limit exceeded: ${canCreate.reason}`);
-      }
-
-      // Create recurring reservation entity
-      const recurringReservation = RecurringReservationEntity.create({
+    try {
+      // Create the recurring reservation using domain service
+      const result = await this.recurringReservationService.createRecurringReservation({
         title: command.title,
         description: command.description,
         resourceId: command.resourceId,
@@ -97,69 +87,46 @@ export class CreateRecurringReservationHandler implements ICommandHandler<Create
         interval: command.interval,
         daysOfWeek: command.daysOfWeek,
         dayOfMonth: command.dayOfMonth,
-        status: RecurringReservationStatus.ACTIVE,
-        totalInstances: 0, // totalInstances - will be calculated
-        confirmedInstances: 0, // confirmedInstances
-        programId: command.programId
       });
 
-      // Validate the recurring reservation
-      const validation = await this.recurringReservationService.validateRecurringReservation(
-        recurringReservation,
-        command.maxInstances,
-        command.allowOverlap
-      );
+      // Log success
+      this.logger.log('Recurring reservation created successfully', {
+        recurringReservationId: result.recurringReservation.id,
+        instancesGenerated: result.generatedInstances.length,
+        warnings: result.warnings
+      });
 
-      if (!validation.isValid) {
-        throw new BadRequestException(`Validation failed: ${validation.errors.join(', ')}`);
-      }
-
-      // Save the recurring reservation
-      const savedReservation = await this.recurringReservationRepository.create(recurringReservation);
-
-      // Generate initial instances
-      await this.recurringReservationService.generateInstances(
-        savedReservation,
-        command.maxInstances,
-        //true // skipConflicts
-      );
-
-      // Publish event
+      // Publish domain event
       await this.eventBus.publishEvent({
-        eventId: `create-recurring-reservation-${savedReservation.id}`,
-        eventType: 'recurring-reservations.created',
-        aggregateId: savedReservation.id,
+        eventId: `recurring_reservation_created_${result.recurringReservation.id}`,
+        eventType: 'recurring_reservation.created',
+        aggregateId: result.recurringReservation.id,
         aggregateType: 'RecurringReservation',
-        userId: command.userId,
         eventData: {
-          recurringReservationId: savedReservation.id,
+          recurringReservationId: result.recurringReservation.id,
           userId: command.userId,
           resourceId: command.resourceId,
           title: command.title,
           frequency: command.frequency,
-          startDate: command.startDate,
-          endDate: command.endDate,
-          timestamp: new Date()
+          instancesGenerated: result.generatedInstances.length,
+          warnings: result.warnings
         },
-        version: 1,
-        timestamp: new Date()
+        timestamp: new Date(),
+        version: 1
       });
 
-      this.logger.log('Recurring reservation created successfully', {
-        id: savedReservation.id,
-        userId: command.userId,
-        resourceId: command.resourceId
-      });
-
-      return savedReservation;
+      return result.recurringReservation;
 
     } catch (error) {
-      this.logger.error('Failed to create recurring reservation', error, LoggingHelper.logParams({
+      this.logger.error('Failed to create recurring reservation', {
+        error: error.message,
+        stack: error.stack,
         userId: command.userId,
         resourceId: command.resourceId,
         title: command.title
-      }));
-      throw error;
+      });
+
+      throw new BadRequestException(`Failed to create recurring reservation: ${error.message}`);
     }
   }
 }
@@ -168,8 +135,8 @@ export class CreateRecurringReservationHandler implements ICommandHandler<Create
 @CommandHandler(UpdateRecurringReservationCommand)
 export class UpdateRecurringReservationHandler implements ICommandHandler<UpdateRecurringReservationCommand> {
   constructor(
+    @Inject('RecurringReservationDomainService')
     private readonly recurringReservationService: RecurringReservationDomainService,
-    private readonly recurringReservationRepository: RecurringReservationRepository,
     private readonly eventBus: EventBusService,
     private readonly logger: LoggingService
   ) {}
@@ -182,60 +149,59 @@ export class UpdateRecurringReservationHandler implements ICommandHandler<Update
     });
 
     try {
-      // Get existing reservation
-      const existingReservation = await this.recurringReservationRepository.findById(command.id);
-      if (!existingReservation) {
-        throw new NotFoundException(`Recurring reservation with ID ${command.id} not found`);
-      }
-
-      // Check permissions
-      if (existingReservation.userId !== command.userId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only update your own reservations');
-      }
-
-      // Update the reservation
+      // Update using domain service
       const updatedReservation = await this.recurringReservationService.updateRecurringReservation(
         command.id,
-        command.updateData,
+        {
+          title: command.updateData.title,
+          description: command.updateData.description,
+          startTime: command.updateData.startTime,
+          endTime: command.updateData.endTime,
+          endDate: command.updateData.endDate,
+        },
         command.updateScope,
         command.regenerateInstances
       );
 
-      // Publish event
-      await this.eventBus.publishEvent({
-        eventId: `update-recurring-reservation-${command.id}`,
-        eventType: 'recurring-reservations.updated',
-        aggregateId: command.id,
-        aggregateType: 'RecurringReservation',
-        userId: command.userId,
-        eventData: {
-          recurringReservationId: command.id,
-          userId: command.userId,
-          updateScope: command.updateScope,
-          updateData: command.updateData,
-          updateReason: command.updateReason,
-          updatedBy: command.updatedBy,
-          timestamp: new Date()
-        },
-        version: 1,
-        timestamp: new Date()
-      });
-
       this.logger.log('Recurring reservation updated successfully', {
-        id: command.id,
+        id: updatedReservation.id,
         userId: command.userId,
         updateScope: command.updateScope
+      });
+
+      // Publish domain event
+      await this.eventBus.publishEvent({
+        eventId: `recurring_reservation_updated_${updatedReservation.id}`,
+        eventType: 'recurring_reservation.updated',
+        aggregateId: updatedReservation.id,
+        aggregateType: 'RecurringReservation',
+        eventData: {
+          recurringReservationId: updatedReservation.id,
+          userId: command.userId,
+          updateScope: command.updateScope,
+          regenerateInstances: command.regenerateInstances,
+          changes: {
+            title: command.updateData.title,
+            description: command.updateData.description,
+            startTime: command.updateData.startTime,
+            endTime: command.updateData.endTime,
+            endDate: command.updateData.endDate,
+          }
+        },
+        timestamp: new Date(),
+        version: 1
       });
 
       return updatedReservation;
 
     } catch (error) {
-      this.logger.error('Failed to update recurring reservation', error, LoggingHelper.logParams({
+      this.logger.error('Failed to update recurring reservation', {
+        error: error.message,
         id: command.id,
         userId: command.userId
-      }));
-      throw error;
+      });
+
+      throw new BadRequestException(`Failed to update recurring reservation: ${error.message}`);
     }
   }
 }
@@ -244,8 +210,8 @@ export class UpdateRecurringReservationHandler implements ICommandHandler<Update
 @CommandHandler(CancelRecurringReservationCommand)
 export class CancelRecurringReservationHandler implements ICommandHandler<CancelRecurringReservationCommand> {
   constructor(
+    @Inject('RecurringReservationDomainService')
     private readonly recurringReservationService: RecurringReservationDomainService,
-    private readonly recurringReservationRepository: RecurringReservationRepository,
     private readonly eventBus: EventBusService,
     private readonly logger: LoggingService
   ) {}
@@ -259,55 +225,45 @@ export class CancelRecurringReservationHandler implements ICommandHandler<Cancel
     });
 
     try {
-      // Get existing reservation
-      const existingReservation = await this.recurringReservationRepository.findById(command.id);
-      if (!existingReservation) {
-        throw new NotFoundException(`Recurring reservation with ID ${command.id} not found`);
-      }
-
-      // Check permissions
-      if (existingReservation.userId !== command.userId) {
-        // TODO: Add role-based permission check for admins
-        throw new ForbiddenException('You can only cancel your own reservations');
-      }
-
-      // Cancel the reservation
-      await this.recurringReservationService.cancelRecurringReservation(
+      // Cancel using domain service
+      const result = await this.recurringReservationService.cancelRecurringSeries(
         command.id,
-        command.reason,
-        command.cancelScope
+        command.cancelScope === 'FUTURE_ONLY',
+        command.reason
       );
-
-      // Publish event
-      await this.eventBus.publishEvent({
-        eventId: `cancel-recurring-reservation-${command.id}`,
-        eventType: 'recurring-reservations.cancelled',
-        aggregateId: command.id,
-        aggregateType: 'RecurringReservation',
-        userId: command.userId,
-        eventData: {
-          recurringReservationId: command.id,
-          cancelScope: command.cancelScope,
-          reason: command.reason,
-          cancelledBy: command.cancelledBy,
-          timestamp: new Date()
-        },
-        version: 1,
-        timestamp: new Date()
-      });
 
       this.logger.log('Recurring reservation cancelled successfully', {
         id: command.id,
-        userId: command.userId,
-        cancelScope: command.cancelScope
+        cancelledInstances: result.cancelledInstances.length,
+        cancelledReservations: result.cancelledReservations.length
+      });
+
+      // Publish domain event
+      await this.eventBus.publishEvent({
+        eventId: `recurring_reservation_cancelled_${command.id}`,
+        eventType: 'recurring_reservation.cancelled',
+        aggregateId: command.id,
+        aggregateType: 'RecurringReservation',
+        eventData: {
+          recurringReservationId: command.id,
+          userId: command.userId,
+          reason: command.reason,
+          cancelScope: command.cancelScope,
+          cancelledInstances: result.cancelledInstances.length,
+          cancelledReservations: result.cancelledReservations.length
+        },
+        timestamp: new Date(),
+        version: 1
       });
 
     } catch (error) {
-      this.logger.error('Failed to cancel recurring reservation', error, LoggingHelper.logParams({
+      this.logger.error('Failed to cancel recurring reservation', {
+        error: error.message,
         id: command.id,
         userId: command.userId
-      }));
-      throw error;
+      });
+
+      throw new BadRequestException(`Failed to cancel recurring reservation: ${error.message}`);
     }
   }
 }
@@ -316,6 +272,7 @@ export class CancelRecurringReservationHandler implements ICommandHandler<Cancel
 @CommandHandler(GenerateRecurringReservationInstancesCommand)
 export class GenerateRecurringReservationInstancesHandler implements ICommandHandler<GenerateRecurringReservationInstancesCommand> {
   constructor(
+    @Inject('RecurringReservationDomainService')
     private readonly recurringReservationService: RecurringReservationDomainService,
     private readonly eventBus: EventBusService,
     private readonly logger: LoggingService
@@ -375,6 +332,7 @@ export class GenerateRecurringReservationInstancesHandler implements ICommandHan
 @CommandHandler(ConfirmRecurringReservationInstanceCommand)
 export class ConfirmRecurringReservationInstanceHandler implements ICommandHandler<ConfirmRecurringReservationInstanceCommand> {
   constructor(
+    @Inject('RecurringReservationDomainService')
     private readonly recurringReservationService: RecurringReservationDomainService,
     private readonly eventBus: EventBusService,
     private readonly logger: LoggingService
@@ -430,6 +388,7 @@ export class ConfirmRecurringReservationInstanceHandler implements ICommandHandl
 @CommandHandler(ValidateRecurringReservationCommand)
 export class ValidateRecurringReservationHandler implements ICommandHandler<ValidateRecurringReservationCommand> {
   constructor(
+    @Inject('RecurringReservationDomainService')
     private readonly recurringReservationService: RecurringReservationDomainService,
     private readonly logger: LoggingService
   ) {}
@@ -490,6 +449,7 @@ export class ValidateRecurringReservationHandler implements ICommandHandler<Vali
 @CommandHandler(BulkCancelRecurringReservationsCommand)
 export class BulkCancelRecurringReservationsHandler implements ICommandHandler<BulkCancelRecurringReservationsCommand> {
   constructor(
+    @Inject('RecurringReservationDomainService')
     private readonly recurringReservationService: RecurringReservationDomainService,
     private readonly eventBus: EventBusService,
     private readonly logger: LoggingService
