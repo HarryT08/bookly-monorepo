@@ -1,114 +1,43 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@auth/*": [
-        "./auth/*"
-      ],
-      "@i18n": [
-        "./i18n/index"
-      ],
-      "@i18n/*": [
-        "./i18n/*"
-      ],
-      "@fuse/*": [
-        "./lib/fuse/*"
-      ],
-      "@mock-utils/*": [
-        "./mock-utils/*"
-      ],
-      "@services/*": [
-        "./services/*"
-      ],
-      "@hooks/*": [
-        "./hooks/*"
-      ],
-      "@store/*": [
-        "./store/*"
-      ],
-      "@utils/*": [
-        "./utils/*"
-      ],
-      "@types/*": [
-        "./types/*"
-      ],
-      "@components/*": [
-        "./components/*"
-      ],
-      "@contexts/*": [
-        "./contexts/*"
-      ],
-      "@styles/*": [
-        "./styles/*"
-      ],
-      "@configs/*": [
-        "./configs/*"
-      ],
-      "@/*": [
-        "./src/*"
-      ]
-    },
-    "declaration": true,
-    "target": "esnext",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "es2020",
-      "scripthost"
-    ],
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
     "plugins": [
-      {
-        "name": "typescript-plugin-css-modules"
-      },
       {
         "name": "next"
       }
     ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-    "incremental": true
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/atoms/*": ["./src/components/atoms/*"],
+      "@/molecules/*": ["./src/components/molecules/*"],
+      "@/organisms/*": ["./src/components/organisms/*"],
+      "@/templates/*": ["./src/components/templates/*"],
+      "@/pages/*": ["./src/pages/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/store/*": ["./src/store/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/styles/*": ["./src/styles/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/i18n/*": ["./src/i18n/*"]
+    }
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx",
-    "./global.d.ts",
-    "./services/**/*.ts",
-    "./hooks/**/*.ts",
-    "./store/**/*.ts",
-    "./utils/**/*.ts",
-    "./types/**/*.ts",
-    "./components/**/*.ts",
-    "./components/**/*.tsx",
-    "./contexts/**/*.ts",
-    "./contexts/**/*.tsx",
-    "./auth/**/*.ts",
-    "./auth/**/*.tsx",
-    "./mock-utils/**/*.ts",
-    "./styles/**/*.ts",
-    "./configs/**/*.ts",
-    "./i18n/**/*.ts",
-    "./lib/**/*.ts",
-    "./lib/**/*.tsx",
-    "tailwind.config.ts",
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "next.config.mjs",
-    "next.config.ts",
-    "build/types/**/*.ts"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

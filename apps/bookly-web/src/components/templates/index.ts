@@ -1,5 +1,4 @@
-export { SettingsTemplate } from './SettingsTemplate/SettingsTemplate';
-export { DataTablePageTemplate } from './DataTablePageTemplate';
-export { FormPageTemplate } from './FormPageTemplate';
-export { BackupDialog } from './BackupDialog/BackupDialog';
-export { UpdateDialog } from './UpdateDialog/UpdateDialog';
+export { AuthLayout } from './AuthLayout/AuthLayout';
+export type { AuthLayoutProps } from './AuthLayout/AuthLayout';
+
+export { MainLayout } from './MainLayout/MainLayout';
