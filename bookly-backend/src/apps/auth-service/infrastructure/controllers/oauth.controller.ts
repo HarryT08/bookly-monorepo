@@ -9,8 +9,10 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { AuthService } from '../../application/services/auth.service';
 import { ConfigService } from '@nestjs/config';
+import { SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { AuthService } from '../../application/services/auth.service';
 import { SSOConfigGuard } from '../guards/sso-config.guard';
 import { AUTH_URLS } from '../../utils/maps/urls.map';
 

@@ -7,6 +7,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 import { AuthCategoryService } from '../../application/services/category.service';
 import { LoggingService } from '@libs/logging/logging.service';
 
@@ -20,7 +22,11 @@ export class AuthCategoryController {
 
   @Get()
   @ApiOperation({ summary: 'Get all role categories' })
-  @ApiResponse({ status: 200, description: 'Role categories retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Role categories retrieved successfully',
+    type: PaginatedResponseDto
+  })
   async findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
@@ -39,7 +45,13 @@ export class AuthCategoryController {
         search,
       });
 
-      return categories;
+      return ResponseUtil.paginated(
+        categories.data,
+        categories.pagination.total,
+        categories.pagination.page,
+        categories.pagination.limit,
+        'Role categories retrieved successfully'
+      );
     } catch (error) {
       this.loggingService.error('Failed to retrieve role categories', error);
       throw error;
@@ -48,7 +60,11 @@ export class AuthCategoryController {
 
   @Get('defaults')
   @ApiOperation({ summary: 'Get default role categories' })
-  @ApiResponse({ status: 200, description: 'Default role categories retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Default role categories retrieved successfully',
+    type: SuccessResponseDto
+  })
   async getDefaults() {
     try {
       const categories = await this.categoryService.findDefaults();
@@ -57,7 +73,7 @@ export class AuthCategoryController {
         count: categories.length,
       });
 
-      return categories;
+      return ResponseUtil.success(categories, 'Default role categories retrieved successfully');
     } catch (error) {
       this.loggingService.error('Failed to retrieve default role categories', error);
       throw error;

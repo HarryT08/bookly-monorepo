@@ -1,0 +1,189 @@
+{
+  "info": {
+    "name": "Bookly - Seed Endpoints Collection",
+    "description": "Comprehensive collection of seed endpoints organized by microservice",
+    "version": "1.0.0",
+    "_postman_id": "bookly-seed-endpoints-2024",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_service_url",
+      "value": "{{base_url}}/auth",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏛️ Auth Service Seeds",
+      "item": [
+        {
+          "name": "Check Seed Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{auth_service_url}}/seed/status",
+              "host": ["{{auth_service_url}}"],
+              "path": ["seed", "status"]
+            },
+            "description": "Check if database needs seeding"
+          }
+        },
+        {
+          "name": "Run Complete Seed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{auth_service_url}}/seed/run",
+              "host": ["{{auth_service_url}}"],
+              "path": ["seed", "run"]
+            },
+            "description": "Execute complete seeding process"
+          }
+        }
+      ],
+      "description": "Authentication service seed endpoints"
+    },
+    {
+      "name": "🏢 Resources Service Seeds",
+      "item": [
+        {
+          "name": "Seed Categories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/resources/seed/categories",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "seed", "categories"]
+            },
+            "description": "Seed resource categories (RF-02)"
+          }
+        },
+        {
+          "name": "Seed Sample Resources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/resources/seed/resources",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "seed", "resources"]
+            },
+            "description": "Seed sample resources for testing"
+          }
+        }
+      ],
+      "description": "Resources service seed endpoints"
+    },
+    {
+      "name": "📅 Availability Service Seeds",
+      "item": [
+        {
+          "name": "Seed Default Availability",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/availability/seed/default-availability",
+              "host": ["{{base_url}}"],
+              "path": ["availability", "seed", "default-availability"]
+            },
+            "description": "Seed default availability schedules (RF-07)"
+          }
+        }
+      ],
+      "description": "Availability service seed endpoints"
+    },
+    {
+      "name": "✅ Stockpile Service Seeds",
+      "item": [
+        {
+          "name": "Seed Approval Flows",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/stockpile/seed/approval-flows",
+              "host": ["{{base_url}}"],
+              "path": ["stockpile", "seed", "approval-flows"]
+            },
+            "description": "Seed approval flows (RF-24)"
+          }
+        }
+      ],
+      "description": "Stockpile service seed endpoints"
+    },
+    {
+      "name": "📊 Reports Service Seeds",
+      "item": [
+        {
+          "name": "Seed Sample Feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/seed/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["reports", "seed", "feedback"]
+            },
+            "description": "Seed sample feedback (RF-34)"
+          }
+        }
+      ],
+      "description": "Reports service seed endpoints"
+    }
+  ]
+}

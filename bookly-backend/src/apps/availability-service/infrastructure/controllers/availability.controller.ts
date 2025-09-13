@@ -33,19 +33,21 @@ import { GetCalendarViewQuery } from '../../application/queries/get-calendar-vie
 import { GetReservationHistoryDetailedQuery } from '../../application/queries/get-reservation-history-detailed.query';
 
 // DTOs
-import { CreateAvailabilityDto } from '../../../../libs/dto/availability/create-availability.dto';
-import { CreateScheduleDto } from '../../../../libs/dto/availability/create-schedule.dto';
-import { CreateReservationDto } from '../../../../libs/dto/availability/create-reservation.dto';
-import { CreateCalendarIntegrationDto, AvailabilityQueryDto } from '../../../../libs/dto/availability/calendar-integration.dto';
-import { ReservationHistoryQueryDto } from '../../../../libs/dto/availability/reservation-history.dto';
-import { CalendarViewQueryDto, CalendarViewType, EventType } from '../../../../libs/dto/availability/calendar-view.dto';
+import { CreateAvailabilityDto } from '@libs/dto/availability/create-availability.dto';
+import { CreateScheduleDto } from '@libs/dto/availability/create-schedule.dto';
+import { CreateReservationDto } from '@libs/dto/availability/create-reservation.dto';
+import { CreateCalendarIntegrationDto, AvailabilityQueryDto } from '@libs/dto/availability/calendar-integration.dto';
+import { ReservationHistoryQueryDto } from '@libs/dto/availability/reservation-history.dto';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { CalendarViewQueryDto, CalendarViewType, EventType } from '@libs/dto/availability/calendar-view.dto';
 import {
   CreateReservationHistoryDto,
   ReservationHistoryDetailedQueryDto,
   ReservationHistoryResponseDto,
   HistoryAction,
   HistorySource
-} from '../../../../libs/dto/availability/reservation-history-detailed.dto';
+} from '@libs/dto/availability/reservation-history-detailed.dto';
 
 /**
  * Availability Controller
@@ -87,7 +89,11 @@ export class AvailabilityController {
     summary: 'Create basic availability hours (RF-07)',
     description: 'Creates basic availability hours for a resource on specific days of the week'
   })
-  @ApiResponse({ status: 201, description: 'Availability created successfully' })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Availability created successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Time slot conflicts with existing availability' })
   async createAvailability(@Body() createAvailabilityDto: CreateAvailabilityDto) {
@@ -99,7 +105,8 @@ export class AvailabilityController {
       createAvailabilityDto.isActive
     );
     
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Availability created successfully');
   }
 
   @Post(AVAILABILITY_URLS.SCHEDULE_CREATE)

@@ -9,6 +9,12 @@ import { LoggingModule } from "@/libs/logging/logging.module";
 import { CommonModule } from "@/libs/common/common.module";
 import { EventBusModule } from "@/libs/event-bus/event-bus.module";
 
+// Command Handlers
+import { CreateFeedbackHandler } from "./application/handlers/create-feedback.handler";
+import { GenerateUsageReportHandler } from "./application/handlers/generate-usage-report.handler";
+import { GenerateUserReportHandler } from "./application/handlers/generate-user-report.handler";
+import { GenerateDemandReportHandler } from "./application/handlers/generate-demand-report.handler";
+
 // Query Handlers
 import { UsageReportHandler } from "./application/handlers/usage-report.handler";
 import { UsageReportSummaryHandler } from "./application/handlers/usage-report.handler";
@@ -32,6 +38,13 @@ import { PrismaReportExportsRepository } from "./infrastructure/repositories/pri
 // Services
 import { ReportsAuditService } from "./application/services/audit.service";
 import { AuthModule } from "@apps/auth-service/auth.module";
+
+const commandHandlers = [
+  CreateFeedbackHandler,
+  GenerateUsageReportHandler,
+  GenerateUserReportHandler,
+  GenerateDemandReportHandler,
+];
 
 const queryHandlers = [
   UsageReportHandler,
@@ -78,6 +91,7 @@ const repositories = [
   providers: [
     ReportsService,
     ReportsAuditService,
+    ...commandHandlers,
     ...queryHandlers,
     ...repositories,
   ],

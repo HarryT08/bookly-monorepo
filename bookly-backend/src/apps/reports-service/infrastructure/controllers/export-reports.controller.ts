@@ -23,9 +23,11 @@ import {
   ApiConsumes,
   ApiProduces
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/libs/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@/apps/auth-service/infrastructure/guards/roles.guard';
-import { Roles } from '@/apps/auth-service/infrastructure/decorators/roles.decorator';
+import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@libs/common/guards/roles.guard';
+import { Roles } from '@libs/common/decorators/roles.decorator';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 import { ExportCsvDto } from '@dto/reports/export-csv.dto';
 import { ExportResponseDto } from '@dto/reports/report-response.dto';
 import { 
@@ -34,8 +36,8 @@ import {
   DownloadExportQuery,
   CachedReportQuery 
 } from '../../application/queries/export-report.query';
-import { LoggingService } from '@logging/logging.service';
-import { LoggingHelper } from '@/libs/logging/logging.helper';
+import { LoggingService } from '@libs/logging/logging.service';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 import { Response as ExpressResponse } from 'express';
 import { REPORTS_URLS } from '../../utils/maps/urls.map';
 
@@ -67,7 +69,7 @@ export class ExportReportsController {
   @ApiResponse({ 
     status: 201, 
     description: 'Export initiated successfully',
-    type: ExportResponseDto 
+    type: SuccessResponseDto 
   })
   @ApiResponse({ status: 400, description: 'Invalid export configuration' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -77,7 +79,7 @@ export class ExportReportsController {
   async exportToCsv(
     @Body() exportConfig: ExportCsvDto,
     @Request() req: any,
-  ): Promise<ExportResponseDto> {
+  ) {
     const startTime = Date.now();
     const requestId = req.headers['x-request-id'] || `exp_${Date.now()}`;
 
@@ -115,7 +117,7 @@ export class ExportReportsController {
         })
       );
 
-      return result;
+      return ResponseUtil.success(result, 'Export initiated successfully');
 
     } catch (error) {
       const executionTime = Date.now() - startTime;
@@ -132,12 +134,7 @@ export class ExportReportsController {
       );
 
       throw new HttpException(
-        {
-          message: 'Error exporting report to CSV',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: '/reports/export/csv',
-        },
+        'Error exporting report to CSV',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -242,12 +239,7 @@ export class ExportReportsController {
       }
 
       throw new HttpException(
-        {
-          message: 'Error downloading export',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: `/reports/export/download/${exportId}`,
-        },
+        'Error downloading export',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -289,7 +281,7 @@ export class ExportReportsController {
     @Query('limit') limit?: number,
     @Query('reportType') reportType?: string,
     @Request() req?: any,
-  ): Promise<any[]> {
+  ) {
     try {
       this.loggingService.log(
         `Export history requested`,
@@ -309,7 +301,7 @@ export class ExportReportsController {
 
       const result = await this.queryBus.execute(query);
 
-      return result;
+      return ResponseUtil.success(result, 'Export history retrieved successfully');
 
     } catch (error) {
       this.loggingService.error(
@@ -323,12 +315,7 @@ export class ExportReportsController {
       );
 
       throw new HttpException(
-        {
-          message: 'Error getting export history',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: '/reports/export/history',
-        },
+        'Error getting export history',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -368,7 +355,7 @@ export class ExportReportsController {
   async getCachedReport(
     @Param('reportId') reportId: string,
     @Request() req: any,
-  ): Promise<any> {
+  ) {
     try {
       this.loggingService.log(
         `Cached report requested`,
@@ -394,7 +381,7 @@ export class ExportReportsController {
         );
       }
 
-      return result;
+      return ResponseUtil.success(result, 'Cached report retrieved successfully');
 
     } catch (error) {
       this.loggingService.error(
@@ -411,12 +398,7 @@ export class ExportReportsController {
       }
 
       throw new HttpException(
-        {
-          message: 'Error getting cached report',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: `/reports/export/cached/${reportId}`,
-        },
+        'Error getting cached report',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -458,7 +440,7 @@ export class ExportReportsController {
     @Request() req: any,
     @Query('reportType') reportType?: string,
     @Query('limit') limit?: number,
-  ): Promise<any> {
+  ) {
     try {
       const query = new ExportHistoryQuery(
         req.user.id,
@@ -476,7 +458,7 @@ export class ExportReportsController {
         );
       }
 
-      return {
+      const statusData = {
         id: exportData.id,
         status: exportData.status,
         progress: exportData.status === 'COMPLETED' ? 100 : 
@@ -493,6 +475,8 @@ export class ExportReportsController {
         downloadUrl: exportData.isAvailable ? `/reports/export/download/${exportId}` : null,
       };
 
+      return ResponseUtil.success(statusData, 'Export status retrieved successfully');
+
     } catch (error) {
       this.loggingService.error(
         `Error getting export status: ${error.message}`,
@@ -508,12 +492,7 @@ export class ExportReportsController {
       }
 
       throw new HttpException(
-        {
-          message: 'Error getting export status',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: `/reports/export/status/${exportId}`,
-        },
+        'Error getting export status',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

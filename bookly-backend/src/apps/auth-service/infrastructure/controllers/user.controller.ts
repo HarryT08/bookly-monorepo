@@ -1,11 +1,16 @@
 import { Controller, Get, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { QueryBus, CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { GetUserQuery } from '../../application/queries/get-user.query';
 import { GetUsersQuery } from '../../application/queries/get-users.query';
-import { UserService } from '../../application/services/user.service';
+import { UpdateUserCommand } from '../../application/commands/update-user.command';
+import { DeleteUserCommand } from '../../application/commands/delete-user.command';
+import { AssignRoleCommand } from '../../application/commands/assign-role.command';
+import { RemoveRoleCommand } from '../../application/commands/remove-role.command';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AUTH_URLS } from '../../utils/maps';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -14,53 +19,89 @@ import { AUTH_URLS } from '../../utils/maps';
 export class UserController {
   constructor(
     private readonly queryBus: QueryBus,
-    private readonly userService: UserService,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @Get(AUTH_URLS.USER_FIND)
   @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Users retrieved successfully',
+    type: PaginatedResponseDto
+  })
   async findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
   ) {
-    return this.queryBus.execute(new GetUsersQuery(page, limit, search));
+    const result = await this.queryBus.execute(new GetUsersQuery(page, limit, search));
+    return ResponseUtil.fromServiceResponse({
+      items: result.users,
+      total: result.total,
+      page: page || 1,
+      limit: limit || 20,
+      message: 'Users retrieved successfully'
+    });
   }
 
   @Get(AUTH_URLS.USER_FIND_BY_ID)
   @ApiOperation({ summary: 'Get user by ID' })
-  @ApiResponse({ status: 200, description: 'User retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User retrieved successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   async findById(@Param('id') id: string) {
-    return this.queryBus.execute(new GetUserQuery(id));
+    const user = await this.queryBus.execute(new GetUserQuery(id));
+    return ResponseUtil.success(user, 'User retrieved successfully');
   }
 
   @Put(AUTH_URLS.USER_UPDATE)
   @ApiOperation({ summary: 'Update user' })
-  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User updated successfully',
+    type: SuccessResponseDto
+  })
   async update(@Param('id') id: string, @Body() data: any) {
-    return this.userService.update(id, data);
+    const user = await this.commandBus.execute(new UpdateUserCommand(id, data));
+    return ResponseUtil.success(user, 'User updated successfully');
   }
 
   @Delete(AUTH_URLS.USER_DELETE)
   @ApiOperation({ summary: 'Delete user' })
-  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User deleted successfully',
+    type: SuccessResponseDto
+  })
   async delete(@Param('id') id: string) {
-    return this.userService.delete(id);
+    await this.commandBus.execute(new DeleteUserCommand(id));
+    return ResponseUtil.success(null, 'User deleted successfully');
   }
 
   @Put(AUTH_URLS.USER_ASSIGN_ROLE)
   @ApiOperation({ summary: 'Assign role to user' })
-  @ApiResponse({ status: 200, description: 'Role assigned successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Role assigned successfully',
+    type: SuccessResponseDto
+  })
   async assignRole(@Param('userId') userId: string, @Param('roleId') roleId: string) {
-    return this.userService.assignRole(userId, roleId);
+    await this.commandBus.execute(new AssignRoleCommand(userId, roleId));
+    return ResponseUtil.success(null, 'Role assigned successfully');
   }
 
   @Delete(AUTH_URLS.USER_REMOVE_ROLE)
   @ApiOperation({ summary: 'Remove role from user' })
-  @ApiResponse({ status: 200, description: 'Role removed successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Role removed successfully',
+    type: SuccessResponseDto
+  })
   async removeRole(@Param('userId') userId: string, @Param('roleId') roleId: string) {
-    return this.userService.removeRole(userId, roleId);
+    await this.commandBus.execute(new RemoveRoleCommand(userId, roleId));
+    return ResponseUtil.success(null, 'Role removed successfully');
   }
 }

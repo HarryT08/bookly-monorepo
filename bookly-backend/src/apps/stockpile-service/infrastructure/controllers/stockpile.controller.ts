@@ -2,6 +2,8 @@ import { Controller, Get, Post, Put, Param, Body, Query, HttpCode, HttpStatus } 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 
 // Import commands (these would need to be created)
 import { ApproveRequestCommand } from '../../application/commands/approve-request.command';
@@ -57,7 +59,11 @@ export class StockpileController {
   @ApiQuery({ name: 'endDate', required: false, description: 'End date filter (ISO format)' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
-  @ApiResponse({ status: 200, description: 'Approval requests retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Approval requests retrieved successfully',
+    type: PaginatedResponseDto
+  })
   async findAllApprovals(
     @Query('status') status?: string,
     @Query('requesterId') requesterId?: string,
@@ -77,7 +83,14 @@ export class StockpileController {
       page || 1,
       limit || 20
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.fromServiceResponse({
+      items: result.approvals || result.data || result,
+      total: result.total || (Array.isArray(result) ? result.length : 0),
+      page: page || 1,
+      limit: limit || 20,
+      message: 'Approval requests retrieved successfully'
+    });
   }
 
   @Get(STOCKPILE_URLS.APPROVAL_REQUEST_STATUS)
@@ -86,12 +99,18 @@ export class StockpileController {
     description: 'Retrieve detailed information for a specific approval request'
   })
   @ApiParam({ name: 'id', description: 'Approval request ID' })
-  @ApiResponse({ status: 200, description: 'Approval request retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Approval request retrieved successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 404, description: 'Approval request not found' })
   async findApprovalById(@Param('id') id: string) {
     const query = new GetApprovalByIdQuery(id);
-    return await this.queryBus.execute(query);
+    const approval = await this.queryBus.execute(query);
+    return ResponseUtil.success(approval, 'Approval request retrieved successfully');
   }
+
 
   @Post(STOCKPILE_URLS.APPROVAL_REQUEST_APPROVE)
   @HttpCode(HttpStatus.OK)

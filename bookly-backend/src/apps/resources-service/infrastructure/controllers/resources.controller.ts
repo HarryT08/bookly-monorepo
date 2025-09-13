@@ -27,8 +27,10 @@ import {
   ResourceResponseDto,
   PaginatedResourceResponseDto,
   ResourceAvailabilityResponseDto,
-} from '../../../../libs/dto/resources';
-import { CreateResourceDto, AvailableScheduleDto } from '../../../../libs/dto/resources/create-resource.dto';
+} from '@libs/dto/resources';
+import { CreateResourceDto, AvailableScheduleDto } from '@libs/dto/resources/create-resource.dto';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 import { CreateResourceCommand } from '../../application/commands/create-resource.command';
 import { UpdateResourceCommand } from '../../application/commands/update-resource.command';
 import { DeleteResourceCommand } from '../../application/commands/delete-resource.command';
@@ -108,7 +110,7 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 200, 
     description: 'Resources retrieved successfully',
-    type: [ResourceResponseDto] 
+    type: SuccessResponseDto
   })
   async findAll(
     @Query('type') type?: string,
@@ -116,7 +118,7 @@ export class ResourcesController {
     @Query('categoryId') categoryId?: string,
     @Query('isActive') isActive?: boolean,
     @Query('location') location?: string,
-  ): Promise<ResourceResponseDto[]> {
+  ) {
     const query = new GetResourcesQuery({
       type,
       status,
@@ -126,7 +128,8 @@ export class ResourcesController {
     });
 
     const resources: ResourceEntity[] = await this.queryBus.execute(query);
-    return resources.map(resource => this.mapToResponseDto(resource));
+    const responseData = resources.map(resource => this.mapToResponseDto(resource));
+    return ResponseUtil.list(responseData, 'Resources retrieved successfully');
   }
 
   /**
@@ -146,7 +149,7 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 200, 
     description: 'Paginated resources retrieved successfully',
-    type: PaginatedResourceResponseDto 
+    type: PaginatedResponseDto
   })
   async findWithPagination(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -155,7 +158,7 @@ export class ResourcesController {
     @Query('status') status?: string,
     @Query('categoryId') categoryId?: string,
     @Query('isActive') isActive?: boolean,
-  ): Promise<PaginatedResourceResponseDto> {
+  ) {
     const query = new GetResourcesWithPaginationQuery(page, limit, {
       type,
       status,
@@ -164,14 +167,15 @@ export class ResourcesController {
     });
 
     const result = await this.queryBus.execute(query);
+    const responseData = result.resources.map(resource => this.mapToResponseDto(resource));
     
-    return {
-      resources: result.resources.map(resource => this.mapToResponseDto(resource)),
-      total: result.total,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-    };
+    return ResponseUtil.paginated(
+      responseData,
+      result.total,
+      result.page,
+      result.limit,
+      'Paginated resources retrieved successfully'
+    );
   }
 
   /**
@@ -186,12 +190,13 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 200, 
     description: 'Search results retrieved successfully',
-    type: [ResourceResponseDto] 
+    type: SuccessResponseDto
   })
-  async search(@Query('q') query: string): Promise<ResourceResponseDto[]> {
+  async search(@Query('q') query: string) {
     const searchQuery = new SearchResourcesQuery(query);
     const resources: ResourceEntity[] = await this.queryBus.execute(searchQuery);
-    return resources.map(resource => this.mapToResponseDto(resource));
+    const responseData = resources.map(resource => this.mapToResponseDto(resource));
+    return ResponseUtil.list(responseData, 'Search results retrieved successfully');
   }
 
   /**
@@ -206,13 +211,14 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 200, 
     description: 'Resource retrieved successfully',
-    type: ResourceResponseDto 
+    type: SuccessResponseDto
   })
   @ApiResponse({ status: 404, description: 'Resource not found' })
-  async findById(@Param('id') id: string): Promise<ResourceResponseDto> {
+  async findById(@Param('id') id: string) {
     const query = new GetResourceQuery(id);
     const resource: ResourceEntity = await this.queryBus.execute(query);
-    return this.mapToResponseDto(resource);
+    const responseData = this.mapToResponseDto(resource);
+    return ResponseUtil.success(responseData, 'Resource retrieved successfully');
   }
 
   /**

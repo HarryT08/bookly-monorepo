@@ -12,9 +12,11 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { RolesGuard } from '../guards/roles.guard';
-import { Roles } from '../decorators/roles.decorator';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@libs/common/guards/roles.guard';
+import { Roles } from '@libs/common/decorators/roles.decorator';
 import { PermissionService } from '../../application/services/permission.service';
 import { CreatePermissionDto, UpdatePermissionDto, PermissionResponseDto } from '../../../../libs/dto/auth/permission.dto';
 import { AUTH_URLS } from '../../utils/maps';
@@ -33,14 +35,15 @@ export class PermissionController {
   @ApiResponse({
     status: 201,
     description: 'Permission created successfully',
-    type: PermissionResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid permission data' })
   @ApiResponse({ status: 409, description: 'Permission already exists' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async createPermission(@Body() createPermissionDto: CreatePermissionDto): Promise<PermissionResponseDto> {
+  async createPermission(@Body() createPermissionDto: CreatePermissionDto) {
     const permission = await this.permissionService.createPermission(createPermissionDto);
-    return this.mapToResponseDto(permission);
+    const responseDto = this.mapToResponseDto(permission);
+    return ResponseUtil.success(responseDto, 'Permission created successfully');
   }
 
   @Get()
@@ -53,14 +56,14 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: 'Permissions retrieved successfully',
-    type: [PermissionResponseDto],
+    type: PaginatedResponseDto,
   })
   async getAllPermissions(
     @Query('resource') resource?: string,
     @Query('action') action?: string,
     @Query('scope') scope?: string,
     @Query('isActive') isActive?: boolean,
-  ): Promise<PermissionResponseDto[]> {
+  ) {
     const filters = {
       ...(resource && { resource }),
       ...(action && { action }),
@@ -69,7 +72,8 @@ export class PermissionController {
     };
 
     const permissions = await this.permissionService.findAllPermissions(filters);
-    return permissions.map(permission => this.mapToResponseDto(permission));
+    const data = permissions.map(permission => this.mapToResponseDto(permission));
+    return ResponseUtil.success(data, 'Permissions retrieved successfully');
   }
 
   @Get(AUTH_URLS.PERMISSION_FIND_BY_ACTIVE)
@@ -78,11 +82,12 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: 'Active permissions retrieved successfully',
-    type: [PermissionResponseDto],
+    type: SuccessResponseDto,
   })
-  async getActivePermissions(): Promise<PermissionResponseDto[]> {
+  async getActivePermissions() {
     const permissions = await this.permissionService.findActivePermissions();
-    return permissions.map(permission => this.mapToResponseDto(permission));
+    const data = permissions.map(permission => this.mapToResponseDto(permission));
+    return ResponseUtil.success(data, 'Active permissions retrieved successfully');
   }
 
   @Get(AUTH_URLS.PERMISSION_FIND_BY_RESOURCE)
@@ -93,15 +98,16 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: 'Permissions retrieved successfully',
-    type: [PermissionResponseDto],
+    type: SuccessResponseDto,
   })
   async getPermissionsByResource(
     @Param('resource') resource: string,
     @Query('action') action?: string,
     @Query('scope') scope?: string,
-  ): Promise<PermissionResponseDto[]> {
+  ) {
     const permissions = await this.permissionService.findPermissionsByResource(resource, action, scope);
-    return permissions.map(permission => this.mapToResponseDto(permission));
+    const data = permissions.map(permission => this.mapToResponseDto(permission));
+    return ResponseUtil.success(data, 'Permissions retrieved successfully');
   }
 
   @Get(AUTH_URLS.PERMISSION_FIND_BY_ID)
@@ -110,12 +116,13 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: 'Permission retrieved successfully',
-    type: PermissionResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Permission not found' })
-  async getPermissionById(@Param('id') id: string): Promise<PermissionResponseDto> {
+  async getPermissionById(@Param('id') id: string) {
     const permission = await this.permissionService.findPermissionById(id);
-    return this.mapToResponseDto(permission);
+    const data = this.mapToResponseDto(permission);
+    return ResponseUtil.success(data, 'Permission retrieved successfully');
   }
 
   @Put(AUTH_URLS.PERMISSION_UPDATE)
@@ -124,7 +131,7 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: 'Permission updated successfully',
-    type: PermissionResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Permission not found' })
   @ApiResponse({ status: 409, description: 'Permission name already exists' })
@@ -132,9 +139,10 @@ export class PermissionController {
   async updatePermission(
     @Param('id') id: string,
     @Body() updatePermissionDto: UpdatePermissionDto,
-  ): Promise<PermissionResponseDto> {
+  ) {
     const permission = await this.permissionService.updatePermission(id, updatePermissionDto);
-    return this.mapToResponseDto(permission);
+    const data = this.mapToResponseDto(permission);
+    return ResponseUtil.success(data, 'Permission updated successfully');
   }
 
   @Put(AUTH_URLS.PERMISSION_ACTIVATE)
@@ -143,13 +151,14 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: 'Permission activated successfully',
-    type: PermissionResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Permission not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async activatePermission(@Param('id') id: string): Promise<PermissionResponseDto> {
+  async activatePermission(@Param('id') id: string) {
     const permission = await this.permissionService.activatePermission(id);
-    return this.mapToResponseDto(permission);
+    const data = this.mapToResponseDto(permission);
+    return ResponseUtil.success(data, 'Permission activated successfully');
   }
 
   @Put(AUTH_URLS.PERMISSION_DEACTIVATE)
@@ -158,24 +167,30 @@ export class PermissionController {
   @ApiResponse({
     status: 200,
     description: 'Permission deactivated successfully',
-    type: PermissionResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Permission not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async deactivatePermission(@Param('id') id: string): Promise<PermissionResponseDto> {
+  async deactivatePermission(@Param('id') id: string) {
     const permission = await this.permissionService.deactivatePermission(id);
-    return this.mapToResponseDto(permission);
+    const data = this.mapToResponseDto(permission);
+    return ResponseUtil.success(data, 'Permission deactivated successfully');
   }
 
   @Delete(AUTH_URLS.PERMISSION_DELETE)
   @Roles('Administrador General')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete permission' })
-  @ApiResponse({ status: 204, description: 'Permission deleted successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Permission deleted successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 404, description: 'Permission not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async deletePermission(@Param('id') id: string): Promise<void> {
+  async deletePermission(@Param('id') id: string) {
     await this.permissionService.deletePermission(id);
+    return ResponseUtil.success(null, 'Permission deleted successfully');
   }
 
   @Post(AUTH_URLS.PERMISSIONS_SEED_DEFAULTS)
@@ -185,12 +200,13 @@ export class PermissionController {
   @ApiResponse({
     status: 201,
     description: 'Default permissions created successfully',
-    type: [PermissionResponseDto],
+    type: SuccessResponseDto,
   })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async seedDefaultPermissions(): Promise<PermissionResponseDto[]> {
+  async seedDefaultPermissions() {
     const permissions = await this.permissionService.createDefaultPermissions();
-    return permissions.map(permission => this.mapToResponseDto(permission));
+    const data = permissions.map(permission => this.mapToResponseDto(permission));
+    return ResponseUtil.success(data, 'Default permissions created successfully');
   }
 
   private mapToResponseDto(permission: any): PermissionResponseDto {

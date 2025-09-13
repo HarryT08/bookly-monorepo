@@ -32,6 +32,10 @@ import { ResourceModificationGuard } from './infrastructure/guards/resource-modi
 import { DoubleConfirmationGuard } from './infrastructure/guards/double-confirmation.guard';
 import { ResourceAuditMiddleware } from './infrastructure/middleware/resource-audit.middleware';
 import { RegisterHandler } from './application/handlers/register.handler';
+import { UpdateUserHandler } from './application/handlers/update-user.handler';
+import { DeleteUserHandler } from './application/handlers/delete-user.handler';
+import { AssignRoleHandler } from './application/handlers/assign-role.handler';
+import { RemoveRoleHandler } from './application/handlers/remove-role.handler';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
 import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
@@ -40,7 +44,14 @@ import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 
-const CommandHandlers = [LoginHandler, RegisterHandler];
+const CommandHandlers = [
+  LoginHandler, 
+  RegisterHandler,
+  UpdateUserHandler,
+  DeleteUserHandler,
+  AssignRoleHandler,
+  RemoveRoleHandler
+];
 const QueryHandlers = [GetUserHandler, GetUsersHandler];
 
 @Module({

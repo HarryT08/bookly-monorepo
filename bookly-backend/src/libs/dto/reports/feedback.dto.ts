@@ -16,4 +16,7 @@ export class FeedbackDto extends BaseEntityDto {
 
   @ApiProperty({ description: 'Feedback comment' })
   comment?: string;
+
+  @ApiProperty({ description: 'Feedback category' })
+  category?: string;
 }

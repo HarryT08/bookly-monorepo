@@ -17,9 +17,11 @@ import {
   ApiBearerAuth,
   ApiQuery 
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/libs/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@/libs/common/guards/roles.guard';
-import { Roles } from '@/libs/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@libs/common/guards/roles.guard';
+import { Roles } from '@libs/common/decorators/roles.decorator';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 import { UsageReportFiltersDto } from '@dto/reports/usage-report-filters.dto';
 import { UsageReportResponseDto } from '@dto/reports/report-response.dto';
 import { 
@@ -27,8 +29,8 @@ import {
   UsageReportSummaryQuery, 
   ReportFilterOptionsQuery 
 } from '../../application/queries/usage-report.query';
-import { LoggingService } from '@logging/logging.service';
-import { LoggingHelper } from '@/libs/logging/logging.helper';
+import { LoggingService } from '@libs/logging/logging.service';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 import { REPORTS_URLS } from '../../utils/maps/urls.map';
 
 /**
@@ -58,7 +60,7 @@ export class UsageReportsController {
   @ApiResponse({ 
     status: 200, 
     description: 'Usage report generated successfully',
-    type: UsageReportResponseDto 
+    type: SuccessResponseDto 
   })
   @ApiResponse({ status: 400, description: 'Invalid filters provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -68,7 +70,7 @@ export class UsageReportsController {
   async generateUsageReport(
     @Query() filters: UsageReportFiltersDto,
     @Request() req: any,
-  ): Promise<UsageReportResponseDto> {
+  ) {
     const startTime = Date.now();
     const requestId = req.headers['x-request-id'] || `req_${Date.now()}`;
 
@@ -105,7 +107,7 @@ export class UsageReportsController {
         })
       );
 
-      return result;
+      return ResponseUtil.success(result, 'Usage report generated successfully');
 
     } catch (error) {
       const executionTime = Date.now() - startTime;
@@ -122,12 +124,7 @@ export class UsageReportsController {
       );
 
       throw new HttpException(
-        {
-          message: 'Error generating usage report',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: '/reports/usage',
-        },
+        'Error generating usage report',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -145,22 +142,13 @@ export class UsageReportsController {
   @ApiResponse({ 
     status: 200, 
     description: 'Usage report summary retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalResources: { type: 'number', example: 15 },
-        totalReservations: { type: 'number', example: 450 },
-        averageUtilization: { type: 'number', example: 75.5 },
-        mostUsedResource: { type: 'string', example: 'Aula Magna' },
-        leastUsedResource: { type: 'string', example: 'Laboratorio 3' },
-      },
-    }
+    type: SuccessResponseDto
   })
   @UsePipes(new ValidationPipe({ transform: true }))
   async getUsageReportSummary(
     @Query() filters: UsageReportFiltersDto,
     @Request() req: any,
-  ): Promise<any> {
+  ) {
     try {
       this.loggingService.log(
         `Usage report summary requested`,
@@ -192,12 +180,7 @@ export class UsageReportsController {
       );
 
       throw new HttpException(
-        {
-          message: 'Error getting usage report summary',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: '/reports/usage/summary',
-        },
+        'Error getting usage report summary',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -225,24 +208,13 @@ export class UsageReportsController {
   @ApiResponse({ 
     status: 200, 
     description: 'Filter options retrieved successfully',
-    schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          name: { type: 'string' },
-          code: { type: 'string' },
-          count: { type: 'number' },
-        },
-      },
-    }
+    type: SuccessResponseDto
   })
   async getFilterOptions(
     @Query('filterType') filterType: 'programs' | 'resourceTypes' | 'categories' | 'users',
     @Query('userType') userType?: string,
     @Request() req?: any,
-  ): Promise<any[]> {
+  ) {
     try {
       this.loggingService.log(
         `Filter options requested`,
@@ -277,12 +249,7 @@ export class UsageReportsController {
       );
 
       throw new HttpException(
-        {
-          message: 'Error getting filter options',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: `/reports/usage/filter-options/${filterType}`,
-        },
+        'Error getting filter options',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

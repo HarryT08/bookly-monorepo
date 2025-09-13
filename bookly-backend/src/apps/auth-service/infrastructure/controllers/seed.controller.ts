@@ -1,6 +1,8 @@
-import { SeedService } from '@/libs/common/services/seed.service';
 import { Controller, Post, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { SeedService } from '@libs/common/services/seed.service';
 
 @ApiTags('Seed')
 @Controller('seed')
@@ -15,23 +17,19 @@ export class SeedController {
   @ApiResponse({ 
     status: 200, 
     description: 'Database seeding status',
-    schema: {
-      type: 'object',
-      properties: {
-        needsSeeding: { type: 'boolean' },
-        message: { type: 'string' }
-      }
-    }
+    type: SuccessResponseDto
   })
   async checkSeedingStatus() {
     const needsSeeding = await this.seedService.needsSeeding();
     
-    return {
+    const data = {
       needsSeeding,
       message: needsSeeding 
         ? 'Database is empty and needs seeding' 
         : 'Database already contains data'
     };
+
+    return ResponseUtil.success(data, 'Seeding status retrieved successfully');
   }
 
   @Post('run')
@@ -43,31 +41,15 @@ export class SeedController {
   @ApiResponse({ 
     status: 200, 
     description: 'Seeding completed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        message: { type: 'string' },
-        summary: {
-          type: 'object',
-          properties: {
-            programs: { type: 'number' },
-            roles: { type: 'number' },
-            users: { type: 'number' },
-            categories: { type: 'number' },
-            maintenanceTypes: { type: 'number' },
-            resources: { type: 'number' }
-          }
-        }
-      }
-    }
+    type: SuccessResponseDto
   })
   @ApiResponse({ 
     status: 400, 
     description: 'Seeding failed or database already contains data' 
   })
   async runSeeding() {
-    return await this.seedService.runSeeding();
+    const result = await this.seedService.runSeeding();
+    return ResponseUtil.success(result, 'Database seeding completed successfully');
   }
 
   @Post('run-full')
@@ -79,30 +61,14 @@ export class SeedController {
   @ApiResponse({ 
     status: 200, 
     description: 'Full seeding completed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean' },
-        message: { type: 'string' },
-        summary: {
-          type: 'object',
-          properties: {
-            programs: { type: 'number' },
-            roles: { type: 'number' },
-            users: { type: 'number' },
-            categories: { type: 'number' },
-            maintenanceTypes: { type: 'number' },
-            resources: { type: 'number' }
-          }
-        }
-      }
-    }
+    type: SuccessResponseDto
   })
   @ApiResponse({ 
     status: 400, 
     description: 'Full seeding failed' 
   })
   async runFullSeeding() {
-    return await this.seedService.runFullSeeding();
+    const result = await this.seedService.runFullSeeding();
+    return ResponseUtil.success(result, 'Full database seeding completed successfully');
   }
 }

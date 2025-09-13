@@ -17,9 +17,11 @@ import {
   ApiBearerAuth,
   ApiQuery 
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/libs/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@/apps/auth-service/infrastructure/guards/roles.guard';
-import { Roles } from '@/apps/auth-service/infrastructure/decorators/roles.decorator';
+import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@libs/common/guards/roles.guard';
+import { Roles } from '@libs/common/decorators/roles.decorator';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 import { UserReportFiltersDto } from '@dto/reports/user-report-filters.dto';
 import { UserReportResponseDto } from '@dto/reports/report-response.dto';
 import { 
@@ -27,8 +29,8 @@ import {
   UserReportSummaryQuery, 
   UserReportHistoryQuery 
 } from '../../application/queries/user-report.query';
-import { LoggingService } from '@logging/logging.service';
-import { LoggingHelper } from '@/libs/logging/logging.helper';
+import { LoggingService } from '@libs/logging/logging.service';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 import { REPORTS_URLS } from '../../utils/maps/urls.map';
 
 /**
@@ -58,7 +60,7 @@ export class UserReportsController {
   @ApiResponse({ 
     status: 200, 
     description: 'User report generated successfully',
-    type: UserReportResponseDto 
+    type: SuccessResponseDto 
   })
   @ApiResponse({ status: 400, description: 'Invalid filters provided' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -68,7 +70,7 @@ export class UserReportsController {
   async generateUserReport(
     @Query() filters: UserReportFiltersDto,
     @Request() req: any,
-  ): Promise<UserReportResponseDto> {
+  ) {
     const startTime = Date.now();
     const requestId = req.headers['x-request-id'] || `req_${Date.now()}`;
 
@@ -105,7 +107,7 @@ export class UserReportsController {
         })
       );
 
-      return result;
+      return ResponseUtil.success(result, 'User report generated successfully');
 
     } catch (error) {
       const executionTime = Date.now() - startTime;
@@ -122,12 +124,7 @@ export class UserReportsController {
       );
 
       throw new HttpException(
-        {
-          message: 'Error generating user report',
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          path: '/reports/users',
-        },
+        'Error generating user report',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

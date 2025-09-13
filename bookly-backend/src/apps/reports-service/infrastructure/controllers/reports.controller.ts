@@ -2,6 +2,9 @@ import { Controller, Get, Post, Body, Query, Param, HttpCode, HttpStatus } from 
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { REPORTS_URLS } from '../../utils/maps/urls.map';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ExportCsvDto, FeedbackDto } from '@libs/dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 
 // Import commands (these would need to be created)
 import { GenerateUsageReportCommand } from '../../application/commands/generate-usage-report.command';
@@ -47,7 +50,11 @@ export class ReportsController {
   @ApiQuery({ name: 'startDate', required: false, description: 'Start date (ISO format)' })
   @ApiQuery({ name: 'endDate', required: false, description: 'End date (ISO format)' })
   @ApiQuery({ name: 'groupBy', required: false, description: 'Group by: resource, program, user, date' })
-  @ApiResponse({ status: 200, description: 'Usage report generated successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Usage report generated successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 400, description: 'Invalid filter parameters' })
   async generateUsageReport(@Query() filters: any) {
     const command = new GenerateUsageReportCommand(
@@ -57,7 +64,8 @@ export class ReportsController {
       filters.programId ? [filters.programId] : undefined,
       filters.includeDetails
     );
-    return await this.commandBus.execute(command);
+    const report = await this.commandBus.execute(command);
+    return ResponseUtil.success(report, 'Usage report generated successfully');
   }
 
   @Get(REPORTS_URLS.USER_ACTIVITY)
@@ -68,7 +76,11 @@ export class ReportsController {
   @ApiParam({ name: 'userId', description: 'User ID' })
   @ApiQuery({ name: 'startDate', required: false, description: 'Start date (ISO format)' })
   @ApiQuery({ name: 'endDate', required: false, description: 'End date (ISO format)' })
-  @ApiResponse({ status: 200, description: 'User report generated successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User report generated successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   async generateUserReport(
     @Param('userId') userId: string,
@@ -80,8 +92,10 @@ export class ReportsController {
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined
     );
-    return await this.commandBus.execute(command);
+    const report = await this.commandBus.execute(command);
+    return ResponseUtil.success(report, 'User report generated successfully');
   }
+
 
   @Post(REPORTS_URLS.EXPORT_CSV_REPORT)
   @HttpCode(HttpStatus.OK)
@@ -100,15 +114,20 @@ export class ReportsController {
       }
     }
   })
-  @ApiResponse({ status: 200, description: 'Report exported successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Report exported successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 400, description: 'Invalid export data' })
-  async exportToCSV(@Body() reportData: any) {
+  async exportToCSV(@Body() reportData: ExportCsvDto) {
     const command = new ExportReportCommand(
       reportData.reportType,
       'CSV',
       reportData.filters
     );
-    return await this.commandBus.execute(command);
+    const exportResult = await this.commandBus.execute(command);
+    return ResponseUtil.success(exportResult, 'Report exported successfully');
   }
 
   @Get(REPORTS_URLS.DASHBOARD_DATA)
@@ -117,14 +136,19 @@ export class ReportsController {
     description: 'Retrieve real-time dashboard analytics and metrics'
   })
   @ApiQuery({ name: 'refresh', required: false, type: Boolean, description: 'Force refresh of cached data' })
-  @ApiResponse({ status: 200, description: 'Dashboard data retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Dashboard data retrieved successfully',
+    type: SuccessResponseDto
+  })
   async getDashboardData(@Query('refresh') refresh?: boolean) {
     const query = new GetDashboardDataQuery(
       undefined, // userId
       refresh ? 'force-refresh' : 'default', // timeRange
       { refresh }
     );
-    return await this.queryBus.execute(query);
+    const data = await this.queryBus.execute(query);
+    return ResponseUtil.success(data, 'Dashboard data retrieved successfully');
   }
 
   @Get(REPORTS_URLS.FEEDBACK_REPORTS)
@@ -137,7 +161,11 @@ export class ReportsController {
   @ApiQuery({ name: 'rating', required: false, type: Number, description: 'Filter by rating' })
   @ApiQuery({ name: 'startDate', required: false, description: 'Start date (ISO format)' })
   @ApiQuery({ name: 'endDate', required: false, description: 'End date (ISO format)' })
-  @ApiResponse({ status: 200, description: 'Feedback retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Feedback retrieved successfully',
+    type: PaginatedResponseDto
+  })
   async findAllFeedback(
     @Query('resourceId') resourceId?: string,
     @Query('userId') userId?: string,
@@ -151,7 +179,8 @@ export class ReportsController {
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.paginated(result.data, result.total, 1, 50, 'Feedback retrieved successfully');
   }
 
   @Post(REPORTS_URLS.FEEDBACK_REPORTS)
@@ -175,9 +204,13 @@ export class ReportsController {
       required: ['userId', 'rating']
     }
   })
-  @ApiResponse({ status: 201, description: 'Feedback created successfully' })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Feedback created successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 400, description: 'Invalid feedback data' })
-  async createFeedback(@Body() data: any) {
+  async createFeedback(@Body() data: FeedbackDto) {
     const command = new CreateFeedbackCommand(
       data.userId,
       data.resourceId,
@@ -186,7 +219,8 @@ export class ReportsController {
       data.comment,
       data.category
     );
-    return await this.commandBus.execute(command);
+    const feedback = await this.commandBus.execute(command);
+    return ResponseUtil.success(feedback, 'Feedback created successfully');
   }
 
   @Get(REPORTS_URLS.AUDIT_LOGS)
@@ -201,7 +235,11 @@ export class ReportsController {
   @ApiQuery({ name: 'endDate', required: false, description: 'End date (ISO format)' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
-  @ApiResponse({ status: 200, description: 'Audit logs retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Audit logs retrieved successfully',
+    type: PaginatedResponseDto
+  })
   async getAuditLogs(@Query() filters: any) {
     const query = new GetAuditLogsQuery(
       filters.resourceId,
@@ -213,7 +251,14 @@ export class ReportsController {
       filters.page || 1,
       filters.limit || 50
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.paginated(
+      result.data, 
+      result.total, 
+      filters.page || 1, 
+      filters.limit || 50, 
+      'Audit logs retrieved successfully'
+    );
   }
 
   @Get(REPORTS_URLS.DEMAND_ANALYSIS)
@@ -225,7 +270,11 @@ export class ReportsController {
   @ApiQuery({ name: 'programId', required: false, description: 'Filter by program ID' })
   @ApiQuery({ name: 'startDate', required: false, description: 'Start date (ISO format)' })
   @ApiQuery({ name: 'endDate', required: false, description: 'End date (ISO format)' })
-  @ApiResponse({ status: 200, description: 'Demand report generated successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Demand report generated successfully',
+    type: SuccessResponseDto
+  })
   async generateDemandReport(
     @Query('resourceType') resourceType?: string,
     @Query('programId') programId?: string,
@@ -238,6 +287,7 @@ export class ReportsController {
       resourceType ? [resourceType] : undefined,
       programId ? [programId] : undefined
     );
-    return await this.commandBus.execute(command);
+    const report = await this.commandBus.execute(command);
+    return ResponseUtil.success(report, 'Demand report generated successfully');
   }
 }

@@ -3,6 +3,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { RoleService } from '../../application/services/role.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AUTH_URLS } from '../../utils/maps';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ResponseUtil } from '@libs/common/utils/response.util';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
@@ -13,48 +15,96 @@ export class RoleController {
 
   @Get(AUTH_URLS.ROLE_FIND)
   @ApiOperation({ summary: 'Get all roles' })
-  @ApiResponse({ status: 200, description: 'Roles retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Roles retrieved successfully',
+    type: PaginatedResponseDto
+  })
   async findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
   ) {
-    return this.roleService.findAll(page, limit, search);
+    const result = await this.roleService.findAll(page, limit, search);
+    
+    // Handle both paginated and array responses
+    if (Array.isArray(result)) {
+      return ResponseUtil.fromServiceResponse({
+        items: result,
+        total: result.length,
+        page: page || 1,
+        limit: limit || 20,
+        message: 'Roles retrieved successfully'
+      });
+    } else {
+      return ResponseUtil.fromServiceResponse({
+        items: result.roles,
+        total: result.total,
+        page: page || 1,
+        limit: limit || 20,
+        message: 'Roles retrieved successfully'
+      });
+    }
   }
 
   @Get(AUTH_URLS.ROLE_FIND_BY_ACTIVE)
   @ApiOperation({ summary: 'Get all active roles' })
-  @ApiResponse({ status: 200, description: 'Active roles retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Active roles retrieved successfully',
+    type: [SuccessResponseDto]
+  })
   async findActiveRoles() {
-    return this.roleService.findActiveRoles();
+    const roles = await this.roleService.findActiveRoles();
+    return ResponseUtil.list(roles, 'Active roles retrieved successfully');
   }
 
   @Get(AUTH_URLS.ROLE_FIND_BY_ID)
   @ApiOperation({ summary: 'Get role by ID' })
-  @ApiResponse({ status: 200, description: 'Role retrieved successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Role retrieved successfully',
+    type: SuccessResponseDto
+  })
   @ApiResponse({ status: 404, description: 'Role not found' })
   async findById(@Param('id') id: string) {
-    return this.roleService.findById(id);
+    const role = await this.roleService.findById(id);
+    return ResponseUtil.success(role, 'Role retrieved successfully');
   }
 
   @Post(AUTH_URLS.ROLE_CREATE)
   @ApiOperation({ summary: 'Create a new role' })
-  @ApiResponse({ status: 201, description: 'Role created successfully' })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Role created successfully',
+    type: SuccessResponseDto
+  })
   async create(@Body() data: any) {
-    return this.roleService.create(data, 'admin-user-id');
+    const role = await this.roleService.create(data, 'admin-user-id');
+    return ResponseUtil.success(role, 'Role created successfully');
   }
 
   @Put(AUTH_URLS.ROLE_UPDATE)
   @ApiOperation({ summary: 'Update a role' })
-  @ApiResponse({ status: 200, description: 'Role updated successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Role updated successfully',
+    type: SuccessResponseDto
+  })
   async update(@Param('id') id: string, @Body() data: any) {
-    return this.roleService.update(id, data, 'admin-user-id');
+    const role = await this.roleService.update(id, data, 'admin-user-id');
+    return ResponseUtil.success(role, 'Role updated successfully');
   }
 
   @Delete(AUTH_URLS.ROLE_DELETE)
   @ApiOperation({ summary: 'Delete a role' })
-  @ApiResponse({ status: 200, description: 'Role deleted successfully' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Role deleted successfully',
+    type: SuccessResponseDto
+  })
   async delete(@Param('id') id: string) {
-    return this.roleService.delete(id, 'admin-user-id');
+    await this.roleService.delete(id, 'admin-user-id');
+    return ResponseUtil.success(null, 'Role deleted successfully');
   }
 }

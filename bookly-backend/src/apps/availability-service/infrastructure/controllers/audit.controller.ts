@@ -4,35 +4,18 @@
  * Allows administrators to view audit trails and generate reports
  */
 
-import {
-  Controller,
-  Get,
-  Query,
-  Param,
-  Post,
-  Body,
-  Delete,
-  UseGuards,
-  HttpStatus,
-  HttpCode,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-  ApiParam,
-  ApiBearerAuth,
-  ApiBody,
-} from '@nestjs/swagger';
-import { JwtAuthGuard } from '@apps/auth-service/infrastructure/guards/jwt-auth.guard';
-import { RolesGuard } from '@libs/common/guards/roles.guard';
-import { Roles } from '@apps/auth-service/infrastructure/decorators/roles.decorator';
-import { CurrentUser, UserRole } from "@libs/common";
+import { Controller, Get, Post, Body, Query, Param, Logger, HttpStatus, HttpException, Delete, HttpCode, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { AVAILABILITY_URLS } from '../../utils/maps/urls.map';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { AuditExportDto, CreateTestAuditDto } from '@libs/dto';
+import { Inject } from '@nestjs/common';
 import { LoggingService } from '@logging/logging.service';
 import { AuditService, AuditEventType, AuditCategory } from '../services/audit.service';
 import { AuditRepository, AuditQueryFilters } from '../repositories/audit.repository';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
+import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@/libs/common';
 
 @ApiTags('Audit')
 @Controller('audit')
@@ -284,7 +267,7 @@ export class AuditController {
       }
     }
   })
-  async exportAuditEntries(@Body() filters: any) {
+  async exportAuditEntries(@Body() filters: AuditExportDto) {
     try {
       const exportFilters: AuditQueryFilters = {
         eventType: filters.eventType,
@@ -487,7 +470,7 @@ export class AuditController {
       }
     }
   })
-  async createTestAuditEntry(@Body() testData: any) {
+  async createTestAuditEntry(@Body() testData: CreateTestAuditDto) {
     try {
       const auditContext = {
         userId: 'test-user',
