@@ -114,6 +114,7 @@ import {
 } from './application/handlers/advanced-search.query-handlers';
 
 // Repository Implementations
+import { PrismaAvailabilityRepository } from './infrastructure/repositories/prisma-availability.repository';
 import { PrismaScheduleRepository } from './infrastructure/repositories/prisma-schedule.repository';
 import { PrismaReservationRepository } from './infrastructure/repositories/prisma-reservation.repository';
 import { PrismaReservationHistoryRepository } from './infrastructure/repositories/prisma-reservation-history.repository';
@@ -222,6 +223,10 @@ const queryHandlers = [
 ];
 
 const repositories = [
+  {
+    provide: 'AvailabilityRepository',
+    useClass: PrismaAvailabilityRepository,
+  },
   {
     provide: 'ScheduleRepository',
     useClass: PrismaScheduleRepository,

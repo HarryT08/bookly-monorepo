@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, Min, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { AuditCategory, AuditEventType } from '@/apps/availability-service/utils';
 
 /**
  * DTO for exporting audit entries
@@ -13,7 +14,7 @@ export class AuditExportDto {
   })
   @IsOptional()
   @IsString()
-  eventType?: string;
+  eventType?: AuditEventType;
 
   @ApiPropertyOptional({ 
     description: 'Filter by audit category',
@@ -21,7 +22,7 @@ export class AuditExportDto {
   })
   @IsOptional()
   @IsString()
-  category?: string;
+  category?: AuditCategory;
 
   @ApiPropertyOptional({ 
     description: 'Filter by resource ID',
@@ -76,7 +77,29 @@ export class CreateTestAuditDto {
     example: 'TEST_EVENT'
   })
   @IsString()
-  eventType: string;
+  eventType: AuditEventType;
+
+  @ApiProperty({ 
+    description: 'Audit category',
+    example: 'RESERVATION'
+  })
+  @IsString()
+  category: AuditCategory;
+
+  @ApiProperty({ 
+    description: 'Action performed',
+    example: 'CREATE'
+  })
+  @IsString()
+  action: string;
+
+  @ApiPropertyOptional({ 
+    description: 'Resource ID for the audit entry',
+    example: 'test-resource-id'
+  })
+  @IsOptional()
+  @IsString()
+  resource?: string;
 
   @ApiPropertyOptional({ 
     description: 'Test data payload',
@@ -92,12 +115,4 @@ export class CreateTestAuditDto {
   @IsOptional()
   @IsString()
   userId?: string;
-
-  @ApiPropertyOptional({ 
-    description: 'Resource ID for test entry',
-    example: 'test-resource-id'
-  })
-  @IsOptional()
-  @IsString()
-  resourceId?: string;
 }

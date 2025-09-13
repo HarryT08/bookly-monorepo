@@ -9,6 +9,7 @@ import { LoggingService } from "@logging/logging.service";
 import { DomainEvent, EventBusService } from "@event-bus/services/event-bus.service";
 import { AuditRepository } from "../repositories/audit.repository";
 import { LoggingHelper } from "@logging/logging.helper";
+import { AuditCategory, AuditEventType } from "../../utils";
 
 export interface AuditContext {
   readonly userId?: string;
@@ -50,65 +51,6 @@ export interface AuditEntry {
   };
   readonly duration?: number;
   readonly tags?: string[];
-}
-
-export enum AuditEventType {
-  // Recurring Reservations (RF-12)
-  RECURRING_RESERVATION_CREATED = "recurring_reservation_created",
-  RECURRING_RESERVATION_UPDATED = "recurring_reservation_updated",
-  RECURRING_RESERVATION_CANCELLED = "recurring_reservation_cancelled",
-  RECURRING_INSTANCE_GENERATED = "recurring_instance_generated",
-  RECURRING_INSTANCE_CONFIRMED = "recurring_instance_confirmed",
-  RECURRING_INSTANCE_CANCELLED = "recurring_instance_cancelled",
-  RECURRING_CONFLICT_DETECTED = "recurring_conflict_detected",
-
-  // Waiting List (RF-14)
-  WAITING_LIST_JOINED = "waiting_list_joined",
-  WAITING_LIST_LEFT = "waiting_list_left",
-  WAITING_LIST_SLOT_AVAILABLE = "waiting_list_slot_available",
-  WAITING_LIST_CONFIRMED = "waiting_list_confirmed",
-  WAITING_LIST_EXPIRED = "waiting_list_expired",
-  WAITING_LIST_REORDERED = "waiting_list_reordered",
-  WAITING_LIST_ESCALATED = "waiting_list_escalated",
-
-  // Reassignment (RF-15)
-  REASSIGNMENT_REQUESTED = "reassignment_requested",
-  REASSIGNMENT_ACCEPTED = "reassignment_accepted",
-  REASSIGNMENT_REJECTED = "reassignment_rejected",
-  REASSIGNMENT_CANCELLED = "reassignment_cancelled",
-  REASSIGNMENT_EXPIRED = "reassignment_expired",
-  EQUIVALENT_RESOURCES_FOUND = "equivalent_resources_found",
-
-  // Penalties
-  PENALTY_APPLIED = "penalty_applied",
-  PENALTY_REMOVED = "penalty_removed",
-  PENALTY_EVENT_CREATED = "penalty_event_created",
-  USER_PENALTY_ASSIGNED = "user_penalty_assigned",
-
-  // Notifications
-  NOTIFICATION_SENT = "notification_sent",
-  NOTIFICATION_FAILED = "notification_failed",
-  NOTIFICATION_TEMPLATE_USED = "notification_template_used",
-
-  // Security & Access
-  UNAUTHORIZED_ACCESS_ATTEMPT = "unauthorized_access_attempt",
-  PERMISSION_DENIED = "permission_denied",
-  SUSPICIOUS_ACTIVITY = "suspicious_activity",
-
-  // System Operations
-  SERVICE_STARTED = "service_started",
-  SERVICE_STOPPED = "service_stopped",
-  HEALTH_CHECK_PERFORMED = "health_check_performed",
-  CONFIGURATION_CHANGED = "configuration_changed",
-}
-
-export enum AuditCategory {
-  BOOKING = "booking",
-  NOTIFICATION = "notification",
-  SECURITY = "security",
-  SYSTEM = "system",
-  USER_ACTION = "user_action",
-  AUTOMATED_PROCESS = "automated_process",
 }
 
 @Injectable()

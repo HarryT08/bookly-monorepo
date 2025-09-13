@@ -12,10 +12,11 @@ import { SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { AuditExportDto, CreateTestAuditDto } from '@libs/dto';
 import { Inject } from '@nestjs/common';
 import { LoggingService } from '@logging/logging.service';
-import { AuditService, AuditEventType, AuditCategory } from '../services/audit.service';
+import { AuditService } from '../services/audit.service';
 import { AuditRepository, AuditQueryFilters } from '../repositories/audit.repository';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
 import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@/libs/common';
+import { AuditCategory, AuditEventType } from '../../utils';
 
 @ApiTags('Audit')
 @Controller('audit')
@@ -481,14 +482,14 @@ export class AuditController {
       };
 
       await this.auditService.audit(
-        testData.eventType as AuditEventType,
-        testData.category as AuditCategory,
+        testData.eventType,
+        testData.category,
         testData.action,
         testData.resource,
         auditContext,
         {
-          resourceId: testData.resourceId,
-          payload: testData.payload,
+          resourceId: testData.resource,
+          payload: testData.testData,
           tags: ['test', 'manual']
         }
       );

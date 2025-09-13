@@ -7,7 +7,8 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { LoggingService } from '@libs/logging/logging.service';
-import { AuditService, AuditEventType, AuditCategory, AuditContext } from '../services/audit.service';
+import { AuditService, AuditContext } from '../services/audit.service';
+import { AuditEventType, AuditCategory } from '../../utils';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
 
 export interface AuditableRequest extends Request {

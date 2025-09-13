@@ -17,5 +17,8 @@ export enum AuditCategory {
   AVAILABILITY = 'AVAILABILITY',
   CONFLICT = 'CONFLICT',
   BACKUP = 'BACKUP',
-  MAINTENANCE = 'MAINTENANCE'
+  MAINTENANCE = 'MAINTENANCE',
+  BOOKING = "booking",
+  USER_ACTION = "user_action",
+  AUTOMATED_PROCESS = "automated_process",
 }

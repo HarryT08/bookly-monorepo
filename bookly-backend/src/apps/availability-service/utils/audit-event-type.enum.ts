@@ -47,5 +47,39 @@ export enum AuditEventType {
   BACKUP_CREATED = 'BACKUP_CREATED',
   BACKUP_RESTORED = 'BACKUP_RESTORED',
   MAINTENANCE_MODE_ENABLED = 'MAINTENANCE_MODE_ENABLED',
-  MAINTENANCE_MODE_DISABLED = 'MAINTENANCE_MODE_DISABLED'
+  MAINTENANCE_MODE_DISABLED = 'MAINTENANCE_MODE_DISABLED',
+  // Recurring Reservations (RF-12)
+  RECURRING_INSTANCE_GENERATED = "recurring_instance_generated",
+  RECURRING_INSTANCE_CONFIRMED = "recurring_instance_confirmed",
+  RECURRING_INSTANCE_CANCELLED = "recurring_instance_cancelled",
+  RECURRING_CONFLICT_DETECTED = "recurring_conflict_detected",
+
+  // Waiting List (RF-14)
+  WAITING_LIST_SLOT_AVAILABLE = "waiting_list_slot_available",
+  WAITING_LIST_CONFIRMED = "waiting_list_confirmed",
+  WAITING_LIST_EXPIRED = "waiting_list_expired",
+  WAITING_LIST_REORDERED = "waiting_list_reordered",
+  WAITING_LIST_ESCALATED = "waiting_list_escalated",
+
+  // Reassignment (RF-15)
+  REASSIGNMENT_CANCELLED = "reassignment_cancelled",
+  REASSIGNMENT_EXPIRED = "reassignment_expired",
+  EQUIVALENT_RESOURCES_FOUND = "equivalent_resources_found",
+
+  // Penalties
+  PENALTY_EVENT_CREATED = "penalty_event_created",
+  USER_PENALTY_ASSIGNED = "user_penalty_assigned",
+
+  // Notifications
+  NOTIFICATION_TEMPLATE_USED = "notification_template_used",
+
+  // Security & Access
+  UNAUTHORIZED_ACCESS_ATTEMPT = "unauthorized_access_attempt",
+  SUSPICIOUS_ACTIVITY = "suspicious_activity",
+
+  // System Operations
+  SERVICE_STARTED = "service_started",
+  SERVICE_STOPPED = "service_stopped",
+  HEALTH_CHECK_PERFORMED = "health_check_performed",
+  CONFIGURATION_CHANGED = "configuration_changed",
 }

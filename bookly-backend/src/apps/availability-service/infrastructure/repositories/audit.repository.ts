@@ -7,7 +7,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggingService } from '@logging/logging.service';
-import { AuditEntry, AuditEventType, AuditCategory } from '../services/audit.service';
+import { AuditEntry } from '../services/audit.service';
+import { AuditEventType, AuditCategory } from '../../utils';
 import { LoggingHelper } from '@logging/logging.helper';
 
 export interface AuditQueryFilters {

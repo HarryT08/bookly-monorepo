@@ -14,7 +14,8 @@ import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
 import { LoggingService } from '@logging/logging.service';
-import { AuditService, AuditEventType, AuditCategory, AuditContext } from '../services/audit.service';
+import { AuditService, AuditContext } from '../services/audit.service';
+import { AuditEventType, AuditCategory } from '../../utils';
 import { LoggingHelper } from '@logging/logging.helper';
 
 // Decorator to mark methods for auditing
