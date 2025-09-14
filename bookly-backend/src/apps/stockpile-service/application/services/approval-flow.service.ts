@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { LoggingService } from '@libs/logging/logging.service';
 import {
@@ -230,7 +230,7 @@ export class ApprovalFlowService {
     );
   }
 
-  async getPendingApprovalRequests(dto: GetPendingApprovalRequestsDto): Promise<{ requests: ApprovalRequestDto[]; total: number }> {
+  async getPendingApprovalRequests(dto: GetPendingApprovalRequestsDto): Promise<ApprovalRequestDto[]> {
     StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting pending approval requests', 'ApprovalFlowService', dto);
 
     const query = new GetPendingApprovalRequestsQuery(dto.approverId, dto.programId, dto.resourceType, dto.categoryId, dto.page, dto.limit);

@@ -9,8 +9,9 @@ import {
   UseGuards,
   HttpStatus
 } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ResponseUtil } from '@libs/common/utils/response.util';
-import { ApiResponse as StandardApiResponse } from '@libs/dto/common/response.dto';
+import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { 
   ApiTags, 
   ApiOperation, 
@@ -23,7 +24,34 @@ import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { NotificationTemplateService } from '@apps/stockpile-service/application/services/notification-template.service';
+
+// Import Commands
+import {
+  CreateNotificationChannelCommand,
+  CreateNotificationTemplateCommand,
+  UpdateNotificationTemplateCommand,
+  CreateNotificationConfigCommand,
+  SendNotificationCommand,
+  SendBatchNotificationsCommand,
+  MarkNotificationAsReadCommand
+} from '@apps/stockpile-service/application/commands/notification-template.commands';
+
+// Import Queries
+import {
+  GetNotificationChannelsQuery,
+  GetNotificationChannelByIdQuery,
+  GetNotificationTemplatesQuery,
+  GetNotificationTemplateByIdQuery,
+  GetDefaultNotificationTemplateQuery,
+  GetNotificationTemplateVariablesQuery,
+  GetAvailableNotificationVariablesQuery,
+  GetNotificationConfigsQuery,
+  GetNotificationConfigByIdQuery,
+  GetSentNotificationsByReservationQuery,
+  GetSentNotificationsByRecipientQuery,
+  GetPendingNotificationsQuery,
+  GetNotificationsForBatchQuery
+} from '@apps/stockpile-service/application/queries/notification-template.queries';
 import {
   CreateNotificationChannelDto,
   CreateNotificationTemplateDto,
@@ -44,7 +72,10 @@ import { STOCKPILE_URLS } from '@apps/stockpile-service/utils/maps/urls.map';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller(STOCKPILE_URLS.NOTIFICATION_TEMPLATES)
 export class NotificationTemplateController {
-  constructor(private readonly notificationTemplateService: NotificationTemplateService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
+  ) {}
 
   @Post(STOCKPILE_URLS.NOTIFICATION_CHANNEL_CREATE)
   @Roles('ADMIN')
@@ -53,8 +84,18 @@ export class NotificationTemplateController {
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Insufficient permissions' })
   async createNotificationChannel(
     @Body() dto: CreateNotificationChannelDto
-  ): Promise<NotificationChannelDto> {
-    return await this.notificationTemplateService.createNotificationChannel(dto);
+  ): Promise<SuccessResponseDto<NotificationChannelDto>> {
+    const command = new CreateNotificationChannelCommand(
+      dto.name,
+      dto.channel,
+      dto.displayName,
+      dto.supportsAttachments,
+      dto.supportsLinks,
+      dto.maxMessageLength,
+      dto.settings
+    );
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Notification channel created successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_CHANNELS)
@@ -63,8 +104,10 @@ export class NotificationTemplateController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification channels retrieved successfully', type: [NotificationChannelDto] })
   async getNotificationChannels(
     @Query('isActive') isActive?: boolean
-  ): Promise<NotificationChannelDto[]> {
-    return await this.notificationTemplateService.getNotificationChannels(isActive);
+  ): Promise<SuccessResponseDto<NotificationChannelDto[]>> {
+    const query = new GetNotificationChannelsQuery(isActive);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Notification channels retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_CHANNEL_BY_ID)
@@ -72,8 +115,10 @@ export class NotificationTemplateController {
   @ApiParam({ name: 'id', description: 'Notification channel ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification channel retrieved successfully', type: NotificationChannelDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification channel not found' })
-  async getNotificationChannelById(@Param('id') id: string): Promise<NotificationChannelDto | null> {
-    return await this.notificationTemplateService.getNotificationChannelById(id);
+  async getNotificationChannelById(@Param('id') id: string): Promise<SuccessResponseDto<NotificationChannelDto | null>> {
+    const query = new GetNotificationChannelByIdQuery(id);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Notification channel retrieved successfully');
   }
 
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_CREATE)
@@ -84,9 +129,25 @@ export class NotificationTemplateController {
   async createNotificationTemplate(
     @Body() dto: CreateNotificationTemplateDto,
     @CurrentUser() user: any
-  ): Promise<NotificationTemplateDto> {
-    dto.createdBy = user.id;
-    return await this.notificationTemplateService.createNotificationTemplate(dto);
+  ): Promise<SuccessResponseDto<NotificationTemplateDto>> {
+    const command = new CreateNotificationTemplateCommand(
+      dto.name,
+      dto.channelId,
+      dto.eventType,
+      dto.resourceType,
+      dto.categoryId,
+      dto.subject,
+      dto.variables,
+      dto.isDefault,
+      dto.attachDocument,
+      dto.documentAsLink,
+      new Date(),
+      new Date(),
+      dto.content,
+      user.id
+    );
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Notification template created successfully');
   }
 
   @Put(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_UPDATE)
@@ -98,8 +159,17 @@ export class NotificationTemplateController {
   async updateNotificationTemplate(
     @Param('id') id: string,
     @Body() dto: UpdateNotificationTemplateDto
-  ): Promise<NotificationTemplateDto> {
-    return await this.notificationTemplateService.updateNotificationTemplate(id, dto);
+  ): Promise<SuccessResponseDto<NotificationTemplateDto>> {
+    const command = new UpdateNotificationTemplateCommand(
+      id,
+      dto.name,
+      dto.subject,
+      dto.content,
+      dto.variables,
+      dto.isActive
+    );
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Notification template updated successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATES)
@@ -120,8 +190,8 @@ export class NotificationTemplateController {
     @Query('isActive') isActive?: boolean,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
-  ): Promise<{ templates: NotificationTemplateDto[]; total: number }> {
-    return await this.notificationTemplateService.getNotificationTemplates(
+  ): Promise<SuccessResponseDto<NotificationTemplateDto[]>> {
+    const query = new GetNotificationTemplatesQuery(
       channelId,
       eventType,
       resourceType,
@@ -130,6 +200,9 @@ export class NotificationTemplateController {
       page,
       limit
     );
+    const result = await this.queryBus.execute(query);
+    const { templates, total } = result;
+    return ResponseUtil.paginated(templates, total, page, limit, 'Notification templates retrieved successfully') as SuccessResponseDto<NotificationTemplateDto[]>;
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_BY_ID)
@@ -137,8 +210,10 @@ export class NotificationTemplateController {
   @ApiParam({ name: 'id', description: 'Notification template ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification template retrieved successfully', type: NotificationTemplateDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification template not found' })
-  async getNotificationTemplateById(@Param('id') id: string): Promise<NotificationTemplateDto | null> {
-    return await this.notificationTemplateService.getNotificationTemplateById(id);
+  async getNotificationTemplateById(@Param('id') id: string): Promise<SuccessResponseDto<NotificationTemplateDto | null>> {
+    const query = new GetNotificationTemplateByIdQuery(id);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Notification template retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_DEFAULT_SEARCH)
@@ -153,13 +228,15 @@ export class NotificationTemplateController {
     @Query('eventType') eventType: NotificationEventType,
     @Query('resourceType') resourceType?: string,
     @Query('categoryId') categoryId?: string
-  ): Promise<NotificationTemplateDto | null> {
-    return await this.notificationTemplateService.getDefaultNotificationTemplate(
+  ): Promise<SuccessResponseDto<NotificationTemplateDto | null>> {
+    const query = new GetDefaultNotificationTemplateQuery(
       channelId,
       eventType,
       resourceType,
       categoryId
     );
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Default notification template retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_VARIABLES)
@@ -167,7 +244,8 @@ export class NotificationTemplateController {
   @ApiParam({ name: 'id', description: 'Notification template ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification template variables retrieved successfully' })
   async getNotificationTemplateVariables(@Param('id') id: string): Promise<any> {
-    return await this.notificationTemplateService.getNotificationTemplateVariables(id);
+    const query = new GetNotificationTemplateVariablesQuery(id);
+    return await this.queryBus.execute(query);
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_AVAILABLE_VARIABLES)
@@ -179,7 +257,8 @@ export class NotificationTemplateController {
     @Query('eventType') eventType: NotificationEventType,
     @Query('resourceType') resourceType?: string
   ): Promise<any> {
-    return await this.notificationTemplateService.getAvailableNotificationVariables(eventType, resourceType);
+    const query = new GetAvailableNotificationVariablesQuery(eventType, resourceType);
+    return await this.queryBus.execute(query);
   }
 
   @Post(STOCKPILE_URLS.NOTIFICATION_CONFIGS)
@@ -190,9 +269,21 @@ export class NotificationTemplateController {
   async createNotificationConfig(
     @Body() dto: CreateNotificationConfigDto,
     @CurrentUser() user: any
-  ): Promise<NotificationConfigDto> {
-    dto.createdBy = user.id;
-    return await this.notificationTemplateService.createNotificationConfig(dto);
+  ): Promise<SuccessResponseDto<NotificationConfigDto>> {
+    const command = new CreateNotificationConfigCommand(
+      dto.programId,
+      dto.resourceType,
+      dto.categoryId,
+      dto.channelId,
+      dto.isEnabled,
+      dto.isImmediate,
+      dto.batchInterval,
+      dto.sendDocuments,
+      dto.documentMethod,
+      user.id
+    );
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Notification config created successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_CONFIGS)
@@ -209,14 +300,16 @@ export class NotificationTemplateController {
     @Query('categoryId') categoryId?: string,
     @Query('channelId') channelId?: string,
     @Query('isEnabled') isEnabled?: boolean
-  ): Promise<NotificationConfigDto[]> {
-    return await this.notificationTemplateService.getNotificationConfigs(
+  ): Promise<SuccessResponseDto<NotificationConfigDto[]>> {
+    const query = new GetNotificationConfigsQuery(
       programId,
       resourceType,
       categoryId,
       channelId,
       isEnabled
     );
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Notification configs retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_CONFIGS_BY_ID)
@@ -224,8 +317,10 @@ export class NotificationTemplateController {
   @ApiParam({ name: 'id', description: 'Notification config ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Notification config retrieved successfully', type: NotificationConfigDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification config not found' })
-  async getNotificationConfigById(@Param('id') id: string): Promise<NotificationConfigDto | null> {
-    return await this.notificationTemplateService.getNotificationConfigById(id);
+  async getNotificationConfigById(@Param('id') id: string): Promise<SuccessResponseDto<NotificationConfigDto | null>> {
+    const query = new GetNotificationConfigByIdQuery(id);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Notification config retrieved successfully');
   }
 
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SEND)
@@ -233,8 +328,18 @@ export class NotificationTemplateController {
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification sent successfully', type: SentNotificationDto })
   async sendNotification(
     @Body() dto: SendNotificationDto
-  ): Promise<SentNotificationDto> {
-    return await this.notificationTemplateService.sendNotification(dto);
+  ): Promise<SuccessResponseDto<SentNotificationDto>> {
+    const command = new SendNotificationCommand(
+      dto.channel,
+      dto.templateId,
+      dto.reservationId,
+      dto.recipientId,
+      dto.variables,
+      dto.hasAttachment,
+      dto.attachmentPath
+    );
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Notification sent successfully');
   }
 
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SEND_BATCH)
@@ -244,7 +349,11 @@ export class NotificationTemplateController {
   async sendBatchNotifications(
     @Body() body: { channelId: string; notificationIds: string[] }
   ): Promise<void> {
-    return await this.notificationTemplateService.sendBatchNotifications(body.channelId, body.notificationIds);
+    const command = new SendBatchNotificationsCommand(
+      body.channelId,
+      body.notificationIds
+    );
+    return await this.commandBus.execute(command);
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SENT_BY_RESERVATION)
@@ -253,8 +362,10 @@ export class NotificationTemplateController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Sent notifications retrieved successfully', type: [SentNotificationDto] })
   async getSentNotificationsByReservation(
     @Param('reservationId') reservationId: string
-  ): Promise<SentNotificationDto[]> {
-    return await this.notificationTemplateService.getSentNotificationsByReservation(reservationId);
+  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+    const query = new GetSentNotificationsByReservationQuery(reservationId);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Sent notifications retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SENT_BY_RECIPIENT)
@@ -271,14 +382,17 @@ export class NotificationTemplateController {
     @Query('status') status?: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
-  ): Promise<{ notifications: SentNotificationDto[]; total: number }> {
-    return await this.notificationTemplateService.getSentNotificationsByRecipient(
+  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+    const query = new GetSentNotificationsByRecipientQuery(
       recipientId,
       channel,
       status,
       page,
       limit
     );
+    const result = await this.queryBus.execute(query);
+    const { notifications, total } = result;
+    return ResponseUtil.paginated(notifications, total, page, limit, 'Sent notifications retrieved successfully') as SuccessResponseDto<SentNotificationDto[]>;
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_PENDING)
@@ -288,8 +402,10 @@ export class NotificationTemplateController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Pending notifications retrieved successfully', type: [SentNotificationDto] })
   async getPendingNotifications(
     @Query('channelId') channelId?: string
-  ): Promise<SentNotificationDto[]> {
-    return await this.notificationTemplateService.getPendingNotifications(channelId);
+  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+    const query = new GetPendingNotificationsQuery(channelId);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Pending notifications retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_BATCH)
@@ -301,8 +417,10 @@ export class NotificationTemplateController {
   async getNotificationsForBatch(
     @Param('channelId') channelId: string,
     @Query('batchInterval') batchInterval: number
-  ): Promise<SentNotificationDto[]> {
-    return await this.notificationTemplateService.getNotificationsForBatch(channelId, batchInterval);
+  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+    const query = new GetNotificationsForBatchQuery(channelId, batchInterval);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Notifications for batch retrieved successfully');
   }
 
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_MARK_READ)
@@ -313,6 +431,7 @@ export class NotificationTemplateController {
     @Param('id') id: string,
     @CurrentUser() user: any
   ): Promise<void> {
-    return await this.notificationTemplateService.markNotificationAsRead(id, user.id);
+    const command = new MarkNotificationAsReadCommand(id, user.id);
+    return await this.commandBus.execute(command);
   }
 }

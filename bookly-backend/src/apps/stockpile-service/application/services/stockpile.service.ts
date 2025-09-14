@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
 import { LoggingHelper } from '@libs/logging/logging.helper';
 import { ApprovalFlowRepository } from '@apps/stockpile-service/domain/repositories/approval-flow.repository';
@@ -34,8 +34,11 @@ import { ApprovalRequestStatus } from '@apps/stockpile-service/utils/approval-re
 @Injectable()
 export class StockpileService {
   constructor(
+    @Inject('ApprovalFlowRepository')
     private readonly approvalFlowRepository: ApprovalFlowRepository,
+    @Inject('DocumentTemplateRepository')
     private readonly documentTemplateRepository: DocumentTemplateRepository,
+    @Inject('NotificationTemplateRepository')
     private readonly notificationTemplateRepository: NotificationTemplateRepository,
     private readonly loggingService: LoggingService
   ) {}
