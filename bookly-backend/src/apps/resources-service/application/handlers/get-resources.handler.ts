@@ -8,7 +8,7 @@ import {
 } from '@apps/resources-service/application/queries/get-resources.query';
 import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
 import { ResourcesService } from '@apps/resources-service/application/services/resources.service';
-import { LoggingService } from '@/libs/logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 
 /**
  * Get Resources Query Handler

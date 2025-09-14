@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { UpdateResourceDto } from '@/libs/dto/resources/update-resource.dto';
+import { UpdateResourceDto } from '@libs/dto/resources/update-resource.dto';
 
 /**
  * Update Resource Command Data Interface

@@ -10,7 +10,7 @@ import {
 import { MaintenanceRecordEntity } from '../../domain/entities/maintenance-record.entity';
 import { LoggingService } from '@libs/logging/logging.service';
 import { MaintenanceRecord } from '@prisma/client';
-import { PrismaService } from '@/libs/common/services/prisma.service';
+import { PrismaService } from '@libs/common/services/prisma.service';
 
 @Injectable()
 export class PrismaMaintenanceRecordRepository implements MaintenanceRecordRepository {

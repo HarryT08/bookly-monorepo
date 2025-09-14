@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { UpdateResourceCommand } from '@apps/resources-service/application/commands/update-resource.command';
 import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
 import { ResourcesService } from '@apps/resources-service/application/services/resources.service';
-import { LoggingService } from '@/libs/logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 
 /**
  * Update Resource Command Handler

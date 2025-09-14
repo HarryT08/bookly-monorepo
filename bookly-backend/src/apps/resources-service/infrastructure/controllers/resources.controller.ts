@@ -73,11 +73,11 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 201, 
     description: 'Resource created successfully',
-    type: ResourceResponseDto 
+    type: SuccessResponseDto 
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Resource code already exists' })
-  async create(@Body(ValidationPipe) createResourceDto: CreateResourceDto): Promise<ResourceResponseDto> {
+  async create(@Body(ValidationPipe) createResourceDto: CreateResourceDto) {
     const command = new CreateResourceCommand({
       name: createResourceDto.name,
       type: createResourceDto.type,
@@ -91,7 +91,8 @@ export class ResourcesController {
     });
 
     const resource: ResourceEntity = await this.commandBus.execute(command);
-    return this.mapToResponseDto(resource);
+    const responseData = this.mapToResponseDto(resource);
+    return ResponseUtil.success(responseData, 'Resource created successfully');
   }
 
   /**
@@ -233,13 +234,14 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 200, 
     description: 'Resource retrieved successfully',
-    type: ResourceResponseDto 
+    type: SuccessResponseDto 
   })
   @ApiResponse({ status: 404, description: 'Resource not found' })
-  async findByCode(@Param('code') code: string): Promise<ResourceResponseDto> {
+  async findByCode(@Param('code') code: string) {
     const query = new GetResourceByCodeQuery(code);
     const resource: ResourceEntity = await this.queryBus.execute(query);
-    return this.mapToResponseDto(resource);
+    const responseData = this.mapToResponseDto(resource);
+    return ResponseUtil.success(responseData, 'Resource retrieved successfully');
   }
 
   /**
@@ -258,7 +260,7 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 200, 
     description: 'Availability check completed',
-    type: ResourceAvailabilityResponseDto 
+    type: SuccessResponseDto 
   })
   @ApiResponse({ status: 404, description: 'Resource not found' })
   async checkAvailability(
@@ -266,16 +268,18 @@ export class ResourcesController {
     @Query('date') date: string,
     @Query('userType') userType: string,
     @Query('duration', ParseIntPipe) duration: number,
-  ): Promise<ResourceAvailabilityResponseDto> {
+  ) {
     const requestedDate = new Date(date);
     const query = new CheckResourceAvailabilityQuery(id, requestedDate, userType, duration);
     const result = await this.queryBus.execute(query);
     
-    return {
+    const responseData = {
       available: result.available,
       reason: result.reason,
       priority: result.priority,
     };
+    
+    return ResponseUtil.success(responseData, 'Availability check completed');
   }
 
   /**
@@ -292,14 +296,14 @@ export class ResourcesController {
   @ApiResponse({ 
     status: 200, 
     description: 'Resource updated successfully',
-    type: ResourceResponseDto 
+    type: SuccessResponseDto 
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 404, description: 'Resource not found' })
   async update(
     @Param('id') id: string,
     @Body(ValidationPipe) updateResourceDto: UpdateResourceDto,
-  ): Promise<ResourceResponseDto> {
+  ) {
     const command = new UpdateResourceCommand({
       ...updateResourceDto,
       id,
@@ -307,7 +311,8 @@ export class ResourcesController {
     });
 
     const resource: ResourceEntity = await this.commandBus.execute(command);
-    return this.mapToResponseDto(resource);
+    const responseData = this.mapToResponseDto(resource);
+    return ResponseUtil.success(responseData, 'Resource updated successfully');
   }
 
   /**
@@ -316,26 +321,27 @@ export class ResourcesController {
    * Supports both soft delete (when has relations) and hard delete (when no relations)
    */
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
     summary: 'Delete resource',
     description: 'Deletes a resource. Uses soft delete if resource has active relations, hard delete otherwise. Implements RF-01.'
   })
   @ApiParam({ name: 'id', description: 'Resource ID' })
   @ApiQuery({ name: 'force', required: false, type: Boolean, description: 'Force hard delete even with relations' })
-  @ApiResponse({ status: 204, description: 'Resource deleted successfully' })
+  @ApiResponse({ status: 200, description: 'Resource deleted successfully', type: SuccessResponseDto })
   @ApiResponse({ status: 400, description: 'Cannot delete resource with active relations' })
   @ApiResponse({ status: 404, description: 'Resource not found' })
   async delete(
     @Param('id') id: string,
     @Query('force') force?: boolean,
-  ): Promise<void> {
+  ) {
     const command = new DeleteResourceCommand({
       id,
       deletedBy: 'system', // TODO: Get from JWT token
       force: force || false,
     });
     await this.commandBus.execute(command);
+    return ResponseUtil.success(null, 'Resource deleted successfully');
   }
 
   /**

@@ -4,7 +4,7 @@ import {
   ResourcesException,
   ResourcesErrorMessages 
 } from '../../domain/enums/resources-errors.enum';
-import { AllExceptionsFilter } from '@/libs/common/filters/all-exceptions.filter';
+import { AllExceptionsFilter } from '@libs/common/filters/all-exceptions.filter';
 
 @Catch()
 export class ResourcesExceptionFilter extends AllExceptionsFilter {

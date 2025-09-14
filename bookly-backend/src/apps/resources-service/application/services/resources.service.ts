@@ -1,6 +1,6 @@
 import { Injectable, Inject, BadRequestException, ConflictException } from '@nestjs/common';
-import { LoggingService } from '@/libs/logging/logging.service';
-import { EventBusService, DomainEvent } from '@/libs/event-bus/services/event-bus.service';
+import { LoggingService } from '@libs/logging/logging.service';
+import { EventBusService, DomainEvent } from '@libs/event-bus/services/event-bus.service';
 import { ResourceRepository } from '@apps/resources-service/domain/repositories/resource.repository';
 import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
 import { 
@@ -8,8 +8,8 @@ import {
   createStandardizedEvent, 
   EventAction, 
   RESOURCE_EVENTS 
-} from '@/libs/event-bus/interfaces/standardized-domain-event.interface';
-import { CreateResourceDto, AvailableScheduleDto } from '@/libs/dto/resources/create-resource.dto';
+} from '@libs/event-bus/interfaces/standardized-domain-event.interface';
+import { CreateResourceDto, AvailableScheduleDto } from '@libs/dto/resources/create-resource.dto';
 import { AvailableSchedule } from '@apps/resources-service/domain/entities/resource.entity';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -1,5 +1,5 @@
 import { ICommand } from '@nestjs/cqrs';
-import { CreateResourceDto } from '@/libs/dto/resources/create-resource.dto';
+import { CreateResourceDto } from '@libs/dto/resources/create-resource.dto';
 
 /**
  * Create Resource Command

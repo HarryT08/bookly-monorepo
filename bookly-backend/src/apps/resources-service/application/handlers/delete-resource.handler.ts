@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { DeleteResourceCommand } from '@apps/resources-service/application/commands/delete-resource.command';
 import { ResourcesService } from '@apps/resources-service/application/services/resources.service';
-import { LoggingService } from '@/libs/logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 
 /**
  * Delete Resource Command Handler
