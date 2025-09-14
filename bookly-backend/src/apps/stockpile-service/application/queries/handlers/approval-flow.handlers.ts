@@ -19,8 +19,6 @@ import {
   ApprovalLevelDto,
   ApprovalRequestDto
 } from '@libs/dto/stockpile/approval-flow.dto';
-import { ApprovalFlowRepository } from '@apps/stockpile-service/domain/repositories/approval-flow.repository';
-import { ApprovalFlowEntity, ApprovalLevelEntity, ApprovalRequestEntity } from '@apps/stockpile-service/domain/entities/approval-flow.entity';
 import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()
@@ -169,17 +167,21 @@ export class GetExpiredApprovalRequestsHandler implements IQueryHandler<GetExpir
 @QueryHandler(GetApprovalHistoryQuery)
 export class GetApprovalHistoryHandler implements IQueryHandler<GetApprovalHistoryQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetApprovalHistoryQuery): Promise<{ actions: any[]; total: number }> {
-    this.loggingService.log('Getting approval history', 'GetApprovalHistoryHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get approval history query', 'GetApprovalHistoryHandler', LoggingHelper.logParams({ query }));
 
-    // TODO: Implement approval history query with filtering and pagination
-    // This would require additional repository methods
-
-    return { actions: [], total: 0 };
+    return await this.approvalFlowService.getApprovalHistory({
+      reservationId: query.reservationId,
+      approverId: query.approverId,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      page: query.page,
+      limit: query.limit
+    });
   }
 }
 
@@ -187,7 +189,7 @@ export class GetApprovalHistoryHandler implements IQueryHandler<GetApprovalHisto
 @QueryHandler(GetUserApprovalStatisticsQuery)
 export class GetUserApprovalStatisticsHandler implements IQueryHandler<GetUserApprovalStatisticsQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
@@ -199,17 +201,12 @@ export class GetUserApprovalStatisticsHandler implements IQueryHandler<GetUserAp
     pendingRequests: number;
     averageResponseTime?: number;
   }> {
-    this.loggingService.log('Getting user approval statistics', 'GetUserApprovalStatisticsHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get user approval statistics query', 'GetUserApprovalStatisticsHandler', LoggingHelper.logParams({ query }));
 
-    // TODO: Implement user statistics calculation
-    // This would require additional repository methods and calculations
-
-    return {
+    return await this.approvalFlowService.getUserApprovalStatistics({
       userId: query.userId,
-      totalRequests: 0,
-      approvedRequests: 0,
-      rejectedRequests: 0,
-      pendingRequests: 0
-    };
+      startDate: query.startDate,
+      endDate: query.endDate
+    });
   }
 }

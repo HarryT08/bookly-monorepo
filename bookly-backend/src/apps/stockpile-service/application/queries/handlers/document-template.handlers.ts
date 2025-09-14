@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
-import { DocumentTemplateRepository } from '@apps/stockpile-service/domain/repositories/document-template.repository';
+import { DocumentTemplateService } from '@apps/stockpile-service/application/services/document-template.service';
 import {
   GetDocumentTemplatesQuery,
   GetDocumentTemplateByIdQuery,
@@ -18,14 +18,14 @@ import { LoggingHelper } from '@libs/logging/logging.helper';
 @QueryHandler(GetDocumentTemplatesQuery)
 export class GetDocumentTemplatesHandler implements IQueryHandler<GetDocumentTemplatesQuery> {
   constructor(
-    @Inject('DocumentTemplateRepository') private readonly repository: DocumentTemplateRepository,
+    private readonly documentTemplateService: DocumentTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetDocumentTemplatesQuery): Promise<{ templates: DocumentTemplateDto[]; total: number }> {
-    this.loggingService.log('Getting document templates', 'GetDocumentTemplatesHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get document templates query', 'GetDocumentTemplatesHandler', LoggingHelper.logParams(query));
 
-    const result = await this.repository.findDocumentTemplates({
+    const result = await this.documentTemplateService.getDocumentTemplates({
       resourceType: query.resourceType,
       categoryId: query.categoryId,
       eventType: query.eventType,
@@ -34,32 +34,7 @@ export class GetDocumentTemplatesHandler implements IQueryHandler<GetDocumentTem
       limit: query.limit
     });
 
-    return {
-      templates: result.templates.map(template => this.mapToDto(template)),
-      total: result.total
-    };
-  }
-
-  private mapToDto(template: any): DocumentTemplateDto {
-    return {
-      id: template.id,
-      name: template.name,
-      description: template.description,
-      resourceType: template.resourceType,
-      categoryId: template.categoryId,
-      eventType: template.eventType,
-      format: template.format,
-      templatePath: template.templatePath,
-      content: template.content,
-      variables: template.variables,
-      isDefault: template.isDefault,
-      isActive: template.isActive,
-      canSendAsAttachment: template.canSendAsAttachment,
-      canSendAsLink: template.canSendAsLink,
-      createdBy: template.createdBy,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt
-    };
+    return result;
   }
 }
 
@@ -67,38 +42,15 @@ export class GetDocumentTemplatesHandler implements IQueryHandler<GetDocumentTem
 @QueryHandler(GetDocumentTemplateByIdQuery)
 export class GetDocumentTemplateByIdHandler implements IQueryHandler<GetDocumentTemplateByIdQuery> {
   constructor(
-    @Inject('DocumentTemplateRepository') private readonly repository: DocumentTemplateRepository,
+    private readonly documentTemplateService: DocumentTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetDocumentTemplateByIdQuery): Promise<DocumentTemplateDto | null> {
-    this.loggingService.log('Getting document template by ID', 'GetDocumentTemplateByIdHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get document template by ID query', 'GetDocumentTemplateByIdHandler', LoggingHelper.logParams(query));
 
-    const template = await this.repository.findDocumentTemplateById(query.id);
-    
-    return template ? this.mapToDto(template) : null;
-  }
-
-  private mapToDto(template: any): DocumentTemplateDto {
-    return {
-      id: template.id,
-      name: template.name,
-      description: template.description,
-      resourceType: template.resourceType,
-      categoryId: template.categoryId,
-      eventType: template.eventType,
-      format: template.format,
-      templatePath: template.templatePath,
-      content: template.content,
-      variables: template.variables,
-      isDefault: template.isDefault,
-      isActive: template.isActive,
-      canSendAsAttachment: template.canSendAsAttachment,
-      canSendAsLink: template.canSendAsLink,
-      createdBy: template.createdBy,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt
-    };
+    const template = await this.documentTemplateService.getDocumentTemplateById({ id: query.id });
+    return template;
   }
 }
 
@@ -106,42 +58,18 @@ export class GetDocumentTemplateByIdHandler implements IQueryHandler<GetDocument
 @QueryHandler(GetDefaultDocumentTemplateQuery)
 export class GetDefaultDocumentTemplateHandler implements IQueryHandler<GetDefaultDocumentTemplateQuery> {
   constructor(
-    @Inject('DocumentTemplateRepository') private readonly repository: DocumentTemplateRepository,
+    private readonly documentTemplateService: DocumentTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetDefaultDocumentTemplateQuery): Promise<DocumentTemplateDto | null> {
-    this.loggingService.log('Getting default document template', 'GetDefaultDocumentTemplateHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get default document template query', 'GetDefaultDocumentTemplateHandler', LoggingHelper.logParams(query));
 
-    const template = await this.repository.findDefaultDocumentTemplate(
-      query.resourceType,
-      query.categoryId,
-      query.eventType
-    );
-    
-    return template ? this.mapToDto(template) : null;
-  }
-
-  private mapToDto(template: any): DocumentTemplateDto {
-    return {
-      id: template.id,
-      name: template.name,
-      description: template.description,
-      resourceType: template.resourceType,
-      categoryId: template.categoryId,
-      eventType: template.eventType,
-      format: template.format,
-      templatePath: template.templatePath,
-      content: template.content,
-      variables: template.variables,
-      isDefault: template.isDefault,
-      isActive: template.isActive,
-      canSendAsAttachment: template.canSendAsAttachment,
-      canSendAsLink: template.canSendAsLink,
-      createdBy: template.createdBy,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt
-    };
+    return await this.documentTemplateService.getDefaultDocumentTemplate({
+      resourceType: query.resourceType,
+      categoryId: query.categoryId,
+      eventType: query.eventType
+    });
   }
 }
 
@@ -149,34 +77,15 @@ export class GetDefaultDocumentTemplateHandler implements IQueryHandler<GetDefau
 @QueryHandler(GetGeneratedDocumentsByReservationQuery)
 export class GetGeneratedDocumentsByReservationHandler implements IQueryHandler<GetGeneratedDocumentsByReservationQuery> {
   constructor(
-    @Inject('DocumentTemplateRepository') private readonly repository: DocumentTemplateRepository,
+    private readonly documentTemplateService: DocumentTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetGeneratedDocumentsByReservationQuery): Promise<GeneratedDocumentDto[]> {
-    this.loggingService.log('Getting generated documents by reservation', 'GetGeneratedDocumentsByReservationHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get generated documents by reservation query', 'GetGeneratedDocumentsByReservationHandler', LoggingHelper.logParams(query));
 
-    const documents = await this.repository.findGeneratedDocumentsByReservation(query.reservationId);
-    
-    return documents.map(document => this.mapToGeneratedDocumentDto(document));
-  }
-
-  private mapToGeneratedDocumentDto(document: any): GeneratedDocumentDto {
-    return {
-      id: document.id,
-      templateId: document.templateId,
-      reservationId: document.reservationId,
-      fileName: document.fileName,
-      filePath: document.filePath,
-      documentPath: document.filePath, // Use filePath as documentPath
-      fileSize: document.fileSize,
-      format: document.format || 'PDF', // Default format
-      mimeType: document.mimeType,
-      variables: document.variables,
-      generatedBy: document.generatedBy,
-      createdAt: document.createdAt,
-      updatedAt: document.updatedAt
-    };
+    const documents = await this.documentTemplateService.getGeneratedDocumentsByReservation({ reservationId: query.reservationId });
+    return documents;
   }
 }
 
@@ -184,34 +93,15 @@ export class GetGeneratedDocumentsByReservationHandler implements IQueryHandler<
 @QueryHandler(GetGeneratedDocumentByIdQuery)
 export class GetGeneratedDocumentByIdHandler implements IQueryHandler<GetGeneratedDocumentByIdQuery> {
   constructor(
-    @Inject('DocumentTemplateRepository') private readonly repository: DocumentTemplateRepository,
+    private readonly documentTemplateService: DocumentTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetGeneratedDocumentByIdQuery): Promise<GeneratedDocumentDto | null> {
-    this.loggingService.log('Getting generated document by ID', 'GetGeneratedDocumentByIdHandler', LoggingHelper.logParams({ id: query.id }));
+    this.loggingService.log('Orchestrating get generated document by ID query', 'GetGeneratedDocumentByIdHandler', LoggingHelper.logParams(query));
 
-    const document = await this.repository.findGeneratedDocumentById(query.id);
-    
-    return document ? this.mapToGeneratedDocumentDto(document) : null;
-  }
-
-  private mapToGeneratedDocumentDto(document: any): GeneratedDocumentDto {
-    return {
-      id: document.id,
-      templateId: document.templateId,
-      reservationId: document.reservationId,
-      fileName: document.fileName,
-      filePath: document.filePath,
-      documentPath: document.filePath, // Use filePath as documentPath
-      fileSize: document.fileSize,
-      format: document.format || 'PDF', // Default format
-      mimeType: document.mimeType,
-      variables: document.variables,
-      generatedBy: document.generatedBy,
-      createdAt: document.createdAt,
-      updatedAt: document.updatedAt
-    };
+    const document = await this.documentTemplateService.getGeneratedDocumentById({ id: query.id });
+    return document;
   }
 }
 
@@ -219,20 +109,15 @@ export class GetGeneratedDocumentByIdHandler implements IQueryHandler<GetGenerat
 @QueryHandler(GetDocumentTemplateVariablesQuery)
 export class GetDocumentTemplateVariablesHandler implements IQueryHandler<GetDocumentTemplateVariablesQuery> {
   constructor(
-    @Inject('DocumentTemplateRepository') private readonly repository: DocumentTemplateRepository,
+    private readonly documentTemplateService: DocumentTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetDocumentTemplateVariablesQuery): Promise<any> {
-    this.loggingService.log('Getting document template variables', 'GetDocumentTemplateVariablesHandler', LoggingHelper.logParams({ templateId: query.templateId }));
+    this.loggingService.log('Orchestrating get document template variables query', 'GetDocumentTemplateVariablesHandler', LoggingHelper.logParams(query));
 
-    const template = await this.repository.findDocumentTemplateById(query.templateId);
-    
-    if (!template) {
-      throw new Error(`Document template with ID ${query.templateId} not found`);
-    }
-
-    return template.variables || {};
+    const variables = await this.documentTemplateService.getDocumentTemplateVariables({ templateId: query.templateId });
+    return variables;
   }
 }
 
@@ -240,43 +125,13 @@ export class GetDocumentTemplateVariablesHandler implements IQueryHandler<GetDoc
 @QueryHandler(GetAvailableDocumentVariablesQuery)
 export class GetAvailableDocumentVariablesHandler implements IQueryHandler<GetAvailableDocumentVariablesQuery> {
   constructor(
+    private readonly documentTemplateService: DocumentTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetAvailableDocumentVariablesQuery): Promise<any> {
-    this.loggingService.log('Getting available document variables', 'GetAvailableDocumentVariablesHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get available document variables query', 'GetAvailableDocumentVariablesHandler', LoggingHelper.logParams(query));
 
-    // Return available variables based on event type and resource type
-    const baseVariables = {
-      reservation: {
-        id: 'Reservation ID',
-        startTime: 'Start time',
-        endTime: 'End time',
-        purpose: 'Purpose',
-        requesterName: 'Requester name',
-        requesterEmail: 'Requester email'
-      },
-      resource: {
-        name: 'Resource name',
-        type: 'Resource type',
-        location: 'Location',
-        capacity: 'Capacity'
-      },
-      approval: {
-        approverName: 'Approver name',
-        approvalDate: 'Approval date',
-        comments: 'Comments',
-        status: 'Status'
-      }
-    };
-
-    // Add resource-specific variables based on resource type
-    if (query.resourceType) {
-      baseVariables[`${query.resourceType}_specific`] = {
-        // Add resource type specific variables here
-      };
-    }
-
-    return baseVariables;
+    return await this.documentTemplateService.getAvailableDocumentVariables();
   }
 }

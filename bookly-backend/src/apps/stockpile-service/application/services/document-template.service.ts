@@ -1,22 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
-import {
-  CreateDocumentTemplateCommand,
-  UpdateDocumentTemplateCommand,
-  GenerateDocumentCommand,
-  UploadDocumentTemplateCommand,
-  DeleteDocumentTemplateCommand
-} from '@apps/stockpile-service/application/commands/document-template.commands';
-import {
-  GetDocumentTemplatesQuery,
-  GetDocumentTemplateByIdQuery,
-  GetDefaultDocumentTemplateQuery,
-  GetGeneratedDocumentsByReservationQuery,
-  GetGeneratedDocumentByIdQuery,
-  GetDocumentTemplateVariablesQuery,
-  GetAvailableDocumentVariablesQuery
-} from '@apps/stockpile-service/application/queries/document-template.queries';
 import {
   CreateDocumentTemplateDto,
   UpdateDocumentTemplateDto,
@@ -29,227 +12,261 @@ import {
   GeneratedDocumentDto,
   DocumentEventType
 } from '@libs/dto/stockpile/document-template.dto';
+import {
+  GetByIdRequestDto,
+  GetGeneratedDocumentsByReservationRequestDto,
+  GetDocumentTemplateVariablesRequestDto
+} from '@libs/dto/stockpile/stockpile-requests.dto';
 import { LoggingHelper } from '@libs/logging/logging.helper';
-import { StockpileHandlerUtil } from '../utils/stockpile-handler.util';
+import { DocumentTemplateRepository } from '@apps/stockpile-service/domain/repositories/document-template.repository';
+import { DocumentTemplateEntity, GeneratedDocumentEntity } from '@apps/stockpile-service/domain/entities/document-template.entity';
+import { DocumentFormat } from '@apps/stockpile-service/utils/document-format.enum';
 
 @Injectable()
 export class DocumentTemplateService {
   constructor(
-    private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
+    @Inject('DocumentTemplateRepository') private readonly documentTemplateRepository: DocumentTemplateRepository,
     private readonly loggingService: LoggingService
   ) {}
 
   async createDocumentTemplate(dto: CreateDocumentTemplateDto): Promise<DocumentTemplateDto> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Creating document template', 'DocumentTemplateService', dto);
+    this.loggingService.log('Creating document template', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const command = new CreateDocumentTemplateCommand(
+    const entity = new DocumentTemplateEntity(
+      null, // id will be set by repository
       dto.name,
-      dto.eventType,
+      dto.eventType as DocumentEventType,
       dto.format,
-      dto.categoryId,
+      dto.createdBy,
       dto.description,
       dto.resourceType,
+      dto.categoryId,
       dto.templatePath,
       dto.content,
-      dto.variables,
-      dto.isDefault,
-      dto.canSendAsAttachment,
-      dto.canSendAsLink
+      dto.variables || {},
+      dto.isDefault || false,
+      true, // isActive
+      dto.canSendAsAttachment || false,
+      dto.canSendAsLink || false,
+      new Date(),
+      new Date()
     );
 
-    return await StockpileHandlerUtil.executeCommand(
-      this.commandBus,
-      command,
-      this.loggingService,
-      'create document template',
-      'DocumentTemplateService'
-    );
+    const savedEntity = await this.documentTemplateRepository.createDocumentTemplate(entity);
+    return this.convertDocumentTemplateToDto(savedEntity);
   }
 
   async updateDocumentTemplate(id: string, dto: UpdateDocumentTemplateDto): Promise<DocumentTemplateDto> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Updating document template', 'DocumentTemplateService', { id, dto });
+    this.loggingService.log('Updating document template', 'DocumentTemplateService', LoggingHelper.logParams({ id, dto }));
 
-    const command = new UpdateDocumentTemplateCommand(
-      id,
-      dto.name,
-      dto.description,
-      dto.content,
-      dto.variables,
-      dto.canSendAsAttachment,
-      dto.canSendAsLink,
-      dto.isActive
-    );
+    const existingTemplate = await this.documentTemplateRepository.findDocumentTemplateById(id);
+    if (!existingTemplate) {
+      throw new NotFoundException(`Document template with ID ${id} not found`);
+    }
 
-    return await StockpileHandlerUtil.executeCommand(
-      this.commandBus,
-      command,
-      this.loggingService,
-      'update document template',
-      'DocumentTemplateService'
-    );
+    await this.documentTemplateRepository.updateDocumentTemplate(id, {
+      name: dto.name,
+      description: dto.description,
+      content: dto.content,
+      variables: dto.variables,
+      canSendAsAttachment: dto.canSendAsAttachment,
+      canSendAsLink: dto.canSendAsLink,
+      isActive: dto.isActive,
+      updatedAt: new Date()
+    });
+
+    const updatedTemplate = await this.documentTemplateRepository.findDocumentTemplateById(id);
+    return this.convertDocumentTemplateToDto(updatedTemplate);
   }
 
   async generateDocument(dto: GenerateDocumentDto): Promise<GeneratedDocumentDto> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Generating document', 'DocumentTemplateService', dto);
+    this.loggingService.log('Generating document', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const command = new GenerateDocumentCommand(
+    // Validate template exists
+    const template = await this.documentTemplateRepository.findDocumentTemplateById(dto.templateId);
+    if (!template) {
+      throw new NotFoundException(`Document template with ID ${dto.templateId} not found`);
+    }
+
+    const entity = new GeneratedDocumentEntity(
+      null, // id will be set by repository
       dto.templateId,
       dto.reservationId,
-      dto.variables,
-      dto.generatedBy
+      `document_${dto.reservationId}_${Date.now()}.pdf`,
+      `/documents/${dto.reservationId}/`,
+      'application/pdf',
+      dto.generatedBy,
+      new Date(),
+      new Date(),
+      0, // fileSize will be set after generation
+      dto.variables || {}
     );
 
-    return await StockpileHandlerUtil.executeCommand(
-      this.commandBus,
-      command,
-      this.loggingService,
-      'generate document',
-      'DocumentTemplateService'
-    );
+    const savedEntity = await this.documentTemplateRepository.createGeneratedDocument(entity);
+    return this.convertGeneratedDocumentToDto(savedEntity);
   }
 
   async uploadDocumentTemplate(file: any, dto: UploadDocumentTemplateDto): Promise<DocumentTemplateDto> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Uploading document template', 'DocumentTemplateService', { dto, fileName: file.originalname });
+    this.loggingService.log('Uploading document template', 'DocumentTemplateService', LoggingHelper.logParams({ dto, fileName: file.originalname }));
 
-    const command = new UploadDocumentTemplateCommand(
-      dto.templateId,
-      file,
-      dto.uploadedBy
-    );
+    const existingTemplate = await this.documentTemplateRepository.findDocumentTemplateById(dto.templateId);
+    if (!existingTemplate) {
+      throw new NotFoundException(`Document template with ID ${dto.templateId} not found`);
+    }
 
-    return await StockpileHandlerUtil.executeCommand(
-      this.commandBus,
-      command,
-      this.loggingService,
-      'upload document template',
-      'DocumentTemplateService'
-    );
+    const filePath = `/templates/${dto.templateId}/${file.originalname}`;
+    await this.documentTemplateRepository.updateDocumentTemplate(dto.templateId, {
+      templatePath: filePath,
+      updatedAt: new Date()
+    });
+
+    const updatedTemplate = await this.documentTemplateRepository.findDocumentTemplateById(dto.templateId);
+    return this.convertDocumentTemplateToDto(updatedTemplate);
   }
 
   async deleteDocumentTemplate(dto: DeleteDocumentTemplateDto): Promise<void> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Deleting document template', 'DocumentTemplateService', dto);
+    this.loggingService.log('Deleting document template', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const command = new DeleteDocumentTemplateCommand(
-      dto.id,
-      dto.deletedBy
-    );
+    const existingTemplate = await this.documentTemplateRepository.findDocumentTemplateById(dto.id);
+    if (!existingTemplate) {
+      throw new NotFoundException(`Document template with ID ${dto.id} not found`);
+    }
 
-    await StockpileHandlerUtil.executeCommand(
-      this.commandBus,
-      command,
-      this.loggingService,
-      'delete document template',
-      'DocumentTemplateService'
-    );
+    await this.documentTemplateRepository.deleteDocumentTemplate(dto.id);
   }
 
   async getDocumentTemplates(dto: GetDocumentTemplatesDto): Promise<{ templates: DocumentTemplateDto[]; total: number }> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting document templates', 'DocumentTemplateService', dto);
+    this.loggingService.log('Getting document templates', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const query = new GetDocumentTemplatesQuery(
-      dto.resourceType,
-      dto.categoryId,
-      dto.eventType,
-      dto.isActive,
-      dto.page,
-      dto.limit
-    );
+    const result = await this.documentTemplateRepository.findDocumentTemplates({
+      resourceType: dto.resourceType,
+      categoryId: dto.categoryId,
+      eventType: dto.eventType,
+      isActive: dto.isActive,
+      page: dto.page,
+      limit: dto.limit
+    });
 
-    return await StockpileHandlerUtil.executeQuery(
-      this.queryBus,
-      query,
-      this.loggingService,
-      'get document templates',
-      'DocumentTemplateService'
-    );
+    return {
+      templates: result.templates.map(template => this.convertDocumentTemplateToDto(template)),
+      total: result.total
+    };
   }
 
-  async getDocumentTemplateById(id: string): Promise<DocumentTemplateDto | null> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting document template by ID', 'DocumentTemplateService', { id });
+  async getDocumentTemplateById(dto: GetByIdRequestDto): Promise<DocumentTemplateDto | null> {
+    this.loggingService.log('Getting document template by ID', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const query = new GetDocumentTemplateByIdQuery(id);
-
-    return await StockpileHandlerUtil.executeQuery(
-      this.queryBus,
-      query,
-      this.loggingService,
-      'get document template by ID',
-      'DocumentTemplateService'
-    );
+    const template = await this.documentTemplateRepository.findDocumentTemplateById(dto.id);
+    return template ? this.convertDocumentTemplateToDto(template) : null;
   }
 
   async getDefaultDocumentTemplate(dto: GetDefaultDocumentTemplateDto): Promise<DocumentTemplateDto | null> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting default document template', 'DocumentTemplateService', dto);
+    this.loggingService.log('Getting default document template', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const query = new GetDefaultDocumentTemplateQuery(
+    const template = await this.documentTemplateRepository.findDefaultDocumentTemplate(
       dto.resourceType,
       dto.categoryId,
       dto.eventType
     );
 
-    return await StockpileHandlerUtil.executeQuery(
-      this.queryBus,
-      query,
-      this.loggingService,
-      'get default document template',
-      'DocumentTemplateService'
-    );
+    return template ? this.convertDocumentTemplateToDto(template) : null;
   }
 
-  async getGeneratedDocumentsByReservation(reservationId: string): Promise<GeneratedDocumentDto[]> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting generated documents by reservation', 'DocumentTemplateService', { reservationId });
+  async getGeneratedDocumentsByReservation(dto: GetGeneratedDocumentsByReservationRequestDto): Promise<GeneratedDocumentDto[]> {
+    this.loggingService.log('Getting generated documents by reservation', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const query = new GetGeneratedDocumentsByReservationQuery(reservationId);
-
-    return await StockpileHandlerUtil.executeQuery(
-      this.queryBus,
-      query,
-      this.loggingService,
-      'get generated documents by reservation',
-      'DocumentTemplateService'
-    );
+    const documents = await this.documentTemplateRepository.findGeneratedDocumentsByReservation(dto.reservationId);
+    return documents.map(doc => this.convertGeneratedDocumentToDto(doc));
   }
 
-  async getGeneratedDocumentById(id: string): Promise<GeneratedDocumentDto | null> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting generated document by ID', 'DocumentTemplateService', { id });
+  async getGeneratedDocumentById(dto: GetByIdRequestDto): Promise<GeneratedDocumentDto | null> {
+    this.loggingService.log('Getting generated document by ID', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const query = new GetGeneratedDocumentByIdQuery(id);
-
-    return await StockpileHandlerUtil.executeQuery(
-      this.queryBus,
-      query,
-      this.loggingService,
-      'get generated document by ID',
-      'DocumentTemplateService'
-    );
+    const document = await this.documentTemplateRepository.findGeneratedDocumentById(dto.id);
+    return document ? this.convertGeneratedDocumentToDto(document) : null;
   }
 
-  async getDocumentTemplateVariables(templateId: string): Promise<any> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting document template variables', 'DocumentTemplateService', { templateId });
+  async getDocumentTemplateVariables(dto: GetDocumentTemplateVariablesRequestDto): Promise<Record<string, any>> {
+    this.loggingService.log('Getting document template variables', 'DocumentTemplateService', LoggingHelper.logParams(dto));
 
-    const query = new GetDocumentTemplateVariablesQuery(templateId);
+    const template = await this.documentTemplateRepository.findDocumentTemplateById(dto.templateId);
+    if (!template) {
+      throw new NotFoundException(`Document template with ID ${dto.templateId} not found`);
+    }
 
-    return await StockpileHandlerUtil.executeQuery(
-      this.queryBus,
-      query,
-      this.loggingService,
-      'get document template variables',
-      'DocumentTemplateService'
-    );
+    return template.variables || {};
   }
 
-  async getAvailableDocumentVariables(eventType: DocumentEventType, resourceType?: string): Promise<any> {
-    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting available document variables', 'DocumentTemplateService', { eventType, resourceType });
+  async getAvailableDocumentVariables(): Promise<Record<string, any>> {
+    this.loggingService.log('Getting available document variables', 'DocumentTemplateService', LoggingHelper.logParams({}));
 
-    const query = new GetAvailableDocumentVariablesQuery(eventType, resourceType);
+    // Return standard document variables available for templates
+    return {
+      reservation: {
+        id: 'string',
+        startDate: 'Date',
+        endDate: 'Date',
+        status: 'string',
+        notes: 'string'
+      },
+      resource: {
+        name: 'string',
+        type: 'string',
+        location: 'string',
+        capacity: 'number'
+      },
+      user: {
+        name: 'string',
+        email: 'string',
+        role: 'string'
+      },
+      approval: {
+        status: 'string',
+        approverName: 'string',
+        approvalDate: 'Date',
+        comments: 'string'
+      }
+    };
+  }
 
-    return await StockpileHandlerUtil.executeQuery(
-      this.queryBus,
-      query,
-      this.loggingService,
-      'get available document variables',
-      'DocumentTemplateService'
-    );
+  // DTO Conversion Methods
+  private convertDocumentTemplateToDto(entity: DocumentTemplateEntity): DocumentTemplateDto {
+    return {
+      id: entity.id,
+      name: entity.name,
+      description: entity.description,
+      resourceType: entity.resourceType,
+      categoryId: entity.categoryId,
+      eventType: entity.eventType,
+      format: entity.format,
+      templatePath: entity.templatePath,
+      content: entity.content,
+      variables: entity.variables,
+      isDefault: entity.isDefault,
+      isActive: entity.isActive,
+      canSendAsAttachment: entity.canSendAsAttachment,
+      canSendAsLink: entity.canSendAsLink,
+      createdBy: entity.createdBy,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt
+    };
+  }
+
+  private convertGeneratedDocumentToDto(entity: GeneratedDocumentEntity): GeneratedDocumentDto {
+    return {
+      id: entity.id,
+      templateId: entity.templateId,
+      reservationId: entity.reservationId,
+      fileName: entity.fileName,
+      filePath: entity.filePath,
+      documentPath: entity.filePath,
+      fileSize: entity.fileSize || 0,
+      format: DocumentFormat.PDF, // Default format since not stored in entity
+      mimeType: entity.mimeType,
+      variables: entity.variables,
+      generatedBy: entity.generatedBy,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt
+    };
   }
 }

@@ -22,41 +22,24 @@ import {
   NotificationTemplateDto, 
   NotificationConfigDto, 
   SentNotificationDto 
-} from '@dto/stockpile/notification-template.dto';
+} from '@libs/dto/stockpile/notification-template.dto';
 import { LoggingHelper } from '@libs/logging/logging.helper';
-import { NotificationChannelEntity } from '@/apps/stockpile-service/domain/entities/notification-template.entity';
-import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+import { NotificationTemplateService } from '@apps/stockpile-service/application/services/notification-template.service';
+import { NotificationChannelEntity } from '@apps/stockpile-service/domain/entities/notification-template.entity';
+import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
 
 @Injectable()
 @QueryHandler(GetNotificationChannelsQuery)
 export class GetNotificationChannelsHandler implements IQueryHandler<GetNotificationChannelsQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationChannelsQuery): Promise<NotificationChannelDto[]> {
-    this.loggingService.log('Getting notification channels', 'GetNotificationChannelsHandler', LoggingHelper.logParams(query));
+    this.loggingService.log('Orchestrating get notification channels query', 'GetNotificationChannelsHandler', LoggingHelper.logParams(query));
 
-    const channels = await this.repository.findAllNotificationChannels();
-    
-    return channels.map(channel => this.mapToChannelDto(channel));
-  }
-
-  private mapToChannelDto(channel: NotificationChannelEntity): NotificationChannelDto {
-    return {
-    id: channel.id,
-    name: channel.name,
-    displayName: channel.displayName,
-    isActive: channel.isActive,
-    supportsAttachments: channel.supportsAttachments,
-    supportsLinks: channel.supportsLinks,
-    maxMessageLength: channel.maxMessageLength,
-    settings: channel.settings,
-    createdAt: channel.createdAt,
-    updatedAt: channel.updatedAt,
-    channel: channel.channel || NotificationChannelType.EMAIL
-};
+    return await this.notificationTemplateService.getNotificationChannels();
   }
 }
 
@@ -64,32 +47,15 @@ export class GetNotificationChannelsHandler implements IQueryHandler<GetNotifica
 @QueryHandler(GetNotificationChannelByIdQuery)
 export class GetNotificationChannelByIdHandler implements IQueryHandler<GetNotificationChannelByIdQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationChannelByIdQuery): Promise<NotificationChannelDto | null> {
-    this.loggingService.log('Getting notification channel by ID', 'GetNotificationChannelByIdHandler', LoggingHelper.logParams({ id: query.id }));
+    this.loggingService.log('Orchestrating get notification channel by ID query', 'GetNotificationChannelByIdHandler', LoggingHelper.logParams({ id: query.id }));
 
-    const channel = await this.repository.findNotificationChannelById(query.id);
-    
-    return channel ? this.mapToChannelDto(channel) : null;
-  }
-
-  private mapToChannelDto(channel: any): NotificationChannelDto {
-    return {
-    id: channel.id,
-    name: channel.name,
-    displayName: channel.displayName,
-    isActive: channel.isActive,
-    supportsAttachments: channel.supportsAttachments,
-    supportsLinks: channel.supportsLinks,
-    maxMessageLength: channel.maxMessageLength,
-    settings: channel.settings,
-    createdAt: channel.createdAt,
-    updatedAt: channel.updatedAt,
-    channel: channel.channel || NotificationChannelType.EMAIL
-};
+    const channel = await this.notificationTemplateService.getNotificationChannelById({ id: query.id });
+    return channel;
   }
 }
 
@@ -97,48 +63,22 @@ export class GetNotificationChannelByIdHandler implements IQueryHandler<GetNotif
 @QueryHandler(GetNotificationTemplatesQuery)
 export class GetNotificationTemplatesHandler implements IQueryHandler<GetNotificationTemplatesQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationTemplatesQuery): Promise<{ templates: NotificationTemplateDto[]; total: number }> {
-    this.loggingService.log('Getting notification templates', 'GetNotificationTemplatesHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get notification templates query', 'GetNotificationTemplatesHandler', LoggingHelper.logParams({ query }));
 
-    const result = await this.repository.findNotificationTemplates({
-      channelId: query.channelId,
-      eventType: query.eventType,
-      resourceType: query.resourceType,
-      categoryId: query.categoryId,
-      isActive: query.isActive,
-      page: query.page,
-      limit: query.limit
-    });
-
-    return {
-      templates: result.templates.map(template => this.mapToTemplateDto(template)),
-      total: result.total
-    };
-  }
-
-  private mapToTemplateDto(template: any): NotificationTemplateDto {
-    return {
-      id: template.id,
-      name: template.name,
-      channelId: template.channelId,
-      eventType: template.eventType,
-      resourceType: template.resourceType,
-      categoryId: template.categoryId,
-      subject: template.subject,
-      content: template.content,
-      variables: template.variables,
-      isDefault: template.isDefault,
-      isActive: template.isActive,
-      attachDocument: template.attachDocument,
-      documentAsLink: template.documentAsLink,
-      createdBy: template.createdBy,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt
-    };
+    return await this.notificationTemplateService.getNotificationTemplates(
+      query.channelId,
+      query.eventType,
+      query.resourceType,
+      query.categoryId,
+      query.isActive,
+      query.page,
+      query.limit
+    );
   }
 }
 
@@ -146,37 +86,15 @@ export class GetNotificationTemplatesHandler implements IQueryHandler<GetNotific
 @QueryHandler(GetNotificationTemplateByIdQuery)
 export class GetNotificationTemplateByIdHandler implements IQueryHandler<GetNotificationTemplateByIdQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationTemplateByIdQuery): Promise<NotificationTemplateDto | null> {
-    this.loggingService.log('Getting notification template by ID', 'GetNotificationTemplateByIdHandler', LoggingHelper.logParams({ id: query.id }));
+    this.loggingService.log('Orchestrating get notification template by ID query', 'GetNotificationTemplateByIdHandler', LoggingHelper.logParams({ id: query.id }));
 
-    const template = await this.repository.findNotificationTemplateById(query.id);
-    
-    return template ? this.mapToTemplateDto(template) : null;
-  }
-
-  private mapToTemplateDto(template: any): NotificationTemplateDto {
-    return {
-      id: template.id,
-      name: template.name,
-      channelId: template.channelId,
-      eventType: template.eventType,
-      resourceType: template.resourceType,
-      categoryId: template.categoryId,
-      subject: template.subject,
-      content: template.content,
-      variables: template.variables,
-      isDefault: template.isDefault,
-      isActive: template.isActive,
-      attachDocument: template.attachDocument,
-      documentAsLink: template.documentAsLink,
-      createdBy: template.createdBy,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt
-    };
+    const template = await this.notificationTemplateService.getNotificationTemplateById({ id: query.id });
+    return template;
   }
 }
 
@@ -184,42 +102,19 @@ export class GetNotificationTemplateByIdHandler implements IQueryHandler<GetNoti
 @QueryHandler(GetDefaultNotificationTemplateQuery)
 export class GetDefaultNotificationTemplateHandler implements IQueryHandler<GetDefaultNotificationTemplateQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetDefaultNotificationTemplateQuery): Promise<NotificationTemplateDto | null> {
-    this.loggingService.log('Getting default notification template', 'GetDefaultNotificationTemplateHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get default notification template query', 'GetDefaultNotificationTemplateHandler', LoggingHelper.logParams({ query }));
 
-    const template = await this.repository.findDefaultNotificationTemplate(
+    return await this.notificationTemplateService.getDefaultNotificationTemplate(
       query.channelId,
       query.eventType,
       query.resourceType,
       query.categoryId
     );
-    
-    return template ? this.mapToTemplateDto(template) : null;
-  }
-
-  private mapToTemplateDto(template: any): NotificationTemplateDto {
-    return {
-      id: template.id,
-      name: template.name,
-      channelId: template.channelId,
-      eventType: template.eventType,
-      resourceType: template.resourceType,
-      categoryId: template.categoryId,
-      subject: template.subject,
-      content: template.content,
-      variables: template.variables,
-      isDefault: template.isDefault,
-      isActive: template.isActive,
-      attachDocument: template.attachDocument,
-      documentAsLink: template.documentAsLink,
-      createdBy: template.createdBy,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt
-    };
   }
 }
 
@@ -227,113 +122,53 @@ export class GetDefaultNotificationTemplateHandler implements IQueryHandler<GetD
 @QueryHandler(GetNotificationConfigsQuery)
 export class GetNotificationConfigsHandler implements IQueryHandler<GetNotificationConfigsQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationConfigsQuery): Promise<NotificationConfigDto[]> {
-    this.loggingService.log('Getting notification configs', 'GetNotificationConfigsHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get notification configs query', 'GetNotificationConfigsHandler', LoggingHelper.logParams(query));
 
-    const configs = await this.repository.findNotificationConfigs({
-      programId: query.programId,
-      resourceType: query.resourceType,
-      categoryId: query.categoryId,
-      channelId: query.channelId,
-      isEnabled: query.isEnabled
-    });
-    
-    return configs.map(config => this.mapToConfigDto(config));
+    return await this.notificationTemplateService.getNotificationConfigs(
+      query.programId,
+      query.resourceType,
+      query.categoryId,
+      query.channelId,
+      query.isEnabled
+    );
   }
 
-  private mapToConfigDto(config: any): NotificationConfigDto {
-    return {
-      id: config.id,
-      programId: config.programId,
-      resourceType: config.resourceType,
-      categoryId: config.categoryId,
-      channelId: config.channelId,
-      isEnabled: config.isEnabled,
-      isImmediate: config.isImmediate,
-      batchInterval: config.batchInterval,
-      sendDocuments: config.sendDocuments,
-      documentMethod: config.documentMethod,
-      createdBy: config.createdBy,
-      createdAt: config.createdAt,
-      updatedAt: config.updatedAt
-    };
-  }
 }
 
 @Injectable()
 @QueryHandler(GetNotificationConfigByIdQuery)
 export class GetNotificationConfigByIdHandler implements IQueryHandler<GetNotificationConfigByIdQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationConfigByIdQuery): Promise<NotificationConfigDto | null> {
-    this.loggingService.log('Getting notification config by ID', 'GetNotificationConfigByIdHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get notification config by ID query', 'GetNotificationConfigByIdHandler', LoggingHelper.logParams(query));
 
-    const config = await this.repository.findNotificationConfigById(query.id);
-    
-    return config ? this.mapToConfigDto(config) : null;
+    const config = await this.notificationTemplateService.getNotificationConfigById({ id: query.id });
+    return config;
   }
 
-  private mapToConfigDto(config: any): NotificationConfigDto {
-    return {
-      id: config.id,
-      programId: config.programId,
-      resourceType: config.resourceType,
-      categoryId: config.categoryId,
-      channelId: config.channelId,
-      isEnabled: config.isEnabled,
-      isImmediate: config.isImmediate,
-      batchInterval: config.batchInterval,
-      sendDocuments: config.sendDocuments,
-      documentMethod: config.documentMethod,
-      createdBy: config.createdBy,
-      createdAt: config.createdAt,
-      updatedAt: config.updatedAt
-    };
-  }
 }
 
 @Injectable()
 @QueryHandler(GetSentNotificationsByReservationQuery)
 export class GetSentNotificationsByReservationHandler implements IQueryHandler<GetSentNotificationsByReservationQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetSentNotificationsByReservationQuery): Promise<SentNotificationDto[]> {
-    this.loggingService.log('Getting sent notifications by reservation', 'GetSentNotificationsByReservationHandler', LoggingHelper.logParams({ reservationId: query.reservationId }));
+    this.loggingService.log('Orchestrating get sent notifications by reservation query', 'GetSentNotificationsByReservationHandler', LoggingHelper.logParams(query));
 
-    const notifications = await this.repository.findSentNotificationsByReservation(query.reservationId);
-    
-    return notifications.map(notification => this.mapToSentNotificationDto(notification));
-  }
-
-  private mapToSentNotificationDto(notification: any): SentNotificationDto {
-    return {
-      id: notification.id,
-      templateId: notification.templateId,
-      reservationId: notification.reservationId,
-      recipientId: notification.recipientId,
-      channel: notification.channel,
-      subject: notification.subject,
-      content: notification.content,
-      status: notification.status,
-      hasAttachment: notification.hasAttachment,
-      attachmentPath: notification.attachmentPath,
-      sentAt: notification.sentAt,
-      readAt: notification.readAt,
-      errorMessage: notification.errorMessage,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-      variables: notification.variables
-    };
+    return await this.notificationTemplateService.getSentNotificationsByReservation(query.reservationId);
   }
 }
 
@@ -341,46 +176,20 @@ export class GetSentNotificationsByReservationHandler implements IQueryHandler<G
 @QueryHandler(GetSentNotificationsByRecipientQuery)
 export class GetSentNotificationsByRecipientHandler implements IQueryHandler<GetSentNotificationsByRecipientQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetSentNotificationsByRecipientQuery): Promise<{ notifications: SentNotificationDto[]; total: number }> {
-    this.loggingService.log('Getting sent notifications by recipient', 'GetSentNotificationsByRecipientHandler', LoggingHelper.logParams({ recipientId: query.recipientId }));
+    this.loggingService.log('Orchestrating get sent notifications by recipient query', 'GetSentNotificationsByRecipientHandler', LoggingHelper.logParams(query));
 
-    const result = await this.repository.findSentNotificationsByRecipient({
-      recipientId: query.recipientId,
-      channel: query.channel,
-      status: query.status,
-      page: query.page,
-      limit: query.limit
-    });
-
-    return {
-      notifications: result.notifications.map(notification => this.mapToSentNotificationDto(notification)),
-      total: result.total
-    };
-  }
-
-  private mapToSentNotificationDto(notification: any): SentNotificationDto {
-    return {
-      id: notification.id,
-      templateId: notification.templateId,
-      reservationId: notification.reservationId,
-      recipientId: notification.recipientId,
-      channel: notification.channel,
-      subject: notification.subject,
-      content: notification.content,
-      status: notification.status,
-      hasAttachment: notification.hasAttachment,
-      attachmentPath: notification.attachmentPath,
-      sentAt: notification.sentAt,
-      readAt: notification.readAt,
-      errorMessage: notification.errorMessage,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-      variables: notification.variables
-    };
+    return await this.notificationTemplateService.getSentNotificationsByRecipient(
+      query.recipientId,
+      query.channel,
+      query.status,
+      query.page,
+      query.limit
+    );
   }
 }
 
@@ -388,37 +197,14 @@ export class GetSentNotificationsByRecipientHandler implements IQueryHandler<Get
 @QueryHandler(GetPendingNotificationsQuery)
 export class GetPendingNotificationsHandler implements IQueryHandler<GetPendingNotificationsQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetPendingNotificationsQuery): Promise<SentNotificationDto[]> {
-    this.loggingService.log('Getting pending notifications', 'GetPendingNotificationsHandler', LoggingHelper.logParams({ channelId: query.channelId }));
+    this.loggingService.log('Orchestrating get pending notifications query', 'GetPendingNotificationsHandler', LoggingHelper.logParams(query));
 
-    const notifications = await this.repository.findPendingNotifications(query.channelId);
-    
-    return notifications.map(notification => this.mapToSentNotificationDto(notification));
-  }
-
-  private mapToSentNotificationDto(notification: any): SentNotificationDto {
-    return {
-    id: notification.id,
-    templateId: notification.templateId,
-    reservationId: notification.reservationId,
-    recipientId: notification.recipientId,
-    channel: notification.channel,
-    subject: notification.subject,
-    content: notification.content,
-    status: notification.status,
-    hasAttachment: notification.hasAttachment,
-    attachmentPath: notification.attachmentPath,
-    sentAt: notification.sentAt,
-    readAt: notification.readAt,
-    errorMessage: notification.errorMessage,
-    createdAt: notification.createdAt,
-    updatedAt: notification.updatedAt,
-    variables: notification.variables
-};
+    return await this.notificationTemplateService.getPendingNotifications(query.channelId);
   }
 }
 
@@ -426,37 +212,17 @@ export class GetPendingNotificationsHandler implements IQueryHandler<GetPendingN
 @QueryHandler(GetNotificationsForBatchQuery)
 export class GetNotificationsForBatchHandler implements IQueryHandler<GetNotificationsForBatchQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationsForBatchQuery): Promise<SentNotificationDto[]> {
-    this.loggingService.log('Getting notifications for batch', 'GetNotificationsForBatchHandler', LoggingHelper.logParams({ channelId: query.channelId, batchIntervalMs: query.batchIntervalMs }));
+    this.loggingService.log('Orchestrating get notifications for batch query', 'GetNotificationsForBatchHandler', LoggingHelper.logParams(query));
 
-    const notifications = await this.repository.findNotificationsForBatch(query.channelId, query.batchIntervalMs);
-    
-    return notifications.map(notification => this.mapToSentNotificationDto(notification));
-  }
-
-  private mapToSentNotificationDto(notification: any): SentNotificationDto {
-    return {
-      id: notification.id,
-      templateId: notification.templateId,
-      reservationId: notification.reservationId,
-      recipientId: notification.recipientId,
-      channel: notification.channel,
-      subject: notification.subject,
-      content: notification.content,
-      status: notification.status,
-      hasAttachment: notification.hasAttachment,
-      attachmentPath: notification.attachmentPath,
-      sentAt: notification.sentAt,
-      readAt: notification.readAt,
-      errorMessage: notification.errorMessage,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-      variables: notification.variables
-    };
+    return await this.notificationTemplateService.getNotificationsForBatch(
+      query.channelId,
+      query.batchIntervalMs
+    );
   }
 }
 
@@ -464,20 +230,14 @@ export class GetNotificationsForBatchHandler implements IQueryHandler<GetNotific
 @QueryHandler(GetNotificationTemplateVariablesQuery)
 export class GetNotificationTemplateVariablesHandler implements IQueryHandler<GetNotificationTemplateVariablesQuery> {
   constructor(
-    @Inject('NotificationTemplateRepository') private readonly repository: NotificationTemplateRepository,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(query: GetNotificationTemplateVariablesQuery): Promise<any> {
-    this.loggingService.log('Getting notification template variables', 'GetNotificationTemplateVariablesHandler', LoggingHelper.logParams({ templateId: query.templateId }));
+    this.loggingService.log('Orchestrating get notification template variables query', 'GetNotificationTemplateVariablesHandler', LoggingHelper.logParams(query));
 
-    const template = await this.repository.findNotificationTemplateById(query.templateId);
-    
-    if (!template) {
-      throw new Error(`Notification template with ID ${query.templateId} not found`);
-    }
-
-    return template.variables || {};
+    return await this.notificationTemplateService.getNotificationTemplateVariables(query.templateId);
   }
 }
 

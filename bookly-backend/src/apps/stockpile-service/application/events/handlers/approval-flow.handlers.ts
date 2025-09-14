@@ -10,7 +10,7 @@ import {
   ReservationCancelledEvent,
   ApprovalRequestTimeoutEvent,
   ApprovalReminderEvent,
-} from '../../../domain/events/approval-flow.events';
+} from '@apps/stockpile-service/domain/events/approval-flow.events';
 import { 
   GenerateDocumentCommand 
 } from '../../commands/document-template.commands';

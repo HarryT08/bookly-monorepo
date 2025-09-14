@@ -7,7 +7,7 @@ import {
   ApprovalLevelEntity, 
   ApprovalRequestEntity, 
   ApprovalActionEntity
-} from '../../../domain/entities/approval-flow.entity';
+} from '@apps/stockpile-service/domain/entities/approval-flow.entity';
 import {
   CreateApprovalFlowCommand,
   UpdateApprovalFlowCommand,

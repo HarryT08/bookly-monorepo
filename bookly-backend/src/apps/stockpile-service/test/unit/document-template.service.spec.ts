@@ -495,7 +495,7 @@ describe('DocumentTemplateService - Document Generation BDD Tests', () => {
 
       it('Then should return all documents with metadata', async () => {
         // When
-        const result = await service.getGeneratedDocumentsByReservation(approvalFlowId);
+        const result = await service.getGeneratedDocumentsByReservation({ reservationId: approvalFlowId });
 
         // Then
         expect(result).toHaveLength(2);
@@ -528,7 +528,7 @@ describe('DocumentTemplateService - Document Generation BDD Tests', () => {
 
       it('Then should return empty array and log the result', async () => {
         // When
-        const result = await service.getGeneratedDocumentsByReservation(approvalFlowId);
+        const result = await service.getGeneratedDocumentsByReservation({ reservationId: approvalFlowId });
 
         // Then
         expect(result).toHaveLength(0);

@@ -390,6 +390,108 @@ export class ApprovalFlowService {
     };
   }
 
+  async getApprovalHistory(dto: {
+    reservationId?: string;
+    approverId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    page?: number;
+    limit?: number;
+  }): Promise<{ actions: any[]; total: number }> {
+    this.loggingService.log('Getting approval history', 'ApprovalFlowService', LoggingHelper.logParams(dto));
+
+    // Business logic: Query approval requests and transform to history actions
+    let requests: ApprovalRequestEntity[] = [];
+    
+    if (dto.reservationId) {
+      requests = await this.approvalFlowRepository.findApprovalRequestsByReservationId(dto.reservationId);
+    } else {
+      // For now, return empty result for complex filtering until repository method is implemented
+      return { actions: [], total: 0 };
+    }
+
+    // Transform requests to history actions
+    const actions = requests
+      .filter(request => {
+        if (dto.approverId && request.approverId !== dto.approverId) return false;
+        if (dto.startDate && request.createdAt < dto.startDate) return false;
+        if (dto.endDate && request.createdAt > dto.endDate) return false;
+        return true;
+      })
+      .map(request => ({
+        id: request.id,
+        reservationId: request.reservationId,
+        approverId: request.approverId,
+        action: request.status,
+        comments: request.comments,
+        timestamp: request.respondedAt || request.createdAt,
+        level: request.levelId
+      }));
+
+    // Simple pagination
+    const page = dto.page || 1;
+    const limit = dto.limit || 10;
+    const startIndex = (page - 1) * limit;
+    const paginatedActions = actions.slice(startIndex, startIndex + limit);
+
+    return {
+      actions: paginatedActions,
+      total: actions.length
+    };
+  }
+
+  async getUserApprovalStatistics(dto: {
+    userId: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{
+    userId: string;
+    totalRequests: number;
+    approvedRequests: number;
+    rejectedRequests: number;
+    pendingRequests: number;
+    averageResponseTime?: number;
+  }> {
+    this.loggingService.log('Getting user approval statistics', 'ApprovalFlowService', LoggingHelper.logParams(dto));
+
+    // Business logic: Calculate user statistics from existing repository methods
+    const allRequests = await this.approvalFlowRepository.findPendingApprovalRequestsByApprover(dto.userId);
+
+    // Filter by date range if provided
+    const filteredRequests = allRequests.filter(request => {
+      if (dto.startDate && request.createdAt < dto.startDate) return false;
+      if (dto.endDate && request.createdAt > dto.endDate) return false;
+      return true;
+    });
+
+    // Count by status
+    const approvedCount = filteredRequests.filter(r => r.status === 'APPROVED').length;
+    const rejectedCount = filteredRequests.filter(r => r.status === 'REJECTED').length;
+    const pendingCount = filteredRequests.filter(r => r.status === 'PENDING').length;
+    const totalCount = filteredRequests.length;
+
+    // Calculate average response time for completed requests
+    const completedRequests = filteredRequests.filter(r => r.respondedAt && r.requestedAt);
+    let averageResponseTime: number | undefined;
+    
+    if (completedRequests.length > 0) {
+      const totalResponseTime = completedRequests.reduce((sum, request) => {
+        const responseTime = request.respondedAt!.getTime() - request.requestedAt.getTime();
+        return sum + responseTime;
+      }, 0);
+      averageResponseTime = totalResponseTime / completedRequests.length / (1000 * 60 * 60); // Convert to hours
+    }
+
+    return {
+      userId: dto.userId,
+      totalRequests: totalCount,
+      approvedRequests: approvedCount,
+      rejectedRequests: rejectedCount,
+      pendingRequests: pendingCount,
+      averageResponseTime
+    };
+  }
+
   private toApprovalRequestDto(entity: ApprovalRequestEntity): ApprovalRequestDto {
     return {
       id: entity.id,

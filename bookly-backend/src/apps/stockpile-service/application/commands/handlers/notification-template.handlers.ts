@@ -322,10 +322,10 @@ export class MarkNotificationAsReadHandler
       LoggingHelper.logParams({ command })
     );
 
-    await this.notificationTemplateService.markNotificationAsRead(
-      command.notificationId,
-      command.userId
-    );
+    await this.notificationTemplateService.markNotificationAsRead({
+      notificationId: command.notificationId,
+      userId: command.userId
+    });
 
     this.loggingService.log('Mark notification as read command completed', 'MarkNotificationAsReadHandler', LoggingHelper.logId(command.notificationId));
   }

@@ -172,3 +172,52 @@ export class GetApprovalWorkflowStatusRequestDto {
   @IsString()
   reservationId: string;
 }
+
+/**
+ * Request DTO for getting entities by ID
+ */
+export class GetByIdRequestDto {
+  @ApiProperty({ description: 'Entity ID' })
+  @IsString()
+  id: string;
+}
+
+/**
+ * Request DTO for getting generated documents by reservation
+ */
+export class GetGeneratedDocumentsByReservationRequestDto {
+  @ApiProperty({ description: 'Reservation ID' })
+  @IsString()
+  reservationId: string;
+}
+
+/**
+ * Request DTO for getting document template variables
+ */
+export class GetDocumentTemplateVariablesRequestDto {
+  @ApiProperty({ description: 'Template ID' })
+  @IsString()
+  templateId: string;
+}
+
+/**
+ * Request DTO for marking notification as read
+ */
+export class MarkNotificationAsReadRequestDto {
+  @ApiProperty({ description: 'Notification ID' })
+  @IsString()
+  notificationId: string;
+
+  @ApiProperty({ description: 'User ID' })
+  @IsString()
+  userId: string;
+}
+
+/**
+ * Request DTO for getting notification channels
+ */
+export class GetNotificationChannelsRequestDto {
+  @ApiProperty({ description: 'Filter by active status', required: false })
+  @IsOptional()
+  isActive?: boolean;
+}
