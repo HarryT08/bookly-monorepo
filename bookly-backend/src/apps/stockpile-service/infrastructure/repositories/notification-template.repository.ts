@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@libs/common/services/prisma.service';
 import { LoggingService } from '@libs/logging/logging.service';
-import { NotificationTemplateRepository } from '../../domain/repositories/notification-template.repository';
+import { NotificationTemplateRepository } from '@apps/stockpile-service/domain/repositories/notification-template.repository';
 import { 
   NotificationChannelEntity, 
   NotificationTemplateEntity, 
   NotificationConfigEntity, 
   SentNotificationEntity,
-} from '../../domain/entities/notification-template.entity';
+} from '@apps/stockpile-service/domain/entities/notification-template.entity';
 import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
-import { NotificationEventType } from '../../utils/notification-event-type.enum';
+import { NotificationEventType } from '@apps/stockpile-service/utils/notification-event-type.enum';
 import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()

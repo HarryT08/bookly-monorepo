@@ -168,7 +168,9 @@ export class GetGeneratedDocumentsByReservationHandler implements IQueryHandler<
       reservationId: document.reservationId,
       fileName: document.fileName,
       filePath: document.filePath,
+      documentPath: document.filePath, // Use filePath as documentPath
       fileSize: document.fileSize,
+      format: document.format || 'PDF', // Default format
       mimeType: document.mimeType,
       variables: document.variables,
       generatedBy: document.generatedBy,
@@ -201,7 +203,9 @@ export class GetGeneratedDocumentByIdHandler implements IQueryHandler<GetGenerat
       reservationId: document.reservationId,
       fileName: document.fileName,
       filePath: document.filePath,
+      documentPath: document.filePath, // Use filePath as documentPath
       fileSize: document.fileSize,
+      format: document.format || 'PDF', // Default format
       mimeType: document.mimeType,
       variables: document.variables,
       generatedBy: document.generatedBy,

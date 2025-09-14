@@ -137,14 +137,14 @@ export class SubmitReservationForApprovalHandler implements ICommandHandler<Subm
   async execute(command: SubmitReservationForApprovalCommand): Promise<void> {
     this.loggingService.log('Orchestrating submit reservation for approval command', 'SubmitReservationForApprovalHandler', LoggingHelper.logParams({ command }));
     
-    await this.approvalFlowService.submitReservationForApproval(
-      command.reservationId,
-      command.userId,
-      command.resourceId,
-      command.resourceType,
-      command.categoryId,
-      command.programId
-    );
+    await this.approvalFlowService.submitReservationForApproval({
+      reservationId: command.reservationId,
+      userId: command.userId,
+      resourceId: command.resourceId,
+      resourceType: command.resourceType,
+      categoryId: command.categoryId,
+      programId: command.programId
+    });
     
     this.loggingService.log('Submit reservation for approval command completed', 'SubmitReservationForApprovalHandler');
   }
@@ -193,7 +193,11 @@ export class CancelReservationHandler implements ICommandHandler<CancelReservati
   async execute(command: CancelReservationCommand): Promise<void> {
     this.loggingService.log('Orchestrating cancel reservation command', 'CancelReservationHandler', LoggingHelper.logParams({ command }));
     
-    await this.approvalFlowService.cancelReservation(command.reservationId, command.userId, command.reason);
+    await this.approvalFlowService.cancelReservation({
+      reservationId: command.reservationId,
+      userId: command.userId,
+      reason: command.reason
+    });
     
     this.loggingService.log('Cancel reservation command completed', 'CancelReservationHandler');
   }

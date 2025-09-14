@@ -13,8 +13,8 @@ import {
   GetApprovalHistoryQuery,
   GetUserApprovalStatisticsQuery
 } from '../approval-flow.queries';
-import { ApprovalFlowRepository } from '../../../domain/repositories/approval-flow.repository';
-import { ApprovalFlowEntity, ApprovalLevelEntity, ApprovalRequestEntity } from '../../../domain/entities/approval-flow.entity';
+import { ApprovalFlowRepository } from '@apps/stockpile-service/domain/repositories/approval-flow.repository';
+import { ApprovalFlowEntity, ApprovalLevelEntity, ApprovalRequestEntity } from '@apps/stockpile-service/domain/entities/approval-flow.entity';
 import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()

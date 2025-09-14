@@ -1,7 +1,7 @@
 import { ICommand } from '@nestjs/cqrs';
 import { Multer } from 'multer';
-import { DocumentFormat } from '../../utils/document-format.enum';
-import { DocumentEventType } from '../../utils/document-event-type.enum';
+import { DocumentFormat } from '@apps/stockpile-service/utils/document-format.enum';
+import { DocumentEventType } from '@apps/stockpile-service/utils/document-event-type.enum';
 
 // Create Document Template Command
 export class CreateDocumentTemplateCommand implements ICommand {

@@ -31,7 +31,7 @@ import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { DocumentTemplateService } from '../../application/services/document-template.service';
+import { DocumentTemplateService } from '@apps/stockpile-service/application/services/document-template.service';
 import {
   CreateDocumentTemplateDto,
   UpdateDocumentTemplateDto,
@@ -40,7 +40,7 @@ import {
   GeneratedDocumentDto,
   DocumentEventType
 } from '@libs/dto/stockpile/document-template.dto';
-import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
+import { STOCKPILE_URLS } from '@apps/stockpile-service/utils/maps/urls.map';
 
 @ApiTags('Document Templates')
 @ApiBearerAuth()
@@ -71,7 +71,8 @@ export class DocumentTemplateController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document template not found' })
   async updateDocumentTemplate(
     @Param('id') id: string,
-    @Body() dto: UpdateDocumentTemplateDto
+    @Body() dto: UpdateDocumentTemplateDto,
+    @CurrentUser() user: any
   ): Promise<StandardApiResponse<DocumentTemplateDto>> {
     const result = await this.documentTemplateService.updateDocumentTemplate(id, dto);
     return ResponseUtil.success(result, 'Document template updated successfully');
@@ -87,7 +88,7 @@ export class DocumentTemplateController {
     @Param('id') id: string,
     @CurrentUser() user: any
   ): Promise<void> {
-    return await this.documentTemplateService.deleteDocumentTemplate(id, user.id);
+    return await this.documentTemplateService.deleteDocumentTemplate({ id, deletedBy: user.id });
   }
 
   @Get(STOCKPILE_URLS.DOCUMENT_TEMPLATES)
@@ -107,14 +108,14 @@ export class DocumentTemplateController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
   ): Promise<StandardApiResponse<DocumentTemplateDto[]>> {
-    const result = await this.documentTemplateService.getDocumentTemplates(
+    const result = await this.documentTemplateService.getDocumentTemplates({
       resourceType,
       categoryId,
       eventType,
       isActive,
       page,
       limit
-    );
+    });
     return ResponseUtil.paginated(result.templates, result.total, page, limit, 'Document templates retrieved successfully');
   }
 
@@ -138,7 +139,8 @@ export class DocumentTemplateController {
     @Query('categoryId') categoryId?: string,
     @Query('eventType') eventType?: DocumentEventType
   ): Promise<DocumentTemplateDto | null> {
-    return await this.documentTemplateService.getDefaultDocumentTemplate(resourceType, categoryId, eventType);
+    const result = await this.documentTemplateService.getDefaultDocumentTemplate({ resourceType, categoryId, eventType });
+    return result;
   }
 
   @Post(STOCKPILE_URLS.DOCUMENT_TEMPLATE_UPLOAD)
@@ -153,7 +155,8 @@ export class DocumentTemplateController {
     @UploadedFile() file: Multer.File,
     @CurrentUser() user: any
   ): Promise<DocumentTemplateDto> {
-    return await this.documentTemplateService.uploadDocumentTemplate(id, file, user.id);
+    const result = await this.documentTemplateService.uploadDocumentTemplate(file, { templateId: id, uploadedBy: user.id });
+    return result;
   }
 
   @Get(STOCKPILE_URLS.DOCUMENT_TEMPLATE_VARIABLES)

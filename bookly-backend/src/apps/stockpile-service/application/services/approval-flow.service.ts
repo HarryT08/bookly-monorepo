@@ -8,7 +8,7 @@ import {
   SubmitReservationForApprovalCommand,
   ProcessApprovalRequestCommand,
   CancelReservationCommand
-} from '../commands/approval-flow.commands';
+} from '@apps/stockpile-service/application/commands/approval-flow.commands';
 import {
   GetApprovalFlowsQuery,
   GetApprovalFlowByIdQuery,
@@ -17,17 +17,22 @@ import {
   GetPendingApprovalRequestsQuery,
   GetApprovalRequestsByReservationQuery,
   GetReservationStatusQuery
-} from '../queries/approval-flow.queries';
+} from '@apps/stockpile-service/application/queries/approval-flow.queries';
 import {
   CreateApprovalFlowDto,
   UpdateApprovalFlowDto,
   CreateApprovalLevelDto,
   ProcessApprovalRequestDto,
+  SubmitReservationForApprovalDto,
+  CancelReservationDto,
+  GetApprovalFlowsDto,
+  GetPendingApprovalRequestsDto,
   ApprovalFlowDto,
   ApprovalLevelDto,
   ApprovalRequestDto
 } from '@libs/dto/stockpile/approval-flow.dto';
 import { LoggingHelper } from '@libs/logging/logging.helper';
+import { StockpileHandlerUtil } from '../utils/stockpile-handler.util';
 
 @Injectable()
 export class ApprovalFlowService {
@@ -38,7 +43,7 @@ export class ApprovalFlowService {
   ) {}
 
   async createApprovalFlow(dto: CreateApprovalFlowDto): Promise<ApprovalFlowDto> {
-    this.loggingService.log('Creating approval flow', 'ApprovalFlowService', LoggingHelper.logParams({ dto }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Creating approval flow', 'ApprovalFlowService', dto);
 
     const command = new CreateApprovalFlowCommand(
       dto.name,
@@ -54,11 +59,17 @@ export class ApprovalFlowService {
       dto.reminderHours
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'create approval flow',
+      'ApprovalFlowService'
+    );
   }
 
   async updateApprovalFlow(id: string, dto: UpdateApprovalFlowDto): Promise<ApprovalFlowDto> {
-    this.loggingService.log('Updating approval flow', 'ApprovalFlowService', LoggingHelper.logParams({ id, dto }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Updating approval flow', 'ApprovalFlowService', { id, dto });
 
     const command = new UpdateApprovalFlowCommand(
       id,
@@ -71,11 +82,17 @@ export class ApprovalFlowService {
       dto.isActive
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'update approval flow',
+      'ApprovalFlowService'
+    );
   }
 
   async createApprovalLevel(dto: CreateApprovalLevelDto): Promise<ApprovalLevelDto> {
-    this.loggingService.log('Creating approval level', 'ApprovalFlowService', LoggingHelper.logParams({ dto }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Creating approval level', 'ApprovalFlowService', dto);
 
     const command = new CreateApprovalLevelCommand(
       dto.flowId,
@@ -88,37 +105,38 @@ export class ApprovalFlowService {
       dto.timeoutHours
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'create approval level',
+      'ApprovalFlowService'
+    );
   }
 
-  async submitReservationForApproval(
-    reservationId: string,
-    userId: string,
-    resourceId: string,
-    resourceType?: string,
-    categoryId?: string,
-    programId?: string
-  ): Promise<void> {
-    this.loggingService.log('Submitting reservation for approval', 'ApprovalFlowService', LoggingHelper.logParams({
-      reservationId,
-      userId,
-      resourceId
-    }));
+  async submitReservationForApproval(dto: SubmitReservationForApprovalDto): Promise<void> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Submitting reservation for approval', 'ApprovalFlowService', dto);
 
     const command = new SubmitReservationForApprovalCommand(
-      reservationId,
-      userId,
-      resourceId,
-      resourceType,
-      categoryId,
-      programId
+      dto.reservationId,
+      dto.userId,
+      dto.resourceId,
+      dto.resourceType,
+      dto.categoryId,
+      dto.programId
     );
 
-    return await this.commandBus.execute(command);
+    await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'submit reservation for approval',
+      'ApprovalFlowService'
+    );
   }
 
   async processApprovalRequest(requestId: string, dto: ProcessApprovalRequestDto): Promise<void> {
-    this.loggingService.log('Processing approval request', 'ApprovalFlowService', LoggingHelper.logParams({ requestId, dto }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Processing approval request', 'ApprovalFlowService', { requestId, dto });
 
     const command = new ProcessApprovalRequestCommand(
       requestId,
@@ -127,45 +145,59 @@ export class ApprovalFlowService {
       dto.comments
     );
 
-    return await this.commandBus.execute(command);
+    await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'process approval request',
+      'ApprovalFlowService'
+    );
   }
 
-  async cancelReservation(reservationId: string, userId: string, reason?: string): Promise<void> {
-    this.loggingService.log('Cancelling reservation', 'ApprovalFlowService', LoggingHelper.logParams({
-      reservationId,
-      userId,
-      reason
-    }));
+  async cancelReservation(dto: CancelReservationDto): Promise<void> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Canceling reservation', 'ApprovalFlowService', dto);
 
-    const command = new CancelReservationCommand(reservationId, userId, reason);
+    const command = new CancelReservationCommand(
+      dto.reservationId,
+      dto.userId,
+      dto.reason
+    );
 
-    return await this.commandBus.execute(command);
+    await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'cancel reservation',
+      'ApprovalFlowService'
+    );
   }
 
-  async getApprovalFlows(
-    programId?: string,
-    resourceType?: string,
-    categoryId?: string,
-    isActive?: boolean
-  ): Promise<ApprovalFlowDto[]> {
-    this.loggingService.log('Getting approval flows', 'ApprovalFlowService', LoggingHelper.logParams({
-      programId,
-      resourceType,
-      categoryId,
-      isActive
-    }));
+  async getApprovalFlows(dto: GetApprovalFlowsDto): Promise<ApprovalFlowDto[]> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting approval flows', 'ApprovalFlowService', dto);
 
-    const query = new GetApprovalFlowsQuery(programId, resourceType, categoryId, isActive);
+    const query = new GetApprovalFlowsQuery(dto.programId, dto.resourceType, dto.categoryId, dto.isActive);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get approval flows',
+      'ApprovalFlowService'
+    );
   }
 
   async getApprovalFlowById(id: string): Promise<ApprovalFlowDto | null> {
-    this.loggingService.log('Getting approval flow by ID', 'ApprovalFlowService', LoggingHelper.logParams({ id }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting approval flow by ID', 'ApprovalFlowService', { id });
 
     const query = new GetApprovalFlowByIdQuery(id);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get approval flow by ID',
+      'ApprovalFlowService'
+    );
   }
 
   async getDefaultApprovalFlow(
@@ -185,48 +217,45 @@ export class ApprovalFlowService {
   }
 
   async getApprovalLevelsByFlowId(flowId: string): Promise<ApprovalLevelDto[]> {
-    this.loggingService.log('Getting approval levels by flow ID', 'ApprovalFlowService', LoggingHelper.logParams({ flowId }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting approval levels by flow ID', 'ApprovalFlowService', { flowId });
 
     const query = new GetApprovalLevelsByFlowIdQuery(flowId);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get approval levels by flow ID',
+      'ApprovalFlowService'
+    );
   }
 
-  async getPendingApprovalRequests(
-    approverId?: string,
-    programId?: string,
-    resourceType?: string,
-    categoryId?: string,
-    page: number = 1,
-    limit: number = 10
-  ): Promise<{ requests: ApprovalRequestDto[]; total: number }> {
-    this.loggingService.log('Getting pending approval requests', 'ApprovalFlowService', LoggingHelper.logParams({
-      approverId,
-      programId,
-      resourceType,
-      categoryId,
-      page,
-      limit
-    }));
+  async getPendingApprovalRequests(dto: GetPendingApprovalRequestsDto): Promise<{ requests: ApprovalRequestDto[]; total: number }> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting pending approval requests', 'ApprovalFlowService', dto);
 
-    const query = new GetPendingApprovalRequestsQuery(
-      approverId,
-      programId,
-      resourceType,
-      categoryId,
-      page,
-      limit
+    const query = new GetPendingApprovalRequestsQuery(dto.approverId, dto.programId, dto.resourceType, dto.categoryId, dto.page, dto.limit);
+
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get pending approval requests',
+      'ApprovalFlowService'
     );
-
-    return await this.queryBus.execute(query);
   }
 
   async getApprovalRequestsByReservation(reservationId: string): Promise<ApprovalRequestDto[]> {
-    this.loggingService.log('Getting approval requests by reservation', 'ApprovalFlowService', LoggingHelper.logParams({ reservationId }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting approval requests by reservation', 'ApprovalFlowService', { reservationId });
 
     const query = new GetApprovalRequestsByReservationQuery(reservationId);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get approval requests by reservation',
+      'ApprovalFlowService'
+    );
   }
 
   async getReservationStatus(reservationId: string): Promise<{

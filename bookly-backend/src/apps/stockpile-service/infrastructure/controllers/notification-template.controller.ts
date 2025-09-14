@@ -23,7 +23,7 @@ import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { NotificationTemplateService } from '../../application/services/notification-template.service';
+import { NotificationTemplateService } from '@apps/stockpile-service/application/services/notification-template.service';
 import {
   CreateNotificationChannelDto,
   CreateNotificationTemplateDto,
@@ -37,7 +37,7 @@ import {
   NotificationEventType
 } from '@libs/dto/stockpile/notification-template.dto';
 import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
-import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
+import { STOCKPILE_URLS } from '@apps/stockpile-service/utils/maps/urls.map';
 
 @ApiTags('Notification Templates')
 @ApiBearerAuth()

@@ -266,3 +266,103 @@ export class ProcessApprovalRequestDto {
   @IsString()
   comments?: string;
 }
+
+export class SubmitReservationForApprovalDto {
+  @ApiProperty({ description: 'Reservation ID' })
+  @IsString()
+  reservationId: string;
+
+  @ApiProperty({ description: 'User ID' })
+  @IsString()
+  userId: string;
+
+  @ApiProperty({ description: 'Resource ID' })
+  @IsString()
+  resourceId: string;
+
+  @ApiProperty({ description: 'Resource type', required: false })
+  @IsOptional()
+  @IsString()
+  resourceType?: string;
+
+  @ApiProperty({ description: 'Category ID', required: false })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @ApiProperty({ description: 'Program ID', required: false })
+  @IsOptional()
+  @IsString()
+  programId?: string;
+}
+
+export class CancelReservationDto {
+  @ApiProperty({ description: 'Reservation ID' })
+  @IsString()
+  reservationId: string;
+
+  @ApiProperty({ description: 'User ID' })
+  @IsString()
+  userId: string;
+
+  @ApiProperty({ description: 'Cancellation reason', required: false })
+  @IsOptional()
+  @IsString()
+  reason?: string;
+}
+
+export class GetApprovalFlowsDto {
+  @ApiProperty({ description: 'Program ID filter', required: false })
+  @IsOptional()
+  @IsString()
+  programId?: string;
+
+  @ApiProperty({ description: 'Resource type filter', required: false })
+  @IsOptional()
+  @IsString()
+  resourceType?: string;
+
+  @ApiProperty({ description: 'Category ID filter', required: false })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @ApiProperty({ description: 'Active status filter', required: false })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class GetPendingApprovalRequestsDto {
+  @ApiProperty({ description: 'Approver ID filter', required: false })
+  @IsOptional()
+  @IsString()
+  approverId?: string;
+
+  @ApiProperty({ description: 'Program ID filter', required: false })
+  @IsOptional()
+  @IsString()
+  programId?: string;
+
+  @ApiProperty({ description: 'Resource type filter', required: false })
+  @IsOptional()
+  @IsString()
+  resourceType?: string;
+
+  @ApiProperty({ description: 'Category ID filter', required: false })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @ApiProperty({ description: 'Page number', default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiProperty({ description: 'Items per page', default: 10 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  limit?: number;
+}

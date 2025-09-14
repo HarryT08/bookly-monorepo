@@ -1,26 +1,23 @@
 import { Controller, Get, Post, Put, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
-import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
+import { STOCKPILE_URLS } from '@apps/stockpile-service/utils/maps/urls.map';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 
-// Import commands (these would need to be created)
-import { ApproveRequestCommand } from '../../application/commands/approve-request.command';
-import { RejectRequestCommand } from '../../application/commands/reject-request.command';
-import { GenerateDocumentCommand } from '../../application/commands/generate-document.command';
-import { SendNotificationCommand } from '../../application/commands/send-notification.command';
-import { CheckInCommand } from '../../application/commands/check-in.command';
-import { CheckOutCommand } from '../../application/commands/check-out.command';
-import { CreateApprovalFlowCommand } from '../../application/commands/create-approval-flow.command';
-import { UpdateApprovalFlowCommand } from '../../application/commands/update-approval-flow.command';
+// Import Commands
+import { ApproveRequestCommand } from '@apps/stockpile-service/application/commands/approve-request.command';
+import { RejectRequestCommand } from '@apps/stockpile-service/application/commands/reject-request.command';
+import { GenerateDocumentCommand } from '@apps/stockpile-service/application/commands/generate-document.command';
+import { SendNotificationCommand } from '@apps/stockpile-service/application/commands/send-notification.command';
+import { CheckInCommand } from '@apps/stockpile-service/application/commands/check-in.command';
+import { CheckOutCommand } from '@apps/stockpile-service/application/commands/check-out.command';
 
-// Import queries (these would need to be created)
-import { GetApprovalsQuery } from '../../application/queries/get-approvals.query';
-import { GetApprovalByIdQuery } from '../../application/queries/get-approval-by-id.query';
-import { GetApprovalFlowsQuery } from '../../application/queries/get-approval-flows.query';
-import { GetNotificationTemplatesQuery } from '../../application/queries/get-notification-templates.query';
-import { GetCheckInStatusQuery } from '../../application/queries/get-checkin-status.query';
+// Import Queries
+import { GetApprovalsQuery } from '@apps/stockpile-service/application/queries/get-approvals.query';
+import { GetApprovalByIdQuery } from '@apps/stockpile-service/application/queries/get-approval-by-id.query';
+import { GetApprovalFlowsQuery } from '@apps/stockpile-service/application/queries/get-approval-flows.query';
+import { GetCheckInStatusQuery } from '@apps/stockpile-service/application/queries/get-checkin-status.query';
 
 /**
  * Stockpile Controller

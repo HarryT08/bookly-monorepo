@@ -7,7 +7,7 @@ import {
   GenerateDocumentCommand,
   UploadDocumentTemplateCommand,
   DeleteDocumentTemplateCommand
-} from '../commands/document-template.commands';
+} from '@apps/stockpile-service/application/commands/document-template.commands';
 import {
   GetDocumentTemplatesQuery,
   GetDocumentTemplateByIdQuery,
@@ -16,16 +16,21 @@ import {
   GetGeneratedDocumentByIdQuery,
   GetDocumentTemplateVariablesQuery,
   GetAvailableDocumentVariablesQuery
-} from '../queries/document-template.queries';
+} from '@apps/stockpile-service/application/queries/document-template.queries';
 import {
   CreateDocumentTemplateDto,
   UpdateDocumentTemplateDto,
   GenerateDocumentDto,
+  UploadDocumentTemplateDto,
+  DeleteDocumentTemplateDto,
+  GetDocumentTemplatesDto,
+  GetDefaultDocumentTemplateDto,
   DocumentTemplateDto,
   GeneratedDocumentDto,
   DocumentEventType
 } from '@libs/dto/stockpile/document-template.dto';
 import { LoggingHelper } from '@libs/logging/logging.helper';
+import { StockpileHandlerUtil } from '../utils/stockpile-handler.util';
 
 @Injectable()
 export class DocumentTemplateService {
@@ -36,7 +41,7 @@ export class DocumentTemplateService {
   ) {}
 
   async createDocumentTemplate(dto: CreateDocumentTemplateDto): Promise<DocumentTemplateDto> {
-    this.loggingService.log('Creating document template', 'DocumentTemplateService', LoggingHelper.logParams(dto));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Creating document template', 'DocumentTemplateService', dto);
 
     const command = new CreateDocumentTemplateCommand(
       dto.name,
@@ -53,11 +58,17 @@ export class DocumentTemplateService {
       dto.canSendAsLink
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'create document template',
+      'DocumentTemplateService'
+    );
   }
 
   async updateDocumentTemplate(id: string, dto: UpdateDocumentTemplateDto): Promise<DocumentTemplateDto> {
-    this.loggingService.log('Updating document template', 'DocumentTemplateService', LoggingHelper.logParams({ id, dto }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Updating document template', 'DocumentTemplateService', { id, dto });
 
     const command = new UpdateDocumentTemplateCommand(
       id,
@@ -70,11 +81,17 @@ export class DocumentTemplateService {
       dto.isActive
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'update document template',
+      'DocumentTemplateService'
+    );
   }
 
   async generateDocument(dto: GenerateDocumentDto): Promise<GeneratedDocumentDto> {
-    this.loggingService.log('Generating document', 'DocumentTemplateService', LoggingHelper.logParams(dto));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Generating document', 'DocumentTemplateService', dto);
 
     const command = new GenerateDocumentCommand(
       dto.templateId,
@@ -83,100 +100,156 @@ export class DocumentTemplateService {
       dto.generatedBy
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'generate document',
+      'DocumentTemplateService'
+    );
   }
 
-  async uploadDocumentTemplate(templateId: string, file: any, uploadedBy: string): Promise<DocumentTemplateDto> {
-    this.loggingService.log('Uploading document template', 'DocumentTemplateService', LoggingHelper.logParams({ templateId, fileName: file.originalname }));
+  async uploadDocumentTemplate(file: any, dto: UploadDocumentTemplateDto): Promise<DocumentTemplateDto> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Uploading document template', 'DocumentTemplateService', { dto, fileName: file.originalname });
 
-    const command = new UploadDocumentTemplateCommand(templateId, file, uploadedBy);
+    const command = new UploadDocumentTemplateCommand(
+      dto.templateId,
+      file,
+      dto.uploadedBy
+    );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'upload document template',
+      'DocumentTemplateService'
+    );
   }
 
-  async deleteDocumentTemplate(id: string, deletedBy: string): Promise<void> {
-    this.loggingService.log('Deleting document template', 'DocumentTemplateService', LoggingHelper.logParams({ id, deletedBy }));
+  async deleteDocumentTemplate(dto: DeleteDocumentTemplateDto): Promise<void> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Deleting document template', 'DocumentTemplateService', dto);
 
-    const command = new DeleteDocumentTemplateCommand(id, deletedBy);
+    const command = new DeleteDocumentTemplateCommand(
+      dto.id,
+      dto.deletedBy
+    );
 
-    return await this.commandBus.execute(command);
+    await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'delete document template',
+      'DocumentTemplateService'
+    );
   }
 
-  async getDocumentTemplates(
-    resourceType?: string,
-    categoryId?: string,
-    eventType?: DocumentEventType,
-    isActive?: boolean,
-    page: number = 1,
-    limit: number = 10
-  ): Promise<{ templates: DocumentTemplateDto[]; total: number }> {
-    this.loggingService.log('Getting document templates', 'DocumentTemplateService', LoggingHelper.logParams({
-      resourceType,
-      categoryId,
-      eventType,
-      isActive,
-      page,
-      limit
-    }));
+  async getDocumentTemplates(dto: GetDocumentTemplatesDto): Promise<{ templates: DocumentTemplateDto[]; total: number }> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting document templates', 'DocumentTemplateService', dto);
 
-    const query = new GetDocumentTemplatesQuery(resourceType, categoryId, eventType, isActive, page, limit);
+    const query = new GetDocumentTemplatesQuery(
+      dto.resourceType,
+      dto.categoryId,
+      dto.eventType,
+      dto.isActive,
+      dto.page,
+      dto.limit
+    );
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get document templates',
+      'DocumentTemplateService'
+    );
   }
 
   async getDocumentTemplateById(id: string): Promise<DocumentTemplateDto | null> {
-    this.loggingService.log('Getting document template by ID', 'DocumentTemplateService', LoggingHelper.logParams({ id }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting document template by ID', 'DocumentTemplateService', { id });
 
     const query = new GetDocumentTemplateByIdQuery(id);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get document template by ID',
+      'DocumentTemplateService'
+    );
   }
 
-  async getDefaultDocumentTemplate(
-    resourceType?: string,
-    categoryId?: string,
-    eventType?: DocumentEventType
-  ): Promise<DocumentTemplateDto | null> {
-    this.loggingService.log('Getting default document template', 'DocumentTemplateService', LoggingHelper.logParams({
-      resourceType,
-      categoryId,
-      eventType
-    }));
+  async getDefaultDocumentTemplate(dto: GetDefaultDocumentTemplateDto): Promise<DocumentTemplateDto | null> {
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting default document template', 'DocumentTemplateService', dto);
 
-    const query = new GetDefaultDocumentTemplateQuery(resourceType, categoryId, eventType);
+    const query = new GetDefaultDocumentTemplateQuery(
+      dto.resourceType,
+      dto.categoryId,
+      dto.eventType
+    );
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get default document template',
+      'DocumentTemplateService'
+    );
   }
 
   async getGeneratedDocumentsByReservation(reservationId: string): Promise<GeneratedDocumentDto[]> {
-    this.loggingService.log('Getting generated documents by reservation', 'DocumentTemplateService', LoggingHelper.logParams({ reservationId }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting generated documents by reservation', 'DocumentTemplateService', { reservationId });
 
     const query = new GetGeneratedDocumentsByReservationQuery(reservationId);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get generated documents by reservation',
+      'DocumentTemplateService'
+    );
   }
 
   async getGeneratedDocumentById(id: string): Promise<GeneratedDocumentDto | null> {
-    this.loggingService.log('Getting generated document by ID', 'DocumentTemplateService', LoggingHelper.logParams({ id }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting generated document by ID', 'DocumentTemplateService', { id });
 
     const query = new GetGeneratedDocumentByIdQuery(id);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get generated document by ID',
+      'DocumentTemplateService'
+    );
   }
 
   async getDocumentTemplateVariables(templateId: string): Promise<any> {
-    this.loggingService.log('Getting document template variables', 'DocumentTemplateService', LoggingHelper.logParams({ templateId }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting document template variables', 'DocumentTemplateService', { templateId });
 
     const query = new GetDocumentTemplateVariablesQuery(templateId);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get document template variables',
+      'DocumentTemplateService'
+    );
   }
 
   async getAvailableDocumentVariables(eventType: DocumentEventType, resourceType?: string): Promise<any> {
-    this.loggingService.log('Getting available document variables', 'DocumentTemplateService', LoggingHelper.logParams({ eventType, resourceType }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Getting available document variables', 'DocumentTemplateService', { eventType, resourceType });
 
     const query = new GetAvailableDocumentVariablesQuery(eventType, resourceType);
 
-    return await this.queryBus.execute(query);
+    return await StockpileHandlerUtil.executeQuery(
+      this.queryBus,
+      query,
+      this.loggingService,
+      'get available document variables',
+      'DocumentTemplateService'
+    );
   }
 }

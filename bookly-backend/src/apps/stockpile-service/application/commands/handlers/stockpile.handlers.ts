@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { LoggingService } from '@libs/logging/logging.service';
 import { LoggingHelper } from '@libs/logging/logging.helper';
-import { StockpileService } from '../../services/stockpile.service';
+import { StockpileService } from '@apps/stockpile-service/application/services/stockpile.service';
 
 // Import commands
-import { ApproveRequestCommand } from '../approve-request.command';
-import { RejectRequestCommand } from '../reject-request.command';
-import { CheckInCommand } from '../check-in.command';
-import { CheckOutCommand } from '../check-out.command';
+import { ApproveRequestCommand } from '@apps/stockpile-service/application/commands/approve-request.command';
+import { RejectRequestCommand } from '@apps/stockpile-service/application/commands/reject-request.command';
+import { CheckInCommand } from '@apps/stockpile-service/application/commands/check-in.command';
+import { CheckOutCommand } from '@apps/stockpile-service/application/commands/check-out.command';
 
 // Import DTOs from stockpile requests and responses
 import {

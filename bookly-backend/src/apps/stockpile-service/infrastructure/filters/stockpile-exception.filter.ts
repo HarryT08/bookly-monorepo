@@ -3,8 +3,8 @@ import {
   StockpileErrorCode, 
   StockpileException,
   StockpileErrorMessages 
-} from '../../domain/enums/stockpile-errors.enum';
-import { AllExceptionsFilter } from '@/libs/common/filters/all-exceptions.filter';
+} from '@apps/stockpile-service/domain/enums/stockpile-errors.enum';
+import { AllExceptionsFilter } from '@libs/common/filters/all-exceptions.filter';
 
 @Catch()
 export class StockpileExceptionFilter extends AllExceptionsFilter {

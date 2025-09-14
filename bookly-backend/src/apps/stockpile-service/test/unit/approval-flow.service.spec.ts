@@ -124,14 +124,14 @@ describe('ApprovalFlowService - Approval and Validation BDD Tests', () => {
 
       it('Then should create approval flow and initiate validation process', async () => {
         // When
-        const result = await service.submitReservationForApproval(
-          reservationRequest.reservationId,
-          reservationRequest.userId,
-          reservationRequest.resourceId,
-          reservationRequest.resourceType,
-          reservationRequest.categoryId,
-          reservationRequest.programId
-        );
+        const result = await service.submitReservationForApproval({
+          reservationId: reservationRequest.reservationId,
+          userId: reservationRequest.userId,
+          resourceId: reservationRequest.resourceId,
+          resourceType: reservationRequest.resourceType,
+          categoryId: reservationRequest.categoryId,
+          programId: reservationRequest.programId
+        });
 
         // Then
         expect(result).toEqual(
@@ -175,12 +175,14 @@ describe('ApprovalFlowService - Approval and Validation BDD Tests', () => {
 
       it('Then should reject the request and log validation failures', async () => {
         // When & Then
-        await expect(service.submitReservationForApproval(
-          invalidRequest.userId,
-          invalidRequest.resourceId,
-          invalidRequest.resourceType,
-          invalidRequest.categoryId,
-          invalidRequest.programId)
+        await expect(service.submitReservationForApproval({
+            reservationId: invalidRequest.reservationId,
+            userId: invalidRequest.userId,
+            resourceId: invalidRequest.resourceId,
+            resourceType: invalidRequest.resourceType,
+            categoryId: invalidRequest.categoryId,
+            programId: invalidRequest.programId
+          })
         )
           .rejects.toThrow(BadRequestException);
 
@@ -207,12 +209,14 @@ describe('ApprovalFlowService - Approval and Validation BDD Tests', () => {
 
       it('Then should deny access and log permission violation', async () => {
         // When & Then
-        await expect(service.submitReservationForApproval(
-          restrictedRequest.userId,
-          restrictedRequest.resourceId,
-          restrictedRequest.resourceType,
-          restrictedRequest.categoryId,
-          restrictedRequest.programId)
+        await expect(service.submitReservationForApproval({
+            reservationId: restrictedRequest.reservationId,
+            userId: restrictedRequest.userId,
+            resourceId: restrictedRequest.resourceId,
+            resourceType: restrictedRequest.resourceType,
+            categoryId: restrictedRequest.categoryId,
+            programId: restrictedRequest.programId
+          })
         )
           .rejects.toThrow(ForbiddenException);
 

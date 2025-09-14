@@ -10,7 +10,7 @@ import {
   SendNotificationCommand,
   SendBatchNotificationsCommand,
   MarkNotificationAsReadCommand
-} from '../commands/notification-template.commands';
+} from '@apps/stockpile-service/application/commands/notification-template.commands';
 import {
   GetNotificationChannelsQuery,
   GetNotificationChannelByIdQuery,
@@ -25,7 +25,7 @@ import {
   GetNotificationsForBatchQuery,
   GetNotificationTemplateVariablesQuery,
   GetAvailableNotificationVariablesQuery
-} from '../queries/notification-template.queries';
+} from '@apps/stockpile-service/application/queries/notification-template.queries';
 import {
   CreateNotificationChannelDto,
   CreateNotificationTemplateDto,
@@ -39,6 +39,7 @@ import {
   NotificationEventType,
 } from '@libs/dto/stockpile/notification-template.dto';
 import { LoggingHelper } from '@libs/logging/logging.helper';
+import { StockpileHandlerUtil } from '../utils/stockpile-handler.util';
 
 @Injectable()
 export class NotificationTemplateService {
@@ -49,7 +50,7 @@ export class NotificationTemplateService {
   ) {}
 
   async createNotificationChannel(dto: CreateNotificationChannelDto): Promise<NotificationChannelDto> {
-    this.loggingService.log('Creating notification channel', 'NotificationTemplateService', JSON.stringify(dto));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Creating notification channel', 'NotificationTemplateService', dto);
 
     const command = new CreateNotificationChannelCommand(
       dto.name,
@@ -61,11 +62,17 @@ export class NotificationTemplateService {
       dto.settings
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'create notification channel',
+      'NotificationTemplateService'
+    );
   }
 
   async createNotificationTemplate(dto: CreateNotificationTemplateDto): Promise<NotificationTemplateDto> {
-    this.loggingService.log('Creating notification template', 'NotificationTemplateService', JSON.stringify(dto));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Creating notification template', 'NotificationTemplateService', dto);
 
     const command = new CreateNotificationTemplateCommand(
       dto.name,
@@ -84,11 +91,17 @@ export class NotificationTemplateService {
       dto.createdBy
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'create notification template',
+      'NotificationTemplateService'
+    );
   }
 
   async updateNotificationTemplate(id: string, dto: UpdateNotificationTemplateDto): Promise<NotificationTemplateDto> {
-    this.loggingService.log('Updating notification template', 'NotificationTemplateService', JSON.stringify({ id, dto }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Updating notification template', 'NotificationTemplateService', { id, dto });
 
     const command = new UpdateNotificationTemplateCommand(
       id,
@@ -101,17 +114,23 @@ export class NotificationTemplateService {
       dto.isActive
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'update notification template',
+      'NotificationTemplateService'
+    );
   }
 
   async createNotificationConfig(dto: CreateNotificationConfigDto): Promise<NotificationConfigDto> {
-    this.loggingService.log('Creating notification config', 'NotificationTemplateService', JSON.stringify(dto));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Creating notification config', 'NotificationTemplateService', dto);
 
     const command = new CreateNotificationConfigCommand(
+      dto.channelId,
       dto.programId,
       dto.resourceType,
       dto.categoryId,
-      dto.channelId,
       dto.isEnabled,
       dto.isImmediate,
       dto.batchInterval,
@@ -120,11 +139,17 @@ export class NotificationTemplateService {
       dto.createdBy
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'create notification config',
+      'NotificationTemplateService'
+    );
   }
 
   async sendNotification(dto: SendNotificationDto): Promise<SentNotificationDto> {
-    this.loggingService.log('Sending notification', 'NotificationTemplateService', JSON.stringify(dto));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Sending notification', 'NotificationTemplateService', dto);
 
     const command = new SendNotificationCommand(
       dto.channel,
@@ -136,23 +161,41 @@ export class NotificationTemplateService {
       dto.attachmentPath
     );
 
-    return await this.commandBus.execute(command);
+    return await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'send notification',
+      'NotificationTemplateService'
+    );
   }
 
   async sendBatchNotifications(channelId: string, notificationIds: string[]): Promise<void> {
-    this.loggingService.log('Sending batch notifications', 'NotificationTemplateService', JSON.stringify({ channelId, count: notificationIds.length }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Sending batch notifications', 'NotificationTemplateService', { channelId, count: notificationIds.length });
 
     const command = new SendBatchNotificationsCommand(channelId, notificationIds);
 
-    return await this.commandBus.execute(command);
+    await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'send batch notifications',
+      'NotificationTemplateService'
+    );
   }
 
   async markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
-    this.loggingService.log('Marking notification as read', 'NotificationTemplateService', JSON.stringify({ notificationId, userId }));
+    StockpileHandlerUtil.logServiceOperation(this.loggingService, 'Marking notification as read', 'NotificationTemplateService', { notificationId, userId });
 
     const command = new MarkNotificationAsReadCommand(notificationId, userId);
 
-    return await this.commandBus.execute(command);
+    await StockpileHandlerUtil.executeCommand(
+      this.commandBus,
+      command,
+      this.loggingService,
+      'mark notification as read',
+      'NotificationTemplateService'
+    );
   }
 
   async getNotificationChannels(isActive?: boolean): Promise<NotificationChannelDto[]> {

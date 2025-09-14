@@ -1,8 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
-import { DocumentTemplateService } from '../../services/document-template.service';
-import { DocumentTemplateEntity, GeneratedDocumentEntity } from '../../../domain/entities/document-template.entity';
+import { DocumentTemplateService } from '@apps/stockpile-service/application/services/document-template.service';
+import { DocumentTemplateEntity, GeneratedDocumentEntity } from '@apps/stockpile-service/domain/entities/document-template.entity';
 import {
   CreateDocumentTemplateCommand,
   UpdateDocumentTemplateCommand,
@@ -132,9 +132,11 @@ export class UploadDocumentTemplateHandler implements ICommandHandler<UploadDocu
     }));
 
     const result = await this.documentTemplateService.uploadDocumentTemplate(
-      command.templateId,
       command.file,
-      command.uploadedBy
+      {
+        templateId: command.templateId,
+        uploadedBy: command.uploadedBy
+      }
     );
 
     this.loggingService.log('Upload document template command completed', 'UploadDocumentTemplateHandler', LoggingHelper.logId(result.id));
@@ -157,7 +159,10 @@ export class DeleteDocumentTemplateHandler implements ICommandHandler<DeleteDocu
   async execute(command: DeleteDocumentTemplateCommand): Promise<void> {
     this.loggingService.log('Orchestrating delete document template command', 'DeleteDocumentTemplateHandler', LoggingHelper.logParams(command));
 
-    await this.documentTemplateService.deleteDocumentTemplate(command.id, command.deletedBy);
+    await this.documentTemplateService.deleteDocumentTemplate({
+      id: command.id,
+      deletedBy: command.deletedBy
+    });
 
     this.loggingService.log('Delete document template command completed', 'DeleteDocumentTemplateHandler');
   }

@@ -1,5 +1,5 @@
-import { ApprovalRequestStatus } from '../../utils/approval-request-status.enum';
-import { ApprovalActionType } from '../../utils/approval-action-type.enum';
+import { ApprovalRequestStatus } from '@apps/stockpile-service/utils/approval-request-status.enum';
+import { ApprovalActionType } from '@apps/stockpile-service/utils/approval-action-type.enum';
 
 export class ApprovalFlowEntity {
   constructor(

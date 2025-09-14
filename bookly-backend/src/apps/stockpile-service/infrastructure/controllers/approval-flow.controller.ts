@@ -20,7 +20,7 @@ import {
   ApiQuery,
   ApiBearerAuth
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../auth-service/infrastructure/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@apps/auth-service/infrastructure/guards/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { SetMetadata, Injectable, CanActivate } from '@nestjs/common';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
@@ -51,7 +51,7 @@ export class RolesGuard implements CanActivate {
     return requiredRoles.some((role) => user.roles?.includes(role));
   }
 }
-import { ApprovalFlowService } from '../../application/services/approval-flow.service';
+import { ApprovalFlowService } from '@apps/stockpile-service/application/services/approval-flow.service';
 import {
   CreateApprovalFlowDto,
   UpdateApprovalFlowDto,
@@ -61,7 +61,7 @@ import {
   ApprovalLevelDto,
   ApprovalRequestDto
 } from '@dto/stockpile/approval-flow.dto';
-import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
+import { STOCKPILE_URLS } from '@apps/stockpile-service/utils/maps/urls.map';
 
 @ApiTags('Approval Flow')
 @ApiBearerAuth()
@@ -111,7 +111,12 @@ export class ApprovalFlowController {
     @Query('categoryId') categoryId?: string,
     @Query('isActive') isActive?: boolean
   ): Promise<StandardApiResponse<ApprovalFlowDto[]>> {
-    const result = await this.approvalFlowService.getApprovalFlows(programId, resourceType, categoryId, isActive);
+    const result = await this.approvalFlowService.getApprovalFlows({
+      programId,
+      resourceType,
+      categoryId,
+      isActive
+    });
     return ResponseUtil.list(result, 'Approval flows retrieved successfully');
   }
 
@@ -169,14 +174,14 @@ export class ApprovalFlowController {
     @Body() body: { resourceId: string; resourceType?: string; categoryId?: string; programId?: string },
     @CurrentUser() user: any
   ): Promise<void> {
-    return await this.approvalFlowService.submitReservationForApproval(
+    return await this.approvalFlowService.submitReservationForApproval({
       reservationId,
-      user.id,
-      body.resourceId,
-      body.resourceType,
-      body.categoryId,
-      body.programId
-    );
+      userId: user.id,
+      resourceId: body.resourceId,
+      resourceType: body.resourceType,
+      categoryId: body.categoryId,
+      programId: body.programId
+    });
   }
 
   @Get(STOCKPILE_URLS.APPROVAL_FLOW_REQUESTS_PENDING)
@@ -196,14 +201,14 @@ export class ApprovalFlowController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
   ): Promise<StandardApiResponse<ApprovalRequestDto[]>> {
-    const result = await this.approvalFlowService.getPendingApprovalRequests(
+    const result = await this.approvalFlowService.getPendingApprovalRequests({
       approverId,
       programId,
       resourceType,
       categoryId,
       page,
       limit
-    );
+    });
     return ResponseUtil.paginated(result.requests, result.total, page, limit, 'Pending approval requests retrieved successfully');
   }
 
@@ -254,6 +259,10 @@ export class ApprovalFlowController {
     @Body() body: { reason?: string },
     @CurrentUser() user: any
   ): Promise<void> {
-    return await this.approvalFlowService.cancelReservation(reservationId, user.id, body.reason);
+    return await this.approvalFlowService.cancelReservation({
+      reservationId,
+      userId: user.id,
+      reason: body.reason
+    });
   }
 }
