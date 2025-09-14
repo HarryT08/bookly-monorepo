@@ -329,11 +329,11 @@ describe('Hito 6 - Basic Services Tests', () => {
         isActive: true,
       });
 
-      const result = await resourceResponsibleService.assignResponsible(
-        'resource-1',
-        'user-1',
-        'admin-1',
-      );
+      const result = await resourceResponsibleService.assignResponsible({
+        resourceId: 'resource-1',
+        userId: 'user-1',
+        assignedBy: 'admin-1',
+      });
 
       expect(result).toBeDefined();
       expect(result.resourceId).toBe('resource-1');

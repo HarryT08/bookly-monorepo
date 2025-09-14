@@ -6,6 +6,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * Implements RF-01 (delete resource) - Clean Architecture patterns
  */
 export class DeleteResourceDto {
+  @ApiProperty({ description: 'Resource ID to delete' })
+  @IsString()
+  id: string;
+
   @ApiProperty({ description: 'User ID who is deleting the resource' })
   @IsString()
   deletedBy: string;

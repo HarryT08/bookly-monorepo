@@ -3,4 +3,5 @@
  */
 export * from './create-resource.dto';
 export * from './update-resource.dto';
+export * from './delete-resource.dto';
 export * from './resource-response.dto';
