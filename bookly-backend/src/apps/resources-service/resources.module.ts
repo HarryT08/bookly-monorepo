@@ -3,7 +3,15 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { ResourcesController } from '@apps/resources-service/infrastructure/controllers/resources.controller';
 import { PrismaResourceRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource.repository';
 import { PrismaCategoryRepository } from '@apps/resources-service/infrastructure/repositories/prisma-category.repository';
+import { PrismaResourceCategoryRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource-category.repository';
 import { ResourcesService } from '@apps/resources-service/application/services/resources.service';
+import { ResourceCategoryService } from '@apps/resources-service/application/services/resource-category.service';
+import { MaintenanceTypeService } from '@apps/resources-service/application/services/maintenance-type.service';
+import { ResourceImportService } from '@apps/resources-service/application/services/resource-import.service';
+import { ResourceResponsibleService } from '@apps/resources-service/application/services/resource-responsible.service';
+import { PrismaMaintenanceTypeRepository } from '@apps/resources-service/infrastructure/repositories/prisma-maintenance-type.repository';
+import { PrismaResourceImportRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource-import.repository';
+import { PrismaResourceResponsibleRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource-responsible.repository';
 import { LoggingModule } from '@libs/logging/logging.module';
 import { CommonModule } from '@libs/common/common.module';
 import { EventBusModule } from '@libs/event-bus/event-bus.module';
@@ -130,6 +138,10 @@ const QueryHandlers = [
   providers: [
     // Services
     ResourcesService,
+    ResourceCategoryService,
+    MaintenanceTypeService,
+    ResourceImportService,
+    ResourceResponsibleService,
     // Repositories
     {
       provide: 'ResourceRepository',
@@ -139,6 +151,22 @@ const QueryHandlers = [
       provide: 'CategoryRepository',
       useClass: PrismaCategoryRepository,
     },
+    {
+      provide: 'ResourceCategoryRepository',
+      useClass: PrismaResourceCategoryRepository,
+    },
+    {
+      provide: 'MaintenanceTypeRepository',
+      useClass: PrismaMaintenanceTypeRepository,
+    },
+    {
+      provide: 'ResourceImportRepository',
+      useClass: PrismaResourceImportRepository,
+    },
+    {
+      provide: 'ResourceResponsibleRepository',
+      useClass: PrismaResourceResponsibleRepository,
+    },
     // Command Handlers
     ...CommandHandlers,
     // Query Handlers
@@ -147,6 +175,15 @@ const QueryHandlers = [
   exports: [
     'ResourceRepository',
     'CategoryRepository',
+    'ResourceCategoryRepository',
+    'MaintenanceTypeRepository',
+    'ResourceImportRepository',
+    'ResourceResponsibleRepository',
+    ResourcesService,
+    ResourceCategoryService,
+    MaintenanceTypeService,
+    ResourceImportService,
+    ResourceResponsibleService,
     ...CommandHandlers,
     ...QueryHandlers,
   ],
