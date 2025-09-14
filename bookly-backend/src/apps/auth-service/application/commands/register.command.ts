@@ -1,11 +1,28 @@
 import { ICommand } from '@nestjs/cqrs';
+import { RegisterDto } from '@libs/dto';
 
 export class RegisterCommand implements ICommand {
   constructor(
-    public readonly email: string,
-    public readonly username: string,
-    public readonly password: string,
-    public readonly firstName: string,
-    public readonly lastName: string,
+    public readonly registerDto: RegisterDto,
   ) {}
+
+  get email(): string {
+    return this.registerDto.email;
+  }
+
+  get username(): string {
+    return this.registerDto.username;
+  }
+
+  get password(): string {
+    return this.registerDto.password;
+  }
+
+  get firstName(): string {
+    return this.registerDto.firstName;
+  }
+
+  get lastName(): string {
+    return this.registerDto.lastName;
+  }
 }

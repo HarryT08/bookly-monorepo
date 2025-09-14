@@ -1,51 +1,60 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ConflictException } from '@nestjs/common';
-import { RegisterCommand } from '@/apps/auth-service/application/commands/register.command';
-import { UserService } from '@/apps/auth-service/application/services/user.service';
-import { UserEntity } from '@/apps/auth-service/domain/entities/user.entity';
-import { LoggingService } from '@logging/logging.service';
-import { MonitoringService } from '@monitoring/monitoring.service';
-import * as bcrypt from 'bcrypt';
+import { RegisterCommand } from '../commands/register.command';
+import { AuthService } from '../services/auth.service';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
+import { LoggingService } from '@libs/logging/logging.service';
+import { MonitoringService } from '@libs/monitoring/monitoring.service';
+import { EventBusService } from '@libs/event-bus/services/event-bus.service';
+import { UserRegisteredEvent } from '../../domain/events';
+import { RegisterDto } from '@libs/dto';
 
 @CommandHandler(RegisterCommand)
 export class RegisterHandler implements ICommandHandler<RegisterCommand> {
   constructor(
-    private readonly userService: UserService,
+    private readonly authService: AuthService,
     private readonly loggingService: LoggingService,
     private readonly monitoringService: MonitoringService,
+    private readonly eventBusService: EventBusService,
   ) {}
 
-  async execute(command: RegisterCommand): Promise<UserEntity> {
+  async execute(command: RegisterCommand): Promise<{ message: string; user: any }> {
     const { email, username, password, firstName, lastName } = command;
 
     try {
       this.loggingService.log(`Registration attempt for email: ${email}`, 'RegisterHandler');
 
-      // Check if user already exists
-      const existingUserByEmail = await this.userService.findByEmail(email);
-      if (existingUserByEmail) {
-        throw new ConflictException('User with this email already exists');
-      }
+      // Delegate business logic to service
+      const registerDto: RegisterDto = {
+        email,
+        username,
+        password,
+        firstName,
+        lastName,
+      };
 
-      const existingUserByUsername = await this.userService.findByUsername(username);
-      if (existingUserByUsername) {
-        throw new ConflictException('User with this username already exists');
-      }
+      const registerResult = await this.authService.register(registerDto);
 
-      // Hash password
-      const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-      // Create user entity
-      const userEntity = UserEntity.create(email, username, hashedPassword, firstName, lastName);
-
-      // Save user
-      const createdUser = await this.userService.create(userEntity);
-
-      this.loggingService.log(`User registered successfully: ${createdUser.id}`, 'RegisterHandler');
+      this.loggingService.log(`User registered successfully: ${registerResult.user.id}`, 'RegisterHandler');
       this.monitoringService.captureMessage(`New user registered: ${email}`, 'info');
 
-      return createdUser;
+      // Publish UserRegisteredEvent
+      const registrationEvent = new UserRegisteredEvent(
+        registerResult.user.id,
+        {
+          userId: registerResult.user.id,
+          email: registerResult.user.email,
+          username: registerResult.user.username,
+          firstName: registerResult.user.firstName,
+          lastName: registerResult.user.lastName,
+          roles: [],
+          timestamp: new Date(),
+        },
+        registerResult.user.id
+      );
+      
+      await this.eventBusService.publishEvent(registrationEvent);
+
+      return registerResult;
     } catch (error) {
       this.loggingService.error(`Registration error for email: ${email}`, error, 'RegisterHandler');
       this.monitoringService.captureException(error, { email, command: 'RegisterCommand' });

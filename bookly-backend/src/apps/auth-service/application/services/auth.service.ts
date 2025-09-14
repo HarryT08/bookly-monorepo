@@ -6,6 +6,7 @@ import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { RegisterCommand } from '@apps/auth-service/application/commands/register.command';
 import { LoggingService } from '@libs/logging/logging.service';
 import { LoggingHelper } from '@libs/logging/logging.helper';
+import { LoginDto, RegisterDto } from '@libs/dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -180,18 +181,36 @@ export class AuthService {
   }
 
   /**
+   * Login user with credentials
+   */
+  async loginUser(loginDto: LoginDto): Promise<{ access_token: string; user: any }> {
+    try {
+      const user = await this.validateUser(loginDto.email, loginDto.password);
+      if (!user) {
+        this.loggingService.warn(`Failed login attempt for email: ${loginDto.email}`);
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const loginResult = await this.login(user);
+      return loginResult;
+    } catch (error) {
+      this.loggingService.error('Error during user login', error, LoggingHelper.logParams({
+        email: loginDto.email,
+      }));
+      throw error;
+    }
+  }
+
+  /**
    * Register a new user using CQRS
    */
-  async register(registerDto: { email: string; password: string; firstName: string; lastName: string; username?: string }): Promise<{ message: string; user: any }> {
+  async register(registerDto: RegisterDto): Promise<{ message: string; user: any }> {
     try {
       // Use CQRS Command pattern
-      const command = new RegisterCommand(
-        registerDto.email,
-        registerDto.username || registerDto.email.split('@')[0],
-        registerDto.password,
-        registerDto.firstName,
-        registerDto.lastName,
-      );
+      const command = new RegisterCommand({
+        ...registerDto,
+        username: registerDto.username || registerDto.email.split('@')[0],
+      });
 
       const createdUser = await this.commandBus.execute<RegisterCommand, UserEntity>(command);
 

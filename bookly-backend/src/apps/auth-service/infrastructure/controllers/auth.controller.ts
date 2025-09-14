@@ -25,7 +25,7 @@ export class AuthController {
   @Post(AUTH_URLS.AUTH_LOGIN)
   async login(@Body() loginDto: LoginDto) {
     const result = await this.commandBus.execute(
-      new LoginCommand(loginDto.email, loginDto.password),
+      new LoginCommand(loginDto),
     );
     return ResponseUtil.success(result, 'Login successful');
   }
@@ -40,13 +40,7 @@ export class AuthController {
   @Post(AUTH_URLS.AUTH_REGISTER)
   async register(@Body() registerDto: RegisterDto) {
     const result = await this.commandBus.execute(
-      new RegisterCommand(
-        registerDto.email,
-        registerDto.username,
-        registerDto.password,
-        registerDto.firstName,
-        registerDto.lastName,
-      ),
+      new RegisterCommand(registerDto),
     );
     return ResponseUtil.success(result, 'User registered successfully');
   }
