@@ -57,13 +57,14 @@ export class ReportsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid filter parameters' })
   async generateUsageReport(@Query() filters: any) {
-    const command = new GenerateUsageReportCommand(
-      filters.startDate ? new Date(filters.startDate) : new Date(),
-      filters.endDate ? new Date(filters.endDate) : new Date(),
-      filters.resourceId ? [filters.resourceId] : undefined,
-      filters.programId ? [filters.programId] : undefined,
-      filters.includeDetails
-    );
+    const generateUsageReportDto: any = {
+      startDate: filters.startDate || new Date().toISOString(),
+      endDate: filters.endDate || new Date().toISOString(),
+      resourceIds: filters.resourceId ? [filters.resourceId] : undefined,
+      programIds: filters.programId ? [filters.programId] : undefined,
+      includeDetails: filters.includeDetails
+    };
+    const command = new GenerateUsageReportCommand(generateUsageReportDto);
     const report = await this.commandBus.execute(command);
     return ResponseUtil.success(report, 'Usage report generated successfully');
   }
@@ -87,11 +88,12 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
   ) {
-    const command = new GenerateUserReportCommand(
+    const generateUserReportDto: any = {
       userId,
-      startDate ? new Date(startDate) : undefined,
-      endDate ? new Date(endDate) : undefined
-    );
+      startDate,
+      endDate,
+    };
+    const command = new GenerateUserReportCommand(generateUserReportDto);
     const report = await this.commandBus.execute(command);
     return ResponseUtil.success(report, 'User report generated successfully');
   }
@@ -211,14 +213,7 @@ export class ReportsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid feedback data' })
   async createFeedback(@Body() data: FeedbackDto) {
-    const command = new CreateFeedbackCommand(
-      data.userId,
-      data.resourceId,
-      data.reservationId,
-      data.rating,
-      data.comment,
-      data.category
-    );
+    const command = new CreateFeedbackCommand(data);
     const feedback = await this.commandBus.execute(command);
     return ResponseUtil.success(feedback, 'Feedback created successfully');
   }
@@ -281,12 +276,13 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
   ) {
-    const command = new GenerateDemandReportCommand(
-      startDate ? new Date(startDate) : new Date(),
-      endDate ? new Date(endDate) : new Date(),
-      resourceType ? [resourceType] : undefined,
-      programId ? [programId] : undefined
-    );
+    const generateDemandReportDto: any = {
+      startDate: startDate || new Date().toISOString(),
+      endDate: endDate || new Date().toISOString(),
+      resourceTypes: resourceType ? [resourceType] : undefined,
+      programIds: programId ? [programId] : undefined,
+    };
+    const command = new GenerateDemandReportCommand(generateDemandReportDto);
     const report = await this.commandBus.execute(command);
     return ResponseUtil.success(report, 'Demand report generated successfully');
   }

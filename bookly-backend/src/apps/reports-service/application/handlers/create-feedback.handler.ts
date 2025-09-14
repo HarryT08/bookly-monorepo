@@ -1,8 +1,11 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { Injectable, Inject } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
-import { CreateFeedbackCommand } from '../commands/create-feedback.command';
-import { ReportsRepository } from '../../domain/repositories/reports.repository';
+import { EventBusService } from '@libs/event-bus/services/event-bus.service';
+import { ReportsService } from '@apps/reports-service/application/services/reports.service';
+import { CreateFeedbackCommand } from '@apps/reports-service/application/commands/create-feedback.command';
+import { CreateFeedbackDto } from '@libs/dto';
+import { DomainEvent } from '@libs/event-bus/services/event-bus.service';
 
 /**
  * Create Feedback Command Handler
@@ -12,45 +15,40 @@ import { ReportsRepository } from '../../domain/repositories/reports.repository'
 @CommandHandler(CreateFeedbackCommand)
 export class CreateFeedbackHandler implements ICommandHandler<CreateFeedbackCommand> {
   constructor(
-    @Inject('ReportsRepository')
-    private readonly reportsRepository: ReportsRepository,
-    private readonly eventBus: EventBus,
+    private readonly reportsService: ReportsService,
+    private readonly eventBus: EventBusService,
     private readonly loggingService: LoggingService,
   ) {}
 
   async execute(command: CreateFeedbackCommand): Promise<any> {
     this.loggingService.log(
-      'Creating user feedback',
-      `CreateFeedbackHandler - userId: ${command.userId}, resourceId: ${command.resourceId}`,
+      'Executing create feedback command',
+      `CreateFeedbackHandler - userId: ${command.createFeedbackDto.userId}`,
       'CreateFeedbackHandler'
     );
 
     try {
-      const feedbackData = {
-        userId: command.userId,
-        resourceId: command.resourceId,
-        reservationId: command.reservationId,
-        rating: command.rating,
-        comment: command.comment,
-        category: command.category,
-        createdAt: new Date(),
-      };
-
-      // For now, store as a simple object until proper feedback repository method is implemented
-      const feedback = {
-        id: Date.now().toString(),
-        ...feedbackData,
-      };
+      // Delegate to service
+      const feedback = await this.reportsService.createFeedback(command.createFeedbackDto);
 
       // Publish domain event
-      this.eventBus.publish({
-        type: 'FeedbackCreated',
-        feedbackId: feedback.id,
-        userId: command.userId,
-        resourceId: command.resourceId,
-        rating: command.rating,
+      const event: DomainEvent = {
+        eventId: `feedback-created-${Date.now()}`,
+        eventType: 'FeedbackCreated',
+        aggregateId: feedback.id,
+        aggregateType: 'Feedback',
+        eventData: {
+          feedbackId: feedback.id,
+          userId: command.createFeedbackDto.userId,
+          resourceId: command.createFeedbackDto.resourceId,
+          rating: command.createFeedbackDto.rating,
+        },
         timestamp: new Date(),
-      });
+        version: 1,
+        userId: command.createFeedbackDto.userId,
+      };
+
+      await this.eventBus.publishEvent(event);
 
       this.loggingService.log(
         'Feedback created successfully',

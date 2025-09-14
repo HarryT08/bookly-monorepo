@@ -319,6 +319,7 @@ describe('AuthService - Authentication BDD Tests', () => {
   describe('Given a user attempting to register', () => {
     const registerDto = {
       email: 'newuser@ufps.edu.co',
+      username: 'newuser',
       password: 'password123',
       firstName: 'New',
       lastName: 'User',

@@ -28,8 +28,12 @@ export * from './stockpile/approval-flow.dto';
 export * from './stockpile/document-template.dto';
 export * from './stockpile/notification-template.dto';
 
-// Reports Service DTOs
+// Reports DTOs
 export * from './reports/feedback.dto';
+export * from './reports/create-feedback.dto';
+export * from './reports/generate-usage-report.dto';
+export * from './reports/generate-user-report.dto';
+export * from './reports/generate-demand-report.dto';
 export * from './reports/audit-log.dto';
 export * from './reports/export-csv.dto';
 export * from './reports/usage-report-filters.dto';

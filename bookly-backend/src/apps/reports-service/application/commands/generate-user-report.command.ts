@@ -3,12 +3,10 @@
  */
 
 import { ICommand } from '@nestjs/cqrs';
+import { GenerateUserReportDto } from '@libs/dto';
 
 export class GenerateUserReportCommand implements ICommand {
   constructor(
-    public readonly userId?: string,
-    public readonly startDate?: Date,
-    public readonly endDate?: Date,
-    public readonly filters?: Record<string, unknown>,
+    public readonly generateUserReportDto: GenerateUserReportDto,
   ) {}
 }

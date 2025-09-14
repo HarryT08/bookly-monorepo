@@ -1,8 +1,10 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { Injectable, Inject } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
-import { GenerateDemandReportCommand } from '../commands/generate-demand-report.command';
-import { GeneratedReportsRepository } from '../../domain/repositories/generated-reports.repository';
+import { EventBusService } from '@libs/event-bus/services/event-bus.service';
+import { ReportsService } from '@apps/reports-service/application/services/reports.service';
+import { GenerateDemandReportCommand } from '@apps/reports-service/application/commands/generate-demand-report.command';
+import { DomainEvent } from '@libs/event-bus/services/event-bus.service';
 
 /**
  * Generate Demand Report Command Handler
@@ -12,48 +14,41 @@ import { GeneratedReportsRepository } from '../../domain/repositories/generated-
 @CommandHandler(GenerateDemandReportCommand)
 export class GenerateDemandReportHandler implements ICommandHandler<GenerateDemandReportCommand> {
   constructor(
-    @Inject('GeneratedReportsRepository')
-    private readonly generatedReportsRepository: GeneratedReportsRepository,
-    private readonly eventBus: EventBus,
+    private readonly reportsService: ReportsService,
+    private readonly eventBus: EventBusService,
     private readonly loggingService: LoggingService,
   ) {}
 
   async execute(command: GenerateDemandReportCommand): Promise<any> {
     this.loggingService.log(
-      'Generating demand report',
-      `GenerateDemandReportHandler - period: ${command.startDate} to ${command.endDate}`,
+      'Executing generate demand report command',
+      `GenerateDemandReportHandler - period: ${command.generateDemandReportDto.startDate} to ${command.generateDemandReportDto.endDate}`,
       'GenerateDemandReportHandler'
     );
 
     try {
-      const reportData = {
-        type: 'DEMAND_REPORT',
-        filters: {
-          startDate: command.startDate,
-          endDate: command.endDate,
-          resourceTypes: command.resourceTypes,
-          programIds: command.programIds,
+      // Delegate to service
+      const report = await this.reportsService.generateDemandReport(command.generateDemandReportDto);
+
+      // Publish domain event
+      const event: DomainEvent = {
+        eventId: `demand-report-generated-${Date.now()}`,
+        eventType: 'DemandReportGenerated',
+        aggregateId: report.id,
+        aggregateType: 'DemandReport',
+        eventData: {
+          reportId: report.id,
+          filters: command.generateDemandReportDto,
+          generatedAt: new Date(),
         },
-        status: 'GENERATING',
-        createdAt: new Date(),
-      };
-
-      // For now, create a simple report object until proper repository method is implemented
-      const report = {
-        id: Date.now().toString(),
-        ...reportData,
-      };
-
-      // Publish domain event to trigger async report generation
-      this.eventBus.publish({
-        type: 'DemandReportRequested',
-        reportId: report.id,
-        filters: reportData.filters,
         timestamp: new Date(),
-      });
+        version: 1,
+      };
+
+      await this.eventBus.publishEvent(event);
 
       this.loggingService.log(
-        'Demand report generation initiated',
+        'Demand report generated successfully',
         `GenerateDemandReportHandler - reportId: ${report.id}`,
         'GenerateDemandReportHandler'
       );

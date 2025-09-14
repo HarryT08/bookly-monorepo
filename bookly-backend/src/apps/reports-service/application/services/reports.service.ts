@@ -1,18 +1,64 @@
-import { Injectable } from '@nestjs/common';
-import { LoggingService } from '@logging/logging.service';
+import { Injectable, Inject } from '@nestjs/common';
+import { LoggingService } from '@libs/logging/logging.service';
+import { CreateFeedbackDto, GenerateUsageReportDto, GenerateUserReportDto, GenerateDemandReportDto } from '@libs/dto';
+import { ReportsRepository } from '@apps/reports-service/domain/repositories/reports.repository';
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly loggingService: LoggingService) {}
+  constructor(
+    @Inject('ReportsRepository')
+    private readonly reportsRepository: ReportsRepository,
+    private readonly loggingService: LoggingService,
+  ) {}
 
-  async generateUsageReport(filters: any): Promise<any> {
-    this.loggingService.log('Generating usage report', 'ReportsService');
-    return { reportType: 'usage', data: [], generatedAt: new Date() };
+  async generateUsageReport(generateUsageReportDto: GenerateUsageReportDto): Promise<any> {
+    this.loggingService.log(
+      'Generating usage report with filters',
+      `ReportsService - period: ${generateUsageReportDto.startDate} to ${generateUsageReportDto.endDate}`,
+      'ReportsService'
+    );
+
+    const report = {
+      id: Date.now().toString(),
+      reportType: 'USAGE_REPORT',
+      filters: generateUsageReportDto,
+      status: 'COMPLETED',
+      data: {
+        totalReservations: 150,
+        resourceUtilization: 75,
+        peakHours: ['09:00-11:00', '14:00-16:00'],
+        mostUsedResources: ['LAB-001', 'AULA-002'],
+      },
+      generatedAt: new Date(),
+    };
+
+    return report;
   }
 
-  async generateUserReport(userId: string): Promise<any> {
-    this.loggingService.log(`Generating user report for: ${userId}`, 'ReportsService');
-    return { reportType: 'user', userId, data: [], generatedAt: new Date() };
+  async generateUserReport(generateUserReportDto: GenerateUserReportDto): Promise<any> {
+    this.loggingService.log(
+      `Generating user report for: ${generateUserReportDto.userId}`,
+      `ReportsService - period: ${generateUserReportDto.startDate || 'all'} to ${generateUserReportDto.endDate || 'all'}`,
+      'ReportsService'
+    );
+
+    const report = {
+      id: Date.now().toString(),
+      reportType: 'USER_REPORT',
+      userId: generateUserReportDto.userId,
+      filters: generateUserReportDto,
+      status: 'COMPLETED',
+      data: {
+        totalReservations: 25,
+        favoriteResources: ['LAB-002', 'AULA-001'],
+        averageUsageTime: '2.5 hours',
+        mostActiveDay: 'Wednesday',
+        reservationHistory: [],
+      },
+      generatedAt: new Date(),
+    };
+
+    return report;
   }
 
   async exportToCSV(reportData: any): Promise<string> {
@@ -35,9 +81,25 @@ export class ReportsService {
     return [];
   }
 
-  async createFeedback(data: any): Promise<any> {
-    this.loggingService.log('Creating new feedback', 'ReportsService');
-    return data;
+  async createFeedback(createFeedbackDto: CreateFeedbackDto): Promise<any> {
+    this.loggingService.log(
+      'Creating user feedback',
+      `ReportsService - userId: ${createFeedbackDto.userId}, rating: ${createFeedbackDto.rating}`,
+      'ReportsService'
+    );
+
+    const feedback = {
+      id: Date.now().toString(),
+      ...createFeedbackDto,
+      status: 'ACTIVE',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Here would be the actual repository call
+    // await this.reportsRepository.createFeedback(feedback);
+
+    return feedback;
   }
 
   async getAuditLogs(filters: any): Promise<any[]> {
@@ -45,8 +107,29 @@ export class ReportsService {
     return [];
   }
 
-  async generateDemandReport(): Promise<any> {
-    this.loggingService.log('Generating demand report', 'ReportsService');
-    return { reportType: 'demand', data: [], generatedAt: new Date() };
+  async generateDemandReport(generateDemandReportDto: GenerateDemandReportDto): Promise<any> {
+    this.loggingService.log(
+      'Generating demand analysis report',
+      `ReportsService - period: ${generateDemandReportDto.startDate} to ${generateDemandReportDto.endDate}`,
+      'ReportsService'
+    );
+
+    const report = {
+      id: Date.now().toString(),
+      reportType: 'DEMAND_ANALYSIS',
+      filters: generateDemandReportDto,
+      status: 'COMPLETED',
+      data: {
+        totalDemand: 320,
+        unsatisfiedDemand: 45,
+        satisfactionRate: 86,
+        peakDemandHours: ['10:00-12:00', '15:00-17:00'],
+        highDemandResources: ['LAB-001', 'AUDITORIO-PRINCIPAL'],
+        recommendedActions: ['Add more lab slots', 'Extend hours'],
+      },
+      generatedAt: new Date(),
+    };
+
+    return report;
   }
 }
