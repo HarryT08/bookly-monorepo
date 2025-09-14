@@ -1,14 +1,16 @@
 import { Injectable, Inject, BadRequestException, ConflictException } from '@nestjs/common';
-import { LoggingService } from '@logging/logging.service';
-import { EventBusService, DomainEvent } from '@libs/event-bus/services/event-bus.service';
-import { ResourceRepository } from '../../domain/repositories/resource.repository';
-import { ResourceEntity } from '../../domain/entities/resource.entity';
+import { LoggingService } from '@/libs/logging/logging.service';
+import { EventBusService, DomainEvent } from '@/libs/event-bus/services/event-bus.service';
+import { ResourceRepository } from '@apps/resources-service/domain/repositories/resource.repository';
+import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
 import { 
   StandardizedDomainEvent, 
   createStandardizedEvent, 
   EventAction, 
   RESOURCE_EVENTS 
-} from '@libs/event-bus/interfaces/standardized-domain-event.interface';
+} from '@/libs/event-bus/interfaces/standardized-domain-event.interface';
+import { CreateResourceDto, AvailableScheduleDto } from '@/libs/dto/resources/create-resource.dto';
+import { AvailableSchedule } from '@apps/resources-service/domain/entities/resource.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -19,6 +21,46 @@ export class ResourcesService {
     private readonly loggingService: LoggingService,
     private readonly eventBusService: EventBusService,
   ) {}
+
+  /**
+   * Maps DTO to domain entity AvailableSchedule format
+   * Private helper method for type conversion
+   */
+  private mapDtoToAvailableSchedule(dto: AvailableScheduleDto): AvailableSchedule {
+    return {
+      weeklySchedule: {
+        MONDAY: { enabled: false, startTime: '08:00', endTime: '17:00' },
+        TUESDAY: { enabled: false, startTime: '08:00', endTime: '17:00' },
+        WEDNESDAY: { enabled: false, startTime: '08:00', endTime: '17:00' },
+        THURSDAY: { enabled: false, startTime: '08:00', endTime: '17:00' },
+        FRIDAY: { enabled: false, startTime: '08:00', endTime: '17:00' },
+        SATURDAY: { enabled: false, startTime: '08:00', endTime: '17:00' },
+        SUNDAY: { enabled: false, startTime: '08:00', endTime: '17:00' },
+      },
+      exceptions: [],
+      maintenanceSchedules: [],
+      restrictions: {
+        maxReservationDays: dto.restrictions?.maxAdvanceReservation || 30,
+        minReservationHours: dto.restrictions?.minAdvanceReservation || 2,
+        minReservationDuration: dto.restrictions?.minReservationDuration || 30,
+        maxReservationDuration: dto.restrictions?.maxReservationDuration || 480,
+        minAdvanceReservation: dto.restrictions?.minAdvanceReservation || 2,
+        maxAdvanceReservation: dto.restrictions?.maxAdvanceReservation || 30,
+        userTypePriority: dto.priorities?.reduce((acc, p) => ({ ...acc, [p.userType]: p.priority }), {}) || {},
+        userTypes: dto.restrictions?.userTypes || ['STUDENT', 'TEACHER', 'ADMIN'],
+        advanceBookingDays: dto.restrictions?.maxAdvanceReservation || 30,
+      },
+      operatingHours: {
+        MONDAY: { start: '08:00', end: '17:00' },
+        TUESDAY: { start: '08:00', end: '17:00' },
+        WEDNESDAY: { start: '08:00', end: '17:00' },
+        THURSDAY: { start: '08:00', end: '17:00' },
+        FRIDAY: { start: '08:00', end: '17:00' },
+        SATURDAY: { start: '08:00', end: '12:00' },
+        SUNDAY: { start: '08:00', end: '12:00' },
+      },
+    };
+  }
 
   async findAll(): Promise<ResourceEntity[]> {
     this.loggingService.log('Finding all resources', 'ResourcesService');
@@ -119,17 +161,7 @@ export class ResourcesService {
    * Creates a new resource with full business logic validation
    * Implements RF-01 - Follows Clean Architecture patterns
    */
-  async createResource(data: {
-    name: string;
-    type: string;
-    capacity: number;
-    location: string;
-    programId: string;
-    description?: string;
-    attributes?: any;
-    availableSchedules?: any;
-    categoryId: string;
-  }): Promise<ResourceEntity> {
+  async createResource(data: CreateResourceDto): Promise<ResourceEntity> {
     this.loggingService.log(
       'Creating resource with business validation',
       {
@@ -142,17 +174,20 @@ export class ResourcesService {
     );
 
     try {
+      // Map DTO to domain entity format
+      const availableSchedules = data.availableSchedules ? this.mapDtoToAvailableSchedule(data.availableSchedules) : undefined;
+      
       // Business Logic 1: Create resource entity with validation
       const resource = ResourceEntity.create(
         data.name,
         data.type,
-        data.capacity,
-        data.location,
+        data.capacity || null,
+        data.location || null,
         data.programId,
         data.description,
         data.attributes,
-        data.availableSchedules,
-        data.categoryId,
+        availableSchedules,
+        data.categoryId || '',
       );
 
       // Business Logic 2: Validate resource
@@ -164,17 +199,20 @@ export class ResourcesService {
       // Business Logic 3: Check if code is unique
       const existingResource = await this.resourceRepository.findByCode(resource.code);
       if (existingResource) {
-        // Regenerate code if collision occurs (very unlikely)
+        // Map DTO to domain entity format
+        const availableSchedules = data.availableSchedules ? this.mapDtoToAvailableSchedule(data.availableSchedules) : undefined;
+        
+        // Generate code if collision occurs (very unlikely)
         const newResource = ResourceEntity.create(
           data.name,
           data.type,
-          data.capacity,
-          data.location,
+          data.capacity || null,
+          data.location || null,
           data.programId,
           data.description,
           data.attributes,
-          data.availableSchedules,
-          data.categoryId,
+          availableSchedules,
+          data.categoryId || '',
         );
         
         // Business Logic 4: Persist resource

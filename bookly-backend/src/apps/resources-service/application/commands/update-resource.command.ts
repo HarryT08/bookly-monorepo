@@ -1,21 +1,21 @@
 import { ICommand } from '@nestjs/cqrs';
-import { AvailableSchedule, ResourceAttributes } from '../../domain/entities/resource.entity';
+import { UpdateResourceDto } from '@/libs/dto/resources/update-resource.dto';
+
+/**
+ * Update Resource Command Data Interface
+ */
+export interface UpdateResourceCommandData extends UpdateResourceDto {
+  readonly id: string;
+  readonly updatedBy: string;
+}
 
 /**
  * Update Resource Command
  * Implements RF-01 (edit resource)
+ * Uses standardized DTO for type safety and validation
  */
 export class UpdateResourceCommand implements ICommand {
   constructor(
-    public readonly id: string,
-    public readonly name?: string,
-    public readonly type?: string,
-    public readonly capacity?: number | null,
-    public readonly location?: string | null,
-    public readonly status?: string,
-    public readonly description?: string | null,
-    public readonly attributes?: ResourceAttributes | null,
-    public readonly availableSchedules?: AvailableSchedule | null,
-    public readonly categoryId?: string | null,
+    public readonly data: UpdateResourceCommandData
   ) {}
 }

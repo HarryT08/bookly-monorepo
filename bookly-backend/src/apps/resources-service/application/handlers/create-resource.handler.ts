@@ -1,9 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
-import { CreateResourceCommand } from '../commands/create-resource.command';
-import { ResourceEntity } from '../../domain/entities/resource.entity';
-import { LoggingService } from '../../../../libs/logging/logging.service';
-import { ResourcesService } from '../services/resources.service';
+import { CreateResourceCommand } from '@apps/resources-service/application/commands/create-resource.command';
+import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
+import { LoggingService } from '@libs/logging/logging.service';
+import { ResourcesService } from '@apps/resources-service/application/services/resources.service';
 
 /**
  * Create Resource Command Handler
@@ -18,28 +18,24 @@ export class CreateResourceHandler implements ICommandHandler<CreateResourceComm
   ) {}
 
   async execute(command: CreateResourceCommand): Promise<ResourceEntity> {
-    this.logger.log(
-      'Orchestrating resource creation',
-      {
-        name: command.name,
-        type: command.type,
-        capacity: command.capacity,
-        location: command.location
-      },
-      'CreateResourceHandler'
-    );
+    try {
+      this.logger.log(
+        'Executing create resource command',
+        `CreateResourceHandler - name: ${command.data.name}`,
+        'CreateResourceHandler'
+      );
 
-    // Delegate to service (Clean Architecture pattern)
-    return await this.resourcesService.createResource({
-      name: command.name,
-      type: command.type,
-      capacity: command.capacity,
-      location: command.location,
-      programId: command.programId,
-      description: command.description,
-      attributes: command.attributes,
-      availableSchedules: command.availableSchedules,
-      categoryId: command.categoryId
-    });
+      // Delegate to service (Clean Architecture pattern)
+      const resource = await this.resourcesService.createResource(command.data);
+      
+      return resource;
+    } catch (error) {
+      this.logger.error(
+        `Failed to create resource: ${error.message}`,
+        error.stack,
+        'CreateResourceHandler'
+      );
+      throw error;
+    }
   }
 }

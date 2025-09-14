@@ -300,18 +300,11 @@ export class ResourcesController {
     @Param('id') id: string,
     @Body(ValidationPipe) updateResourceDto: UpdateResourceDto,
   ): Promise<ResourceResponseDto> {
-    const command = new UpdateResourceCommand(
+    const command = new UpdateResourceCommand({
+      ...updateResourceDto,
       id,
-      updateResourceDto.name,
-      updateResourceDto.type,
-      updateResourceDto.capacity,
-      updateResourceDto.location,
-      updateResourceDto.status,
-      updateResourceDto.description,
-      updateResourceDto.attributes,
-      updateResourceDto.availableSchedules ? this.mapDtoToAvailableSchedule(updateResourceDto.availableSchedules) : null,
-      updateResourceDto.categoryId,
-    );
+      updatedBy: 'system', // TODO: Get from JWT token
+    });
 
     const resource: ResourceEntity = await this.commandBus.execute(command);
     return this.mapToResponseDto(resource);
@@ -337,7 +330,11 @@ export class ResourcesController {
     @Param('id') id: string,
     @Query('force') force?: boolean,
   ): Promise<void> {
-    const command = new DeleteResourceCommand(id, force || false);
+    const command = new DeleteResourceCommand({
+      id,
+      deletedBy: 'system', // TODO: Get from JWT token
+      force: force || false,
+    });
     await this.commandBus.execute(command);
   }
 

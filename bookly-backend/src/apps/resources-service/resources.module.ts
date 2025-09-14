@@ -1,26 +1,26 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { ResourcesController } from './infrastructure/controllers/resources.controller';
-import { PrismaResourceRepository } from './infrastructure/repositories/prisma-resource.repository';
-import { PrismaCategoryRepository } from './infrastructure/repositories/prisma-category.repository';
-import { ResourcesService } from './application/services/resources.service';
-import { LoggingModule } from '../../libs/logging/logging.module';
-import { CommonModule } from '../../libs/common/common.module';
-import { EventBusModule } from '../../libs/event-bus/event-bus.module';
+import { ResourcesController } from '@apps/resources-service/infrastructure/controllers/resources.controller';
+import { PrismaResourceRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource.repository';
+import { PrismaCategoryRepository } from '@apps/resources-service/infrastructure/repositories/prisma-category.repository';
+import { ResourcesService } from '@apps/resources-service/application/services/resources.service';
+import { LoggingModule } from '@libs/logging/logging.module';
+import { CommonModule } from '@libs/common/common.module';
+import { EventBusModule } from '@libs/event-bus/event-bus.module';
 
 // Command Handlers
-import { CreateResourceHandler } from './application/handlers/create-resource.handler';
-import { UpdateResourceHandler } from './application/handlers/update-resource.handler';
-import { DeleteResourceHandler } from './application/handlers/delete-resource.handler';
+import { CreateResourceHandler } from '@apps/resources-service/application/handlers/create-resource.handler';
+import { UpdateResourceHandler } from '@apps/resources-service/application/handlers/update-resource.handler';
+import { DeleteResourceHandler } from '@apps/resources-service/application/handlers/delete-resource.handler';
 
 // Query Handlers
-import { GetResourceHandler, GetResourceByCodeHandler } from './application/handlers/get-resource.handler';
+import { GetResourceHandler, GetResourceByCodeHandler } from '@apps/resources-service/application/handlers/get-resource.handler';
 import {
   GetResourcesHandler,
   GetResourcesWithPaginationHandler,
   SearchResourcesHandler,
   CheckResourceAvailabilityHandler,
-} from './application/handlers/get-resources.handler';
+} from '@apps/resources-service/application/handlers/get-resources.handler';
 
 const CommandHandlers = [
   CreateResourceHandler,
