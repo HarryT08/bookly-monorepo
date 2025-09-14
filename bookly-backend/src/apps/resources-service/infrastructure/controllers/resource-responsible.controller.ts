@@ -20,8 +20,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ResourceResponsibleService } from '@apps/resources-service/application/services/resource-responsible.service';
-import { AssignResourceResponsibleDto, AssignMultipleResourceResponsiblesDto, ResourceResponsibleResponseDto } from '@apps/resources-service/application/dtos/resource-responsible.dto';
-import { ResourceResponsibleEntity } from '@apps/resources-service/domain/entities/resource-responsible.entity';
+import { ResourceResponsibleResponseDto } from '@libs/dto/resources/resource-responsible.dto';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 import { SuccessResponseDto } from '@libs/dto/common/response.dto';
@@ -124,11 +123,11 @@ export class ResourceResponsibleController {
     @Body() body: { userIds: string[] },
     @CurrentUser() user: UserEntity,
   ) {
-    const assignments = await this.resourceResponsibleService.assignMultipleResponsibles(
+    const assignments = await this.resourceResponsibleService.assignMultipleResponsibles({
       resourceId,
-      body.userIds,
-      user.id!,
-    );
+      userIds: body.userIds,
+      assignedBy: user.id!,
+    });
     return ResponseUtil.success(assignments, 'Users assigned as responsible successfully');
   }
 
@@ -164,11 +163,11 @@ export class ResourceResponsibleController {
     @Body() body: { userIds: string[] },
     @CurrentUser() user: UserEntity,
   ) {
-    const replacedResponsibles = await this.resourceResponsibleService.replaceResourceResponsibles(
+    const replacedResponsibles = await this.resourceResponsibleService.replaceResourceResponsibles({
       resourceId,
-      body.userIds,
-      user.id!,
-    );
+      userIds: body.userIds,
+      assignedBy: user.id!,
+    });
     return ResponseUtil.success(replacedResponsibles, 'Resource responsible users replaced successfully');
   }
 
@@ -259,7 +258,7 @@ export class ResourceResponsibleController {
     @CurrentUser() user: UserEntity,
     @Query('activeOnly') activeOnly: boolean = true,
   ) {
-    const myResponsibilities = await this.resourceResponsibleService.getUserResponsibilities(user.id!, activeOnly);
+    const myResponsibilities = await this.resourceResponsibleService.getUserResponsibilities({ userId: user.id!, activeOnly });
     return ResponseUtil.success(myResponsibilities, 'User managed resources retrieved successfully');
   }
 

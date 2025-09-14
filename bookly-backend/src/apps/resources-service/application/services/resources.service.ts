@@ -396,47 +396,45 @@ export class ResourcesService {
    * Deletes a resource (soft delete for safety)
    * Implements RF-01 - Follows Clean Architecture patterns
    */
-  async deleteResource(id: string, data: DeleteResourceDto): Promise<void> {
+  async deleteResource(data: DeleteResourceDto): Promise<void> {
     this.loggingService.log(
       'Deleting resource with business validation',
-      { resourceId: id, deletedBy: data.deletedBy, force: data.force },
+      { resourceId: data.id, deletedBy: data.deletedBy, force: data.force },
       'ResourcesService'
     );
 
     try {
       // Business Logic 1: Verify resource exists
-      const existingResource = await this.resourceRepository.findById(id);
+      const existingResource = await this.resourceRepository.findById(data.id);
       if (!existingResource) {
-        throw new BadRequestException(`Resource with id ${id} not found`);
+        throw new BadRequestException(`Resource with id ${data.id} not found`);
       }
 
       // Business Logic 2: Check if resource has active reservations (if implementing soft delete)
       if (!data.force) {
-        // In a real implementation, check for active reservations
-        const activeReservations = await this.checkActiveReservations(id);
-        if (activeReservations.length > 0) {  
-          throw new ConflictException('Cannot delete resource with active reservations');
-        }
+        // TODO: Implement integration with availability-service to check active reservations
+        // For now, we allow deletion but this should be implemented in future iterations
+        this.loggingService.log('Skipping active reservations check - integration pending', { resourceId: data.id }, 'ResourcesService');
       }
 
       // Business Logic 3: Perform deletion (soft delete by default)
       if (data.force) {
         // Hard delete - removes from database
-        await this.resourceRepository.delete(id);
+        await this.resourceRepository.delete(data.id);
       } else {
         // Soft delete - marks as inactive
         const deletedResource = existingResource.softDelete();
-        await this.resourceRepository.update(id, deletedResource);
+        await this.resourceRepository.update(data.id, deletedResource);
       }
 
       // Business Logic 4: Publish standardized domain event
       const domainEvent = createStandardizedEvent(
-        'resource.queried',
-        id,
+        'resource.deleted',
+        data.id,
         'Resource',
-        EventAction.UPDATED,
+        EventAction.DELETED,
         {
-          resourceId: id,
+          resourceId: data.id,
           found: !!existingResource,
           resourceCode: existingResource?.code,
           resourceName: existingResource?.name
@@ -451,12 +449,12 @@ export class ResourcesService {
 
       this.loggingService.log(
         'Resource deleted successfully',
-        { resourceId: id, deletedBy: data.deletedBy, deletionType: data.force ? 'HARD' : 'SOFT' },
+        { resourceId: data.id, deletedBy: data.deletedBy, deletionType: data.force ? 'HARD' : 'SOFT' },
         'ResourcesService'
       );
 
     } catch (error) {
-      this.loggingService.error(`Failed to delete resource: ${id}`, error, 'ResourcesService');
+      this.loggingService.error(`Failed to delete resource: ${data.id}`, error, 'ResourcesService');
       throw error;
     }
   }

@@ -26,7 +26,7 @@ export class DeleteResourceHandler implements ICommandHandler<DeleteResourceComm
       );
 
       // Delegate to service (Clean Architecture pattern)
-      await this.resourcesService.deleteResource(command.data.id, command.data.deletedBy, command.data.force);
+      await this.resourcesService.deleteResource(command.data);
       
     } catch (error) {
       this.logger.error(

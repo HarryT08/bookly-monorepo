@@ -225,11 +225,11 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(null);
       resourceResponsibleRepository.create.mockResolvedValue(mockResourceResponsibleEntity);
 
-      const result = await service.assignMultipleResponsibles(
-        'resource-id-1',
+      const result = await service.assignMultipleResponsibles({
+        resourceId: 'resource-id-1',
         userIds,
-        'admin-id-1',
-      );
+        assignedBy: 'admin-id-1',
+      });
 
       expect(resourceRepository.findById).toHaveBeenCalledWith('resource-id-1');
       expect(userRepository.findById).toHaveBeenCalledTimes(2);
@@ -317,7 +317,7 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(null);
 
       await expect(
-        service.deactivateResponsible('resource-id-1', 'user-id-1'),
+        service.deactivateResponsible({ resourceId: 'resource-id-1', userId: 'user-id-1' }),
       ).rejects.toThrow(NotFoundException);
       expect(resourceResponsibleRepository.deactivate).not.toHaveBeenCalled();
     });
@@ -335,7 +335,7 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(inactiveResponsible);
 
       await expect(
-        service.deactivateResponsible('resource-id-1', 'user-id-1'),
+        service.deactivateResponsible({ resourceId: 'resource-id-1', userId: 'user-id-1' }),
       ).rejects.toThrow(ConflictException);
       expect(resourceResponsibleRepository.deactivate).not.toHaveBeenCalled();
     });
