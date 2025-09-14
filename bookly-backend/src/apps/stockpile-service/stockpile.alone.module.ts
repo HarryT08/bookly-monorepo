@@ -5,10 +5,10 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 // Shared Libraries
-import { CommonModule } from '@common/common.module';
-import { EventBusModule } from '@event-bus/event-bus.module';
-import { LoggingModule } from '@logging/logging.module';
-import { MonitoringModule } from '@monitoring/monitoring.module';
+import { CommonModule } from '@libs/common/common.module';
+import { EventBusModule } from '@libs/event-bus/event-bus.module';
+import { LoggingModule } from '@libs/logging/logging.module';
+import { MonitoringModule } from '@libs/monitoring/monitoring.module';
 import { I18nConfigModule } from '@i18n/i18n.module';
 
 // Feature Module

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@common/services/prisma.service';
-import { LoggingService } from '@logging/logging.service';
-import { LoggingHelper } from '@logging/logging.helper';
+import { PrismaService } from '@libs/common/services/prisma.service';
+import { LoggingService } from '@libs/logging/logging.service';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 import { ApprovalFlowRepository } from '../../domain/repositories/approval-flow.repository';
 import {
   ApprovalFlowEntity,

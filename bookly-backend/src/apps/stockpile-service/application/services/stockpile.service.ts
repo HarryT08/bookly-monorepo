@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LoggingService } from '@logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 
 @Injectable()
 export class StockpileService {

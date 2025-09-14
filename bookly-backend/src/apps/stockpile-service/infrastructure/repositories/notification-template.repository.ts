@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@common/services/prisma.service';
-import { LoggingService } from '@logging/logging.service';
+import { PrismaService } from '@libs/common/services/prisma.service';
+import { LoggingService } from '@libs/logging/logging.service';
 import { NotificationTemplateRepository } from '../../domain/repositories/notification-template.repository';
 import { 
   NotificationChannelEntity, 
@@ -8,9 +8,9 @@ import {
   NotificationConfigEntity, 
   SentNotificationEntity,
 } from '../../domain/entities/notification-template.entity';
-import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
 import { NotificationEventType } from '../../utils/notification-event-type.enum';
-import { LoggingHelper } from '@logging/logging.helper';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()
 export class PrismaNotificationTemplateRepository implements NotificationTemplateRepository {

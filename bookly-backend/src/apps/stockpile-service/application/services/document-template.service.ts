@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { LoggingService } from '@logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 import {
   CreateDocumentTemplateCommand,
   UpdateDocumentTemplateCommand,
@@ -24,8 +24,8 @@ import {
   DocumentTemplateDto,
   GeneratedDocumentDto,
   DocumentEventType
-} from '@dto/stockpile/document-template.dto';
-import { LoggingHelper } from '@logging/logging.helper';
+} from '@libs/dto/stockpile/document-template.dto';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()
 export class DocumentTemplateService {

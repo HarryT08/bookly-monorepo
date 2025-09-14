@@ -1,7 +1,7 @@
 import { EventsHandler, IEventHandler, CommandBus } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
-import { LoggingService } from '@logging/logging.service';
-import { DomainEvent, EventBusService } from '@/libs/event-bus/services/event-bus.service';
+import { LoggingService } from '@libs/logging/logging.service';
+import { DomainEvent, EventBusService } from '@libs/event-bus/services/event-bus.service';
 import {
   ReservationSubmittedEvent,
   ApprovalRequestCreatedEvent,
@@ -18,7 +18,7 @@ import {
   SendNotificationCommand 
 } from '../../commands/notification-template.commands';
 import { LoggingHelper } from '@libs/logging/logging.helper';
-import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
 
 @Injectable()
 @EventsHandler(ReservationSubmittedEvent)

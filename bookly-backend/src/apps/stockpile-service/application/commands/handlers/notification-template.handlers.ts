@@ -1,7 +1,7 @@
-import { CommandHandler, ICommandHandler, EventBus } from "@nestjs/cqrs";
-import { Injectable, Inject } from "@nestjs/common";
-import { LoggingService } from "@logging/logging.service";
-import { NotificationTemplateRepository } from "../../../domain/repositories/notification-template.repository";
+import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
+import { Injectable } from "@nestjs/common";
+import { LoggingService } from "@libs/logging/logging.service";
+import { NotificationTemplateService } from "../../services/notification-template.service";
 import {
   NotificationChannelEntity,
   NotificationTemplateEntity,
@@ -36,15 +36,17 @@ import { LoggingHelper } from "@libs/logging/logging.helper";
 import { NotificationStatus } from "@/apps/stockpile-service/utils";
 import { NotificationChannelType } from "@/apps/availability-service/utils/notification-channel-type.enum";
 
+/**
+ * Create Notification Channel Command Handler
+ * Orchestrates notification channel creation by delegating to NotificationTemplateService
+ */
 @Injectable()
 @CommandHandler(CreateNotificationChannelCommand)
 export class CreateNotificationChannelHandler
   implements ICommandHandler<CreateNotificationChannelCommand>
 {
   constructor(
-    @Inject("NotificationTemplateRepository")
-    private readonly repository: NotificationTemplateRepository,
-    private readonly eventBus: EventBus,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
@@ -52,36 +54,23 @@ export class CreateNotificationChannelHandler
     command: CreateNotificationChannelCommand
   ): Promise<NotificationChannelDto> {
     this.loggingService.log(
-      "Creating notification channel",
+      "Orchestrating create notification channel command",
       "CreateNotificationChannelHandler",
       LoggingHelper.logParams({ command })
     );
 
-    const channel = new NotificationChannelEntity(
-      undefined, // ID will be generated
-      command.name,
-      command.channel,
-      command.displayName,
-      command.supportsAttachments,
-      command.supportsLinks,
-      command.maxMessageLength,
-      true, // isActive
-      command.settings
-    );
+    const result = await this.notificationTemplateService.createNotificationChannel({
+      name: command.name,
+      channel: command.channel,
+      displayName: command.displayName,
+      supportsAttachments: command.supportsAttachments,
+      supportsLinks: command.supportsLinks,
+      maxMessageLength: command.maxMessageLength,
+      settings: command.settings
+    });
 
-    const createdChannel =
-      await this.repository.createNotificationChannel(channel);
-
-    // Publish event
-    await this.eventBus.publish(
-      new NotificationChannelCreatedEvent(
-        createdChannel.id,
-        createdChannel.name,
-        createdChannel.displayName
-      )
-    );
-
-    return this.mapToChannelDto(createdChannel);
+    this.loggingService.log('Create notification channel command completed', 'CreateNotificationChannelHandler', LoggingHelper.logId(result.id));
+    return result;
   }
 
   private mapToChannelDto(
@@ -109,9 +98,7 @@ export class CreateNotificationTemplateHandler
   implements ICommandHandler<CreateNotificationTemplateCommand>
 {
   constructor(
-    @Inject("NotificationTemplateRepository")
-    private readonly repository: NotificationTemplateRepository,
-    private readonly eventBus: EventBus,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
@@ -119,47 +106,28 @@ export class CreateNotificationTemplateHandler
     command: CreateNotificationTemplateCommand
   ): Promise<NotificationTemplateDto> {
     this.loggingService.log(
-      "Creating notification template",
+      "Orchestrating create notification template command",
       "CreateNotificationTemplateHandler",
       LoggingHelper.logParams({ command })
     );
 
-    const template = new NotificationTemplateEntity(
-      undefined, // ID will be generated
-      command.name,
-      command.channelId,
-      command.eventType,
-      command.resourceType,
-      command.categoryId,
-      command.subject,
-      command.content,
-      command.createdBy,
-      command.variables,
-      command.isDefault,
-      true, // isActive
-      command.attachDocument,
-      command.documentAsLink,
-      command.createdAt,
-      command.updatedAt
-    );
+    const result = await this.notificationTemplateService.createNotificationTemplate({
+      name: command.name,
+      channelId: command.channelId,
+      eventType: command.eventType,
+      resourceType: command.resourceType,
+      categoryId: command.categoryId,
+      subject: command.subject,
+      content: command.content,
+      variables: command.variables,
+      isDefault: command.isDefault,
+      attachDocument: command.attachDocument,
+      documentAsLink: command.documentAsLink,
+      createdBy: command.createdBy
+    });
 
-    const createdTemplate =
-      await this.repository.createNotificationTemplate(template);
-
-    // Publish event
-    await this.eventBus.publish(
-      new NotificationTemplateCreatedEvent(
-        createdTemplate.id,
-        createdTemplate.name,
-        createdTemplate.channelId,
-        createdTemplate.eventType,
-        createdTemplate.resourceType,
-        createdTemplate.categoryId,
-        createdTemplate.createdBy
-      )
-    );
-
-    return this.mapToTemplateDto(createdTemplate);
+    this.loggingService.log('Create notification template command completed', 'CreateNotificationTemplateHandler', LoggingHelper.logId(result.id));
+    return result;
   }
 
   private mapToTemplateDto(
@@ -186,15 +154,17 @@ export class CreateNotificationTemplateHandler
   }
 }
 
+/**
+ * Update Notification Template Command Handler
+ * Orchestrates notification template update by delegating to NotificationTemplateService
+ */
 @Injectable()
 @CommandHandler(UpdateNotificationTemplateCommand)
 export class UpdateNotificationTemplateHandler
   implements ICommandHandler<UpdateNotificationTemplateCommand>
 {
   constructor(
-    @Inject("NotificationTemplateRepository")
-    private readonly repository: NotificationTemplateRepository,
-    private readonly eventBus: EventBus,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
@@ -202,94 +172,37 @@ export class UpdateNotificationTemplateHandler
     command: UpdateNotificationTemplateCommand
   ): Promise<NotificationTemplateDto> {
     this.loggingService.log(
-      "Updating notification template",
+      "Orchestrating update notification template command",
       "UpdateNotificationTemplateHandler",
       LoggingHelper.logParams({ command })
     );
 
-    const existingTemplate = await this.repository.findNotificationTemplateById(
-      command.id
-    );
-    if (!existingTemplate) {
-      throw new Error(`Notification template with ID ${command.id} not found`);
-    }
+    const result = await this.notificationTemplateService.updateNotificationTemplate(command.id, {
+      name: command.name,
+      subject: command.subject,
+      content: command.content,
+      variables: command.variables,
+      isActive: command.isActive,
+      attachDocument: command.attachDocument,
+      documentAsLink: command.documentAsLink
+    });
 
-    const updatedTemplate = new NotificationTemplateEntity(
-      existingTemplate.id,
-      command.name || existingTemplate.name,
-      existingTemplate.channelId,
-      existingTemplate.eventType,
-      existingTemplate.resourceType,
-      existingTemplate.categoryId,
-      command.subject || existingTemplate.subject,
-      command.content || existingTemplate.content,
-      existingTemplate.createdBy,
-      command.variables || existingTemplate.variables,
-      existingTemplate.isDefault,
-      command.isActive !== undefined
-        ? command.isActive
-        : existingTemplate.isActive,
-      command.attachDocument !== undefined
-        ? command.attachDocument
-        : existingTemplate.attachDocument,
-      command.documentAsLink !== undefined
-        ? command.documentAsLink
-        : existingTemplate.documentAsLink,
-      existingTemplate.createdAt,
-      new Date()
-    );
-
-    const savedTemplate = await this.repository.updateNotificationTemplate(
-      updatedTemplate.id,
-      updatedTemplate
-    );
-
-    // Publish event
-    await this.eventBus.publish(
-      new NotificationTemplateUpdatedEvent(
-        savedTemplate.id,
-        savedTemplate.name,
-        savedTemplate.channelId,
-        savedTemplate.eventType
-      )
-    );
-
-    return this.mapToTemplateDto(savedTemplate);
-  }
-
-  private mapToTemplateDto(
-    template: NotificationTemplateEntity
-  ): NotificationTemplateDto {
-    return {
-      id: template.id,
-      name: template.name,
-      channelId: template.channelId,
-      eventType: template.eventType,
-      resourceType: template.resourceType,
-      categoryId: template.categoryId,
-      subject: template.subject,
-      content: template.content,
-      variables: template.variables,
-      isDefault: template.isDefault,
-      isActive: template.isActive,
-      attachDocument: template.attachDocument,
-      documentAsLink: template.documentAsLink,
-      createdBy: template.createdBy,
-      createdAt: template.createdAt,
-      updatedAt: template.updatedAt,
-    };
+    this.loggingService.log('Update notification template command completed', 'UpdateNotificationTemplateHandler', LoggingHelper.logId(result.id));
+    return result;
   }
 }
 
+/**
+ * Create Notification Config Command Handler
+ * Orchestrates notification config creation by delegating to NotificationTemplateService
+ */
 @Injectable()
 @CommandHandler(CreateNotificationConfigCommand)
 export class CreateNotificationConfigHandler
   implements ICommandHandler<CreateNotificationConfigCommand>
 {
   constructor(
-    @Inject("NotificationTemplateRepository")
-    private readonly repository: NotificationTemplateRepository,
-    private readonly eventBus: EventBus,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
@@ -297,75 +210,40 @@ export class CreateNotificationConfigHandler
     command: CreateNotificationConfigCommand
   ): Promise<NotificationConfigDto> {
     this.loggingService.log(
-      "Creating notification config",
+      "Orchestrating create notification config command",
       "CreateNotificationConfigHandler",
       LoggingHelper.logParams({ command })
     );
 
-    const config = new NotificationConfigEntity(
-      undefined, // ID will be generated
-      command.channelId,
-      command.createdBy,
-      command.programId,
-      command.resourceType,
-      command.categoryId,
-      command.isEnabled,
-      command.isImmediate,
-      command.batchInterval,
-      command.sendDocuments,
-      command.documentMethod,
-      command.createdAt,
-      command.updatedAt
-    );
+    const result = await this.notificationTemplateService.createNotificationConfig({
+      channelId: command.channelId,
+      createdBy: command.createdBy,
+      programId: command.programId,
+      resourceType: command.resourceType,
+      categoryId: command.categoryId,
+      isEnabled: command.isEnabled,
+      isImmediate: command.isImmediate,
+      batchInterval: command.batchInterval,
+      sendDocuments: command.sendDocuments,
+      documentMethod: command.documentMethod
+    });
 
-    const createdConfig =
-      await this.repository.createNotificationConfig(config);
-
-    // Publish event
-    await this.eventBus.publish(
-      new NotificationConfigCreatedEvent(
-        createdConfig.id,
-        createdConfig.programId,
-        createdConfig.resourceType,
-        createdConfig.categoryId,
-        createdConfig.channelId,
-        createdConfig.createdBy
-      )
-    );
-
-    return this.mapToConfigDto(createdConfig);
-  }
-
-  private mapToConfigDto(
-    config: NotificationConfigEntity
-  ): NotificationConfigDto {
-    return {
-      id: config.id,
-      programId: config.programId,
-      resourceType: config.resourceType,
-      categoryId: config.categoryId,
-      channelId: config.channelId,
-      isEnabled: config.isEnabled,
-      isImmediate: config.isImmediate,
-      batchInterval: config.batchInterval,
-      sendDocuments: config.sendDocuments,
-      documentMethod: config.documentMethod,
-      createdBy: config.createdBy,
-      createdAt: config.createdAt,
-      updatedAt: config.updatedAt,
-    };
+    this.loggingService.log('Create notification config command completed', 'CreateNotificationConfigHandler', LoggingHelper.logId(result.id));
+    return result;
   }
 }
 
+/**
+ * Send Notification Command Handler
+ * Orchestrates notification sending by delegating to NotificationTemplateService
+ */
 @Injectable()
 @CommandHandler(SendNotificationCommand)
 export class SendNotificationHandler
   implements ICommandHandler<SendNotificationCommand>
 {
   constructor(
-    @Inject("NotificationTemplateRepository")
-    private readonly repository: NotificationTemplateRepository,
-    private readonly eventBus: EventBus,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
@@ -373,217 +251,82 @@ export class SendNotificationHandler
     command: SendNotificationCommand
   ): Promise<SentNotificationDto> {
     this.loggingService.log(
-      "Sending notification",
+      "Orchestrating send notification command",
       "SendNotificationHandler",
       LoggingHelper.logParams({ command })
     );
 
-    const template = await this.repository.findNotificationTemplateById(
-      command.templateId
-    );
-    if (!template) {
-      throw new Error(
-        `Notification template with ID ${command.templateId} not found`
-      );
-    }
+    const result = await this.notificationTemplateService.sendNotification({
+      templateId: command.templateId,
+      reservationId: command.reservationId,
+      recipientId: command.recipientId,
+      channel: command.channel,
+      variables: command.variables,
+      hasAttachment: command.hasAttachment,
+      attachmentPath: command.attachmentPath
+    });
 
-    // Process template variables
-    let processedSubject = template.subject;
-    let processedContent = template.content;
-
-    if (command.variables) {
-      Object.keys(command.variables).forEach((key) => {
-        const value = command.variables[key];
-        processedSubject = processedSubject.replace(`{{${key}}}`, value);
-        processedContent = processedContent.replace(`{{${key}}}`, value);
-      });
-    }
-
-    const notification = new SentNotificationEntity(
-      undefined, // ID will be generated
-      command.templateId,
-      command.reservationId,
-      command.recipientId,
-      command.channel,
-      NotificationStatus.PENDING,
-      processedContent,
-      processedSubject,
-      command.hasAttachment,
-      command.attachmentPath,
-      null, // sentAt
-      null, // deliveredAt
-      null, // readAt
-      null, // errorMessage
-      null, // createdAt
-      null, // updatedAt
-      command.variables
-    );
-
-    const sentNotification =
-      await this.repository.createSentNotification(notification);
-
-    // Publish event
-    await this.eventBus.publish(
-      new NotificationSentEvent(
-        sentNotification.id,
-        sentNotification.templateId,
-        sentNotification.reservationId,
-        sentNotification.recipientId,
-        sentNotification.channel,
-        sentNotification.subject
-      )
-    );
-
-    return this.mapToSentNotificationDto(sentNotification);
-  }
-
-  private mapToSentNotificationDto(
-    notification: SentNotificationEntity
-  ): SentNotificationDto {
-    return {
-      id: notification.id,
-      templateId: notification.templateId,
-      reservationId: notification.reservationId,
-      recipientId: notification.recipientId,
-      channel: notification.channel,
-      subject: notification.subject,
-      content: notification.content,
-      status: notification.status,
-      hasAttachment: notification.hasAttachment,
-      attachmentPath: notification.attachmentPath,
-      sentAt: notification.sentAt,
-      deliveredAt: notification.deliveredAt,
-      readAt: notification.readAt,
-      errorMessage: notification.errorMessage,
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-      variables: notification.variables,
-    };
+    this.loggingService.log('Send notification command completed', 'SendNotificationHandler', LoggingHelper.logId(result.id));
+    return result;
   }
 }
 
+/**
+ * Send Batch Notifications Command Handler
+ * Orchestrates batch notifications sending by delegating to NotificationTemplateService
+ */
 @Injectable()
 @CommandHandler(SendBatchNotificationsCommand)
 export class SendBatchNotificationsHandler
   implements ICommandHandler<SendBatchNotificationsCommand>
 {
   constructor(
-    @Inject("NotificationTemplateRepository")
-    private readonly repository: NotificationTemplateRepository,
-    private readonly eventBus: EventBus,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(command: SendBatchNotificationsCommand): Promise<void> {
     this.loggingService.log(
-      "Sending batch notifications",
+      "Orchestrating send batch notifications command",
       "SendBatchNotificationsHandler",
       LoggingHelper.logParams({ command })
     );
 
-    // Update notifications status to SENT
-    for (const notificationId of command.notificationIds) {
-      const notification =
-        await this.repository.findSentNotificationById(notificationId);
-      if (notification) {
-        const updatedNotification = new SentNotificationEntity(
-          notification.id,
-          notification.templateId,
-          notification.reservationId,
-          notification.recipientId,
-          notification.channel,
-          NotificationStatus.SENT,
-          notification.subject,
-          notification.content,
-          notification.hasAttachment,
-          notification.attachmentPath,
-          new Date(), // sentAt
-          notification.deliveredAt,
-          notification.readAt,
-          notification.errorMessage,
-          notification.createdAt,
-          new Date(),
-          notification.variables
-        );
-
-        await this.repository.updateSentNotification(
-          updatedNotification.id,
-          updatedNotification
-        );
-      }
-    }
-
-    // Publish event
-    await this.eventBus.publish(
-      new BatchNotificationsSentEvent(
-        command.channelId,
-        command.notificationIds,
-        command.notificationIds.length
-      )
+    await this.notificationTemplateService.sendBatchNotifications(
+      command.channelId,
+      command.notificationIds
     );
+
+    this.loggingService.log('Send batch notifications command completed', 'SendBatchNotificationsHandler');
   }
 }
 
+/**
+ * Mark Notification As Read Command Handler
+ * Orchestrates marking notification as read by delegating to NotificationTemplateService
+ */
 @Injectable()
 @CommandHandler(MarkNotificationAsReadCommand)
 export class MarkNotificationAsReadHandler
   implements ICommandHandler<MarkNotificationAsReadCommand>
 {
   constructor(
-    @Inject("NotificationTemplateRepository")
-    private readonly repository: NotificationTemplateRepository,
-    private readonly eventBus: EventBus,
+    private readonly notificationTemplateService: NotificationTemplateService,
     private readonly loggingService: LoggingService
   ) {}
 
   async execute(command: MarkNotificationAsReadCommand): Promise<void> {
     this.loggingService.log(
-      "Marking notification as read",
+      "Orchestrating mark notification as read command",
       "MarkNotificationAsReadHandler",
       LoggingHelper.logParams({ command })
     );
 
-    const notification = await this.repository.findSentNotificationById(
-      command.notificationId
-    );
-    if (!notification) {
-      throw new Error(
-        `Notification with ID ${command.notificationId} not found`
-      );
-    }
-
-    const updatedNotification = new SentNotificationEntity(
-      notification.id,
-      notification.templateId,
-      notification.reservationId,
-      notification.recipientId,
-      notification.channel,
-      notification.status,
-      notification.subject,
-      notification.content,
-      notification.hasAttachment,
-      notification.attachmentPath,
-      notification.sentAt,
-      new Date(), // readAt
-      notification.deliveredAt,
-      notification.errorMessage,
-      notification.createdAt,
-      new Date(),
-      notification.variables
+    await this.notificationTemplateService.markNotificationAsRead(
+      command.notificationId,
+      command.userId
     );
 
-    await this.repository.updateSentNotification(
-      updatedNotification.id,
-      updatedNotification
-    );
-
-    // Publish event
-    await this.eventBus.publish(
-      new NotificationMarkedAsReadEvent(
-        command.notificationId,
-        command.userId,
-        new Date()
-      )
-    );
+    this.loggingService.log('Mark notification as read command completed', 'MarkNotificationAsReadHandler', LoggingHelper.logId(command.notificationId));
   }
 }

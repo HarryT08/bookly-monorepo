@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { CommonModule } from '@common/common.module';
-import { LoggingModule } from '@logging/logging.module';
-import { EventBusModule } from '@event-bus/event-bus.module';
-import { MonitoringModule } from '@monitoring/monitoring.module';
+import { CommonModule } from '@libs/common/common.module';
+import { LoggingModule } from '@libs/logging/logging.module';
+import { EventBusModule } from '@libs/event-bus/event-bus.module';
+import { MonitoringModule } from '@libs/monitoring/monitoring.module';
 
 // Controllers
 import { StockpileController } from './infrastructure/controllers/stockpile.controller';

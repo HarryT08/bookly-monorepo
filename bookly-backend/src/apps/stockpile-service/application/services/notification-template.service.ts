@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { LoggingService } from '@logging/logging.service';
-import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+import { LoggingService } from '@libs/logging/logging.service';
+import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
 import {
   CreateNotificationChannelCommand,
   CreateNotificationTemplateCommand,
@@ -37,7 +37,8 @@ import {
   NotificationConfigDto,
   SentNotificationDto,
   NotificationEventType,
-} from '@dto/stockpile/notification-template.dto';
+} from '@libs/dto/stockpile/notification-template.dto';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()
 export class NotificationTemplateService {

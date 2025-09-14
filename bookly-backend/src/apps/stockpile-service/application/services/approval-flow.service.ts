@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { LoggingService } from '@logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 import {
   CreateApprovalFlowCommand,
   UpdateApprovalFlowCommand,
@@ -26,8 +26,8 @@ import {
   ApprovalFlowDto,
   ApprovalLevelDto,
   ApprovalRequestDto
-} from '@dto/stockpile/approval-flow.dto';
-import { LoggingHelper } from '@logging/logging.helper';
+} from '@libs/dto/stockpile/approval-flow.dto';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 
 @Injectable()
 export class ApprovalFlowService {

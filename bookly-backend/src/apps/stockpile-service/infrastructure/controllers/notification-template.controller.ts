@@ -9,6 +9,8 @@ import {
   UseGuards,
   HttpStatus
 } from '@nestjs/common';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { ApiResponse as StandardApiResponse } from '@libs/dto/common/response.dto';
 import { 
   ApiTags, 
   ApiOperation, 
@@ -17,10 +19,10 @@ import {
   ApiQuery,
   ApiBearerAuth
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
-import { RolesGuard } from '@common/guards/roles.guard';
-import { Roles } from '@common/decorators/roles.decorator';
-import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@libs/common/guards/roles.guard';
+import { Roles } from '@libs/common/decorators/roles.decorator';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
 import { NotificationTemplateService } from '../../application/services/notification-template.service';
 import {
   CreateNotificationChannelDto,
@@ -33,8 +35,8 @@ import {
   NotificationConfigDto,
   SentNotificationDto,
   NotificationEventType
-} from '@dto/stockpile/notification-template.dto';
-import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
+} from '@libs/dto/stockpile/notification-template.dto';
+import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
 import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
 
 @ApiTags('Notification Templates')

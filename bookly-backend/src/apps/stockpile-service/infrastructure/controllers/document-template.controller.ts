@@ -13,6 +13,8 @@ import {
   HttpStatus,
   Res
 } from '@nestjs/common';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { ApiResponse as StandardApiResponse } from '@libs/dto/common/response.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { Multer } from 'multer';
@@ -25,10 +27,10 @@ import {
   ApiBearerAuth,
   ApiConsumes
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@common/guards/jwt-auth.guard';
-import { RolesGuard } from '@common/guards/roles.guard';
-import { Roles } from '@common/decorators/roles.decorator';
-import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@libs/common/guards/roles.guard';
+import { Roles } from '@libs/common/decorators/roles.decorator';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
 import { DocumentTemplateService } from '../../application/services/document-template.service';
 import {
   CreateDocumentTemplateDto,
@@ -37,7 +39,7 @@ import {
   DocumentTemplateDto,
   GeneratedDocumentDto,
   DocumentEventType
-} from '@dto/stockpile/document-template.dto';
+} from '@libs/dto/stockpile/document-template.dto';
 import { STOCKPILE_URLS } from '../../utils/maps/urls.map';
 
 @ApiTags('Document Templates')
@@ -55,9 +57,10 @@ export class DocumentTemplateController {
   async createDocumentTemplate(
     @Body() dto: CreateDocumentTemplateDto,
     @CurrentUser() user: any
-  ): Promise<DocumentTemplateDto> {
+  ): Promise<StandardApiResponse<DocumentTemplateDto>> {
     dto.createdBy = user.id;
-    return await this.documentTemplateService.createDocumentTemplate(dto);
+    const result = await this.documentTemplateService.createDocumentTemplate(dto);
+    return ResponseUtil.success(result, 'Document template created successfully');
   }
 
   @Put(STOCKPILE_URLS.DOCUMENT_TEMPLATE_UPDATE)
@@ -69,8 +72,9 @@ export class DocumentTemplateController {
   async updateDocumentTemplate(
     @Param('id') id: string,
     @Body() dto: UpdateDocumentTemplateDto
-  ): Promise<DocumentTemplateDto> {
-    return await this.documentTemplateService.updateDocumentTemplate(id, dto);
+  ): Promise<StandardApiResponse<DocumentTemplateDto>> {
+    const result = await this.documentTemplateService.updateDocumentTemplate(id, dto);
+    return ResponseUtil.success(result, 'Document template updated successfully');
   }
 
   @Delete(STOCKPILE_URLS.DOCUMENT_TEMPLATE_DELETE)
@@ -102,8 +106,8 @@ export class DocumentTemplateController {
     @Query('isActive') isActive?: boolean,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
-  ): Promise<{ templates: DocumentTemplateDto[]; total: number }> {
-    return await this.documentTemplateService.getDocumentTemplates(
+  ): Promise<StandardApiResponse<DocumentTemplateDto[]>> {
+    const result = await this.documentTemplateService.getDocumentTemplates(
       resourceType,
       categoryId,
       eventType,
@@ -111,6 +115,7 @@ export class DocumentTemplateController {
       page,
       limit
     );
+    return ResponseUtil.paginated(result.templates, result.total, page, limit, 'Document templates retrieved successfully');
   }
 
   @Get(':id')

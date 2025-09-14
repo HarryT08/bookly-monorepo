@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@common/services/prisma.service';
-import { LoggingService } from '@logging/logging.service';
+import { PrismaService } from '@libs/common/services/prisma.service';
+import { LoggingService } from '@libs/logging/logging.service';
 import { DocumentTemplateRepository } from '../../domain/repositories/document-template.repository';
 import { DocumentTemplateEntity, GeneratedDocumentEntity } from '../../domain/entities/document-template.entity';
-import { LoggingHelper } from '@logging/logging.helper';
+import { LoggingHelper } from '@libs/logging/logging.helper';
 import { DocumentEventType } from '../../utils/document-event-type.enum';
 
 @Injectable()

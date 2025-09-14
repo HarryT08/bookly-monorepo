@@ -10,6 +10,8 @@ import {
   UseGuards,
   HttpStatus
 } from '@nestjs/common';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { ApiResponse as StandardApiResponse } from '@libs/dto/common/response.dto';
 import { 
   ApiTags, 
   ApiOperation, 
@@ -76,9 +78,10 @@ export class ApprovalFlowController {
   async createApprovalFlow(
     @Body() dto: CreateApprovalFlowDto,
     @CurrentUser() user: any
-  ): Promise<ApprovalFlowDto> {
+  ): Promise<StandardApiResponse<ApprovalFlowDto>> {
     dto.createdBy = user.id;
-    return await this.approvalFlowService.createApprovalFlow(dto);
+    const result = await this.approvalFlowService.createApprovalFlow(dto);
+    return ResponseUtil.success(result, 'Approval flow created successfully');
   }
 
   @Put(STOCKPILE_URLS.APPROVAL_FLOW_UPDATE)
@@ -90,8 +93,9 @@ export class ApprovalFlowController {
   async updateApprovalFlow(
     @Param('id') id: string,
     @Body() dto: UpdateApprovalFlowDto
-  ): Promise<ApprovalFlowDto> {
-    return await this.approvalFlowService.updateApprovalFlow(id, dto);
+  ): Promise<StandardApiResponse<ApprovalFlowDto>> {
+    const result = await this.approvalFlowService.updateApprovalFlow(id, dto);
+    return ResponseUtil.success(result, 'Approval flow updated successfully');
   }
 
   @Get(STOCKPILE_URLS.APPROVAL_FLOWS)
@@ -106,8 +110,9 @@ export class ApprovalFlowController {
     @Query('resourceType') resourceType?: string,
     @Query('categoryId') categoryId?: string,
     @Query('isActive') isActive?: boolean
-  ): Promise<ApprovalFlowDto[]> {
-    return await this.approvalFlowService.getApprovalFlows(programId, resourceType, categoryId, isActive);
+  ): Promise<StandardApiResponse<ApprovalFlowDto[]>> {
+    const result = await this.approvalFlowService.getApprovalFlows(programId, resourceType, categoryId, isActive);
+    return ResponseUtil.list(result, 'Approval flows retrieved successfully');
   }
 
   @Get(':id')
@@ -115,8 +120,9 @@ export class ApprovalFlowController {
   @ApiParam({ name: 'id', description: 'Approval flow ID' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Approval flow retrieved successfully', type: ApprovalFlowDto })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Approval flow not found' })
-  async getApprovalFlowById(@Param('id') id: string): Promise<ApprovalFlowDto | null> {
-    return await this.approvalFlowService.getApprovalFlowById(id);
+  async getApprovalFlowById(@Param('id') id: string): Promise<StandardApiResponse<ApprovalFlowDto | null>> {
+    const result = await this.approvalFlowService.getApprovalFlowById(id);
+    return ResponseUtil.success(result, 'Approval flow retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.APPROVAL_FLOW_DEFAULT_SEARCH)
@@ -189,8 +195,8 @@ export class ApprovalFlowController {
     @Query('categoryId') categoryId?: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
-  ): Promise<{ requests: ApprovalRequestDto[]; total: number }> {
-    return await this.approvalFlowService.getPendingApprovalRequests(
+  ): Promise<StandardApiResponse<ApprovalRequestDto[]>> {
+    const result = await this.approvalFlowService.getPendingApprovalRequests(
       approverId,
       programId,
       resourceType,
@@ -198,6 +204,7 @@ export class ApprovalFlowController {
       page,
       limit
     );
+    return ResponseUtil.paginated(result.requests, result.total, page, limit, 'Pending approval requests retrieved successfully');
   }
 
   @Post(STOCKPILE_URLS.APPROVAL_FLOW_REQUESTS_PROCESS)

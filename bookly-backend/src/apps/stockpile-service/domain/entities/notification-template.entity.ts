@@ -1,7 +1,8 @@
-import { NotificationChannelType } from '@/apps/availability-service/utils/notification-channel-type.enum';
-import { NotificationEventType } from '@/apps/stockpile-service/utils/notification-event-type.enum';
-import { DocumentDeliveryMethod } from '@/apps/stockpile-service/utils/document-delivery-method.enum';
-import { NotificationStatus } from '@/apps/stockpile-service/utils/notification-status.enum';
+import { NotificationChannelType } from '@apps/availability-service/utils/notification-channel-type.enum';
+import { NotificationEventType } from '@apps/stockpile-service/utils/notification-event-type.enum';
+import { PaginationDto } from '@libs/dto/common/pagination.dto';
+import { DocumentDeliveryMethod } from '@apps/stockpile-service/utils/document-delivery-method.enum';
+import { NotificationStatus } from '@apps/stockpile-service/utils/notification-status.enum';
 
 export class NotificationChannelEntity {
   constructor(
