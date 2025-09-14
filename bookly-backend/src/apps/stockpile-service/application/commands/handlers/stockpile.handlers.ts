@@ -41,6 +41,8 @@ export class ApproveRequestHandler implements ICommandHandler<ApproveRequestComm
     
     const request: ProcessReservationApprovalRequestDto = {
       reservationId: command.requestId,
+      userId: command.approverId,
+      resourceId: '', // Will be resolved from reservation context
       programId: '', // Will be resolved from reservation context
       resourceType: '', // Will be resolved from reservation context
       requestedBy: command.approverId,
@@ -73,6 +75,8 @@ export class RejectRequestHandler implements ICommandHandler<RejectRequestComman
     
     const request: ProcessReservationApprovalRequestDto = {
       reservationId: command.requestId,
+      userId: command.approverId,
+      resourceId: '', // Will be resolved from reservation context
       programId: '', // Will be resolved from reservation context
       resourceType: '', // Will be resolved from reservation context
       requestedBy: command.approverId,
@@ -106,10 +110,11 @@ export class CheckInHandler implements ICommandHandler<CheckInCommand> {
     const request: PerformCheckInRequestDto = {
       reservationId: command.reservationId,
       userId: command.userId,
-      checkInTime: command.timestamp,
-      location: command.location || 'Default Location',
-      qrCode: '', // Optional QR verification
-      deviceInfo: {}
+      checkInTime: new Date(),
+      location: 'Default Location',
+      qrCode: '',
+      deviceInfo: {},
+      notes: ''
     };
 
     const result = await this.stockpileService.performCheckIn(request);
@@ -140,10 +145,11 @@ export class CheckOutHandler implements ICommandHandler<CheckOutCommand> {
     const request: PerformCheckOutRequestDto = {
       reservationId: command.reservationId,
       userId: command.userId,
-      checkOutTime: command.timestamp,
-      resourceCondition: command.resourceCondition || 'GOOD',
-      notes: command.notes,
-      photos: []
+      checkOutTime: new Date(),
+      condition: '',
+      resourceCondition: '',
+      photos: [],
+      notes: ''
     };
 
     const result = await this.stockpileService.performCheckOut(request);

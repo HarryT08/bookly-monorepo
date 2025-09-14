@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { CommandBus } from '@nestjs/cqrs';
-import { AuthService } from '@apps/auth-service/application/services/auth.service';
-import { UserRepository } from '@apps/auth-service/domain/repositories/user.repository';
-import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
-import { RegisterCommand } from '@apps/auth-service/application/commands/register.command';
-import { LoggingService } from '@libs/logging/logging.service';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { AuthService } from '../../application/services/auth.service';
+import { LoggingService } from '@libs/logging/logging.service';
+import { UserEntity } from '../../domain/entities/user.entity';
+import { RegisterDto } from '@libs/dto';
+import { SSOLoginRequestDto } from '@libs/dto/auth/auth-requests.dto';
+import { RegisterCommand } from '../../application/commands/register.command';
+import { UserRepository } from '../../domain/repositories/user.repository';
 import * as bcrypt from 'bcrypt';
 
 // Mock bcrypt
@@ -410,7 +412,14 @@ describe('AuthService - Authentication BDD Tests', () => {
 
       it('Then should return access token and log SSO login', async () => {
         // When
-        const result = await service.loginSSO(ssoUser);
+        const ssoLoginRequest: SSOLoginRequestDto = {
+          email: ssoUser.email,
+          firstName: ssoUser.firstName,
+          lastName: ssoUser.lastName,
+          googleId: ssoUser.providerId,
+          ssoProvider: ssoUser.provider
+        };
+        const result = await service.loginSSO(ssoLoginRequest);
 
         // Then
         expect(result).toEqual({

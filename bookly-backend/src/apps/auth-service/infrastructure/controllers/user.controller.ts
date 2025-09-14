@@ -1,6 +1,7 @@
 import { Controller, Get, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { QueryBus, CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { UpdateUserDto } from '@libs/dto/auth/user-operations.dto';
 import { GetUserQuery } from '../../application/queries/get-user.query';
 import { GetUsersQuery } from '../../application/queries/get-users.query';
 import { UpdateUserCommand } from '../../application/commands/update-user.command';
@@ -64,7 +65,7 @@ export class UserController {
     description: 'User updated successfully',
     type: SuccessResponseDto
   })
-  async update(@Param('id') id: string, @Body() data: any) {
+  async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
     const user = await this.commandBus.execute(new UpdateUserCommand(id, data));
     return ResponseUtil.success(user, 'User updated successfully');
   }

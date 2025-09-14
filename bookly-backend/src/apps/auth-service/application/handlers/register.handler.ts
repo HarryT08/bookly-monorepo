@@ -6,7 +6,7 @@ import { LoggingService } from '@libs/logging/logging.service';
 import { MonitoringService } from '@libs/monitoring/monitoring.service';
 import { EventBusService } from '@libs/event-bus/services/event-bus.service';
 import { UserRegisteredEvent } from '../../domain/events';
-import { RegisterDto } from '@libs/dto';
+import { RegisterRequestDto } from '@libs/dto/auth/auth-requests.dto';
 
 @CommandHandler(RegisterCommand)
 export class RegisterHandler implements ICommandHandler<RegisterCommand> {
@@ -23,8 +23,8 @@ export class RegisterHandler implements ICommandHandler<RegisterCommand> {
     try {
       this.loggingService.log(`Registration attempt for email: ${email}`, 'RegisterHandler');
 
-      // Delegate business logic to service
-      const registerDto: RegisterDto = {
+      // Delegate business logic to service using DTO
+      const registerRequest: RegisterRequestDto = {
         email,
         username,
         password,
@@ -32,7 +32,7 @@ export class RegisterHandler implements ICommandHandler<RegisterCommand> {
         lastName,
       };
 
-      const registerResult = await this.authService.register(registerDto);
+      const registerResult = await this.authService.register(registerRequest);
 
       this.loggingService.log(`User registered successfully: ${registerResult.user.id}`, 'RegisterHandler');
       this.monitoringService.captureMessage(`New user registered: ${email}`, 'info');

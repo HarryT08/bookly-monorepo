@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RoleService } from '../../application/services/role.service';
+import { CreateRoleDto, UpdateRoleDto } from '@libs/dto/auth/user-operations.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AUTH_URLS } from '../../utils/maps';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
@@ -79,7 +80,7 @@ export class RoleController {
     description: 'Role created successfully',
     type: SuccessResponseDto
   })
-  async create(@Body() data: any) {
+  async create(@Body() data: CreateRoleDto) {
     const role = await this.roleService.create(data, 'admin-user-id');
     return ResponseUtil.success(role, 'Role created successfully');
   }
@@ -91,7 +92,7 @@ export class RoleController {
     description: 'Role updated successfully',
     type: SuccessResponseDto
   })
-  async update(@Param('id') id: string, @Body() data: any) {
+  async update(@Param('id') id: string, @Body() data: UpdateRoleDto) {
     const role = await this.roleService.update(id, data, 'admin-user-id');
     return ResponseUtil.success(role, 'Role updated successfully');
   }

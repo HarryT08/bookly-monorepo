@@ -2,37 +2,36 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { RemoveRoleCommand } from '../commands/remove-role.command';
 import { UserService } from '../services/user.service';
 import { LoggingService } from '@libs/logging/logging.service';
+import { MonitoringService } from '@libs/monitoring/monitoring.service';
+import { EventBusService } from '@libs/event-bus/services/event-bus.service';
 
 @CommandHandler(RemoveRoleCommand)
 export class RemoveRoleHandler implements ICommandHandler<RemoveRoleCommand> {
   constructor(
     private readonly userService: UserService,
     private readonly loggingService: LoggingService,
+    private readonly monitoringService: MonitoringService,
+    private readonly eventBusService: EventBusService,
   ) {}
 
-  async execute(command: RemoveRoleCommand): Promise<void> {
+  async execute(command: RemoveRoleCommand): Promise<{ success: boolean; message: string }> {
     const { userId, roleId } = command;
 
-    this.loggingService.log(
-      'Removing role from user',
-      `RemoveRoleHandler - userId: ${userId}, roleId: ${roleId}`,
-      'RemoveRoleHandler'
-    );
-
     try {
+      this.loggingService.log(`Removing role from user: ${userId}`, 'RemoveRoleHandler');
+      
       await this.userService.removeRole(userId, roleId);
       
-      this.loggingService.log(
-        'Role removed successfully',
-        `RemoveRoleHandler - userId: ${userId}, roleId: ${roleId}`,
-        'RemoveRoleHandler'
-      );
+      this.loggingService.log(`Role removed successfully: ${userId} -> ${roleId}`, 'RemoveRoleHandler');
+      this.monitoringService.captureMessage(`Role removed from user ${userId}`, 'info');
+      
+      return {
+        success: true,
+        message: 'Role removed successfully'
+      };
     } catch (error) {
-      this.loggingService.error(
-        `Failed to remove role: ${error.message}`,
-        error.stack,
-        'RemoveRoleHandler'
-      );
+      this.loggingService.error(`Failed to remove role: ${error.message}`, error, 'RemoveRoleHandler');
+      this.monitoringService.captureException(error, { userId, roleId, command: 'RemoveRoleCommand' });
       throw error;
     }
   }

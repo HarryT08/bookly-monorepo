@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserRepository } from '@apps/auth-service/domain/repositories/user.repository';
@@ -6,7 +6,21 @@ import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { RegisterCommand } from '@apps/auth-service/application/commands/register.command';
 import { LoggingService } from '@libs/logging/logging.service';
 import { LoggingHelper } from '@libs/logging/logging.helper';
-import { LoginDto, RegisterDto } from '@libs/dto';
+import { AuthValidationUtil } from '@apps/auth-service/application/utils/auth-validation.util';
+import {
+  LoginRequestDto,
+  RegisterRequestDto,
+  ValidateTokenRequestDto,
+  RefreshTokenRequestDto,
+  SSOLoginRequestDto
+} from '@libs/dto/auth/auth-requests.dto';
+import {
+  LoginResponseDto,
+  RegisterResponseDto,
+  ValidateTokenResponseDto,
+  RefreshTokenResponseDto,
+  SSOLoginResponseDto
+} from '@libs/dto/auth/auth-responses.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -18,185 +32,146 @@ export class AuthService {
     private readonly loggingService: LoggingService,
   ) {}
 
+  /**
+   * Public method: Validate user credentials for LocalStrategy
+   */
   async validateUser(email: string, password: string, ipAddress?: string): Promise<UserEntity | null> {
     try {
       const user = await this.userRepository.findByEmailWithRoles(email);
       
       if (!user) {
-        this.loggingService.warn('Login attempt with non-existent email', {
-          email,
-          ipAddress,
-        });
+        this.loggingService.warn('Login attempt with non-existent email', 
+          AuthValidationUtil.createAuthErrorContext('validateUser', email, ipAddress)
+        );
         return null;
       }
 
-      // Check if account is locked
-      if (user.isAccountLocked()) {
-        this.loggingService.warn('Login attempt on locked account', {
-          userId: user.id,
-          email,
-          ipAddress,
-          lockedUntil: user.lockedUntil,
-        });
-        throw new UnauthorizedException('Account is temporarily locked due to multiple failed login attempts');
-      }
+      // Apply business validation rules
+      AuthValidationUtil.validateAccountNotLocked(user);
+      AuthValidationUtil.validateEmailVerified(user);
+      AuthValidationUtil.validateAccountActive(user);
 
-      // Check if email is verified
-      if (!user.isEmailVerified) {
-        this.loggingService.warn('Login attempt with unverified email', {
-          userId: user.id,
-          email,
-          ipAddress,
-        });
-        throw new UnauthorizedException('Email address must be verified before login');
-      }
-
-      // Check if user is active
-      if (!user.isActive) {
-        this.loggingService.warn('Login attempt on inactive account', {
-          userId: user.id,
-          email,
-          ipAddress,
-        });
-        throw new UnauthorizedException('Account is inactive');
-      }
-
-      // Validate password
-      if (!user.password || !await bcrypt.compare(password, user.password)) {
-        // Increment login attempts
-        user.incrementLoginAttempts();
-        await this.userRepository.update(user.id, {
-          loginAttempts: user.loginAttempts,
-          lockedUntil: user.lockedUntil,
-        });
-
-        this.loggingService.warn('Failed login attempt - invalid password', {
-          userId: user.id,
-          email,
-          ipAddress,
-          loginAttempts: user.loginAttempts,
-        });
+      // Validate password using utility
+      const isPasswordValid = await AuthValidationUtil.validatePassword(user, password, bcrypt);
+      if (!isPasswordValid) {
+        await AuthValidationUtil.handleFailedLoginAttempt(user, this.userRepository);
+        this.loggingService.warn('Failed login attempt - invalid password', 
+          AuthValidationUtil.createAuthErrorContext('validateUser', email, ipAddress, {
+            userId: user.id,
+            loginAttempts: user.loginAttempts
+          })
+        );
         return null;
       }
 
-      // Reset login attempts on successful validation
-      user.resetLoginAttempts();
-      await this.userRepository.update(user.id, {
-        loginAttempts: user.loginAttempts,
-        lockedUntil: user.lockedUntil,
-        lastLoginAt: user.lastLoginAt,
-      });
-
-      this.loggingService.log('Successful user validation', {
-        userId: user.id,
-        email,
-        ipAddress,
-      });
+      // Handle successful login
+      await AuthValidationUtil.handleSuccessfulLogin(user, this.userRepository);
+      this.loggingService.log('Successful user validation', 
+        AuthValidationUtil.createAuthErrorContext('validateUser', email, ipAddress, {
+          userId: user.id
+        })
+      );
 
       return user;
     } catch (error) {
-      this.loggingService.error('Error during user validation', error, LoggingHelper.logParams({
-        email,
-        ipAddress,
-      }));
+      this.loggingService.error('Error during user validation', error, 'AuthService');
       throw error;
     }
   }
 
+  /**
+   * Public method: Generate JWT token and user data
+   */
   async login(user: UserEntity, ipAddress?: string): Promise<{ access_token: string; user: any }> {
     try {
-      const payload = {
-        sub: user.id,
-        email: user.email,
-        username: user.username,
-        roles: user.userRoles?.map(ur => ur.role?.name) || [],
-        permissions: user.getAllPermissions().map(p => p.name),
-        iat: Math.floor(Date.now() / 1000),
-      };
-
+      const payload = AuthValidationUtil.createJwtPayload(user);
       const accessToken = this.jwtService.sign(payload);
+      const userData = AuthValidationUtil.createUserDataResponse(user);
 
-      this.loggingService.log('User logged in successfully', {
-        userId: user.id,
-        email: user.email,
-        ipAddress,
-        roles: payload.roles,
-      });
+      this.loggingService.log('User logged in successfully', 
+        AuthValidationUtil.createAuthErrorContext('login', user.email, ipAddress, {
+          userId: user.id,
+          roles: payload.roles
+        })
+      );
 
       return {
         access_token: accessToken,
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isEmailVerified: user.isEmailVerified,
-          lastLoginAt: user.lastLoginAt,
-          roles: user.userRoles?.map(ur => ur.role) || [],
-          permissions: user.getAllPermissions(),
-        },
+        user: userData,
       };
     } catch (error) {
-      this.loggingService.error('Error during login', error, LoggingHelper.logParams({
-        userId: user.id,
-        email: user.email,
-        ipAddress,
-      }));
+      this.loggingService.error('Error during login', error, 'AuthService');
       throw error;
     }
   }
 
-  async validateToken(token: string): Promise<any> {
+  /**
+   * RF-43: Validate JWT token using DTO
+   */
+  async validateToken(request: ValidateTokenRequestDto): Promise<ValidateTokenResponseDto> {
     try {
-      return this.jwtService.verify(token);
+      const payload = this.jwtService.verify(request.token);
+      return {
+        isValid: true,
+        payload,
+        expiresAt: payload.exp
+      };
     } catch (error) {
-      return null;
+      this.loggingService.warn('Token validation failed', 
+        AuthValidationUtil.createAuthErrorContext('validateToken', 'unknown')
+      );
+      return {
+        isValid: false
+      };
     }
   }
 
-  async refreshToken(userId: string): Promise<{ access_token: string }> {
-    const user = await this.userRepository.findByIdWithRoles(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
+  /**
+   * RF-43: Refresh JWT token using DTO
+   */
+  async refreshToken(request: RefreshTokenRequestDto): Promise<RefreshTokenResponseDto> {
+    const user = await this.userRepository.findByIdWithRoles(request.userId);
+    AuthValidationUtil.validateUserExists(user, 'refresh-token');
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      username: user.username,
-      roles: user.userRoles?.map(ur => ur.role?.name) || [],
-      permissions: user.getAllPermissions().map(p => p.name),
-      iat: Math.floor(Date.now() / 1000),
-    };
+    const payload = AuthValidationUtil.createJwtPayload(user);
+    const accessToken = this.jwtService.sign(payload);
 
-    this.loggingService.log('Token refreshed successfully', LoggingHelper.logParams({
-      userId: user.id,
-      email: user.email,
-    }));
+    this.loggingService.log('Token refreshed successfully', 
+      AuthValidationUtil.createAuthErrorContext('refreshToken', user.email, undefined, {
+        userId: user.id
+      })
+    );
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
+      token_type: 'Bearer',
+      expires_in: 3600
     };
   }
 
   /**
    * Login user with credentials
    */
-  async loginUser(loginDto: LoginDto): Promise<{ access_token: string; user: any }> {
+  /**
+   * RF-43: Login user with credentials using DTO
+   */
+  async loginUser(request: LoginRequestDto): Promise<LoginResponseDto> {
     try {
-      const user = await this.validateUser(loginDto.email, loginDto.password);
+      const user = await this.validateUser(request.email, request.password, request.ipAddress);
       if (!user) {
-        this.loggingService.warn(`Failed login attempt for email: ${loginDto.email}`);
+        this.loggingService.warn(`Failed login attempt for email: ${request.email}`);
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      const loginResult = await this.login(user);
-      return loginResult;
+      const loginResult = await this.login(user, request.ipAddress);
+      return {
+        access_token: loginResult.access_token,
+        user: loginResult.user,
+        token_type: 'Bearer',
+        expires_in: 3600 // 1 hour
+      };
     } catch (error) {
-      this.loggingService.error('Error during user login', error, LoggingHelper.logParams({
-        email: loginDto.email,
-      }));
+      this.loggingService.error('Error during user login', error, 'AuthService');
       throw error;
     }
   }
@@ -204,34 +179,30 @@ export class AuthService {
   /**
    * Register a new user using CQRS
    */
-  async register(registerDto: RegisterDto): Promise<{ message: string; user: any }> {
+  /**
+   * RF-43: Register new user using CQRS and DTO
+   */
+  async register(request: RegisterRequestDto): Promise<RegisterResponseDto> {
     try {
       // Use CQRS Command pattern
       const command = new RegisterCommand({
-        ...registerDto,
-        username: registerDto.username || registerDto.email.split('@')[0],
+        ...request,
+        username: request.username || request.email.split('@')[0],
       });
 
       const createdUser = await this.commandBus.execute<RegisterCommand, UserEntity>(command);
+      const userData = AuthValidationUtil.createUserDataResponse(createdUser);
 
       return {
         message: 'User registered successfully. Please verify your email.',
-        user: {
-          id: createdUser.id,
-          email: createdUser.email,
-          username: createdUser.username,
-          firstName: createdUser.firstName,
-          lastName: createdUser.lastName,
-          isEmailVerified: createdUser.isEmailVerified,
-        },
+        user: userData,
+        emailVerificationRequired: true
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      this.loggingService.error('Error during user registration', error, LoggingHelper.logParams({
-        email: registerDto.email,
-      }));
+      this.loggingService.error('Error during user registration', error, 'AuthService');
       throw new BadRequestException('Registration failed');
     }
   }
@@ -239,40 +210,47 @@ export class AuthService {
   /**
    * Login user via SSO (Google OAuth2)
    */
-  async loginSSO(ssoUser: any): Promise<{ access_token: string; user: any }> {
+  /**
+   * RF-43: SSO Login using DTO (Google OAuth2)
+   */
+  async loginSSO(request: SSOLoginRequestDto): Promise<SSOLoginResponseDto> {
     try {
       const payload = {
-        sub: ssoUser.id,
-        email: ssoUser.email,
-        username: ssoUser.username,
-        roles: ssoUser.roles || [],
-        ssoProvider: ssoUser.ssoProvider || 'google',
+        sub: request.googleId,
+        email: request.email,
+        username: request.email.split('@')[0],
+        roles: AuthValidationUtil.isValidUFPSDomain(request.email) 
+          ? [AuthValidationUtil.getDefaultRoleFromEmail(request.email)] 
+          : [],
+        ssoProvider: request.ssoProvider,
         iat: Math.floor(Date.now() / 1000),
       };
 
+      const accessToken = this.jwtService.sign(payload);
+      const userData = AuthValidationUtil.createSSOUserDataResponse({
+        id: request.googleId,
+        email: request.email,
+        username: request.email.split('@')[0],
+        firstName: request.firstName,
+        lastName: request.lastName,
+        roles: payload.roles,
+        ssoProvider: request.ssoProvider
+      });
+
       this.loggingService.log(
-        `SSO login successful for user: ${ssoUser.email}`,
-        'AuthService',
+        `SSO login successful for user: ${request.email}`,
+        AuthValidationUtil.createAuthErrorContext('loginSSO', request.email)
       );
 
       return {
-        access_token: this.jwtService.sign(payload),
-        user: {
-          id: ssoUser.id,
-          email: ssoUser.email,
-          username: ssoUser.username,
-          firstName: ssoUser.firstName,
-          lastName: ssoUser.lastName,
-          roles: ssoUser.roles || [],
-          ssoProvider: ssoUser.ssoProvider,
-        },
+        access_token: accessToken,
+        user: userData,
+        ssoProvider: request.ssoProvider,
+        isNewUser: false,
+        token_type: 'Bearer'
       };
     } catch (error) {
-      this.loggingService.error(
-        'SSO login failed',
-        error.stack,
-        'AuthService',
-      );
+      this.loggingService.error('SSO login failed', error, 'AuthService');
       throw error;
     }
   }

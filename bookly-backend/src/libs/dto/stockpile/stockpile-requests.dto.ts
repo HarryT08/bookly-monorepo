@@ -18,6 +18,10 @@ export class ProcessReservationApprovalRequestDto {
   @IsString()
   resourceId: string;
 
+  @ApiProperty({ description: 'User ID who requested the approval' })
+  @IsString()
+  requestedBy: string;
+
   @ApiProperty({ description: 'Resource type', required: false })
   @IsOptional()
   @IsString()
@@ -27,6 +31,20 @@ export class ProcessReservationApprovalRequestDto {
   @IsOptional()
   @IsString()
   programId?: string;
+
+  @ApiProperty({ description: 'Additional comments', required: false })
+  @IsOptional()
+  @IsString()
+  comments?: string;
+
+  @ApiProperty({ description: 'Approval conditions', required: false })
+  @IsOptional()
+  conditions?: string[];
+
+  @ApiProperty({ description: 'Request priority', required: false })
+  @IsOptional()
+  @IsString()
+  priority?: string;
 }
 
 /**
@@ -85,6 +103,10 @@ export class PerformCheckInRequestDto {
   @IsString()
   userId: string;
 
+  @ApiProperty({ description: 'Check-in timestamp', required: false })
+  @IsOptional()
+  checkInTime?: Date;
+
   @ApiProperty({ description: 'Location', required: false })
   @IsOptional()
   @IsString()
@@ -94,6 +116,15 @@ export class PerformCheckInRequestDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({ description: 'QR code for check-in', required: false })
+  @IsOptional()
+  @IsString()
+  qrCode?: string;
+
+  @ApiProperty({ description: 'Device information', required: false })
+  @IsOptional()
+  deviceInfo?: Record<string, any>;
 }
 
 /**
@@ -109,6 +140,10 @@ export class PerformCheckOutRequestDto {
   @IsString()
   userId: string;
 
+  @ApiProperty({ description: 'Check-out timestamp', required: false })
+  @IsOptional()
+  checkOutTime?: Date;
+
   @ApiProperty({ description: 'Resource condition', required: false })
   @IsOptional()
   @IsString()
@@ -118,6 +153,15 @@ export class PerformCheckOutRequestDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({ description: 'Resource condition after use', required: false })
+  @IsOptional()
+  @IsString()
+  resourceCondition?: string;
+
+  @ApiProperty({ description: 'Photos during checkout', required: false })
+  @IsOptional()
+  photos?: string[];
 }
 
 /**

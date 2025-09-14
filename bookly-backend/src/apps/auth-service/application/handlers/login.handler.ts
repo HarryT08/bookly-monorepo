@@ -6,7 +6,7 @@ import { LoggingService } from '@libs/logging/logging.service';
 import { MonitoringService } from '@libs/monitoring/monitoring.service';
 import { EventBusService } from '@libs/event-bus/services/event-bus.service';
 import { UserLoggedInEvent } from '../../domain/events';
-import { LoginDto } from '@libs/dto';
+import { LoginRequestDto } from '@libs/dto/auth/auth-requests.dto';
 
 @CommandHandler(LoginCommand)
 export class LoginHandler implements ICommandHandler<LoginCommand> {
@@ -24,8 +24,8 @@ export class LoginHandler implements ICommandHandler<LoginCommand> {
       this.loggingService.log(`Login attempt for email: ${email}`, 'LoginHandler');
       
       // Delegate business logic to service
-      const loginDto: LoginDto = { email, password };
-      const loginResult = await this.authService.loginUser(loginDto);
+      const loginRequest: LoginRequestDto = { email, password };
+      const loginResult = await this.authService.loginUser(loginRequest);
       
       const user = loginResult.user;
       
