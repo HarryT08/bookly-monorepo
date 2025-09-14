@@ -2,5 +2,6 @@ export enum ApprovalRequestStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
   TIMEOUT = 'TIMEOUT'
 }

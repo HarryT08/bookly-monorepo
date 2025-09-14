@@ -1,8 +1,8 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { GetAvailabilityQuery, GetResourceAvailabilityQuery, CheckAvailabilityQuery } from '../queries/get-availability.query';
-import { AvailabilityEntity } from '../../domain/entities/availability.entity';
-import { LoggingService } from '../../../../libs/logging/logging.service';
+import { AvailabilityDto } from '@libs/dto/availability/availability.dto';
+import { LoggingService } from '@libs/logging/logging.service';
 import { AvailabilityService } from '../services/availability.service';
 
 /**
@@ -17,7 +17,7 @@ export class GetAvailabilityHandler implements IQueryHandler<GetAvailabilityQuer
     private readonly logger: LoggingService
   ) {}
 
-  async execute(query: GetAvailabilityQuery): Promise<AvailabilityEntity[]> {
+  async execute(query: GetAvailabilityQuery): Promise<AvailabilityDto[]> {
     this.logger.log(
       `Orchestrating availability query for resource ${query.resourceId}`,
       'GetAvailabilityHandler'

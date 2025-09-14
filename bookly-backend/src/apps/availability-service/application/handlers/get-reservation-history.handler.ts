@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { GetReservationHistoryQuery, ExportReservationHistoryQuery } from '../queries/get-reservation-history.query';
-import { LoggingService } from '../../../../libs/logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 import { AvailabilityService } from '../services/availability.service';
 
 /**

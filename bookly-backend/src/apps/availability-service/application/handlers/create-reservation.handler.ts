@@ -1,8 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { CreateReservationCommand } from '../commands/create-reservation.command';
-import { ReservationEntity } from '../../domain/entities/reservation.entity';
-import { LoggingService } from '../../../../libs/logging/logging.service';
+import { ReservationDto } from '@libs/dto/availability/reservation.dto';
+import { LoggingService } from '@libs/logging/logging.service';
 import { AvailabilityService } from '../services/availability.service';
 
 /**
@@ -17,7 +17,7 @@ export class CreateReservationHandler implements ICommandHandler<CreateReservati
     private readonly logger: LoggingService
   ) {}
 
-  async execute(command: CreateReservationCommand): Promise<ReservationEntity> {
+  async execute(command: CreateReservationCommand): Promise<ReservationDto> {
     this.logger.log(
       'Orchestrating reservation creation',
       {

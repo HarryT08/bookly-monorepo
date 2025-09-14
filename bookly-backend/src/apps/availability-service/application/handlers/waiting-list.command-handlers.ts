@@ -34,8 +34,8 @@ import {
 import { WaitingListService } from "../services/waiting-list.service";
 
 // Entities  
-import { WaitingListEntryEntity } from "@/apps/availability-service/domain/entities/waiting-list-entry.entity";
-import { LoggingService } from "@/libs/logging/logging.service";
+import { WaitingListEntryEntity } from "@apps/availability-service/domain/entities/waiting-list-entry.entity";
+import { LoggingService } from "@libs/logging/logging.service";
 import { WaitingListPriority } from "../../utils";
 
 @Injectable()

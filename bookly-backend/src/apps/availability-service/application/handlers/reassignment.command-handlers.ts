@@ -28,8 +28,13 @@ import {
 import { ReassignmentService } from "../services/reassignment.service";
 import { CommandBus } from "@nestjs/cqrs";
 
-// Entities
-import { ReassignmentRequestEntity } from "../../domain/entities/reassignment-request.entity";
+// DTOs
+import { 
+  ReassignmentRequestDto, 
+  EquivalentResourcesDto, 
+  AutoProcessReassignmentResultDto, 
+  OptimizeReassignmentQueueResultDto 
+} from "@libs/dto/availability/reassignment.dto";
 
 /**
  * Handler: Create Reassignment Request
@@ -47,7 +52,7 @@ export class CreateReassignmentRequestHandler
 
   async execute(
     command: CreateReassignmentRequestCommand
-  ): Promise<ReassignmentRequestEntity> {
+  ): Promise<ReassignmentRequestDto> {
     this.logger.log("Orchestrating reassignment request creation", {
       originalReservationId: command.originalReservationId,
       requestedBy: command.requestedBy,
@@ -134,12 +139,7 @@ export class FindEquivalentResourcesHandler
     private readonly logger: LoggingService
   ) {}
 
-  async execute(command: FindEquivalentResourcesCommand): Promise<{
-      exactMatches: any[];
-      goodMatches: any[];
-      acceptableMatches: any[];
-      recommendations: any[];
-    }> {
+  async execute(command: FindEquivalentResourcesCommand): Promise<EquivalentResourcesDto> {
     this.logger.log("Orchestrating equivalent resources search", {
       originalResourceId: command.originalResourceId,
       startTime: command.startTime,
@@ -238,7 +238,7 @@ export class AutoProcessReassignmentRequestsHandler
     private readonly logger: LoggingService
   ) {}
 
-  async execute(command: AutoProcessReassignmentRequestsCommand): Promise<{ processed: number }> {
+  async execute(command: AutoProcessReassignmentRequestsCommand): Promise<AutoProcessReassignmentResultDto> {
     this.logger.log("Orchestrating auto processing of reassignment requests", {
       criteria: command.criteria,
       maxRequests: command.maxRequests,
@@ -307,7 +307,7 @@ export class OptimizeReassignmentQueueHandler
 
   async execute(
     command: OptimizeReassignmentQueueCommand
-  ): Promise<{ optimized: number; suggestions: any[] }> {
+  ): Promise<OptimizeReassignmentQueueResultDto> {
     this.logger.log("Orchestrating reassignment queue optimization", {
       criteria: command.criteria,
       optimizedBy: command.optimizedBy,

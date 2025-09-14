@@ -6,7 +6,8 @@
 
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
-import { EventBusService } from '../../../../libs/event-bus/services/event-bus.service';
+import { EventBusService } from '@libs/event-bus/services/event-bus.service';
+import { EventAction, EventSource } from '@libs/event-bus/interfaces/standardized-domain-event.interface';
 import {
   AdvancedResourceSearchQuery,
   RealTimeAvailabilitySearchQuery,
@@ -15,7 +16,7 @@ import {
   QuickSearchQuery
 } from '../queries/advanced-search.queries';
 import { AdvancedSearchService } from '../services/advanced-search.service';
-import { LoggingService } from '../../../../libs/logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 import {
   AdvancedSearchPerformedEvent,
   SearchResultViewedEvent,
@@ -71,26 +72,49 @@ export class AdvancedResourceSearchHandler
         limit: query.limit || 20
       });
 
-      const searchEvent = new AdvancedSearchPerformedEvent(
-        query.userId || 'anonymous',
-        query.searchTerm || '',
-        {
-          resourceTypes: query.resourceTypes,
-          locations: query.locations,
-          categories: query.categories,
-          capacityRange: { min: query.capacityMin, max: query.capacityMax },
-          availabilityWindow: query.availabilityStart && query.availabilityEnd 
-            ? { start: query.availabilityStart, end: query.availabilityEnd }
-            : undefined,
-          features: query.features,
-          academicPrograms: query.academicPrograms
+      const now = new Date();
+      const searchEventData = {
+        eventId: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        eventType: 'AdvancedSearchPerformed',
+        eventVersion: '1.0.0',
+        aggregateId: query.userId || 'anonymous',
+        aggregateType: 'User',
+        aggregateVersion: 1,
+        timestamp: now,
+        occurredAt: now,
+        correlationId: `cor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: query.userId,
+        eventData: {
+          action: EventAction.CREATED,
+          entityId: query.userId || 'anonymous',
+          entityType: 'SearchQuery',
+          userId: query.userId || 'anonymous',
+          searchTerm: query.searchTerm || '',
+          filters: {
+            resourceTypes: query.resourceTypes,
+            locations: query.locations,
+            categories: query.categories,
+            capacityRange: { min: query.capacityMin, max: query.capacityMax },
+            availabilityWindow: query.availabilityStart && query.availabilityEnd 
+              ? { start: query.availabilityStart, end: query.availabilityEnd }
+              : undefined,
+            features: query.features,
+            academicPrograms: query.academicPrograms
+          },
+          resultsCount: result.data.length,
+          totalFound: result.pagination.total
         },
-        result.data.length,
-        result.pagination.total,
-        new Date()
-      );
+        metadata: {
+          source: query.userId ? EventSource.USER_ACTION : EventSource.SYSTEM_ACTION,
+          service: 'availability-service',
+          environment: process.env.NODE_ENV || 'development',
+          requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        },
+        schemaVersion: '1.0.0',
+        publishedAt: now
+      };
 
-      // await this.eventBus.publishEvent(searchEvent);
+      await this.eventBus.publishEvent(searchEventData);
 
       this.logger.log('Advanced search completed successfully', {
         resultsCount: result.data.length,

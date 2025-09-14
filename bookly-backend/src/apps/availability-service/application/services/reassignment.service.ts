@@ -10,6 +10,12 @@ import { LoggingService } from '@libs/logging/logging.service';
 // DTOs
 import { CreateReassignmentRequestDto } from '../../infrastructure/dtos/create-reassignment-request.dto';
 import { ReassignmentRequestResponseDto } from '../../infrastructure/dtos/reassignment-response.dto';
+import { 
+  ReassignmentRequestDto, 
+  EquivalentResourcesDto, 
+  AutoProcessReassignmentResultDto, 
+  OptimizeReassignmentQueueResultDto 
+} from '@libs/dto/availability/reassignment.dto';
 
 // Commands
 import {
@@ -79,7 +85,7 @@ export class ReassignmentService {
   async createReassignmentRequest(
     dto: CreateReassignmentRequestDto,
     requestedBy: string
-  ): Promise<ReassignmentRequestEntity> {
+  ): Promise<ReassignmentRequestDto> {
     this.logger.log('Creating reassignment request via application service', {
       originalReservationId: dto.originalReservationId,
       requestedBy,
@@ -295,7 +301,7 @@ export class ReassignmentService {
     processedBy: string,
     dryRun: boolean = false,
     maxRequests: number = 50
-  ): Promise<{ processed: number; failed: string[] }> {
+  ): Promise<AutoProcessReassignmentResultDto> {
     this.logger.log('Auto-processing reassignment requests via application service', {
       criteria,
       processedBy,
@@ -425,7 +431,7 @@ export class ReassignmentService {
     dryRun: boolean = false,
     maxReassignments: number = 100,
     notifyAffectedUsers: boolean = true
-  ): Promise<{ optimized: number; suggestions: any[] }> {
+  ): Promise<OptimizeReassignmentQueueResultDto> {
     this.logger.log('Optimizing reassignment queue via application service', {
       criteria,
       optimizedBy,

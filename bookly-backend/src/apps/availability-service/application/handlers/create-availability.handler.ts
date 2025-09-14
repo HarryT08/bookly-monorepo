@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { CreateAvailabilityCommand } from '../commands/create-availability.command';
 import { AvailabilityService } from '../services/availability.service';
-import { AvailabilityEntity } from '../../domain/entities/availability.entity';
-import { LoggingService } from '../../../../libs/logging/logging.service';
+import { AvailabilityDto } from '@libs/dto/availability/availability.dto';
+import { LoggingService } from '@libs/logging/logging.service';
 
 /**
  * Create Availability Command Handler (RF-07)
@@ -17,7 +17,7 @@ export class CreateAvailabilityHandler implements ICommandHandler<CreateAvailabi
     private readonly logger: LoggingService
   ) {}
 
-  async execute(command: CreateAvailabilityCommand): Promise<AvailabilityEntity> {
+  async execute(command: CreateAvailabilityCommand): Promise<AvailabilityDto> {
     this.logger.log(
       'Availability creation',
       {

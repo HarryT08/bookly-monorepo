@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Injectable } from '@nestjs/common';
 import { CreateScheduleCommand } from '../commands/create-schedule.command';
 import { ScheduleEntity } from '../../domain/entities/schedule.entity';
-import { LoggingService } from '../../../../libs/logging/logging.service';
+import { LoggingService } from '@libs/logging/logging.service';
 import { ScheduleService } from '../services/schedule.service';
 
 /**

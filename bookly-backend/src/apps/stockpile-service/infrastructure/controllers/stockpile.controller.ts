@@ -150,7 +150,8 @@ export class StockpileController {
       data.comments,
       data.conditions
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Request approved successfully');
   }
 
   @Post(STOCKPILE_URLS.APPROVAL_REQUEST_REJECT)
@@ -191,7 +192,8 @@ export class StockpileController {
       data.rejectionCategory || 'General rejection',
       data.comments
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Request rejected successfully');
   }
 
   @Post(STOCKPILE_URLS.APPROVAL_REQUEST_DOCUMENT)
@@ -231,7 +233,8 @@ export class StockpileController {
       options?.templateId,
       { ...options }
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Document generated successfully');
   }
 
   @Post(STOCKPILE_URLS.NOTIFICATION_SEND)
@@ -272,7 +275,8 @@ export class StockpileController {
       data.data,
       (data.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium'
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Notification sent successfully');
   }
 
   @Post(STOCKPILE_URLS.CHECKIN_RESERVATION)
@@ -315,7 +319,8 @@ export class StockpileController {
       data.timestamp ? new Date(data.timestamp) : new Date(),
       data.location
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Check-in completed successfully');
   }
 
   @Post(STOCKPILE_URLS.CHECKOUT_RESERVATION)
@@ -358,7 +363,8 @@ export class StockpileController {
       data.notes,
       data.resourceCondition
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Check-out completed successfully');
   }
 
   @Get(STOCKPILE_URLS.APPROVAL_FLOWS + '/search')
@@ -382,7 +388,8 @@ export class StockpileController {
       undefined, // page
       undefined  // limit
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Approval flows retrieved successfully');
   }
 
   @Get(STOCKPILE_URLS.CHECKIN_STATUS)
@@ -395,6 +402,7 @@ export class StockpileController {
   @ApiResponse({ status: 404, description: 'Reservation not found' })
   async getCheckInStatus(@Param('reservationId') reservationId: string) {
     const query = new GetCheckInStatusQuery(reservationId);
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Check-in status retrieved successfully');
   }
 }

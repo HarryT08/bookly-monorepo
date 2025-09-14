@@ -59,6 +59,14 @@ import {
   MarkNotificationAsReadHandler
 } from './application/commands/handlers/notification-template.handlers';
 
+// Command Handlers - Stockpile (Core Business Logic)
+import {
+  ApproveRequestHandler,
+  RejectRequestHandler,
+  CheckInHandler,
+  CheckOutHandler
+} from './application/commands/handlers/stockpile.handlers';
+
 // Query Handlers - Approval Flow
 import {
   GetApprovalFlowsHandler,
@@ -135,7 +143,12 @@ const CommandHandlers = [
   CreateNotificationConfigHandler,
   SendNotificationHandler,
   SendBatchNotificationsHandler,
-  MarkNotificationAsReadHandler
+  MarkNotificationAsReadHandler,
+  // Stockpile (Core Business Logic)
+  ApproveRequestHandler,
+  RejectRequestHandler,
+  CheckInHandler,
+  CheckOutHandler
 ];
 
 const QueryHandlers = [

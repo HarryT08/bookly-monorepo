@@ -33,8 +33,8 @@ import {
   SentNotificationDto,
 } from "@dto/stockpile/notification-template.dto";
 import { LoggingHelper } from "@libs/logging/logging.helper";
-import { NotificationStatus } from "@/apps/stockpile-service/utils";
-import { NotificationChannelType } from "@/apps/availability-service/utils/notification-channel-type.enum";
+import { NotificationStatus } from "@apps/stockpile-service/utils";
+import { NotificationChannelType } from "@apps/availability-service/utils/notification-channel-type.enum";
 
 /**
  * Create Notification Channel Command Handler
