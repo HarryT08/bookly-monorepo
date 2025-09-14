@@ -13,7 +13,47 @@ import { CreateResourceHandler } from '@apps/resources-service/application/handl
 import { UpdateResourceHandler } from '@apps/resources-service/application/handlers/update-resource.handler';
 import { DeleteResourceHandler } from '@apps/resources-service/application/handlers/delete-resource.handler';
 
+// Resource Category Handlers
+import { 
+  AssignCategoryToResourceHandler,
+  ReplaceResourceCategoriesHandler,
+  RemoveCategoryFromResourceHandler 
+} from '@apps/resources-service/application/handlers/create-resource-category.handler';
+import { 
+  GetResourceCategoriesHandler,
+  GetResourcesByCategoryHandler,
+  CheckResourceCategoryAssignmentHandler 
+} from '@apps/resources-service/application/handlers/get-resource-category.handler';
+
+// Maintenance Type Handlers
+import { CreateMaintenanceTypeHandler } from '@apps/resources-service/application/handlers/create-maintenance-type.handler';
+import { UpdateMaintenanceTypeHandler } from '@apps/resources-service/application/handlers/update-maintenance-type.handler';
+import { GetMaintenanceTypeHandler } from '@apps/resources-service/application/handlers/get-maintenance-type.handler';
+
+// Resource Import Handlers
+import { 
+  PreviewImportHandler,
+  StartImportHandler,
+  GetImportByIdHandler,
+  GetImportsByUserHandler,
+  GetImportsHandler,
+  GetImportStatisticsHandler 
+} from '@apps/resources-service/application/handlers/resource-import-extended.handler';
+import { GetImportStatusHandler, GetImportHistoryHandler, GetImportTemplateHandler } from '@apps/resources-service/application/handlers/get-import-status.handler';
+
 // Query Handlers
+import { BulkAssignResponsibleHandler, TransferResponsibilitiesHandler, ValidateResponsibilityAssignmentHandler } from './application/handlers/bulk-assign-responsible.handler';
+import { 
+  AssignResourceResponsibleHandler,
+  RemoveResourceResponsibleHandler,
+  AssignMultipleResourceResponsibleHandler,
+  ReplaceResourceResponsiblesHandler,
+  DeactivateAllResourceResponsiblesHandler,
+  GetResourceResponsiblesHandler,
+  GetUserResponsibilitiesHandler,
+  GetResponsibilitiesHandler,
+  CheckResourceResponsibleHandler
+} from './application/handlers/create-resource-responsible.handler';
 import { GetResourceHandler, GetResourceByCodeHandler } from '@apps/resources-service/application/handlers/get-resource.handler';
 import {
   GetResourcesHandler,
@@ -26,15 +66,52 @@ const CommandHandlers = [
   CreateResourceHandler,
   UpdateResourceHandler,
   DeleteResourceHandler,
+  // Resource Category Commands
+  AssignCategoryToResourceHandler,
+  ReplaceResourceCategoriesHandler,
+  RemoveCategoryFromResourceHandler,
+  // Maintenance Type Commands
+  CreateMaintenanceTypeHandler,
+  UpdateMaintenanceTypeHandler,
+  // Resource Import Commands
+  PreviewImportHandler,
+  StartImportHandler,
 ];
 
 const QueryHandlers = [
+  // Resource Responsible Handlers
+  BulkAssignResponsibleHandler,
+  TransferResponsibilitiesHandler,
+  ValidateResponsibilityAssignmentHandler,
+  AssignResourceResponsibleHandler,
+  RemoveResourceResponsibleHandler,
+  AssignMultipleResourceResponsibleHandler,
+  ReplaceResourceResponsiblesHandler,
+  DeactivateAllResourceResponsiblesHandler,
+  GetResourceResponsiblesHandler,
+  GetUserResponsibilitiesHandler,
+  GetResponsibilitiesHandler,
+  CheckResourceResponsibleHandler,
   GetResourceHandler,
   GetResourceByCodeHandler,
   GetResourcesHandler,
   GetResourcesWithPaginationHandler,
   SearchResourcesHandler,
   CheckResourceAvailabilityHandler,
+  // Resource Category Queries
+  GetResourceCategoriesHandler,
+  GetResourcesByCategoryHandler,
+  CheckResourceCategoryAssignmentHandler,
+  // Maintenance Type Queries
+  GetMaintenanceTypeHandler,
+  // Resource Import Queries
+  GetImportByIdHandler,
+  GetImportsByUserHandler,
+  GetImportsHandler,
+  GetImportStatisticsHandler,
+  GetImportStatusHandler,
+  GetImportHistoryHandler,
+  GetImportTemplateHandler,
 ];
 
 /**

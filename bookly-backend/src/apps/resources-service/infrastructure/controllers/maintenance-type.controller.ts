@@ -17,7 +17,10 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { MaintenanceTypeService } from '@apps/resources-service/application/services/maintenance-type.service';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CreateMaintenanceTypeCommand } from '@apps/resources-service/application/commands/create-maintenance-type.command';
+import { UpdateMaintenanceTypeCommand, DeactivateMaintenanceTypeCommand, ReactivateMaintenanceTypeCommand } from '@apps/resources-service/application/commands/update-maintenance-type.command';
+import { GetMaintenanceTypeQuery, GetMaintenanceTypeByCodeQuery, GetMaintenanceTypesQuery, GetActiveMaintenanceTypesQuery } from '@apps/resources-service/application/queries/get-maintenance-type.query';
 import {
   CreateMaintenanceTypeDto,
   UpdateMaintenanceTypeDto,
@@ -41,7 +44,10 @@ import { SuccessResponseDto } from '@libs/dto/common/response.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class MaintenanceTypeController {
-  constructor(private readonly maintenanceTypeService: MaintenanceTypeService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   /**
    * Creates a new maintenance type
@@ -70,7 +76,9 @@ export class MaintenanceTypeController {
     @Body() createMaintenanceTypeDto: CreateMaintenanceTypeDto,
     @CurrentUser() user: UserEntity,
   ): Promise<MaintenanceTypeResponseDto> {
-    return await this.maintenanceTypeService.createMaintenanceType(createMaintenanceTypeDto);
+    const commandData = { ...createMaintenanceTypeDto, createdBy: user.id! };
+    const command = new CreateMaintenanceTypeCommand(commandData);
+    return await this.commandBus.execute(command);
   }
 
   /**
@@ -87,7 +95,8 @@ export class MaintenanceTypeController {
     type: SuccessResponseDto,
   })
   async getActiveMaintenanceTypes() {
-    const maintenanceTypes = await this.maintenanceTypeService.getActiveMaintenanceTypes();
+    const query = new GetActiveMaintenanceTypesQuery();
+    const maintenanceTypes = await this.queryBus.execute(query);
     return ResponseUtil.success(maintenanceTypes, 'Active maintenance types retrieved successfully');
   }
 
@@ -110,8 +119,9 @@ export class MaintenanceTypeController {
     description: 'Insufficient permissions',
   })
   async getAllMaintenanceTypes() {
-    const maintenanceTypes = await this.maintenanceTypeService.getAllMaintenanceTypes();
-    return ResponseUtil.success(maintenanceTypes, 'All maintenance types retrieved successfully');
+    const query = new GetMaintenanceTypesQuery(1, 100, undefined, undefined);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result.maintenanceTypes, 'All maintenance types retrieved successfully');
   }
 
   /**
@@ -128,8 +138,10 @@ export class MaintenanceTypeController {
     type: SuccessResponseDto,
   })
   async getDefaultMaintenanceTypes() {
-    const maintenanceTypes = await this.maintenanceTypeService.getDefaultMaintenanceTypes();
-    return ResponseUtil.success(maintenanceTypes, 'Default maintenance types retrieved successfully');
+    const query = new GetMaintenanceTypesQuery(1, 100, undefined, true);
+    const result = await this.queryBus.execute(query);
+    const defaultTypes = result.maintenanceTypes.filter(mt => mt.isDefault);
+    return ResponseUtil.success(defaultTypes, 'Default maintenance types retrieved successfully');
   }
 
   /**
@@ -151,8 +163,10 @@ export class MaintenanceTypeController {
     description: 'Insufficient permissions',
   })
   async getCustomMaintenanceTypes() {
-    const maintenanceTypes = await this.maintenanceTypeService.getCustomMaintenanceTypes();
-    return ResponseUtil.success(maintenanceTypes, 'Custom maintenance types retrieved successfully');
+    const query = new GetMaintenanceTypesQuery(1, 100, undefined, true);
+    const result = await this.queryBus.execute(query);
+    const customTypes = result.maintenanceTypes.filter(mt => !mt.isDefault);
+    return ResponseUtil.success(customTypes, 'Custom maintenance types retrieved successfully');
   }
 
   /**
@@ -178,7 +192,8 @@ export class MaintenanceTypeController {
     description: 'Maintenance type not found',
   })
   async getMaintenanceTypeById(@Param('id') id: string) {
-    const maintenanceType = await this.maintenanceTypeService.getMaintenanceTypeById(id);
+    const query = new GetMaintenanceTypeQuery(id);
+    const maintenanceType = await this.queryBus.execute(query);
     return ResponseUtil.success(maintenanceType, 'Maintenance type retrieved successfully');
   }
 
@@ -205,7 +220,8 @@ export class MaintenanceTypeController {
     description: 'Maintenance type not found',
   })
   async getMaintenanceTypeByName(@Param('name') name: string) {
-    const maintenanceType = await this.maintenanceTypeService.getMaintenanceTypeByName(name);
+    const query = new GetMaintenanceTypeByCodeQuery(name);
+    const maintenanceType = await this.queryBus.execute(query);
     return ResponseUtil.success(maintenanceType, 'Maintenance type retrieved successfully');
   }
 
@@ -249,7 +265,9 @@ export class MaintenanceTypeController {
     @Body() updateMaintenanceTypeDto: UpdateMaintenanceTypeDto,
     @CurrentUser() user: UserEntity,
   ) {
-    const updatedMaintenanceType = await this.maintenanceTypeService.updateMaintenanceType(id, updateMaintenanceTypeDto);
+    const commandData = { id, ...updateMaintenanceTypeDto, updatedBy: user.id! };
+    const command = new UpdateMaintenanceTypeCommand(commandData);
+    const updatedMaintenanceType = await this.commandBus.execute(command);
     return ResponseUtil.success(updatedMaintenanceType, 'Maintenance type updated successfully');
   }
 
@@ -292,7 +310,8 @@ export class MaintenanceTypeController {
     @Param('id') id: string,
     @CurrentUser() user: UserEntity,
   ): Promise<void> {
-    await this.maintenanceTypeService.deactivateMaintenanceType(id);
+    const command = new DeactivateMaintenanceTypeCommand(id, user.id!);
+    await this.commandBus.execute(command);
   }
 
   /**
@@ -330,7 +349,8 @@ export class MaintenanceTypeController {
     @Param('id') id: string,
     @CurrentUser() user: UserEntity,
   ) {
-    const reactivatedMaintenanceType = await this.maintenanceTypeService.reactivateMaintenanceType(id);
+    const command = new ReactivateMaintenanceTypeCommand(id, user.id!);
+    const reactivatedMaintenanceType = await this.commandBus.execute(command);
     return ResponseUtil.success(reactivatedMaintenanceType, 'Maintenance type reactivated successfully');
   }
 
@@ -353,7 +373,13 @@ export class MaintenanceTypeController {
     type: SuccessResponseDto,
   })
   async validateMaintenanceType(@Param('id') id: string) {
-    const isValid = await this.maintenanceTypeService.validateMaintenanceType(id);
-    return ResponseUtil.success({ isValid }, 'Maintenance type validation completed');
+    const query = new GetMaintenanceTypeQuery(id);
+    try {
+      const maintenanceType = await this.queryBus.execute(query);
+      const isValid = maintenanceType && maintenanceType.isActive;
+      return ResponseUtil.success({ isValid }, 'Maintenance type validation completed');
+    } catch (error) {
+      return ResponseUtil.success({ isValid: false }, 'Maintenance type validation completed');
+    }
   }
 }

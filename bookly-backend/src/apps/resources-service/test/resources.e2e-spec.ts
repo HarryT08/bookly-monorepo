@@ -148,8 +148,9 @@ describe('Resources E2E (Hito 1)', () => {
       // Given: Valid update data
       const updateDto: UpdateResourceDto = {
         name: 'Updated Test Resource',
-        capacity: 40,
-        status: 'MAINTENANCE',
+        capacity: 25,
+        status: 'ACTIVE',
+        updatedBy: 'test-user-id',
       };
 
       // When: Updating the resource
@@ -173,6 +174,7 @@ describe('Resources E2E (Hito 1)', () => {
       const nonExistentId = '507f1f77bcf86cd799439011';
       const updateDto: UpdateResourceDto = {
         name: 'Updated Name',
+        updatedBy: 'test-user-id',
       };
 
       // When: Attempting to update non-existent resource

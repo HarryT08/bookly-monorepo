@@ -1,6 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Injectable, Inject } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
+import { ApprovalFlowService } from '@apps/stockpile-service/application/services/approval-flow.service';
 import {
   GetApprovalFlowsQuery,
   GetApprovalFlowByIdQuery,
@@ -13,6 +14,11 @@ import {
   GetApprovalHistoryQuery,
   GetUserApprovalStatisticsQuery
 } from '../approval-flow.queries';
+import {
+  ApprovalFlowDto,
+  ApprovalLevelDto,
+  ApprovalRequestDto
+} from '@libs/dto/stockpile/approval-flow.dto';
 import { ApprovalFlowRepository } from '@apps/stockpile-service/domain/repositories/approval-flow.repository';
 import { ApprovalFlowEntity, ApprovalLevelEntity, ApprovalRequestEntity } from '@apps/stockpile-service/domain/entities/approval-flow.entity';
 import { LoggingHelper } from '@libs/logging/logging.helper';
@@ -21,25 +27,19 @@ import { LoggingHelper } from '@libs/logging/logging.helper';
 @QueryHandler(GetApprovalFlowsQuery)
 export class GetApprovalFlowsHandler implements IQueryHandler<GetApprovalFlowsQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
-  async execute(query: GetApprovalFlowsQuery): Promise<ApprovalFlowEntity[]> {
-    this.loggingService.log('Getting approval flows', 'GetApprovalFlowsHandler', LoggingHelper.logParams({ query }));
+  async execute(query: GetApprovalFlowsQuery): Promise<ApprovalFlowDto[]> {
+    this.loggingService.log('Orchestrating get approval flows query', 'GetApprovalFlowsHandler', LoggingHelper.logParams({ query }));
 
-    const flows = await this.approvalFlowRepository.findApprovalFlowsByScope(
-      query.programId,
-      query.resourceType,
-      query.categoryId
-    );
-
-    // Filter by isActive if specified
-    if (query.isActive !== undefined) {
-      return flows.filter(flow => flow.isActive === query.isActive);
-    }
-
-    return flows;
+    return await this.approvalFlowService.getApprovalFlows({
+      programId: query.programId,
+      resourceType: query.resourceType,
+      categoryId: query.categoryId,
+      isActive: query.isActive
+    });
   }
 }
 
@@ -47,14 +47,14 @@ export class GetApprovalFlowsHandler implements IQueryHandler<GetApprovalFlowsQu
 @QueryHandler(GetApprovalFlowByIdQuery)
 export class GetApprovalFlowByIdHandler implements IQueryHandler<GetApprovalFlowByIdQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
-  async execute(query: GetApprovalFlowByIdQuery): Promise<ApprovalFlowEntity | null> {
-    this.loggingService.log('Getting approval flow by ID', 'GetApprovalFlowByIdHandler', LoggingHelper.logId(query.id));
+  async execute(query: GetApprovalFlowByIdQuery): Promise<ApprovalFlowDto | null> {
+    this.loggingService.log('Orchestrating get approval flow by ID query', 'GetApprovalFlowByIdHandler', LoggingHelper.logId(query.id));
 
-    return await this.approvalFlowRepository.findApprovalFlowById(query.id);
+    return await this.approvalFlowService.getApprovalFlowById(query.id);
   }
 }
 
@@ -62,14 +62,14 @@ export class GetApprovalFlowByIdHandler implements IQueryHandler<GetApprovalFlow
 @QueryHandler(GetDefaultApprovalFlowQuery)
 export class GetDefaultApprovalFlowHandler implements IQueryHandler<GetDefaultApprovalFlowQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
-  async execute(query: GetDefaultApprovalFlowQuery): Promise<ApprovalFlowEntity | null> {
-    this.loggingService.log('Getting default approval flow', 'GetDefaultApprovalFlowHandler', LoggingHelper.logParams({ query }));
+  async execute(query: GetDefaultApprovalFlowQuery): Promise<ApprovalFlowDto | null> {
+    this.loggingService.log('Orchestrating get default approval flow query', 'GetDefaultApprovalFlowHandler', LoggingHelper.logParams({ query }));
 
-    return await this.approvalFlowRepository.findDefaultApprovalFlow(
+    return await this.approvalFlowService.getDefaultApprovalFlow(
       query.programId,
       query.resourceType,
       query.categoryId
@@ -81,14 +81,14 @@ export class GetDefaultApprovalFlowHandler implements IQueryHandler<GetDefaultAp
 @QueryHandler(GetApprovalLevelsByFlowIdQuery)
 export class GetApprovalLevelsByFlowIdHandler implements IQueryHandler<GetApprovalLevelsByFlowIdQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
-  async execute(query: GetApprovalLevelsByFlowIdQuery): Promise<ApprovalLevelEntity[]> {
-    this.loggingService.log('Getting approval levels by flow ID', 'GetApprovalLevelsByFlowIdHandler', LoggingHelper.logId(query.flowId));
+  async execute(query: GetApprovalLevelsByFlowIdQuery): Promise<ApprovalLevelDto[]> {
+    this.loggingService.log('Orchestrating get approval levels by flow ID query', 'GetApprovalLevelsByFlowIdHandler', LoggingHelper.logId(query.flowId));
 
-    return await this.approvalFlowRepository.findApprovalLevelsByFlowId(query.flowId);
+    return await this.approvalFlowService.getApprovalLevelsByFlowId(query.flowId);
   }
 }
 
@@ -96,30 +96,21 @@ export class GetApprovalLevelsByFlowIdHandler implements IQueryHandler<GetApprov
 @QueryHandler(GetPendingApprovalRequestsQuery)
 export class GetPendingApprovalRequestsHandler implements IQueryHandler<GetPendingApprovalRequestsQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
-  async execute(query: GetPendingApprovalRequestsQuery): Promise<{ requests: ApprovalRequestEntity[]; total: number }> {
-    this.loggingService.log('Getting pending approval requests', 'GetPendingApprovalRequestsHandler', LoggingHelper.logParams({ query }));
+  async execute(query: GetPendingApprovalRequestsQuery): Promise<{ requests: ApprovalRequestDto[]; total: number }> {
+    this.loggingService.log('Orchestrating get pending approval requests query', 'GetPendingApprovalRequestsHandler', LoggingHelper.logParams({ query }));
 
-    if (query.approverId) {
-      const requests = await this.approvalFlowRepository.findPendingApprovalRequestsByApprover(query.approverId);
-      
-      // Apply pagination
-      const startIndex = (query.page - 1) * query.limit;
-      const endIndex = startIndex + query.limit;
-      const paginatedRequests = requests.slice(startIndex, endIndex);
-
-      return {
-        requests: paginatedRequests,
-        total: requests.length
-      };
-    }
-
-    // TODO: Implement filtering by programId, resourceType, categoryId
-    // For now, return empty result
-    return { requests: [], total: 0 };
+    return await this.approvalFlowService.getPendingApprovalRequests({
+      approverId: query.approverId,
+      programId: query.programId,
+      resourceType: query.resourceType,
+      categoryId: query.categoryId,
+      page: query.page,
+      limit: query.limit
+    });
   }
 }
 
@@ -127,14 +118,14 @@ export class GetPendingApprovalRequestsHandler implements IQueryHandler<GetPendi
 @QueryHandler(GetApprovalRequestsByReservationQuery)
 export class GetApprovalRequestsByReservationHandler implements IQueryHandler<GetApprovalRequestsByReservationQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
-  async execute(query: GetApprovalRequestsByReservationQuery): Promise<ApprovalRequestEntity[]> {
-    this.loggingService.log('Getting approval requests by reservation', 'GetApprovalRequestsByReservationHandler', LoggingHelper.logParams({ query }));
+  async execute(query: GetApprovalRequestsByReservationQuery): Promise<ApprovalRequestDto[]> {
+    this.loggingService.log('Orchestrating get approval requests by reservation query', 'GetApprovalRequestsByReservationHandler', LoggingHelper.logParams({ query }));
 
-    return await this.approvalFlowRepository.findApprovalRequestsByReservationId(query.reservationId);
+    return await this.approvalFlowService.getApprovalRequestsByReservation(query.reservationId);
   }
 }
 
@@ -142,7 +133,7 @@ export class GetApprovalRequestsByReservationHandler implements IQueryHandler<Ge
 @QueryHandler(GetReservationStatusQuery)
 export class GetReservationStatusHandler implements IQueryHandler<GetReservationStatusQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
@@ -150,49 +141,12 @@ export class GetReservationStatusHandler implements IQueryHandler<GetReservation
     reservationId: string;
     status: string;
     currentLevel?: number;
-    pendingRequests: ApprovalRequestEntity[];
-    completedRequests: ApprovalRequestEntity[];
+    pendingRequests: ApprovalRequestDto[];
+    completedRequests: ApprovalRequestDto[];
   }> {
-    this.loggingService.log('Getting reservation status', 'GetReservationStatusHandler', LoggingHelper.logParams({ query }));
+    this.loggingService.log('Orchestrating get reservation status query', 'GetReservationStatusHandler', LoggingHelper.logParams({ query }));
 
-    const requests = await this.approvalFlowRepository.findApprovalRequestsByReservationId(query.reservationId);
-    
-    const pendingRequests = requests.filter(req => req.isPending());
-    const completedRequests = requests.filter(req => req.isCompleted());
-
-    let status = 'INITIAL';
-    let currentLevel = 0;
-
-    if (requests.length === 0) {
-      status = 'INITIAL';
-    } else if (pendingRequests.length > 0) {
-      status = 'REVIEWING';
-      // Find the current level from pending requests
-      const levels = await Promise.all(
-        pendingRequests.map(req => this.approvalFlowRepository.findApprovalLevelById(req.levelId))
-      );
-      currentLevel = Math.min(...levels.filter(l => l).map(l => l!.level));
-    } else {
-      // Check if all requests are approved or if any is rejected
-      const hasRejected = completedRequests.some(req => req.status === 'REJECTED');
-      const hasTimeout = completedRequests.some(req => req.status === 'TIMEOUT');
-      
-      if (hasRejected) {
-        status = 'REJECTED';
-      } else if (hasTimeout) {
-        status = 'TIMEOUT';
-      } else {
-        status = 'APPROVED';
-      }
-    }
-
-    return {
-      reservationId: query.reservationId,
-      status,
-      currentLevel: currentLevel > 0 ? currentLevel : undefined,
-      pendingRequests,
-      completedRequests
-    };
+    return await this.approvalFlowService.getReservationStatus(query.reservationId);
   }
 }
 
@@ -200,14 +154,14 @@ export class GetReservationStatusHandler implements IQueryHandler<GetReservation
 @QueryHandler(GetExpiredApprovalRequestsQuery)
 export class GetExpiredApprovalRequestsHandler implements IQueryHandler<GetExpiredApprovalRequestsQuery> {
   constructor(
-    @Inject('ApprovalFlowRepository') private readonly approvalFlowRepository: ApprovalFlowRepository,
+    private readonly approvalFlowService: ApprovalFlowService,
     private readonly loggingService: LoggingService
   ) {}
 
-  async execute(query: GetExpiredApprovalRequestsQuery): Promise<ApprovalRequestEntity[]> {
-    this.loggingService.log('Getting expired approval requests', 'GetExpiredApprovalRequestsHandler', LoggingHelper.logParams({ query }));
+  async execute(query: GetExpiredApprovalRequestsQuery): Promise<ApprovalRequestDto[]> {
+    this.loggingService.log('Orchestrating get expired approval requests query', 'GetExpiredApprovalRequestsHandler');
 
-    return await this.approvalFlowRepository.findExpiredApprovalRequests();
+    return await this.approvalFlowService.getExpiredApprovalRequests();
   }
 }
 

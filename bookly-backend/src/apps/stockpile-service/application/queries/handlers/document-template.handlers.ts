@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Injectable, Inject } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
-import { DocumentTemplateRepository } from '../../../domain/repositories/document-template.repository';
+import { DocumentTemplateRepository } from '@apps/stockpile-service/domain/repositories/document-template.repository';
 import {
   GetDocumentTemplatesQuery,
   GetDocumentTemplateByIdQuery,

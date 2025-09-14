@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Injectable, Inject } from '@nestjs/common';
 import { LoggingService } from '@libs/logging/logging.service';
-import { NotificationTemplateRepository } from '../../../domain/repositories/notification-template.repository';
+import { NotificationTemplateRepository } from '@apps/stockpile-service/domain/repositories/notification-template.repository';
 import {
   GetNotificationChannelsQuery,
   GetNotificationChannelByIdQuery,

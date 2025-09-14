@@ -1,19 +1,18 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
-  Body,
-  Query,
-  HttpCode,
-  HttpStatus,
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Put, 
+  Delete, 
+  Body, 
+  Param, 
+  Query, 
+  HttpCode, 
+  HttpStatus, 
   ValidationPipe,
-  ParseIntPipe,
-  DefaultValuePipe,
+  NotFoundException,
+  ParseIntPipe 
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiTags,
   ApiOperation,
@@ -24,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import {
   UpdateResourceDto,
+  DeleteResourceDto,
   ResourceResponseDto,
   PaginatedResourceResponseDto,
   ResourceAvailabilityResponseDto,
@@ -31,20 +31,13 @@ import {
 import { CreateResourceDto, AvailableScheduleDto } from '@libs/dto/resources/create-resource.dto';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
 import { CreateResourceCommand } from '@apps/resources-service/application/commands/create-resource.command';
 import { UpdateResourceCommand } from '@apps/resources-service/application/commands/update-resource.command';
 import { DeleteResourceCommand } from '@apps/resources-service/application/commands/delete-resource.command';
-import {
-  GetResourceQuery,
-  GetResourceByCodeQuery,
-} from '@apps/resources-service/application/queries/get-resource.query';
-import {
-  GetResourcesQuery,
-  GetResourcesWithPaginationQuery,
-  SearchResourcesQuery,
-  CheckResourceAvailabilityQuery,
-} from '@apps/resources-service/application/queries/get-resources.query';
-import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
+import { GetResourceQuery, GetResourceByCodeQuery } from '@apps/resources-service/application/queries/get-resource.query';
+import { GetResourcesQuery, GetResourcesWithPaginationQuery, SearchResourcesQuery, CheckResourceAvailabilityQuery } from '@apps/resources-service/application/queries/get-resources.query';
 
 /**
  * Resources Controller
@@ -78,18 +71,7 @@ export class ResourcesController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Resource code already exists' })
   async create(@Body(ValidationPipe) createResourceDto: CreateResourceDto) {
-    const command = new CreateResourceCommand({
-      name: createResourceDto.name,
-      type: createResourceDto.type,
-      capacity: createResourceDto.capacity || null,
-      location: createResourceDto.location || null,
-      programId: createResourceDto.programId,
-      description: createResourceDto.description,
-      attributes: createResourceDto.attributes,
-      availableSchedules: createResourceDto.availableSchedules ? this.mapDtoToAvailableSchedule(createResourceDto.availableSchedules) : null,
-      categoryId: createResourceDto.categoryId,
-    });
-
+    const command = new CreateResourceCommand(createResourceDto);
     const resource: ResourceEntity = await this.commandBus.execute(command);
     const responseData = this.mapToResponseDto(resource);
     return ResponseUtil.success(responseData, 'Resource created successfully');
@@ -120,14 +102,15 @@ export class ResourcesController {
     @Query('isActive') isActive?: boolean,
     @Query('location') location?: string,
   ) {
-    const query = new GetResourcesQuery({
+    const filters = {
       type,
       status,
       categoryId,
       isActive,
       location,
-    });
+    };
 
+    const query = new GetResourcesQuery(filters);
     const resources: ResourceEntity[] = await this.queryBus.execute(query);
     const responseData = resources.map(resource => this.mapToResponseDto(resource));
     return ResponseUtil.list(responseData, 'Resources retrieved successfully');
@@ -147,36 +130,33 @@ export class ResourcesController {
   @ApiQuery({ name: 'status', required: false, description: 'Filter by resource status' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category ID' })
   @ApiQuery({ name: 'isActive', required: false, type: Boolean, description: 'Filter by active status' })
+  @ApiQuery({ name: 'location', required: false, description: 'Filter by location (partial match)' })
   @ApiResponse({ 
     status: 200, 
     description: 'Paginated resources retrieved successfully',
     type: PaginatedResponseDto
   })
-  async findWithPagination(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  async findAllPaginated(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
     @Query('type') type?: string,
     @Query('status') status?: string,
     @Query('categoryId') categoryId?: string,
     @Query('isActive') isActive?: boolean,
+    @Query('location') location?: string,
   ) {
-    const query = new GetResourcesWithPaginationQuery(page, limit, {
+    const filters = {
       type,
       status,
       categoryId,
       isActive,
-    });
+      location,
+    };
 
+    const query = new GetResourcesWithPaginationQuery(Number(page), Number(limit), filters);
     const result = await this.queryBus.execute(query);
     const responseData = result.resources.map(resource => this.mapToResponseDto(resource));
-    
-    return ResponseUtil.paginated(
-      responseData,
-      result.total,
-      result.page,
-      result.limit,
-      'Paginated resources retrieved successfully'
-    );
+    return ResponseUtil.paginated(responseData, result.total, Number(page), Number(limit), 'Resources retrieved successfully');
   }
 
   /**
@@ -187,17 +167,21 @@ export class ResourcesController {
     summary: 'Search resources',
     description: 'Search resources by name, description, or code.'
   })
-  @ApiQuery({ name: 'q', description: 'Search query' })
+  @ApiQuery({ name: 'query', description: 'Search query' })
+  @ApiQuery({ name: 'type', required: false, description: 'Filter by resource type' })
   @ApiResponse({ 
     status: 200, 
     description: 'Search results retrieved successfully',
     type: SuccessResponseDto
   })
-  async search(@Query('q') query: string) {
+  async search(
+    @Query('query') query: string,
+    @Query('type') type?: string,
+  ) {
     const searchQuery = new SearchResourcesQuery(query);
     const resources: ResourceEntity[] = await this.queryBus.execute(searchQuery);
     const responseData = resources.map(resource => this.mapToResponseDto(resource));
-    return ResponseUtil.list(responseData, 'Search results retrieved successfully');
+    return ResponseUtil.list(responseData, 'Search completed successfully');
   }
 
   /**
@@ -215,7 +199,7 @@ export class ResourcesController {
     type: SuccessResponseDto
   })
   @ApiResponse({ status: 404, description: 'Resource not found' })
-  async findById(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     const query = new GetResourceQuery(id);
     const resource: ResourceEntity = await this.queryBus.execute(query);
     const responseData = this.mapToResponseDto(resource);
@@ -304,12 +288,13 @@ export class ResourcesController {
     @Param('id') id: string,
     @Body(ValidationPipe) updateResourceDto: UpdateResourceDto,
   ) {
-    const command = new UpdateResourceCommand({
+    const updateData = {
       ...updateResourceDto,
-      id,
       updatedBy: 'system', // TODO: Get from JWT token
-    });
+    };
 
+    const commandData = { id, ...updateData };
+    const command = new UpdateResourceCommand(commandData);
     const resource: ResourceEntity = await this.commandBus.execute(command);
     const responseData = this.mapToResponseDto(resource);
     return ResponseUtil.success(responseData, 'Resource updated successfully');
@@ -335,31 +320,16 @@ export class ResourcesController {
     @Param('id') id: string,
     @Query('force') force?: boolean,
   ) {
-    const command = new DeleteResourceCommand({
+    const deleteData = {
       id,
       deletedBy: 'system', // TODO: Get from JWT token
       force: force || false,
-    });
+    };
+    const command = new DeleteResourceCommand(deleteData);
     await this.commandBus.execute(command);
     return ResponseUtil.success(null, 'Resource deleted successfully');
   }
 
-  /**
-   * Map AvailableScheduleDto to domain AvailableSchedule interface
-   */
-  private mapDtoToAvailableSchedule(dto: AvailableScheduleDto): any {
-    // Create a basic mapping that maintains compatibility with existing functionality
-    // This ensures the DTO can be used while preserving the domain structure
-    return {
-      operatingHours: dto.operatingHours,
-      restrictions: dto.restrictions,
-      priorities: dto.priorities,
-      // Add default empty arrays for domain interface compatibility
-      weeklySchedule: {},
-      exceptions: [],
-      maintenanceSchedules: []
-    };
-  }
 
   /**
    * Map resource entity to response DTO

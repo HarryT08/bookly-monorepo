@@ -11,6 +11,7 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
@@ -21,8 +22,16 @@ import {
   ApiConsumes,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-// Service-based controller - not using CQRS pattern
-import { ResourceImportService } from '@apps/resources-service/application/services/resource-import.service';
+import { 
+  PreviewImportCommand,
+  StartImportCommand 
+} from '@apps/resources-service/application/commands/import-resources.command';
+import { 
+  GetImportByIdQuery,
+  GetImportsByUserQuery,
+  GetImportsQuery,
+  GetImportStatisticsQuery 
+} from '@apps/resources-service/application/queries/get-import-status.query';
 import { ImportResourcesDto, ResourceImportResponseDto, ImportPreviewDto } from '@apps/resources-service/application/dtos/resource-import.dto';
 import { ImportStatus } from '@apps/resources-service/utils/import-status.enum';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
@@ -43,7 +52,10 @@ import { Multer } from 'multer';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ResourceImportController {
-  constructor(private readonly resourceImportService: ResourceImportService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   /**
    * Previews CSV file before import
@@ -73,7 +85,9 @@ export class ResourceImportController {
     @UploadedFile() file: Multer.File,
     @CurrentUser() user: UserEntity,
   ): Promise<ImportPreviewDto> {
-    return await this.resourceImportService.previewImport(file, user.id!);
+    return await this.commandBus.execute(
+      new PreviewImportCommand(file, user.id!)
+    );
   }
 
   /**
@@ -105,7 +119,9 @@ export class ResourceImportController {
     @UploadedFile() file: Multer.File,
     @CurrentUser() user: UserEntity,
   ) {
-    const importResult = await this.resourceImportService.startImport(file, user.id!);
+    const importResult = await this.commandBus.execute(
+      new StartImportCommand(file, user.id!)
+    );
     return ResponseUtil.success(importResult, 'Import started successfully');
   }
 
@@ -132,7 +148,9 @@ export class ResourceImportController {
     description: 'Import not found',
   })
   async getImportById(@Param('id') id: string) {
-    const importDetails = await this.resourceImportService.getImportById(id);
+    const importDetails = await this.queryBus.execute(
+      new GetImportByIdQuery(id)
+    );
     return ResponseUtil.success(importDetails, 'Import details retrieved successfully');
   }
 
@@ -150,7 +168,9 @@ export class ResourceImportController {
     type: SuccessResponseDto,
   })
   async getMyImports(@CurrentUser() user: UserEntity) {
-    const myImports = await this.resourceImportService.getImportsByUser(user.id!);
+    const myImports = await this.queryBus.execute(
+      new GetImportsByUserQuery(user.id!)
+    );
     return ResponseUtil.success(myImports, 'User imports retrieved successfully');
   }
 
@@ -239,7 +259,9 @@ export class ResourceImportController {
     if (dateFrom) filters.dateFrom = new Date(dateFrom);
     if (dateTo) filters.dateTo = new Date(dateTo);
 
-    return await this.resourceImportService.getImports(page, limit, filters);
+    return await this.queryBus.execute(
+      new GetImportsQuery(page, limit, filters)
+    );
   }
 
   /**
@@ -284,7 +306,9 @@ export class ResourceImportController {
     totalResourcesImported: number;
     averageSuccessRate: number;
   }> {
-    return await this.resourceImportService.getImportStatistics(userId);
+    return await this.queryBus.execute(
+      new GetImportStatisticsQuery(userId)
+    );
   }
 
   /**
@@ -318,6 +342,8 @@ export class ResourceImportController {
     totalResourcesImported: number;
     averageSuccessRate: number;
   }> {
-    return await this.resourceImportService.getImportStatistics(user.id!);
+    return await this.queryBus.execute(
+      new GetImportStatisticsQuery(user.id!)
+    );
   }
 }

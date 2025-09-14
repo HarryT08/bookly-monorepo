@@ -19,8 +19,29 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ResourceResponsibleService } from '@apps/resources-service/application/services/resource-responsible.service';
-import { ResourceResponsibleResponseDto } from '@libs/dto/resources/resource-responsible.dto';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { 
+  AssignResourceResponsibleCommand,
+  CreateResourceResponsibleCommand,
+  UpdateResourceResponsibleCommand,
+  DeleteResourceResponsibleCommand,
+  RemoveResourceResponsibleCommand,
+  AssignMultipleResourceResponsibleCommand,
+  ReplaceResourceResponsiblesCommand,
+  DeactivateAllResourceResponsiblesCommand
+} from '@apps/resources-service/application/commands/create-resource-responsible.command';
+import { 
+  BulkAssignResponsibleCommand,
+  TransferResponsibilitiesCommand 
+} from '@apps/resources-service/application/commands/bulk-assign-responsible.command';
+import { 
+  GetResourceResponsiblesQuery,
+  GetUserResponsibilitiesQuery,
+  GetResponsibilitiesQuery,
+  CheckResourceResponsibleQuery 
+} from '@apps/resources-service/application/queries/get-resource-responsible.query';
+import { ValidateResponsibilityAssignmentQuery } from '@apps/resources-service/application/queries/validate-responsibility-assignment.query';
+import { AssignResponsibleDto, ResourceResponsibleResponseDto } from '@libs/dto/resources/resource-responsible.dto';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 import { SuccessResponseDto } from '@libs/dto/common/response.dto';
@@ -38,7 +59,10 @@ import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ResourceResponsibleController {
-  constructor(private readonly resourceResponsibleService: ResourceResponsibleService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   /**
    * Assigns a user as responsible for a resource
@@ -80,14 +104,15 @@ export class ResourceResponsibleController {
   async assignResponsible(
     @Param('resourceId') resourceId: string,
     @Param('userId') userId: string,
+    @Body() assignResponsibleDto: AssignResponsibleDto,
     @CurrentUser() user: UserEntity,
   ) {
-    const assignment = await this.resourceResponsibleService.assignResponsible({
-      resourceId,
-      userId,
-      assignedBy: user.id!,
-    });
-    return ResponseUtil.success(assignment, 'User assigned as responsible successfully');
+    const command = new AssignResourceResponsibleCommand(
+      assignResponsibleDto.resourceId,
+      assignResponsibleDto.userId,
+      user.id!
+    );
+    return await this.commandBus.execute(command);
   }
 
   /**
@@ -123,11 +148,8 @@ export class ResourceResponsibleController {
     @Body() body: { userIds: string[] },
     @CurrentUser() user: UserEntity,
   ) {
-    const assignments = await this.resourceResponsibleService.assignMultipleResponsibles({
-      resourceId,
-      userIds: body.userIds,
-      assignedBy: user.id!,
-    });
+    const command = new AssignMultipleResourceResponsibleCommand(resourceId, body.userIds, user.id!);
+    const assignments = await this.commandBus.execute(command);
     return ResponseUtil.success(assignments, 'Users assigned as responsible successfully');
   }
 
@@ -163,11 +185,8 @@ export class ResourceResponsibleController {
     @Body() body: { userIds: string[] },
     @CurrentUser() user: UserEntity,
   ) {
-    const replacedResponsibles = await this.resourceResponsibleService.replaceResourceResponsibles({
-      resourceId,
-      userIds: body.userIds,
-      assignedBy: user.id!,
-    });
+    const command = new ReplaceResourceResponsiblesCommand(resourceId, body.userIds, user.id!);
+    const replacedResponsibles = await this.commandBus.execute(command);
     return ResponseUtil.success(replacedResponsibles, 'Resource responsible users replaced successfully');
   }
 
@@ -197,10 +216,13 @@ export class ResourceResponsibleController {
   })
   async getResourceResponsibles(
     @Param('resourceId') resourceId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
     @Query('activeOnly') activeOnly: boolean = true,
   ) {
-    const responsibles = await this.resourceResponsibleService.getResourceResponsibles({ resourceId, activeOnly });
-    return ResponseUtil.success(responsibles, 'Resource responsible users retrieved successfully');
+    const query = new GetResourceResponsiblesQuery(resourceId, page, limit);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Resource responsible users retrieved successfully');
   }
 
   /**
@@ -229,10 +251,13 @@ export class ResourceResponsibleController {
   })
   async getUserResponsibilities(
     @Param('userId') userId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
     @Query('activeOnly') activeOnly: boolean = true,
   ) {
-    const responsibilities = await this.resourceResponsibleService.getUserResponsibilities({ userId, activeOnly });
-    return ResponseUtil.success(responsibilities, 'User responsibilities retrieved successfully');
+    const query = new GetUserResponsibilitiesQuery(userId, page, limit);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'User responsibilities retrieved successfully');
   }
 
   /**
@@ -256,9 +281,12 @@ export class ResourceResponsibleController {
   })
   async getMyResponsibilities(
     @CurrentUser() user: UserEntity,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 50,
     @Query('activeOnly') activeOnly: boolean = true,
   ) {
-    const myResponsibilities = await this.resourceResponsibleService.getUserResponsibilities({ userId: user.id!, activeOnly });
+    const query = new GetUserResponsibilitiesQuery(user.id!, page, limit);
+    const myResponsibilities = await this.queryBus.execute(query);
     return ResponseUtil.success(myResponsibilities, 'User managed resources retrieved successfully');
   }
 
@@ -313,7 +341,14 @@ export class ResourceResponsibleController {
     page: number;
     limit: number;
   }> {
-    return await this.resourceResponsibleService.getResourcesByUser({ userId, page, limit });
+    const query = new GetUserResponsibilitiesQuery(userId, page, limit);
+    const result = await this.queryBus.execute(query);
+    return {
+      assignments: result.responsibilities,
+      total: result.total,
+      page: result.page,
+      limit: result.limit
+    };
   }
 
   /**
@@ -348,11 +383,9 @@ export class ResourceResponsibleController {
     @Param('resourceId') resourceId: string,
     @Param('userId') userId: string,
   ): Promise<{ isResponsible: boolean }> {
-    const isResponsible = await this.resourceResponsibleService.isUserResponsibleForResource({
-      resourceId,
-      userId,
-    });
-    return { isResponsible };
+    const query = new CheckResourceResponsibleQuery(resourceId, userId);
+    const result = await this.queryBus.execute(query);
+    return { isResponsible: result.exists };
   }
 
   /**
@@ -396,7 +429,8 @@ export class ResourceResponsibleController {
     @Param('userId') userId: string,
     @CurrentUser() user: UserEntity,
   ): Promise<void> {
-    await this.resourceResponsibleService.deactivateResponsible({ resourceId, userId });
+    const command = new RemoveResourceResponsibleCommand(resourceId, userId, user.id!);
+    await this.commandBus.execute(command);
   }
 
   /**
@@ -426,7 +460,8 @@ export class ResourceResponsibleController {
     @Param('resourceId') resourceId: string,
     @CurrentUser() user: UserEntity,
   ): Promise<void> {
-    await this.resourceResponsibleService.deactivateAllResourceResponsibles(resourceId);
+    const command = new DeactivateAllResourceResponsiblesCommand(resourceId, user.id!);
+    await this.commandBus.execute(command);
   }
 
   /**
@@ -506,7 +541,8 @@ export class ResourceResponsibleController {
     if (userId) filters.userId = userId;
     if (isActive !== undefined) filters.isActive = isActive;
 
-    return await this.resourceResponsibleService.getResponsibilities({ page, limit, ...filters });
+    const query = new GetResponsibilitiesQuery(page, limit, resourceId, userId, isActive);
+    return await this.queryBus.execute(query);
   }
 
   /**
@@ -541,12 +577,14 @@ export class ResourceResponsibleController {
     @Param('userId') userId: string,
     @Body() body: { resourceIds: string[] },
     @CurrentUser() user: UserEntity,
-  ): Promise<ResourceResponsibleResponseDto[]> {
-    return await this.resourceResponsibleService.bulkAssignResponsibleToResources({
+  ) {
+    const command = new BulkAssignResponsibleCommand({
       resourceIds: body.resourceIds,
       userId,
       assignedBy: user.id!,
     });
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'User assigned to resources successfully');
   }
 
   /**
@@ -575,13 +613,15 @@ export class ResourceResponsibleController {
       resourceIds?: string[];
     },
     @CurrentUser() user: UserEntity,
-  ): Promise<ResourceResponsibleResponseDto[]> {
-    return await this.resourceResponsibleService.transferResponsibilities({
+  ) {
+    const command = new TransferResponsibilitiesCommand({
       fromUserId: body.fromUserId,
       toUserId: body.toUserId,
-      assignedBy: user.id!,
       resourceIds: body.resourceIds,
+      assignedBy: user.id!,
     });
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Responsibilities transferred successfully');
   }
 
   /**
@@ -614,9 +654,7 @@ export class ResourceResponsibleController {
   async validateResponsibilityAssignment(
     @Body() body: { resourceId: string; userIds: string[] },
   ): Promise<{ isValid: boolean; errors: string[] }> {
-    return await this.resourceResponsibleService.validateResponsibilityAssignment(
-      body.resourceId,
-      body.userIds,
-    );
+    const query = new ValidateResponsibilityAssignmentQuery(body.resourceId, body.userIds);
+    return await this.queryBus.execute(query);
   }
 }

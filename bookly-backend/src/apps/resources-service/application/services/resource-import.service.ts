@@ -21,6 +21,9 @@ import { Multer } from 'multer';
  */
 @Injectable()
 export class ResourceImportService {
+  getImportTemplate(): any {
+      throw new Error('Method not implemented.');
+  }
   constructor(
     @Inject('ResourceImportRepository')
     private readonly resourceImportRepository: ResourceImportRepository,

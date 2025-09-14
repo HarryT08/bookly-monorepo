@@ -72,14 +72,39 @@ export class ResourcesService {
       const resources = await this.resourceRepository.findAll();
       
       this.loggingService.log(
-        `Found ${resources.length} resources`,
+        'Resources found successfully',
         { count: resources.length },
         'ResourcesService'
       );
       
       return resources;
     } catch (error) {
-      this.loggingService.error('Failed to find all resources', error, 'ResourcesService');
+      this.loggingService.error('Error finding resources', error, 'ResourcesService');
+      throw error;
+    }
+  }
+
+  async findAllWithFilters(filters: {
+    type?: string;
+    status?: string;
+    categoryId?: string;
+    isActive?: boolean;
+    location?: string;
+  }): Promise<ResourceEntity[]> {
+    this.loggingService.log('Finding all resources with filters', { filters }, 'ResourcesService');
+    
+    try {
+      const resources = await this.resourceRepository.findAll(filters);
+      
+      this.loggingService.log(
+        'Resources found successfully with filters',
+        { count: resources.length, filters },
+        'ResourcesService'
+      );
+      
+      return resources;
+    } catch (error) {
+      this.loggingService.error('Error finding resources with filters', error, 'ResourcesService');
       throw error;
     }
   }
@@ -132,7 +157,13 @@ export class ResourcesService {
     }
   }
 
-  async findWithPagination(page: number, limit: number, filters?: any): Promise<{ resources: ResourceEntity[], total: number }> {
+  async findWithPagination(page: number, limit: number, filters?: {
+    type?: string;
+    status?: string;
+    categoryId?: string;
+    isActive?: boolean;
+    location?: string;
+  }): Promise<{ resources: ResourceEntity[], total: number }> {
     this.loggingService.log(
       'Finding resources with pagination',
       { page, limit, filters },
@@ -145,17 +176,78 @@ export class ResourcesService {
       this.loggingService.log(
         'Resources found with pagination',
         { 
-          page, 
-          limit, 
           count: result.resources.length, 
-          total: result.total 
+          total: result.total,
+          page: result.page,
+          limit: result.limit 
         },
         'ResourcesService'
       );
       
-      return result;
+      return {
+        resources: result.resources,
+        total: result.total
+      };
     } catch (error) {
-      this.loggingService.error('Failed to find resources with pagination', error, 'ResourcesService');
+      this.loggingService.error('Error finding resources with pagination', error, 'ResourcesService');
+      throw error;
+    }
+  }
+
+  async search(query: string, type?: string): Promise<ResourceEntity[]> {
+    this.loggingService.log('Searching resources', { query, type }, 'ResourcesService');
+    
+    try {
+      const resources = await this.resourceRepository.search(query);
+      
+      // Filter by type if provided
+      const filteredResources = type 
+        ? resources.filter(resource => resource.type === type)
+        : resources;
+      
+      this.loggingService.log(
+        'Search completed successfully',
+        { query, type, count: filteredResources.length },
+        'ResourcesService'
+      );
+      
+      return filteredResources;
+    } catch (error) {
+      this.loggingService.error('Error searching resources', error, 'ResourcesService');
+      throw error;
+    }
+  }
+
+  async checkAvailability(id: string, requestedDate: Date, userType: string, duration: number): Promise<{
+    available: boolean;
+    reason: string;
+    priority: string;
+  }> {
+    this.loggingService.log('Checking resource availability', { id, requestedDate, userType, duration }, 'ResourcesService');
+    
+    try {
+      const resource = await this.resourceRepository.findById(id);
+      if (!resource) {
+        throw new BadRequestException('Resource not found');
+      }
+
+      // Basic availability check - can be extended with complex business rules
+      const available = resource.isActive && resource.status !== 'MAINTENANCE';
+      const reason = !available ? 'Resource is not available or under maintenance' : '';
+      
+      this.loggingService.log(
+        'Availability check completed',
+        { id, available, reason },
+        'ResourcesService'
+      );
+      
+      return {
+        available,
+        reason,
+        priority: 'normal'
+      };
+    } catch (error) {
+      this.loggingService.error('Error checking resource availability', error, 'ResourcesService');
       throw error;
     }
   }

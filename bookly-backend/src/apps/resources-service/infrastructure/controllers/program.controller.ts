@@ -19,7 +19,12 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ProgramService } from '@apps/resources-service/application/services/program.service';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CreateProgramCommand } from '@apps/resources-service/application/commands/create-program.command';
+import { UpdateProgramCommand } from '@apps/resources-service/application/commands/update-program.command';
+import { DeactivateProgramCommand } from '@apps/resources-service/application/commands/deactivate-program.command';
+import { ReactivateProgramCommand } from '@apps/resources-service/application/commands/reactivate-program.command';
+import { GetProgramQuery, GetProgramByCodeQuery, GetProgramsQuery, GetActiveProgramsQuery } from '@apps/resources-service/application/queries/get-program.query';
 import {
   CreateProgramDto,
   UpdateProgramDto,
@@ -42,7 +47,10 @@ import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ProgramController {
-  constructor(private readonly programService: ProgramService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   /**
    * Creates a new academic program
@@ -70,8 +78,11 @@ export class ProgramController {
   async createProgram(
     @Body() createProgramDto: CreateProgramDto,
     @CurrentUser() user: UserEntity,
-  ): Promise<ProgramResponseDto> {
-    return await this.programService.createProgram(createProgramDto, user.id!);
+  ) {
+    const commandData = { ...createProgramDto, createdBy: user.id! };
+    const command = new CreateProgramCommand(commandData);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Program created successfully');
   }
 
   /**
@@ -117,7 +128,8 @@ export class ProgramController {
     @Query('search') search?: string,
     @Query('isActive') isActive?: boolean,
   ) {
-    const result = await this.programService.getPrograms(page, limit, search, isActive);
+    const query = new GetProgramsQuery(page, limit, search, isActive);
+    const result = await this.queryBus.execute(query);
     return ResponseUtil.paginated(result.programs, result.total, page, limit, 'Programs retrieved successfully');
   }
 
@@ -135,7 +147,8 @@ export class ProgramController {
     type: SuccessResponseDto,
   })
   async getActivePrograms() {
-    const programs = await this.programService.getActivePrograms();
+    const query = new GetActiveProgramsQuery();
+    const programs = await this.queryBus.execute(query);
     return ResponseUtil.success(programs, 'Active programs retrieved successfully');
   }
 
@@ -162,7 +175,8 @@ export class ProgramController {
     description: 'Program not found',
   })
   async getProgramById(@Param('id') id: string) {
-    const program = await this.programService.getProgramById(id);
+    const query = new GetProgramQuery(id);
+    const program = await this.queryBus.execute(query);
     return ResponseUtil.success(program, 'Program retrieved successfully');
   }
 
@@ -189,7 +203,8 @@ export class ProgramController {
     description: 'Program not found',
   })
   async getProgramByCode(@Param('code') code: string) {
-    const program = await this.programService.getProgramByCode(code);
+    const query = new GetProgramByCodeQuery(code);
+    const program = await this.queryBus.execute(query);
     return ResponseUtil.success(program, 'Program retrieved successfully');
   }
 
@@ -229,7 +244,9 @@ export class ProgramController {
     @Body() updateProgramDto: UpdateProgramDto,
     @CurrentUser() user: UserEntity,
   ) {
-    const updatedProgram = await this.programService.updateProgram(id, updateProgramDto, user.id!);
+    const commandData = { id, ...updateProgramDto, updatedBy: user.id! };
+    const command = new UpdateProgramCommand(commandData);
+    const updatedProgram = await this.commandBus.execute(command);
     return ResponseUtil.success(updatedProgram, 'Program updated successfully');
   }
 
@@ -268,7 +285,8 @@ export class ProgramController {
     @Param('id') id: string,
     @CurrentUser() user: UserEntity,
   ): Promise<void> {
-    await this.programService.deactivateProgram(id, user.id!);
+    const command = new DeactivateProgramCommand(id, user.id!);
+    await this.commandBus.execute(command);
   }
 
   /**
@@ -306,7 +324,8 @@ export class ProgramController {
     @Param('id') id: string,
     @CurrentUser() user: UserEntity,
   ) {
-    const reactivatedProgram = await this.programService.reactivateProgram(id, user.id!);
+    const command = new ReactivateProgramCommand(id, user.id!);
+    const reactivatedProgram = await this.commandBus.execute(command);
     return ResponseUtil.success(reactivatedProgram, 'Program reactivated successfully');
   }
 }

@@ -68,7 +68,7 @@ export class GetResourcesWithPaginationHandler implements IQueryHandler<GetResou
       );
 
       // Delegate to service (Clean Architecture pattern)
-      const result = await this.resourcesService.findWithPagination(query.page, query.limit, query.filters);
+      const result = await this.resourcesService.findWithPagination(query.page, query.limit, query.filters || {});
       
       return result;
     } catch (error) {
@@ -103,7 +103,7 @@ export class SearchResourcesHandler implements IQueryHandler<SearchResourcesQuer
       );
 
       // Delegate to service (Clean Architecture pattern)
-      const resources = await this.resourcesService.findAll();
+      const resources = await this.resourcesService.search(query.query);
       
       return resources;
     } catch (error) {
@@ -142,19 +142,17 @@ export class CheckResourceAvailabilityHandler implements IQueryHandler<CheckReso
       );
 
       // Delegate to service (Clean Architecture pattern)
-      const resource = await this.resourcesService.findById(query.resourceId);
+      const availabilityResult = await this.resourcesService.checkAvailability(
+        query.resourceId,
+        query.requestedDate,
+        query.userType,
+        query.reservationDuration
+      );
       
-      if (!resource) {
-        return {
-          available: false,
-          reason: 'Resource not found',
-          priority: 0,
-        };
-      }
-
       return {
-        available: true,
-        priority: 1,
+        available: availabilityResult.available,
+        reason: availabilityResult.reason,
+        priority: availabilityResult.priority === 'high' ? 3 : availabilityResult.priority === 'medium' ? 2 : 1,
       };
     } catch (error) {
       this.logger.error(
