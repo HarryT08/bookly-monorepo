@@ -2,7 +2,7 @@
  * HITO 6 - RF-04: ResourceImport Entity
  * Tracks CSV import operations and their results
  */
-import { ImportStatus } from '../../utils/import-status.enum';
+import { ImportStatus } from '@apps/resources-service/utils/import-status.enum';
 
 export interface ImportError {
   row: number;

@@ -19,16 +19,16 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ResourceCategoryService } from '../../application/services/resource-category.service';
+import { ResourceCategoryService } from '@apps/resources-service/application/services/resource-category.service';
 import {
   ResourceCategoryResponseDto,
-} from '../../application/dtos/resource-category.dto';
+} from '@apps/resources-service/application/dtos/resource-category.dto';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '../../../auth-service/domain/entities/user.entity';
-import { RESOURCES_URLS } from '../../utils/maps/urls.map';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
+import { RESOURCES_URLS } from '@apps/resources-service/utils/maps/urls.map';
 
 /**
  * HITO 6 - RF-02: ResourceCategory Controller

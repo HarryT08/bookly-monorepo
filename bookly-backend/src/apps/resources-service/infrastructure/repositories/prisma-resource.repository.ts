@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ResourceRepository } from '../../domain/repositories/resource.repository';
-import { ResourceEntity, AvailableSchedule, ResourceAttributes } from '../../domain/entities/resource.entity';
-import { PrismaService } from '../../../../libs/common/services/prisma.service';
+import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
+import { ResourceRepository } from '@apps/resources-service/domain/repositories/resource.repository';
+// Note: CreateResourceDto needs to be defined - using ResourceEntity for now
+import { PrismaService } from '@libs/common/services/prisma.service';
 
 /**
  * Prisma Resource Repository Implementation
@@ -276,8 +277,8 @@ export class PrismaResourceRepository implements ResourceRepository {
       data.status,
       data.programId,
       data.description,
-      data.attributes as ResourceAttributes,
-      data.availableSchedules as AvailableSchedule,
+      data.attributes ,
+      data.availableSchedules,
       data.categoryId,
       data.isActive,
       data.createdAt,

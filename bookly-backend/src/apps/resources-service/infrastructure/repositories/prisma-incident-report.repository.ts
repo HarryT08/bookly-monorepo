@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../../libs/common/services/prisma.service';
+import { PrismaService } from '@libs/common/services/prisma.service';
 import { 
   IncidentReportRepository,
   IncidentReportFilters,
@@ -7,8 +7,8 @@ import {
   IncidentReportPagination,
   IncidentReportQueryResult,
   IncidentReportStatistics
-} from '../../domain/repositories/incident-report.repository';
-import { IncidentReportEntity } from '../../domain/entities/incident-report.entity';
+} from '@apps/resources-service/domain/repositories/incident-report.repository';
+import { IncidentReportEntity } from '@apps/resources-service/domain/entities/incident-report.entity';
 
 @Injectable()
 export class PrismaIncidentReportRepository extends IncidentReportRepository {

@@ -19,17 +19,19 @@ import {
   ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ProgramService } from '../../application/services/program.service';
+import { ProgramService } from '@apps/resources-service/application/services/program.service';
 import {
   CreateProgramDto,
   UpdateProgramDto,
   ProgramResponseDto,
-} from '../../application/dtos/program.dto';
+} from '@apps/resources-service/application/dtos/program.dto';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { SuccessResponseDto, PaginatedResponseDto } from '@libs/dto/common/response.dto';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '../../../auth-service/domain/entities/user.entity';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 
 /**
  * HITO 6 - RF-02: Program Controller
@@ -107,31 +109,16 @@ export class ProgramController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Programs retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        programs: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/ProgramResponseDto' },
-        },
-        total: { type: 'number' },
-        page: { type: 'number' },
-        limit: { type: 'number' },
-      },
-    },
+    type: PaginatedResponseDto,
   })
   async getPrograms(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('search') search?: string,
     @Query('isActive') isActive?: boolean,
-  ): Promise<{
-    programs: ProgramResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    return await this.programService.getPrograms(page, limit, search, isActive);
+  ) {
+    const result = await this.programService.getPrograms(page, limit, search, isActive);
+    return ResponseUtil.paginated(result.programs, result.total, page, limit, 'Programs retrieved successfully');
   }
 
   /**
@@ -145,10 +132,11 @@ export class ProgramController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Active programs retrieved successfully',
-    type: [ProgramResponseDto],
+    type: SuccessResponseDto,
   })
-  async getActivePrograms(): Promise<ProgramResponseDto[]> {
-    return await this.programService.getActivePrograms();
+  async getActivePrograms() {
+    const programs = await this.programService.getActivePrograms();
+    return ResponseUtil.success(programs, 'Active programs retrieved successfully');
   }
 
   /**
@@ -167,14 +155,15 @@ export class ProgramController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Program retrieved successfully',
-    type: ProgramResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Program not found',
   })
-  async getProgramById(@Param('id') id: string): Promise<ProgramResponseDto> {
-    return await this.programService.getProgramById(id);
+  async getProgramById(@Param('id') id: string) {
+    const program = await this.programService.getProgramById(id);
+    return ResponseUtil.success(program, 'Program retrieved successfully');
   }
 
   /**
@@ -193,14 +182,15 @@ export class ProgramController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Program retrieved successfully',
-    type: ProgramResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Program not found',
   })
-  async getProgramByCode(@Param('code') code: string): Promise<ProgramResponseDto> {
-    return await this.programService.getProgramByCode(code);
+  async getProgramByCode(@Param('code') code: string) {
+    const program = await this.programService.getProgramByCode(code);
+    return ResponseUtil.success(program, 'Program retrieved successfully');
   }
 
   /**
@@ -220,7 +210,7 @@ export class ProgramController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Program updated successfully',
-    type: ProgramResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -238,8 +228,9 @@ export class ProgramController {
     @Param('id') id: string,
     @Body() updateProgramDto: UpdateProgramDto,
     @CurrentUser() user: UserEntity,
-  ): Promise<ProgramResponseDto> {
-    return await this.programService.updateProgram(id, updateProgramDto, user.id!);
+  ) {
+    const updatedProgram = await this.programService.updateProgram(id, updateProgramDto, user.id!);
+    return ResponseUtil.success(updatedProgram, 'Program updated successfully');
   }
 
   /**
@@ -297,7 +288,7 @@ export class ProgramController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Program reactivated successfully',
-    type: ProgramResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -314,7 +305,8 @@ export class ProgramController {
   async reactivateProgram(
     @Param('id') id: string,
     @CurrentUser() user: UserEntity,
-  ): Promise<ProgramResponseDto> {
-    return await this.programService.reactivateProgram(id, user.id!);
+  ) {
+    const reactivatedProgram = await this.programService.reactivateProgram(id, user.id!);
+    return ResponseUtil.success(reactivatedProgram, 'Program reactivated successfully');
   }
 }

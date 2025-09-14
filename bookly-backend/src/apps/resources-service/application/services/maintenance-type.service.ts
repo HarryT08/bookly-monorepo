@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { MaintenanceTypeRepository } from '../../domain/repositories/maintenance-type.repository';
-import { MaintenanceTypeEntity } from '../../domain/entities/maintenance-type.entity';
+import { MaintenanceTypeRepository } from '@apps/resources-service/domain/repositories/maintenance-type.repository';
+import { MaintenanceTypeEntity } from '@apps/resources-service/domain/entities/maintenance-type.entity';
 import { 
   CreateMaintenanceTypeDto, 
   UpdateMaintenanceTypeDto, 

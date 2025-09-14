@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@libs/common/services/prisma.service';
-import { ResourceImportRepository } from '../../domain/repositories/resource-import.repository';
-import { ResourceImportEntity } from '../../domain/entities/resource-import.entity';
-import { ImportStatus } from '../../utils/import-status.enum';
+import { ResourceImportEntity } from '@apps/resources-service/domain/entities/resource-import.entity';
+import { ResourceImportRepository } from '@apps/resources-service/domain/repositories/resource-import.repository';
+import { ImportStatus } from '@apps/resources-service/utils/import-status.enum';
 
 /**
  * HITO 6 - RF-04: Prisma ResourceImport Repository Implementation

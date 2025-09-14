@@ -6,6 +6,19 @@ import { UserRepository } from '../../../auth-service/domain/repositories/user.r
 import { LoggingService } from '@libs/logging/logging.service';
 import { ResourceResponsibleEntity } from '../../domain/entities/resource-responsible.entity';
 import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { 
+  AssignResponsibleDto, 
+  AssignMultipleResponsiblesDto, 
+  ReplaceResourceResponsiblesDto,
+  DeactivateResponsibleDto,
+  GetResourceResponsiblesDto,
+  GetUserResponsibilitiesDto,
+  GetResourcesByUserDto,
+  IsUserResponsibleDto,
+  GetResponsibilitiesDto,
+  BulkAssignResponsibleDto,
+  TransferResponsibilitiesDto
+} from '@libs/dto/resources/resource-responsible.dto';
 
 describe('ResourceResponsibleService', () => {
   let service: ResourceResponsibleService;
@@ -111,11 +124,11 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(null);
       resourceResponsibleRepository.create.mockResolvedValue(mockResourceResponsibleEntity);
 
-      const result = await service.assignResponsible(
-        'resource-id-1',
-        'user-id-1',
-        'admin-id-1',
-      );
+      const result = await service.assignResponsible({
+        resourceId: 'resource-id-1',
+        userId: 'user-id-1',
+        assignedBy: 'admin-id-1',
+      });
 
       expect(resourceRepository.findById).toHaveBeenCalledWith('resource-id-1');
       expect(userRepository.findById).toHaveBeenCalledWith('user-id-1');
@@ -139,7 +152,7 @@ describe('ResourceResponsibleService', () => {
       resourceRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.assignResponsible('non-existent-resource', 'user-id-1', 'admin-id-1'),
+        service.assignResponsible({ resourceId: 'non-existent-resource', userId: 'user-id-1', assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(NotFoundException);
       expect(userRepository.findById).not.toHaveBeenCalled();
       expect(resourceResponsibleRepository.create).not.toHaveBeenCalled();
@@ -150,7 +163,7 @@ describe('ResourceResponsibleService', () => {
       userRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.assignResponsible('resource-id-1', 'non-existent-user', 'admin-id-1'),
+        service.assignResponsible({ resourceId: 'resource-id-1', userId: 'non-existent-user', assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(NotFoundException);
       expect(resourceResponsibleRepository.create).not.toHaveBeenCalled();
     });
@@ -163,7 +176,7 @@ describe('ResourceResponsibleService', () => {
       );
 
       await expect(
-        service.assignResponsible('resource-id-1', 'user-id-1', 'admin-id-1'),
+        service.assignResponsible({ resourceId: 'resource-id-1', userId: 'user-id-1', assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(ConflictException);
       expect(resourceResponsibleRepository.create).not.toHaveBeenCalled();
     });
@@ -192,11 +205,11 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(inactiveResponsible);
       resourceResponsibleRepository.reactivate.mockResolvedValue();
 
-      const result = await service.assignResponsible(
-        'resource-id-1',
-        'user-id-1',
-        'admin-id-1',
-      );
+      const result = await service.assignResponsible({
+        resourceId: 'resource-id-1',
+        userId: 'user-id-1',
+        assignedBy: 'admin-id-1',
+      });
 
       expect(resourceResponsibleRepository.reactivate).toHaveBeenCalled();
       expect(result.isActive).toBe(true);
@@ -227,7 +240,7 @@ describe('ResourceResponsibleService', () => {
 
     it('should throw BadRequestException if no users provided', async () => {
       await expect(
-        service.assignMultipleResponsibles('resource-id-1', [], 'admin-id-1'),
+        service.assignMultipleResponsibles({ resourceId: 'resource-id-1', userIds: [], assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -240,11 +253,11 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(null);
       resourceResponsibleRepository.create.mockResolvedValue(mockResourceResponsibleEntity);
 
-      const result = await service.assignMultipleResponsibles(
-        'resource-id-1',
+      const result = await service.assignMultipleResponsibles({
+        resourceId: 'resource-id-1',
         userIds,
-        'admin-id-1',
-      );
+        assignedBy: 'admin-id-1',
+      });
 
       expect(resourceResponsibleRepository.create).toHaveBeenCalledTimes(1); // Only one assignment
       expect(result).toHaveLength(1);
@@ -259,11 +272,11 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.deactivate.mockResolvedValue(undefined);
       resourceResponsibleRepository.create.mockResolvedValue(mockResourceResponsibleEntity);
 
-      const result = await service.replaceResourceResponsibles(
-        'resource-id-1',
-        newUserIds,
-        'admin-id-1',
-      );
+      const result = await service.replaceResourceResponsibles({
+        resourceId: 'resource-id-1',
+        userIds: newUserIds,
+        assignedBy: 'admin-id-1',
+      });
 
       expect(resourceRepository.findById).toHaveBeenCalledWith('resource-id-1');
       expect(resourceResponsibleRepository.deactivateAllByResource).toHaveBeenCalledWith('resource-id-1');
@@ -275,7 +288,7 @@ describe('ResourceResponsibleService', () => {
 
     it('should throw BadRequestException if no users provided', async () => {
       await expect(
-        service.replaceResourceResponsibles('resource-id-1', [], 'admin-id-1'),
+        service.replaceResourceResponsibles({ resourceId: 'resource-id-1', userIds: [], assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -287,7 +300,7 @@ describe('ResourceResponsibleService', () => {
       );
       resourceResponsibleRepository.deactivate.mockResolvedValue(undefined);
 
-      await service.deactivateResponsible('resource-id-1', 'user-id-1');
+      await service.deactivateResponsible({ resourceId: 'resource-id-1', userId: 'user-id-1' });
 
       expect(resourceResponsibleRepository.findByResourceAndUser).toHaveBeenCalledWith(
         'resource-id-1',
@@ -333,7 +346,7 @@ describe('ResourceResponsibleService', () => {
       const mockResponsibles = [mockResourceResponsibleEntity];
       resourceResponsibleRepository.findByResourceId.mockResolvedValue(mockResponsibles);
 
-      const result = await service.getResourceResponsibles('resource-id-1');
+      const result = await service.getResourceResponsibles({ resourceId: 'resource-id-1' });
 
       expect(resourceResponsibleRepository.findByResourceId).toHaveBeenCalledWith(
         'resource-id-1',
@@ -354,7 +367,7 @@ describe('ResourceResponsibleService', () => {
       const mockResponsibles = [mockResourceResponsibleEntity];
       resourceResponsibleRepository.findByResourceId.mockResolvedValue(mockResponsibles);
 
-      const result = await service.getResourceResponsibles('resource-id-1', false);
+      const result = await service.getResourceResponsibles({ resourceId: 'resource-id-1', activeOnly: false });
 
       expect(resourceResponsibleRepository.findByResourceId).toHaveBeenCalledWith(
         'resource-id-1',
@@ -369,7 +382,7 @@ describe('ResourceResponsibleService', () => {
       const mockResponsibilities = [mockResourceResponsibleEntity];
       resourceResponsibleRepository.findByUserId.mockResolvedValue(mockResponsibilities);
 
-      const result = await service.getUserResponsibilities('user-id-1');
+      const result = await service.getUserResponsibilities({ userId: 'user-id-1' });
 
       expect(resourceResponsibleRepository.findByUserId).toHaveBeenCalledWith('user-id-1', true);
       expect(result).toHaveLength(1);
@@ -384,7 +397,7 @@ describe('ResourceResponsibleService', () => {
         total: 1,
       });
 
-      const result = await service.getResourcesByUser('user-id-1', 1, 10);
+      const result = await service.getResourcesByUser({ userId: 'user-id-1', page: 1, limit: 10 });
 
       expect(resourceResponsibleRepository.findWithPagination).toHaveBeenCalledWith(1, 10, {
         userId: 'user-id-1',
@@ -403,7 +416,7 @@ describe('ResourceResponsibleService', () => {
         mockResourceResponsibleEntity,
       );
 
-      const result = await service.isUserResponsibleForResource('resource-id-1', 'user-id-1');
+      const result = await service.isUserResponsibleForResource({ resourceId: 'resource-id-1', userId: 'user-id-1' });
 
       expect(resourceResponsibleRepository.findByResourceAndUser).toHaveBeenCalledWith(
         'resource-id-1',
@@ -415,7 +428,7 @@ describe('ResourceResponsibleService', () => {
     it('should return false if user is not responsible for resource', async () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(null);
 
-      const result = await service.isUserResponsibleForResource('resource-id-1', 'user-id-1');
+      const result = await service.isUserResponsibleForResource({ resourceId: 'resource-id-1', userId: 'user-id-1' });
 
       expect(result).toBe(false);
     });
@@ -432,7 +445,7 @@ describe('ResourceResponsibleService', () => {
 
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(inactiveResponsible);
 
-      const result = await service.isUserResponsibleForResource('resource-id-1', 'user-id-1');
+      const result = await service.isUserResponsibleForResource({ resourceId: 'resource-id-1', userId: 'user-id-1' });
 
       expect(result).toBe(false);
     });
@@ -446,11 +459,11 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.findByResourceAndUser.mockResolvedValue(null);
       resourceResponsibleRepository.create.mockResolvedValue(mockResourceResponsibleEntity);
 
-      const result = await service.bulkAssignResponsibleToResources(
+      const result = await service.bulkAssignResponsibleToResources({
         resourceIds,
-        'user-id-1',
-        'admin-id-1',
-      );
+        userId: 'user-id-1',
+        assignedBy: 'admin-id-1',
+      });
 
       expect(userRepository.findById).toHaveBeenCalledWith('user-id-1');
       expect(resourceRepository.findById).toHaveBeenCalledTimes(2);
@@ -461,7 +474,7 @@ describe('ResourceResponsibleService', () => {
 
     it('should throw BadRequestException if no resources provided', async () => {
       await expect(
-        service.bulkAssignResponsibleToResources([], 'user-id-1', 'admin-id-1'),
+        service.bulkAssignResponsibleToResources({ resourceIds: [], userId: 'user-id-1', assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -474,11 +487,11 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.deactivate.mockResolvedValue(undefined);
       resourceResponsibleRepository.create.mockResolvedValue(mockResourceResponsibleEntity);
 
-      const result = await service.transferResponsibilities(
-        'user-id-1',
-        'user-id-2',
-        'admin-id-1',
-      );
+      const result = await service.transferResponsibilities({
+        fromUserId: 'user-id-1',
+        toUserId: 'user-id-2',
+        assignedBy: 'admin-id-1',
+      });
 
       expect(userRepository.findById).toHaveBeenCalledWith('user-id-1');
       expect(userRepository.findById).toHaveBeenCalledWith('user-id-2');
@@ -497,12 +510,12 @@ describe('ResourceResponsibleService', () => {
       resourceResponsibleRepository.deactivate.mockResolvedValue(undefined);
       resourceResponsibleRepository.create.mockResolvedValue(mockResourceResponsibleEntity);
 
-      const result = await service.transferResponsibilities(
-        'user-id-1',
-        'user-id-2',
-        'admin-id-1',
-        specificResourceIds,
-      );
+      const result = await service.transferResponsibilities({
+        fromUserId: 'user-id-1',
+        toUserId: 'user-id-2',
+        assignedBy: 'admin-id-1',
+        resourceIds: specificResourceIds,
+      });
 
       expect(result).toHaveLength(1);
       expect(loggingService.log).toHaveBeenCalled();
@@ -512,7 +525,7 @@ describe('ResourceResponsibleService', () => {
       userRepository.findById.mockResolvedValueOnce(null); // fromUser doesn't exist
 
       await expect(
-        service.transferResponsibilities('non-existent-user', 'user-id-2', 'admin-id-1'),
+        service.transferResponsibilities({ fromUserId: 'non-existent-user', toUserId: 'user-id-2', assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -522,7 +535,7 @@ describe('ResourceResponsibleService', () => {
         .mockResolvedValueOnce(null); // toUser doesn't exist
 
       await expect(
-        service.transferResponsibilities('user-id-1', 'non-existent-user', 'admin-id-1'),
+        service.transferResponsibilities({ fromUserId: 'user-id-1', toUserId: 'non-existent-user', assignedBy: 'admin-id-1' }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -598,7 +611,9 @@ describe('ResourceResponsibleService', () => {
         total: 1,
       });
 
-      const result = await service.getResponsibilities(1, 10, {
+      const result = await service.getResponsibilities({
+        page: 1,
+        limit: 10,
         resourceId: 'resource-id-1',
         userId: 'user-id-1',
         isActive: true,

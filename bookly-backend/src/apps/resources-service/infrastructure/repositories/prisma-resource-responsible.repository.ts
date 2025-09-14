@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@libs/common/services/prisma.service';
-import { ResourceResponsibleRepository } from '../../domain/repositories/resource-responsible.repository';
-import { ResourceResponsibleEntity } from '../../domain/entities/resource-responsible.entity';
+import { ResourceResponsibleEntity } from '@apps/resources-service/domain/entities/resource-responsible.entity';
+import { ResourceResponsibleRepository } from '@apps/resources-service/domain/repositories/resource-responsible.repository';
 
 /**
  * HITO 6 - RF-06: Prisma ResourceResponsible Repository Implementation

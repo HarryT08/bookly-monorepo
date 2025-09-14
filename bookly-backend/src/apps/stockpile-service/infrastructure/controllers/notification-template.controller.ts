@@ -430,8 +430,9 @@ export class NotificationTemplateController {
   async markNotificationAsRead(
     @Param('id') id: string,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ): Promise<SuccessResponseDto<void>> {
     const command = new MarkNotificationAsReadCommand(id, user.id);
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Notification marked as read successfully');
   }
 }

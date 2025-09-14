@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { ProgramRepository } from '../../domain/repositories/program.repository';
-import { ProgramEntity } from '../../domain/entities/program.entity';
+import { ProgramRepository } from '@apps/resources-service/domain/repositories/program.repository';
+import { ProgramEntity } from '@apps/resources-service/domain/entities/program.entity';
 import { CreateProgramDto, UpdateProgramDto, ProgramResponseDto } from '../dtos/program.dto';
 import { LoggingService } from '@libs/logging/logging.service';
 

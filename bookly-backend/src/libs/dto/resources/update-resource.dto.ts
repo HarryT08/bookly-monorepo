@@ -64,4 +64,12 @@ export class UpdateResourceDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @ApiPropertyOptional({ description: 'Resource active status' })
+  @IsOptional()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'User ID who is updating the resource' })
+  @IsString()
+  updatedBy: string;
 }

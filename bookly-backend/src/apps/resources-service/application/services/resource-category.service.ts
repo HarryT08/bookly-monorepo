@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { ResourceCategoryRepository } from '../../domain/repositories/resource-category.repository';
-import { ResourceCategoryEntity } from '../../domain/entities/resource-category.entity';
+import { ResourceCategoryRepository } from '@apps/resources-service/domain/repositories/resource-category.repository';
+import { ResourceCategoryEntity } from '@apps/resources-service/domain/entities/resource-category.entity';
 import { 
   ResourceCategoryResponseDto 
 } from '../dtos/resource-category.dto';

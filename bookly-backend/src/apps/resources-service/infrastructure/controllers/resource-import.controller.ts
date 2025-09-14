@@ -21,17 +21,17 @@ import {
   ApiConsumes,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ResourceImportService } from '../../application/services/resource-import.service';
-import {
-  ResourceImportResponseDto,
-  ImportPreviewDto,
-} from '../../application/dtos/resource-import.dto';
-import { ImportStatus } from '../../utils/import-status.enum';
+// Service-based controller - not using CQRS pattern
+import { ResourceImportService } from '@apps/resources-service/application/services/resource-import.service';
+import { ImportResourcesDto, ResourceImportResponseDto, ImportPreviewDto } from '@apps/resources-service/application/dtos/resource-import.dto';
+import { ImportStatus } from '@apps/resources-service/utils/import-status.enum';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { SuccessResponseDto, PaginatedResponseDto } from '@libs/dto/common/response.dto';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '../../../auth-service/domain/entities/user.entity';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { Multer } from 'multer';
 
 /**
@@ -91,7 +91,7 @@ export class ResourceImportController {
   @ApiResponse({
     status: HttpStatus.ACCEPTED,
     description: 'Import started successfully',
-    type: ResourceImportResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -104,8 +104,9 @@ export class ResourceImportController {
   async startImport(
     @UploadedFile() file: Multer.File,
     @CurrentUser() user: UserEntity,
-  ): Promise<ResourceImportResponseDto> {
-    return await this.resourceImportService.startImport(file, user.id!);
+  ) {
+    const importResult = await this.resourceImportService.startImport(file, user.id!);
+    return ResponseUtil.success(importResult, 'Import started successfully');
   }
 
   /**
@@ -124,14 +125,15 @@ export class ResourceImportController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Import details retrieved successfully',
-    type: ResourceImportResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Import not found',
   })
-  async getImportById(@Param('id') id: string): Promise<ResourceImportResponseDto> {
-    return await this.resourceImportService.getImportById(id);
+  async getImportById(@Param('id') id: string) {
+    const importDetails = await this.resourceImportService.getImportById(id);
+    return ResponseUtil.success(importDetails, 'Import details retrieved successfully');
   }
 
   /**
@@ -145,10 +147,11 @@ export class ResourceImportController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'User imports retrieved successfully',
-    type: [ResourceImportResponseDto],
+    type: SuccessResponseDto,
   })
-  async getMyImports(@CurrentUser() user: UserEntity): Promise<ResourceImportResponseDto[]> {
-    return await this.resourceImportService.getImportsByUser(user.id!);
+  async getMyImports(@CurrentUser() user: UserEntity) {
+    const myImports = await this.resourceImportService.getImportsByUser(user.id!);
+    return ResponseUtil.success(myImports, 'User imports retrieved successfully');
   }
 
   /**

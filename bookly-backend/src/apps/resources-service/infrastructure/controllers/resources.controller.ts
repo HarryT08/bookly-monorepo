@@ -31,20 +31,20 @@ import {
 import { CreateResourceDto, AvailableScheduleDto } from '@libs/dto/resources/create-resource.dto';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
-import { CreateResourceCommand } from '../../application/commands/create-resource.command';
-import { UpdateResourceCommand } from '../../application/commands/update-resource.command';
-import { DeleteResourceCommand } from '../../application/commands/delete-resource.command';
+import { CreateResourceCommand } from '@apps/resources-service/application/commands/create-resource.command';
+import { UpdateResourceCommand } from '@apps/resources-service/application/commands/update-resource.command';
+import { DeleteResourceCommand } from '@apps/resources-service/application/commands/delete-resource.command';
 import {
   GetResourceQuery,
   GetResourceByCodeQuery,
-} from '../../application/queries/get-resource.query';
+} from '@apps/resources-service/application/queries/get-resource.query';
 import {
   GetResourcesQuery,
   GetResourcesWithPaginationQuery,
   SearchResourcesQuery,
   CheckResourceAvailabilityQuery,
-} from '../../application/queries/get-resources.query';
-import { ResourceEntity } from '../../domain/entities/resource.entity';
+} from '@apps/resources-service/application/queries/get-resources.query';
+import { ResourceEntity } from '@apps/resources-service/domain/entities/resource.entity';
 
 /**
  * Resources Controller

@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { ResourceImportRepository } from '../../domain/repositories/resource-import.repository';
-import { ResourceImportEntity, ImportError } from '../../domain/entities/resource-import.entity';
-import { ImportStatus } from '../../utils/import-status.enum';
+import { ResourceImportRepository } from '@apps/resources-service/domain/repositories/resource-import.repository';
+import { ResourceImportEntity, ImportError } from '@apps/resources-service/domain/entities/resource-import.entity';
 
 import { 
   ResourceImportResponseDto,
@@ -11,6 +10,7 @@ import {
   ImportPreviewDto 
 } from '../dtos/resource-import.dto';
 import { LoggingService } from '@libs/logging/logging.service';
+import { ImportStatus } from '@apps/resources-service/utils/import-status.enum';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
 import { Multer } from 'multer';

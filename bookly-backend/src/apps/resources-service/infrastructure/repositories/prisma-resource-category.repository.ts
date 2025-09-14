@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@libs/common/services/prisma.service';
-import { ResourceCategoryRepository } from '../../domain/repositories/resource-category.repository';
-import { ResourceCategoryEntity } from '../../domain/entities/resource-category.entity';
+import { ResourceCategoryEntity } from '@apps/resources-service/domain/entities/resource-category.entity';
+import { ResourceCategoryRepository } from '@apps/resources-service/domain/repositories/resource-category.repository';
 
 /**
  * HITO 6 - RF-02: Prisma ResourceCategory Repository Implementation

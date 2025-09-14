@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@libs/common/services/prisma.service';
-import { MaintenanceTypeRepository } from '../../domain/repositories/maintenance-type.repository';
-import { MaintenanceTypeEntity } from '../../domain/entities/maintenance-type.entity';
+import { MaintenanceTypeEntity } from '@apps/resources-service/domain/entities/maintenance-type.entity';
+import { MaintenanceTypeRepository } from '@apps/resources-service/domain/repositories/maintenance-type.repository';
 
 /**
  * HITO 6 - RF-06: Prisma MaintenanceType Repository Implementation

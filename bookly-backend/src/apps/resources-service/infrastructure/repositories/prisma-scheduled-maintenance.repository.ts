@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../libs/common/services/prisma.service';
-import { LoggingService } from '../../../../libs/logging/logging.service';
+import { PrismaService } from '@libs/common/services/prisma.service';
+import { LoggingService } from '@libs/logging/logging.service';
+import { ScheduledMaintenanceEntity } from '@apps/resources-service/domain/entities/scheduled-maintenance.entity';
 import { 
-  ScheduledMaintenanceRepository,
-  ScheduledMaintenanceFilters,
-  ScheduledMaintenanceSortOptions,
-  ScheduledMaintenancePagination,
-  ScheduledMaintenanceQueryResult,
-  ScheduledMaintenanceStatistics
-} from '../../domain/repositories/scheduled-maintenance.repository';
-import { ScheduledMaintenanceEntity } from '../../domain/entities/scheduled-maintenance.entity';
+  ScheduledMaintenanceFilters, 
+  ScheduledMaintenancePagination, 
+  ScheduledMaintenanceQueryResult, 
+  ScheduledMaintenanceRepository, 
+  ScheduledMaintenanceSortOptions, 
+  ScheduledMaintenanceStatistics 
+} from '@apps/resources-service/domain/repositories/scheduled-maintenance.repository';
 
 @Injectable()
 export class PrismaScheduledMaintenanceRepository extends ScheduledMaintenanceRepository {

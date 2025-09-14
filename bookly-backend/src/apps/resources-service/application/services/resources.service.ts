@@ -10,6 +10,9 @@ import {
   RESOURCE_EVENTS 
 } from '@libs/event-bus/interfaces/standardized-domain-event.interface';
 import { CreateResourceDto, AvailableScheduleDto } from '@libs/dto/resources/create-resource.dto';
+import { UpdateResourceDto } from '@libs/dto/resources/update-resource.dto';
+import { DeleteResourceDto } from '@libs/dto/resources/delete-resource.dto';
+import { SetMaintenanceStatusDto } from '@libs/dto/resources/set-maintenance-status.dto';
 import { AvailableSchedule } from '@apps/resources-service/domain/entities/resource.entity';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -302,18 +305,7 @@ export class ResourcesService {
    * Updates an existing resource with full business logic validation
    * Implements RF-02 - Follows Clean Architecture patterns
    */
-  async updateResource(id: string, data: {
-    name?: string;
-    type?: string;
-    capacity?: number;
-    location?: string;
-    description?: string;
-    attributes?: any;
-    availableSchedules?: any;
-    categoryId?: string;
-    isActive?: boolean;
-    updatedBy: string;
-  }): Promise<ResourceEntity> {
+  async updateResource(id: string, data: UpdateResourceDto): Promise<ResourceEntity> {
     this.loggingService.log(
       'Updating resource with business validation',
       { resourceId: id, updatedBy: data.updatedBy },
@@ -327,7 +319,12 @@ export class ResourcesService {
         throw new BadRequestException(`Resource with id ${id} not found`);
       }
 
-      // Business Logic 2: Update resource entity using domain method
+      // Business Logic 2: Map DTO to domain entity format if provided
+      const mappedAvailableSchedules = data.availableSchedules 
+        ? this.mapDtoToAvailableSchedule(data.availableSchedules) 
+        : undefined;
+
+      // Business Logic 3: Update resource entity using domain method
       const updatedResource = existingResource.update(
         data.name,
         data.type,
@@ -335,7 +332,7 @@ export class ResourcesService {
         data.location,
         data.description,
         data.attributes,
-        data.availableSchedules,
+        mappedAvailableSchedules,
         data.categoryId
       );
 
@@ -399,10 +396,10 @@ export class ResourcesService {
    * Deletes a resource (soft delete for safety)
    * Implements RF-01 - Follows Clean Architecture patterns
    */
-  async deleteResource(id: string, deletedBy: string, force: boolean = false): Promise<void> {
+  async deleteResource(id: string, data: DeleteResourceDto): Promise<void> {
     this.loggingService.log(
       'Deleting resource with business validation',
-      { resourceId: id, deletedBy, force },
+      { resourceId: id, deletedBy: data.deletedBy, force: data.force },
       'ResourcesService'
     );
 
@@ -414,16 +411,16 @@ export class ResourcesService {
       }
 
       // Business Logic 2: Check if resource has active reservations (if implementing soft delete)
-      if (!force) {
+      if (!data.force) {
         // In a real implementation, check for active reservations
-        // const activeReservations = await this.checkActiveReservations(id);
-        // if (activeReservations.length > 0) {
-        //   throw new ConflictException('Cannot delete resource with active reservations');
-        // }
+        const activeReservations = await this.checkActiveReservations(id);
+        if (activeReservations.length > 0) {  
+          throw new ConflictException('Cannot delete resource with active reservations');
+        }
       }
 
       // Business Logic 3: Perform deletion (soft delete by default)
-      if (force) {
+      if (data.force) {
         // Hard delete - removes from database
         await this.resourceRepository.delete(id);
       } else {
@@ -454,7 +451,7 @@ export class ResourcesService {
 
       this.loggingService.log(
         'Resource deleted successfully',
-        { resourceId: id, deletedBy, deletionType: force ? 'HARD' : 'SOFT' },
+        { resourceId: id, deletedBy: data.deletedBy, deletionType: data.force ? 'HARD' : 'SOFT' },
         'ResourcesService'
       );
 
@@ -468,10 +465,10 @@ export class ResourcesService {
    * Sets maintenance status for a resource
    * Implements RF-06 - Maintenance of resources
    */
-  async setMaintenanceStatus(id: string, inMaintenance: boolean, userId: string): Promise<ResourceEntity> {
+  async setMaintenanceStatus(id: string, data: SetMaintenanceStatusDto): Promise<ResourceEntity> {
     this.loggingService.log(
       'Setting maintenance status for resource',
-      { resourceId: id, inMaintenance, userId },
+      { resourceId: id, inMaintenance: data.inMaintenance, userId: data.userId },
       'ResourcesService'
     );
 
@@ -483,7 +480,7 @@ export class ResourcesService {
       }
 
       // Business Logic 2: Update resource status
-      const newStatus = inMaintenance ? 'MAINTENANCE' : 'AVAILABLE';
+      const newStatus = data.inMaintenance ? 'MAINTENANCE' : 'AVAILABLE';
       const updatedResource = existingResource.changeStatus(newStatus);
 
       // Business Logic 3: Persist changes
@@ -491,7 +488,7 @@ export class ResourcesService {
 
       // Business Logic 4: Publish standardized domain event
       const domainEvent = createStandardizedEvent(
-        inMaintenance ? 'resource.maintenance_started' : 'resource.maintenance_ended',
+        data.inMaintenance ? 'resource.maintenance_started' : 'resource.maintenance_ended',
         id,
         'Resource',
         EventAction.STATUS_CHANGED,
@@ -499,13 +496,13 @@ export class ResourcesService {
           resourceId: id,
           resourceCode: savedResource.code,
           resourceName: savedResource.name,
-          inMaintenance,
-          maintenanceStarted: inMaintenance ? new Date().toISOString() : null,
-          maintenanceEnded: !inMaintenance ? new Date().toISOString() : null,
-          updatedBy: userId
+          inMaintenance: data.inMaintenance,
+          maintenanceStarted: data.inMaintenance ? new Date().toISOString() : null,
+          maintenanceEnded: !data.inMaintenance ? new Date().toISOString() : null,
+          updatedBy: data.userId
         },
         {
-          userId,
+          userId: data.userId,
           service: 'resources-service',
           correlationId: uuidv4(),
           previousState: existingResource,
@@ -519,7 +516,7 @@ export class ResourcesService {
 
       this.loggingService.log(
         'Resource maintenance status updated successfully',
-        { resourceId: id, newStatus, userId },
+        { resourceId: id, newStatus, userId: data.userId },
         'ResourcesService'
       );
 

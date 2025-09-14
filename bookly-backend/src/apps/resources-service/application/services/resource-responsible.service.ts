@@ -1,10 +1,21 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { ResourceResponsibleRepository } from '../../domain/repositories/resource-responsible.repository';
-import { ResourceResponsibleEntity } from '../../domain/entities/resource-responsible.entity';
+import { ResourceResponsibleRepository } from '@apps/resources-service/domain/repositories/resource-responsible.repository';
+import { ResourceResponsibleEntity } from '@apps/resources-service/domain/entities/resource-responsible.entity';
 import { 
-  ResourceResponsibleResponseDto 
-} from '../dtos/resource-responsible.dto';
+  ResourceResponsibleResponseDto,
+  AssignResponsibleDto,
+  AssignMultipleResponsiblesDto,
+  ReplaceResourceResponsiblesDto,
+  DeactivateResponsibleDto,
+  GetResourceResponsiblesDto,
+  GetUserResponsibilitiesDto,
+  GetResourcesByUserDto,
+  IsUserResponsibleDto,
+  GetResponsibilitiesDto,
+  BulkAssignResponsibleDto,
+  TransferResponsibilitiesDto
+} from '@libs/dto/resources/resource-responsible.dto';
 import { LoggingService } from '@libs/logging/logging.service';
 
 /**
@@ -22,35 +33,31 @@ export class ResourceResponsibleService {
   /**
    * Assigns a user as responsible for a resource
    */
-  async assignResponsible(
-    resourceId: string,
-    userId: string,
-    assignedBy: string
-  ): Promise<ResourceResponsibleResponseDto> {
+  async assignResponsible(data: AssignResponsibleDto): Promise<ResourceResponsibleResponseDto> {
     this.loggingService.log('Assigning user as responsible for resource', { 
-      resourceId,
-      userId,
-      assignedBy 
+      resourceId: data.resourceId,
+      userId: data.userId,
+      assignedBy: data.assignedBy 
     });
 
     // Check if user is already responsible for this resource
     const existingAssignment = await this.resourceResponsibleRepository.findByResourceAndUser(
-      resourceId,
-      userId
+      data.resourceId,
+      data.userId
     );
 
     if (existingAssignment && existingAssignment.isActive) {
       throw new ConflictException(
-        `User '${userId}' is already responsible for resource '${resourceId}'`
+        `User '${data.userId}' is already responsible for resource '${data.resourceId}'`
       );
     }
 
-    const responsibleEntity = ResourceResponsibleEntity.create(resourceId, userId, assignedBy);
+    const responsibleEntity = ResourceResponsibleEntity.create(data.resourceId, data.userId, data.assignedBy);
     const createdAssignment = await this.resourceResponsibleRepository.create(responsibleEntity);
 
     this.loggingService.log('User assigned as responsible successfully', {
-      resourceId,
-      userId,
+      resourceId: data.resourceId,
+      userId: data.userId,
       assignmentId: createdAssignment.id
     });
 
@@ -60,32 +67,28 @@ export class ResourceResponsibleService {
   /**
    * Assigns multiple users as responsible for a resource
    */
-  async assignMultipleResponsibles(
-    resourceId: string,
-    userIds: string[],
-    assignedBy: string
-  ): Promise<ResourceResponsibleResponseDto[]> {
+  async assignMultipleResponsibles(data: AssignMultipleResponsiblesDto): Promise<ResourceResponsibleResponseDto[]> {
     this.loggingService.log('Assigning multiple users as responsible for resource', { 
-      resourceId,
-      userCount: userIds.length,
-      assignedBy 
+      resourceId: data.resourceId,
+      userCount: data.userIds.length,
+      assignedBy: data.assignedBy 
     });
 
-    if (userIds.length === 0) {
+    if (data.userIds.length === 0) {
       throw new ConflictException('At least one user must be provided');
     }
 
     // Remove duplicates
-    const uniqueUserIds = [...new Set(userIds)];
+    const uniqueUserIds = [...new Set(data.userIds)];
 
     const assignments = await this.resourceResponsibleRepository.assignResponsibleToResource(
-      resourceId,
+      data.resourceId,
       uniqueUserIds,
-      assignedBy
+      data.assignedBy
     );
 
     this.loggingService.log('Multiple users assigned as responsible successfully', {
-      resourceId,
+      resourceId: data.resourceId,
       assignedCount: assignments.length
     });
 
@@ -95,32 +98,28 @@ export class ResourceResponsibleService {
   /**
    * Replaces all responsible users for a resource
    */
-  async replaceResourceResponsibles(
-    resourceId: string,
-    userIds: string[],
-    assignedBy: string
-  ): Promise<ResourceResponsibleResponseDto[]> {
+  async replaceResourceResponsibles(data: ReplaceResourceResponsiblesDto): Promise<ResourceResponsibleResponseDto[]> {
     this.loggingService.log('Replacing resource responsible users', { 
-      resourceId,
-      newUserCount: userIds.length,
-      assignedBy 
+      resourceId: data.resourceId,
+      newUserCount: data.userIds.length,
+      assignedBy: data.assignedBy 
     });
 
-    if (userIds.length === 0) {
+    if (data.userIds.length === 0) {
       throw new ConflictException('At least one user must be provided');
     }
 
     // Remove duplicates
-    const uniqueUserIds = [...new Set(userIds)];
+    const uniqueUserIds = [...new Set(data.userIds)];
 
     const assignments = await this.resourceResponsibleRepository.replaceResourceResponsibles(
-      resourceId,
+      data.resourceId,
       uniqueUserIds,
-      assignedBy
+      data.assignedBy
     );
 
     this.loggingService.log('Resource responsible users replaced successfully', {
-      resourceId,
+      resourceId: data.resourceId,
       newAssignmentCount: assignments.length
     });
 
@@ -130,51 +129,45 @@ export class ResourceResponsibleService {
   /**
    * Deactivates a user's responsibility for a resource
    */
-  async deactivateResponsible(
-    resourceId: string,
-    userId: string
-  ): Promise<void> {
+  async deactivateResponsible(data: DeactivateResponsibleDto): Promise<void> {
     this.loggingService.log('Deactivating user responsibility for resource', { 
-      resourceId,
-      userId 
+      resourceId: data.resourceId,
+      userId: data.userId 
     });
 
     // Check if assignment exists and is active
     const existingAssignment = await this.resourceResponsibleRepository.findByResourceAndUser(
-      resourceId,
-      userId
+      data.resourceId,
+      data.userId
     );
 
     if (!existingAssignment) {
       throw new NotFoundException(
-        `User '${userId}' is not assigned as responsible for resource '${resourceId}'`
+        `User '${data.userId}' is not assigned as responsible for resource '${data.resourceId}'`
       );
     }
 
     if (!existingAssignment.isActive) {
       throw new ConflictException(
-        `User '${userId}' is already inactive for resource '${resourceId}'`
+        `User '${data.userId}' is already inactive for resource '${data.resourceId}'`
       );
     }
 
     await this.resourceResponsibleRepository.deactivate(existingAssignment.id);
 
     this.loggingService.log('User responsibility deactivated successfully', {
-      resourceId,
-      userId
+      resourceId: data.resourceId,
+      userId: data.userId
     });
   }
 
   /**
    * Gets all users responsible for a resource
    */
-  async getResourceResponsibles(
-    resourceId: string,
-    activeOnly: boolean = true
-  ): Promise<ResourceResponsibleResponseDto[]> {
-    const assignments = activeOnly
-      ? await this.resourceResponsibleRepository.findActiveByResourceId(resourceId)
-      : await this.resourceResponsibleRepository.findByResourceId(resourceId);
+  async getResourceResponsibles(data: GetResourceResponsiblesDto): Promise<ResourceResponsibleResponseDto[]> {
+    const assignments = data.activeOnly
+      ? await this.resourceResponsibleRepository.findActiveByResourceId(data.resourceId)
+      : await this.resourceResponsibleRepository.findByResourceId(data.resourceId);
 
     return assignments.map(this.toResponseDto);
   }
@@ -182,13 +175,10 @@ export class ResourceResponsibleService {
   /**
    * Gets all resources a user is responsible for
    */
-  async getUserResponsibilities(
-    userId: string,
-    activeOnly: boolean = true
-  ): Promise<ResourceResponsibleResponseDto[]> {
-    const assignments = activeOnly
-      ? await this.resourceResponsibleRepository.findActiveByUserId(userId)
-      : await this.resourceResponsibleRepository.findByUserId(userId);
+  async getUserResponsibilities(data: GetUserResponsibilitiesDto): Promise<ResourceResponsibleResponseDto[]> {
+    const assignments = data.activeOnly
+      ? await this.resourceResponsibleRepository.findActiveByUserId(data.userId)
+      : await this.resourceResponsibleRepository.findByUserId(data.userId);
 
     return assignments.map(this.toResponseDto);
   }
@@ -196,38 +186,31 @@ export class ResourceResponsibleService {
   /**
    * Gets resources managed by a user with pagination
    */
-  async getResourcesByUser(
-    userId: string,
-    page: number = 1,
-    limit: number = 10
-  ): Promise<{ 
+  async getResourcesByUser(data: GetResourcesByUserDto): Promise<{ 
     assignments: ResourceResponsibleResponseDto[]; 
     total: number; 
     page: number; 
     limit: number; 
   }> {
     const { assignments, total } = await this.resourceResponsibleRepository.findResourcesByUser(
-      userId,
-      page,
-      limit
+      data.userId,
+      data.page || 1,
+      data.limit || 10
     );
 
     return {
       assignments: assignments.map(this.toResponseDto),
       total,
-      page,
-      limit,
+      page: data.page || 1,
+      limit: data.limit || 10,
     };
   }
 
   /**
    * Checks if a user is responsible for a specific resource
    */
-  async isUserResponsibleForResource(
-    resourceId: string,
-    userId: string
-  ): Promise<boolean> {
-    return await this.resourceResponsibleRepository.isUserResponsible(resourceId, userId);
+  async isUserResponsibleForResource(data: IsUserResponsibleDto): Promise<boolean> {
+    return await this.resourceResponsibleRepository.isUserResponsible(data.resourceId, data.userId);
   }
 
   /**
@@ -259,20 +242,20 @@ export class ResourceResponsibleService {
   /**
    * Gets responsibility assignments with pagination and filters
    */
-  async getResponsibilities(
-    page: number = 1,
-    limit: number = 10,
-    filters?: {
-      resourceId?: string;
-      userId?: string;
-      isActive?: boolean;
-    }
-  ): Promise<{ 
+  async getResponsibilities(data: GetResponsibilitiesDto): Promise<{ 
     responsibles: ResourceResponsibleResponseDto[]; 
     total: number; 
     page: number; 
     limit: number; 
   }> {
+    const page = data.page || 1;
+    const limit = data.limit || 10;
+    const filters = {
+      resourceId: data.resourceId,
+      userId: data.userId,
+      isActive: data.isActive
+    };
+
     const { responsibles, total } = await this.resourceResponsibleRepository.findWithPagination(
       page,
       limit,
@@ -325,31 +308,27 @@ export class ResourceResponsibleService {
   /**
    * Bulk operations for multiple resources
    */
-  async bulkAssignResponsibleToResources(
-    resourceIds: string[],
-    userId: string,
-    assignedBy: string
-  ): Promise<ResourceResponsibleResponseDto[]> {
+  async bulkAssignResponsibleToResources(data: BulkAssignResponsibleDto): Promise<ResourceResponsibleResponseDto[]> {
     this.loggingService.log('Bulk assigning user as responsible for resources', { 
-      resourceCount: resourceIds.length,
-      userId,
-      assignedBy 
+      resourceCount: data.resourceIds.length,
+      userId: data.userId,
+      assignedBy: data.assignedBy 
     });
 
     const assignments: ResourceResponsibleResponseDto[] = [];
 
-    for (const resourceId of resourceIds) {
+    for (const resourceId of data.resourceIds) {
       try {
         // Skip if already assigned and active
-        const isAlreadyResponsible = await this.isUserResponsibleForResource(resourceId, userId);
+        const isAlreadyResponsible = await this.isUserResponsibleForResource({ resourceId, userId: data.userId });
         if (!isAlreadyResponsible) {
-          const assignment = await this.assignResponsible(resourceId, userId, assignedBy);
+          const assignment = await this.assignResponsible({ resourceId, userId: data.userId, assignedBy: data.assignedBy });
           assignments.push(assignment);
         }
       } catch (error) {
         this.loggingService.warn('Failed to assign user as responsible for resource', {
           resourceId,
-          userId,
+          userId: data.userId,
           error: error.message
         });
       }
@@ -357,7 +336,7 @@ export class ResourceResponsibleService {
 
     this.loggingService.log('Bulk responsibility assignment completed', {
       successfulAssignments: assignments.length,
-      totalResources: resourceIds.length
+      totalResources: data.resourceIds.length
     });
 
     return assignments;
@@ -366,58 +345,53 @@ export class ResourceResponsibleService {
   /**
    * Transfer responsibilities from one user to another
    */
-  async transferResponsibilities(
-    fromUserId: string,
-    toUserId: string,
-    assignedBy: string,
-    resourceIds?: string[]
-  ): Promise<ResourceResponsibleResponseDto[]> {
+  async transferResponsibilities(data: TransferResponsibilitiesDto): Promise<ResourceResponsibleResponseDto[]> {
     this.loggingService.log('Transferring responsibilities between users', { 
-      fromUserId,
-      toUserId,
-      assignedBy,
-      specificResources: resourceIds?.length || 'all'
+      fromUserId: data.fromUserId,
+      toUserId: data.toUserId,
+      transferredBy: data.assignedBy 
     });
 
-    // Get current responsibilities
-    const currentResponsibilities = await this.resourceResponsibleRepository.findActiveByUserId(fromUserId);
+    // Get all active responsibilities of the source user
+    const currentResponsibilities = await this.getUserResponsibilities({ 
+      userId: data.fromUserId, 
+      activeOnly: true 
+    });
     
-    // Filter by specific resources if provided
-    const responsibilitiesToTransfer = resourceIds
-      ? currentResponsibilities.filter(r => resourceIds.includes(r.resourceId!))
-      : currentResponsibilities;
+    const transferredAssignments: ResourceResponsibleResponseDto[] = [];
 
-    const newAssignments: ResourceResponsibleResponseDto[] = [];
-
-    for (const responsibility of responsibilitiesToTransfer) {
+    for (const responsibility of currentResponsibilities) {
       try {
-        // Deactivate old assignment
-        await this.resourceResponsibleRepository.deactivate(responsibility.id);
+        // Deactivate current assignment
+        await this.deactivateResponsible({ 
+          resourceId: responsibility.resourceId, 
+          userId: data.fromUserId
+        });
         
-        // Create new assignment
-        const newAssignment = await this.assignResponsible(
-          responsibility.resourceId!,
-          toUserId,
-          assignedBy
-        );
+        // Create new assignment for target user
+        const newAssignment = await this.assignResponsible({
+          resourceId: responsibility.resourceId,
+          userId: data.toUserId,
+          assignedBy: data.assignedBy
+        });
         
-        newAssignments.push(newAssignment);
+        transferredAssignments.push(newAssignment);
       } catch (error) {
         this.loggingService.warn('Failed to transfer responsibility', {
           resourceId: responsibility.resourceId,
-          fromUserId,
-          toUserId,
+          fromUserId: data.fromUserId,
+          toUserId: data.toUserId,
           error: error.message
         });
       }
     }
 
     this.loggingService.log('Responsibility transfer completed', {
-      transferredCount: newAssignments.length,
-      totalRequested: responsibilitiesToTransfer.length
+      transferredCount: transferredAssignments.length,
+      totalOriginal: currentResponsibilities.length
     });
 
-    return newAssignments;
+    return transferredAssignments;
   }
 
   /**

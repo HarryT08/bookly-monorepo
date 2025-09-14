@@ -17,17 +17,20 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { MaintenanceTypeService } from '../../application/services/maintenance-type.service';
+import { MaintenanceTypeService } from '@apps/resources-service/application/services/maintenance-type.service';
 import {
   CreateMaintenanceTypeDto,
   UpdateMaintenanceTypeDto,
   MaintenanceTypeResponseDto,
-} from '../../application/dtos/maintenance-type.dto';
-import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+} from '@apps/resources-service/application/dtos/maintenance-type.dto';
+import { MaintenanceTypeEntity } from '@apps/resources-service/domain/entities/maintenance-type.entity';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '../../../auth-service/domain/entities/user.entity';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
+import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
+import { ResponseUtil } from '@libs/common/utils/response.util';
+import { SuccessResponseDto } from '@libs/dto/common/response.dto';
 
 /**
  * HITO 6 - RF-06: MaintenanceType Controller
@@ -81,10 +84,11 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Maintenance types retrieved successfully',
-    type: [MaintenanceTypeResponseDto],
+    type: SuccessResponseDto,
   })
-  async getActiveMaintenanceTypes(): Promise<MaintenanceTypeResponseDto[]> {
-    return await this.maintenanceTypeService.getActiveMaintenanceTypes();
+  async getActiveMaintenanceTypes() {
+    const maintenanceTypes = await this.maintenanceTypeService.getActiveMaintenanceTypes();
+    return ResponseUtil.success(maintenanceTypes, 'Active maintenance types retrieved successfully');
   }
 
   /**
@@ -99,14 +103,15 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'All maintenance types retrieved successfully',
-    type: [MaintenanceTypeResponseDto],
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
     description: 'Insufficient permissions',
   })
-  async getAllMaintenanceTypes(): Promise<MaintenanceTypeResponseDto[]> {
-    return await this.maintenanceTypeService.getAllMaintenanceTypes();
+  async getAllMaintenanceTypes() {
+    const maintenanceTypes = await this.maintenanceTypeService.getAllMaintenanceTypes();
+    return ResponseUtil.success(maintenanceTypes, 'All maintenance types retrieved successfully');
   }
 
   /**
@@ -120,10 +125,11 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Default maintenance types retrieved successfully',
-    type: [MaintenanceTypeResponseDto],
+    type: SuccessResponseDto,
   })
-  async getDefaultMaintenanceTypes(): Promise<MaintenanceTypeResponseDto[]> {
-    return await this.maintenanceTypeService.getDefaultMaintenanceTypes();
+  async getDefaultMaintenanceTypes() {
+    const maintenanceTypes = await this.maintenanceTypeService.getDefaultMaintenanceTypes();
+    return ResponseUtil.success(maintenanceTypes, 'Default maintenance types retrieved successfully');
   }
 
   /**
@@ -138,14 +144,15 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Custom maintenance types retrieved successfully',
-    type: [MaintenanceTypeResponseDto],
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
     description: 'Insufficient permissions',
   })
-  async getCustomMaintenanceTypes(): Promise<MaintenanceTypeResponseDto[]> {
-    return await this.maintenanceTypeService.getCustomMaintenanceTypes();
+  async getCustomMaintenanceTypes() {
+    const maintenanceTypes = await this.maintenanceTypeService.getCustomMaintenanceTypes();
+    return ResponseUtil.success(maintenanceTypes, 'Custom maintenance types retrieved successfully');
   }
 
   /**
@@ -164,14 +171,15 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Maintenance type retrieved successfully',
-    type: MaintenanceTypeResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Maintenance type not found',
   })
-  async getMaintenanceTypeById(@Param('id') id: string): Promise<MaintenanceTypeResponseDto> {
-    return await this.maintenanceTypeService.getMaintenanceTypeById(id);
+  async getMaintenanceTypeById(@Param('id') id: string) {
+    const maintenanceType = await this.maintenanceTypeService.getMaintenanceTypeById(id);
+    return ResponseUtil.success(maintenanceType, 'Maintenance type retrieved successfully');
   }
 
   /**
@@ -190,14 +198,15 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Maintenance type retrieved successfully',
-    type: MaintenanceTypeResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Maintenance type not found',
   })
-  async getMaintenanceTypeByName(@Param('name') name: string): Promise<MaintenanceTypeResponseDto> {
-    return await this.maintenanceTypeService.getMaintenanceTypeByName(name);
+  async getMaintenanceTypeByName(@Param('name') name: string) {
+    const maintenanceType = await this.maintenanceTypeService.getMaintenanceTypeByName(name);
+    return ResponseUtil.success(maintenanceType, 'Maintenance type retrieved successfully');
   }
 
   /**
@@ -217,7 +226,7 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Maintenance type updated successfully',
-    type: MaintenanceTypeResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -239,8 +248,9 @@ export class MaintenanceTypeController {
     @Param('id') id: string,
     @Body() updateMaintenanceTypeDto: UpdateMaintenanceTypeDto,
     @CurrentUser() user: UserEntity,
-  ): Promise<MaintenanceTypeResponseDto> {
-    return await this.maintenanceTypeService.updateMaintenanceType(id, updateMaintenanceTypeDto);
+  ) {
+    const updatedMaintenanceType = await this.maintenanceTypeService.updateMaintenanceType(id, updateMaintenanceTypeDto);
+    return ResponseUtil.success(updatedMaintenanceType, 'Maintenance type updated successfully');
   }
 
   /**
@@ -302,7 +312,7 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Maintenance type reactivated successfully',
-    type: MaintenanceTypeResponseDto,
+    type: SuccessResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -319,8 +329,9 @@ export class MaintenanceTypeController {
   async reactivateMaintenanceType(
     @Param('id') id: string,
     @CurrentUser() user: UserEntity,
-  ): Promise<MaintenanceTypeResponseDto> {
-    return await this.maintenanceTypeService.reactivateMaintenanceType(id);
+  ) {
+    const reactivatedMaintenanceType = await this.maintenanceTypeService.reactivateMaintenanceType(id);
+    return ResponseUtil.success(reactivatedMaintenanceType, 'Maintenance type reactivated successfully');
   }
 
   /**
@@ -339,15 +350,10 @@ export class MaintenanceTypeController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Validation result',
-    schema: {
-      type: 'object',
-      properties: {
-        isValid: { type: 'boolean' },
-      },
-    },
+    type: SuccessResponseDto,
   })
-  async validateMaintenanceType(@Param('id') id: string): Promise<{ isValid: boolean }> {
+  async validateMaintenanceType(@Param('id') id: string) {
     const isValid = await this.maintenanceTypeService.validateMaintenanceType(id);
-    return { isValid };
+    return ResponseUtil.success({ isValid }, 'Maintenance type validation completed');
   }
 }

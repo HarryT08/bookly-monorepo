@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { ProgramEntity } from '@apps/resources-service/domain/entities/program.entity';
+import { ProgramRepository } from '@apps/resources-service/domain/repositories/program.repository';
 import { PrismaService } from '@libs/common/services/prisma.service';
-import { ProgramRepository } from '../../domain/repositories/program.repository';
-import { ProgramEntity } from '../../domain/entities/program.entity';
 
 /**
  * HITO 6 - RF-02: Prisma Program Repository Implementation
