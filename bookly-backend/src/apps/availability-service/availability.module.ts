@@ -163,6 +163,7 @@ import { EventBusModule } from '../../libs/event-bus/event-bus.module';
 import { LoggingModule } from '../../libs/logging/logging.module';
 import { NotificationModule } from '../../libs/notification/notification.module';
 import { ResourcesModule } from '../resources-service/resources.module';
+import { HealthModule } from '../../health/health.module';
 
 const commandHandlers = [
   CreateCalendarIntegrationHandler,
@@ -338,6 +339,7 @@ const infrastructureServices = [
     NotificationModule,
     LocalNotificationModule,
     AuditModule,
+    HealthModule,
   ],
   controllers: [
     AvailabilityController,

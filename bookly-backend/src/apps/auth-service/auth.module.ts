@@ -40,6 +40,7 @@ import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.
 import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
 import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
 import { ResourcesModule } from '../resources-service/resources.module';
+import { HealthModule } from '../../health/health.module';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
@@ -60,6 +61,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     CqrsModule,
     PassportModule,
     ResourcesModule,
+    HealthModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

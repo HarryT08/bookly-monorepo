@@ -44,23 +44,163 @@ export class GatewayManagementController {
   ) {}
 
   @Get('health')
-  @ApiOperation({ summary: 'Gateway health check' })
-  @ApiResponse({ status: 200, description: 'Gateway is healthy' })
-  getHealth(): any {
-    return {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      services: {
-        routing: 'operational',
-        loadBalancer: 'operational',
-        circuitBreaker: 'operational',
-        rateLimit: 'operational',
-        observability: 'operational',
-        aggregation: 'operational',
-        protocolTranslation: 'operational',
-      },
-    };
+  @ApiOperation({ summary: 'Gateway internal services health check' })
+  @ApiResponse({ status: 200, description: 'Gateway services status' })
+  async getHealth(): Promise<any> {
+    const timestamp = new Date().toISOString();
+    
+    try {
+      // Health checks para servicios internos del gateway
+      const healthChecks = await Promise.allSettled([
+        this.checkRoutingServiceHealth(),
+        this.checkLoadBalancerHealth(),
+        this.checkCircuitBreakerHealth(),
+        this.checkRateLimitHealth(),
+        this.checkObservabilityHealth(),
+        this.checkAggregationHealth(),
+        this.checkProtocolTranslationHealth(),
+      ]);
+
+      const services: any = {};
+      let overallStatus = 'healthy';
+
+      // Mapear resultados a nombres de servicios
+      const serviceNames = ['routing', 'loadBalancer', 'circuitBreaker', 'rateLimit', 'observability', 'aggregation', 'protocolTranslation'];
+      
+      healthChecks.forEach((result, index) => {
+        const serviceName = serviceNames[index];
+        if (result.status === 'fulfilled') {
+          services[serviceName] = result.value;
+        } else {
+          services[serviceName] = 'unhealthy';
+          overallStatus = 'degraded';
+        }
+      });
+
+      return {
+        status: overallStatus,
+        timestamp,
+        version: '1.0.0',
+        services,
+      };
+    } catch (error) {
+      this.logger.error('Gateway health check failed', error);
+      return {
+        status: 'unhealthy',
+        timestamp,
+        version: '1.0.0',
+        error: 'Health check failed',
+      };
+    }
+  }
+
+  // Health check methods para servicios internos del gateway
+  private async checkRoutingServiceHealth(): Promise<string> {
+    try {
+      // Verificar que el routing service puede obtener rutas
+      const routes = await this.routingService.getAllRoutes();
+      return Array.isArray(routes) && routes.length > 0 ? 'operational' : 'degraded';
+    } catch {
+      return 'unhealthy';
+    }
+  }
+
+  private async checkLoadBalancerHealth(): Promise<string> {
+    try {
+      // Verificar que el load balancer tiene servicios disponibles
+      const services = ['auth', 'resources', 'availability'];
+      for (const service of services) {
+        await this.loadBalancerService.getServiceUrl(service);
+      }
+      return 'operational';
+    } catch {
+      return 'degraded';
+    }
+  }
+
+  private async checkCircuitBreakerHealth(): Promise<string> {
+    try {
+      // Verificar estado de circuit breakers - todos deben estar healthy
+      const services = ['auth', 'resources', 'availability', 'stockpile', 'reports'];
+      const allHealthy = services.every(service => 
+        this.circuitBreakerService.isServiceHealthy(service)
+      );
+      return allHealthy ? 'operational' : 'degraded';
+    } catch {
+      return 'unhealthy';
+    }
+  }
+
+  private async checkRateLimitHealth(): Promise<string> {
+    try {
+      // Verificar configuración de rate limiting
+      const configs = this.rateLimitService.getAllEndpointConfigs();
+      return configs && Object.keys(configs).length > 0 ? 'operational' : 'degraded';
+    } catch {
+      return 'unhealthy';
+    }
+  }
+
+  private async checkObservabilityHealth(): Promise<string> {
+    try {
+      // Verificar que observability puede generar métricas
+      const metrics = this.observabilityService.getMetricsSummary();
+      return metrics ? 'operational' : 'degraded';
+    } catch {
+      return 'unhealthy';
+    }
+  }
+
+  private async checkAggregationHealth(): Promise<string> {
+    try {
+      // Verificar configuraciones de agregación inicializadas
+      const configs = this.aggregationService.getAllAggregationConfigs();
+      
+      // Debe tener al menos las configuraciones básicas (dashboard, admin-analytics)
+      const hasConfigs = configs && configs.size >= 2;
+      
+      // Verificar que las configuraciones clave existan
+      const hasDashboard = configs.has('/dashboard');
+      const hasAdminAnalytics = configs.has('/admin/analytics');
+      
+      return hasConfigs && hasDashboard && hasAdminAnalytics ? 'operational' : 'degraded';
+    } catch {
+      return 'unhealthy';
+    }
+  }
+
+  private async checkProtocolTranslationHealth(): Promise<string> {
+    try {
+      // Verificar formatos soportados
+      const supportedFormats = this.protocolTranslationService.getSupportedFormats();
+      const expectedFormats = ['json', 'xml', 'form-data', 'text'];
+      
+      // Verificar que todos los formatos esperados estén disponibles
+      const hasAllFormats = expectedFormats.every(format => 
+        supportedFormats.includes(format)
+      );
+      
+      // Verificar que cada formato es reconocido como soportado
+      const formatChecks = expectedFormats.every(format => 
+        this.protocolTranslationService.isFormatSupported(format)
+      );
+      
+      // Realizar una traducción simple para verificar funcionalidad
+      const testData = { test: 'health-check', timestamp: new Date().toISOString() };
+      const testTranslation = await this.protocolTranslationService.translateResponse(
+        testData, 
+        'json', 
+        'xml'
+      );
+      
+      const translationWorks = testTranslation && 
+                              testTranslation.data && 
+                              testTranslation.contentType.includes('xml');
+      
+      return hasAllFormats && formatChecks && translationWorks ? 'operational' : 'degraded';
+    } catch {
+      return 'unhealthy';
+    }
   }
 
   @Get('health/aggregated')

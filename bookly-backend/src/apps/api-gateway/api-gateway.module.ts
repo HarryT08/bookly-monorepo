@@ -18,6 +18,7 @@ import { CommonModule } from '@libs/common/common.module';
 import { EventBusModule } from '@libs/event-bus/event-bus.module';
 import { LoggingModule } from '@libs/logging/logging.module';
 import { MonitoringModule } from '@libs/monitoring/monitoring.module';
+import { HealthModule } from '../../health/health.module';
 
 // Services
 import { RoutingService } from './infrastructure/services/routing.service';
@@ -101,6 +102,7 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
     EventBusModule,
     LoggingModule,
     MonitoringModule,
+    HealthModule,
   ],
 
   controllers: [

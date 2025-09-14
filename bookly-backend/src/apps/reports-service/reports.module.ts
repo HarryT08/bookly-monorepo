@@ -8,6 +8,7 @@ import { ExportReportsController } from "@apps/reports-service/infrastructure/co
 import { LoggingModule } from "@/libs/logging/logging.module";
 import { CommonModule } from "@/libs/common/common.module";
 import { EventBusModule } from "@/libs/event-bus/event-bus.module";
+import { HealthModule } from "../../health/health.module";
 
 // Command Handlers
 import { CreateFeedbackHandler } from "@apps/reports-service/application/handlers/create-feedback.handler";
@@ -81,6 +82,7 @@ const repositories = [
     CommonModule,
     EventBusModule,
     AuthModule,
+    HealthModule,
   ],
   controllers: [
     ReportsController,

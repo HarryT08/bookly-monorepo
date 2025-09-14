@@ -15,6 +15,7 @@ import { PrismaResourceResponsibleRepository } from '@apps/resources-service/inf
 import { LoggingModule } from '@libs/logging/logging.module';
 import { CommonModule } from '@libs/common/common.module';
 import { EventBusModule } from '@libs/event-bus/event-bus.module';
+import { HealthModule } from '../../health/health.module';
 
 // Command Handlers
 import { CreateResourceHandler } from '@apps/resources-service/application/handlers/create-resource.handler';
@@ -133,6 +134,7 @@ const QueryHandlers = [
     LoggingModule,
     CommonModule,
     EventBusModule,
+    HealthModule,
   ],
   controllers: [ResourcesController],
   providers: [

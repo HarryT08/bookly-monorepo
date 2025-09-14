@@ -4,6 +4,7 @@ import { CommonModule } from '@libs/common/common.module';
 import { LoggingModule } from '@libs/logging/logging.module';
 import { EventBusModule } from '@libs/event-bus/event-bus.module';
 import { MonitoringModule } from '@libs/monitoring/monitoring.module';
+import { HealthModule } from '../../health/health.module';
 
 // Controllers
 import { StockpileController } from './infrastructure/controllers/stockpile.controller';
@@ -203,7 +204,8 @@ const EventHandlers = [
     CommonModule,
     EventBusModule,
     LoggingModule,
-    MonitoringModule
+    MonitoringModule,
+    HealthModule
   ],
   controllers: [
     StockpileController,
