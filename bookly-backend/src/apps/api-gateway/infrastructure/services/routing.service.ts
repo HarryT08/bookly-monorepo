@@ -81,30 +81,33 @@ export class RoutingService {
     this.addVersionedRoute('POST', '/v1/auth/forgot-password', 'auth', 'v1', { auth: false, rateLimit: true });
     this.addVersionedRoute('POST', '/v1/auth/reset-password', 'auth', 'v1', { auth: false, rateLimit: true });
     this.addVersionedRoute('POST', '/v1/auth/verify-email', 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/auth/categories', 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/auth/categories/defaults', 'auth', 'v1', { auth: false });
     
     // V1 OAuth routes
     this.addVersionedRoute('GET', '/v1/auth/oauth/google', 'auth', 'v1', { auth: false });
     this.addVersionedRoute('GET', '/v1/auth/oauth/google/callback', 'auth', 'v1', { auth: false });
 
     // V1 User management routes
-    this.addVersionedRoute('GET', '/v1/auth/users', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('GET', '/v1/auth/users/:id', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/auth/users/:id', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/auth/users/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/users', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', '/v1/users/:id', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/users/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/users/:id', 'auth', 'v1', { auth: true });
 
     // V1 Role management routes
-    this.addVersionedRoute('GET', '/v1/auth/roles', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/auth/roles', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/auth/roles/:id', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/auth/roles/:id', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/auth/roles/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/roles', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/roles', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/roles/:id', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/roles/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/roles/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/roles/active', 'auth', 'v1', { auth: true, cache: true });
 
     // V1 Permission management routes
-    this.addVersionedRoute('GET', '/v1/auth/permissions', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/auth/permissions', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/auth/permissions/:id', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/auth/permissions/:id', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/auth/permissions/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/permissions', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', '/v1/permissions', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', '/v1/permissions/:id', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', '/v1/permissions/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', '/v1/permissions/:id', 'auth', 'v1', { auth: true });
 
     // V1 Resources routes
     this.addVersionedRoute('GET', '/v1/resources', 'resources', 'v1', { auth: true, cache: true });

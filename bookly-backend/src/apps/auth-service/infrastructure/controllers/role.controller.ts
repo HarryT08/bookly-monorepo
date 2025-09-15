@@ -6,6 +6,8 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AUTH_URLS } from '../../utils/maps';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
+import { UserEntity } from '../../domain/entities/user.entity';
+import { CurrentUser } from '@/libs/common';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
@@ -80,8 +82,8 @@ export class RoleController {
     description: 'Role created successfully',
     type: SuccessResponseDto
   })
-  async create(@Body() data: CreateRoleDto) {
-    const role = await this.roleService.create(data, 'admin-user-id');
+  async create(@Body() data: CreateRoleDto, @CurrentUser() user: UserEntity) {
+    const role = await this.roleService.create(data, user.id);
     return ResponseUtil.success(role, 'Role created successfully');
   }
 

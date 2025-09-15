@@ -23,6 +23,7 @@ import { AuthCategoryService } from '@apps/auth-service/application/services/cat
 import { AuthController } from './infrastructure/controllers/auth.controller';
 import { UserController } from './infrastructure/controllers/user.controller';
 import { RoleController } from './infrastructure/controllers/role.controller';
+import { PermissionController } from './infrastructure/controllers/permission.controller';
 import { SeedController } from './infrastructure/controllers/seed.controller';
 import { AuthCategoryController } from './infrastructure/controllers/category.controller';
 import { OAuthController } from '@apps/auth-service/infrastructure/controllers/oauth.controller';
@@ -77,6 +78,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     AuthController,
     UserController,
     RoleController,
+    PermissionController,
     OAuthController,
     SeedController,
     AuthCategoryController,

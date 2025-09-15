@@ -16,7 +16,7 @@ import { AuthService } from '../../application/services/auth.service';
 import { SSOConfigGuard } from '../guards/sso-config.guard';
 import { AUTH_URLS } from '../../utils/maps/urls.map';
 
-@ApiTags('OAuth2 Authentication')
+@ApiTags('OAuth2')
 @Controller(AUTH_URLS.OAUTH)
 @UseGuards(SSOConfigGuard)
 export class OAuthController {
