@@ -35,19 +35,30 @@ export class UserService {
     return this.userRepository.create(user);
   }
 
-  async update(id: string, user: Partial<UserEntity>): Promise<UserEntity> {
-    return this.userRepository.update(id, user);
+  async update(id: string, user: Partial<UserEntity>, updatedBy?: string): Promise<UserEntity> {
+    // Add updatedBy field to the user data if provided
+    const userData = updatedBy ? { ...user, updatedBy } : user;
+    return this.userRepository.update(id, userData);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, deletedBy?: string): Promise<void> {
+    // Log deletion action with deletedBy information
+    if (deletedBy) {
+      this.loggingService.log(`User ${id} deleted by ${deletedBy}`, 'UserService');
+    }
     return this.userRepository.delete(id);
   }
 
-  async assignRole(userId: string, roleId: string): Promise<void> {
+  async assignRole(userId: string, roleId: string, assignedBy?: string): Promise<void> {
+    // Log assignment action with assignedBy information
+    if (assignedBy) {
+      this.loggingService.log(`Role ${roleId} assigned to user ${userId} by ${assignedBy}`, 'UserService');
+    }
     return this.userRepository.assignRole(userId, roleId);
   }
 
-  async removeRole(userId: string, roleId: string): Promise<void> {
+  async removeRole(userId: string, roleId: string, removedBy?: string): Promise<void> {
+    this.loggingService.log(`Removing role ${roleId} from user ${userId} by ${removedBy}`, 'UserService');
     return this.userRepository.removeRole(userId, roleId);
   }
 

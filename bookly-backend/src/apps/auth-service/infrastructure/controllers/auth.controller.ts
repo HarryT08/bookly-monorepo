@@ -1,4 +1,6 @@
 import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
+import { UserEntity } from '../../domain/entities/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
@@ -53,8 +55,8 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @Post(AUTH_URLS.AUTH_USER_PROFILE)
-  async getProfile(@Request() req) {
-    return ResponseUtil.success(req.user, 'User profile retrieved');
+  async getProfile(@CurrentUser() currentUser: UserEntity) {
+    return ResponseUtil.success(currentUser, 'User profile retrieved');
   }
 
   @ApiOperation({ summary: 'Logout user' })

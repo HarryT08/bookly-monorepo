@@ -31,8 +31,8 @@ export class CalendarIntegrationService {
   /**
    * Create a new calendar integration
    */
-  async createIntegration(integrationData: Partial<CalendarIntegrationEntity>): Promise<CalendarIntegrationEntity> {
-    this.logger.log(`Creating calendar integration for provider: ${integrationData.provider}`);
+  async createIntegration(integrationData: Partial<CalendarIntegrationEntity>, createdBy?: string): Promise<CalendarIntegrationEntity> {
+    this.logger.log(`Creating calendar integration for provider: ${integrationData.provider}`, { createdBy });
 
     // Validate credentials based on provider
     await this.validateCredentials(integrationData.provider!, integrationData.credentials);

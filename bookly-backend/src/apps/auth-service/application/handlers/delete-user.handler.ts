@@ -14,17 +14,17 @@ export class DeleteUserHandler implements ICommandHandler<DeleteUserCommand> {
   ) {}
 
   async execute(command: DeleteUserCommand): Promise<void> {
-    const { id } = command;
+    const { id, deletedBy } = command;
 
     return AuthHandlerUtil.executeWithLogging(
-      () => this.userService.delete(id),
+      () => this.userService.delete(id, deletedBy),
       {
         operationName: 'Delete user',
         handlerName: 'DeleteUserHandler',
         loggingService: this.loggingService,
         monitoringService: this.monitoringService,
         entityId: id,
-        metadata: { command: 'DeleteUserCommand', userId: id }
+        metadata: { command: 'DeleteUserCommand', userId: id, deletedBy }
       }
     );
   }

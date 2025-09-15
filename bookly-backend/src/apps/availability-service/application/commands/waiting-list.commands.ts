@@ -12,23 +12,23 @@ export class JoinWaitingListCommand implements ICommand {
     public readonly userId: string,
     public readonly desiredStartTime: Date,
     public readonly desiredEndTime: Date,
+    public readonly requestedBy: string,
     public readonly priority: WaitingListPriority = WaitingListPriority.MEDIUM,
     public readonly confirmationTimeLimit: number = 10,
-    public readonly reason?: string,
-    public readonly programId?: string,
     public readonly acceptAlternatives: boolean = true,
     public readonly acceptAlternativeResources: boolean = false,
+    public readonly enableNotifications: boolean = true,
+    public readonly autoAccept: boolean = false,
+    public readonly reason?: string,
+    public readonly programId?: string,
     public readonly maxDurationDifference?: number,
     public readonly minDuration?: number,
-    public readonly enableNotifications: boolean = true,
     public readonly notificationMethods?: string[],
     public readonly notes?: string,
     public readonly tags?: string[],
     public readonly expectedAttendees?: number,
     public readonly flexibleTimeRange?: number,
-    public readonly autoAccept: boolean = false,
-    public readonly maxWaitTime?: number,
-    public readonly requestedBy?: string
+    public readonly maxWaitTime?: number
   ) {}
 }
 
@@ -37,8 +37,8 @@ export class LeaveWaitingListCommand implements ICommand {
     public readonly waitingListId: string,
     public readonly entryId: string,
     public readonly userId: string,
-    public readonly reason?: string,
-    public readonly cancelledBy?: string
+    public readonly cancelledBy: string,
+    public readonly reason?: string
   ) {}
 }
 
@@ -92,10 +92,10 @@ export class ReorderWaitingListCommand implements ICommand {
 
 export class ProcessExpiredEntriesCommand implements ICommand {
   constructor(
-    public readonly waitingListId?: string,
+    public readonly processedBy: string,
     public readonly processAll: boolean = false,
     public readonly notifyUsers: boolean = true,
-    public readonly processedBy?: string
+    public readonly waitingListId?: string
   ) {}
 }
 
@@ -134,8 +134,8 @@ export class UpdateWaitingListEntryCommand implements ICommand {
       autoAccept?: boolean;
       maxWaitTime?: number;
     },
-    public readonly updateReason?: string,
-    public readonly updatedBy?: string
+    public readonly updatedBy: string,
+    public readonly updateReason?: string
   ) {}
 }
 

@@ -12,6 +12,7 @@ export class CreateReservationCommand implements ICommand {
     public readonly endDate: Date,
     public readonly resourceId: string,
     public readonly userId: string,
+    public readonly createdBy: string,
     public readonly isRecurring: boolean = false,
     public readonly recurrence: any | null = null
   ) {}

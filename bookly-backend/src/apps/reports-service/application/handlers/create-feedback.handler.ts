@@ -29,7 +29,7 @@ export class CreateFeedbackHandler implements ICommandHandler<CreateFeedbackComm
 
     try {
       // Delegate to service
-      const feedback = await this.reportsService.createFeedback(command.createFeedbackDto);
+      const feedback = await this.reportsService.createFeedback(command.createFeedbackDto, command.createdBy);
 
       // Publish domain event
       const event: DomainEvent = {

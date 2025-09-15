@@ -26,7 +26,7 @@ export class CreateResourceHandler implements ICommandHandler<CreateResourceComm
       );
 
       // Delegate to service (Clean Architecture pattern)
-      const resource = await this.resourcesService.createResource(command.data);
+      const resource = await this.resourcesService.createResource(command.data, command.createdBy);
       
       return resource;
     } catch (error) {

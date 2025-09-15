@@ -15,7 +15,7 @@ import { LoggingService } from '@logging/logging.service';
 import { AuditService } from '../services/audit.service';
 import { AuditRepository, AuditQueryFilters } from '../repositories/audit.repository';
 import { LoggingHelper } from '@/libs/logging/logging.helper';
-import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@/libs/common';
+import { JwtAuthGuard, RolesGuard, Roles, UserRole, CurrentUser } from '@/libs/common';
 import { AuditCategory, AuditEventType } from '../../utils';
 
 @ApiTags('Audit')
@@ -75,7 +75,7 @@ export class AuditController {
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default: 50)' })
   @ApiQuery({ name: 'sortBy', required: false, description: 'Sort field (timestamp, severity, duration)' })
   @ApiQuery({ name: 'sortOrder', required: false, description: 'Sort order (asc, desc)' })
-  async getAuditEntries(@Query() query: any) {
+  async getAuditEntries(@Query() query: any, @CurrentUser() user: any) {
     try {
       const page = parseInt(query.page) || 1;
       const limit = parseInt(query.limit) || 50;
@@ -109,6 +109,7 @@ export class AuditController {
       const total = allEntries.length;
 
       this.logger.log('Audit entries retrieved via API', {
+        userId: user.id,
         page,
         limit,
         total,
@@ -157,7 +158,7 @@ export class AuditController {
     status: 404,
     description: 'Audit entry not found'
   })
-  async getAuditEntryById(@Param('id') id: string) {
+  async getAuditEntryById(@Param('id') id: string, @CurrentUser() user: any) {
     try {
       const entry = await this.auditRepository.findById(id);
 
@@ -169,7 +170,7 @@ export class AuditController {
         };
       }
 
-      this.logger.log('Audit entry retrieved by ID via API', { id });
+      this.logger.log('Audit entry retrieved by ID via API', { id, userId: user.id });
 
       return {
         success: true,
@@ -204,7 +205,7 @@ export class AuditController {
   })
   @ApiQuery({ name: 'dateFrom', required: false, description: 'Statistics from date (ISO string)' })
   @ApiQuery({ name: 'dateTo', required: false, description: 'Statistics to date (ISO string)' })
-  async getAuditStatistics(@Query() query: any) {
+  async getAuditStatistics(@Query() query: any, @CurrentUser() user: any) {
     try {
       const filters: AuditQueryFilters = {
         dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
@@ -213,7 +214,7 @@ export class AuditController {
 
       const statistics = await this.auditRepository.getStatistics(filters);
 
-      this.logger.log('Audit statistics retrieved via API', { filters });
+      this.logger.log('Audit statistics retrieved via API', { filters, userId: user.id });
 
       return {
         success: true,
@@ -268,7 +269,7 @@ export class AuditController {
       }
     }
   })
-  async exportAuditEntries(@Body() filters: AuditExportDto) {
+  async exportAuditEntries(@Body() filters: AuditExportDto, @CurrentUser() user: any) {
     try {
       const exportFilters: AuditQueryFilters = {
         eventType: filters.eventType,
@@ -284,6 +285,7 @@ export class AuditController {
       const filename = `audit_export_${new Date().toISOString().split('T')[0]}.json`;
 
       this.logger.log('Audit entries exported via API', {
+        userId: user.id,
         filters: exportFilters,
         filename
       });
@@ -407,12 +409,13 @@ export class AuditController {
       }
     }
   })
-  async cleanupOldEntries(@Query('retentionDays') retentionDays?: string) {
+  async cleanupOldEntries(@CurrentUser() user: any, @Query('retentionDays') retentionDays?: string) {
     try {
       const retention = parseInt(retentionDays || '365');
       const deletedCount = await this.auditRepository.deleteOldEntries(retention);
 
       this.logger.log('Old audit entries cleaned up via API', {
+        userId: user.id,
         deletedCount,
         retentionDays: retention
       });
@@ -471,11 +474,11 @@ export class AuditController {
       }
     }
   })
-  async createTestAuditEntry(@Body() testData: CreateTestAuditDto) {
+  async createTestAuditEntry(@Body() testData: CreateTestAuditDto, @CurrentUser() user: any) {
     try {
       const auditContext = {
-        userId: 'test-user',
-        userRole: 'ADMIN_GENERAL',
+        userId: user.id,
+        userRole: user.roles?.[0] || 'ADMIN_GENERAL',
         ipAddress: '127.0.0.1',
         userAgent: 'Test Agent',
         correlationId: `test-${Date.now()}`
@@ -494,7 +497,7 @@ export class AuditController {
         }
       );
 
-      this.logger.log('Test audit entry created via API', { testData });
+      this.logger.log('Test audit entry created via API', { testData, userId: user.id });
 
       return {
         success: true,

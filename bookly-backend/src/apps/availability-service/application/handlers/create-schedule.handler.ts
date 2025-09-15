@@ -33,7 +33,7 @@ export class CreateScheduleHandler implements ICommandHandler<CreateScheduleComm
         recurrenceRule: command.recurrenceRule,
         restrictions: command.restrictions,
         isActive: command.isActive
-      });
+      }, command.createdBy);
 
     } catch (error) {
       this.logger.error(

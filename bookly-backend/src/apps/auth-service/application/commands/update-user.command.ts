@@ -9,6 +9,7 @@ export class UpdateUserCommand implements ICommand {
       firstName?: string;
       lastName?: string;
       isActive?: boolean;
-    }
+    },
+    public readonly updatedBy?: string
   ) {}
 }

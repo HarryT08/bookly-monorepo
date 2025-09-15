@@ -13,6 +13,7 @@ export class CreateCalendarIntegrationCommand implements ICommand {
     public readonly credentials: any,
     public readonly calendarId: string | null,
     public readonly syncInterval: number = 30,
-    public readonly isActive: boolean = true
+    public readonly isActive: boolean = true,
+    public readonly createdBy?: string
   ) {}
 }

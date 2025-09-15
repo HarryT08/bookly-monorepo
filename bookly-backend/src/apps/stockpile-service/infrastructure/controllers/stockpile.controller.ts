@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Put, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { STOCKPILE_URLS } from '@apps/stockpile-service/utils/maps/urls.map';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
@@ -121,12 +123,10 @@ export class StockpileController {
     schema: {
       type: 'object',
       properties: {
-        approverId: { type: 'string', description: 'Approver user ID' },
         comments: { type: 'string', description: 'Optional approval comments' },
         conditions: { type: 'array', items: { type: 'string' }, description: 'Approval conditions' },
         notificationChannels: { type: 'array', items: { type: 'string' }, description: 'Notification channels to use' }
-      },
-      required: ['approverId']
+      }
     }
   })
   @ApiResponse({ status: 200, description: 'Request approved successfully' })
@@ -135,15 +135,16 @@ export class StockpileController {
   async approveRequest(
     @Param('id') id: string,
     @Body() data: { 
-      approverId: string; 
       comments?: string;
       conditions?: string[];
       notificationChannels?: string[];
-    }
+    },
+    @CurrentUser() currentUser: UserEntity
   ) {
     const command = new ApproveRequestCommand(
       id,
-      data.approverId,
+      currentUser.id,
+      currentUser.id,
       data.comments,
       data.conditions
     );
@@ -163,12 +164,11 @@ export class StockpileController {
     schema: {
       type: 'object',
       properties: {
-        approverId: { type: 'string', description: 'Approver user ID' },
         comments: { type: 'string', description: 'Required rejection reason' },
         rejectionCategory: { type: 'string', description: 'Category of rejection' },
         notificationChannels: { type: 'array', items: { type: 'string' }, description: 'Notification channels to use' }
       },
-      required: ['approverId', 'comments']
+      required: ['comments']
     }
   })
   @ApiResponse({ status: 200, description: 'Request rejected successfully' })
@@ -177,15 +177,15 @@ export class StockpileController {
   async rejectRequest(
     @Param('id') id: string,
     @Body() data: { 
-      approverId: string; 
       comments: string;
       rejectionCategory?: string;
       notificationChannels?: string[];
-    }
+    },
+    @CurrentUser() currentUser: UserEntity
   ) {
     const command = new RejectRequestCommand(
       id,
-      data.approverId,
+      currentUser.id,
       data.rejectionCategory || 'General rejection',
       data.comments
     );
@@ -216,6 +216,7 @@ export class StockpileController {
   @ApiResponse({ status: 404, description: 'Approval request not found' })
   async generateDocument(
     @Param('id') id: string,
+    @CurrentUser() currentUser: UserEntity,
     @Body() options?: {
       documentType?: 'APPROVAL_LETTER' | 'REJECTION_LETTER' | 'CONDITIONAL_APPROVAL';
       templateId?: string;
@@ -257,20 +258,24 @@ export class StockpileController {
   })
   @ApiResponse({ status: 201, description: 'Notification sent successfully' })
   @ApiResponse({ status: 400, description: 'Invalid notification data' })
-  async sendNotification(@Body() data: { 
-    userId: string; 
-    message: string;
-    channels?: string[];
-    templateId?: string;
-    data?: any;
-    priority?: string;
-  }) {
+  async sendNotification(
+    @Body() data: { 
+      userId: string; 
+      message: string;
+      channels?: string[];
+      templateId?: string;
+      data?: any;
+      priority?: string;
+    },
+    @CurrentUser() currentUser: UserEntity
+  ) {
     const command = new SendNotificationCommand(
       data.userId,
       (data.channels?.[0] as 'EMAIL' | 'WHATSAPP' | 'SMS' | 'PUSH') || 'EMAIL',
       data.templateId,
       data.data,
-      (data.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium'
+      (data.priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium',
+      currentUser.id
     );
     const result = await this.commandBus.execute(command);
     return ResponseUtil.success(result, 'Notification sent successfully');
@@ -288,13 +293,11 @@ export class StockpileController {
     schema: {
       type: 'object',
       properties: {
-        userId: { type: 'string', description: 'User performing check-in' },
         qrCode: { type: 'string', description: 'QR code for verification' },
         location: { type: 'string', description: 'Check-in location' },
         timestamp: { type: 'string', description: 'Check-in timestamp (ISO format)' },
         deviceInfo: { type: 'object', description: 'Device information' }
-      },
-      required: ['userId']
+      }
     }
   })
   @ApiResponse({ status: 200, description: 'Check-in completed successfully' })
@@ -303,16 +306,16 @@ export class StockpileController {
   async checkIn(
     @Param('reservationId') reservationId: string,
     @Body() data: {
-      userId: string;
       qrCode?: string;
       location?: string;
       timestamp?: string;
       deviceInfo?: any;
-    }
+    },
+    @CurrentUser() currentUser: UserEntity
   ) {
     const command = new CheckInCommand(
       reservationId,
-      data.userId,
+      currentUser.id,
       data.timestamp ? new Date(data.timestamp) : new Date(),
       data.location
     );
@@ -332,13 +335,12 @@ export class StockpileController {
     schema: {
       type: 'object',
       properties: {
-        userId: { type: 'string', description: 'User performing check-out' },
         resourceCondition: { type: 'string', enum: ['GOOD', 'DAMAGED', 'MISSING_ITEMS'], description: 'Resource condition' },
         notes: { type: 'string', description: 'Check-out notes' },
         timestamp: { type: 'string', description: 'Check-out timestamp (ISO format)' },
         photos: { type: 'array', items: { type: 'string' }, description: 'Photo URLs for condition documentation' }
       },
-      required: ['userId', 'resourceCondition']
+      required: ['resourceCondition']
     }
   })
   @ApiResponse({ status: 200, description: 'Check-out completed successfully' })
@@ -346,16 +348,16 @@ export class StockpileController {
   async checkOut(
     @Param('reservationId') reservationId: string,
     @Body() data: {
-      userId: string;
       resourceCondition: string;
       notes?: string;
       timestamp?: string;
       photos?: string[];
-    }
+    },
+    @CurrentUser() currentUser: UserEntity
   ) {
     const command = new CheckOutCommand(
       reservationId,
-      data.userId,
+      currentUser.id,
       data.timestamp ? new Date(data.timestamp) : new Date(),
       data.notes,
       data.resourceCondition

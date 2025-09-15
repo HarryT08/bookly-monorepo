@@ -9,6 +9,8 @@ import { DeleteUserCommand } from '../../application/commands/delete-user.comman
 import { AssignRoleCommand } from '../../application/commands/assign-role.command';
 import { RemoveRoleCommand } from '../../application/commands/remove-role.command';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
+import { UserEntity } from '../../domain/entities/user.entity';
 import { AUTH_URLS } from '../../utils/maps';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
@@ -65,8 +67,8 @@ export class UserController {
     description: 'User updated successfully',
     type: SuccessResponseDto
   })
-  async update(@Param('id') id: string, @Body() data: UpdateUserDto) {
-    const user = await this.commandBus.execute(new UpdateUserCommand(id, data));
+  async update(@Param('id') id: string, @Body() data: UpdateUserDto, @CurrentUser() currentUser: UserEntity) {
+    const user = await this.commandBus.execute(new UpdateUserCommand(id, data, currentUser.id));
     return ResponseUtil.success(user, 'User updated successfully');
   }
 
@@ -77,8 +79,8 @@ export class UserController {
     description: 'User deleted successfully',
     type: SuccessResponseDto
   })
-  async delete(@Param('id') id: string) {
-    await this.commandBus.execute(new DeleteUserCommand(id));
+  async delete(@Param('id') id: string, @CurrentUser() currentUser: UserEntity) {
+    await this.commandBus.execute(new DeleteUserCommand(id, currentUser.id));
     return ResponseUtil.success(null, 'User deleted successfully');
   }
 
@@ -89,8 +91,8 @@ export class UserController {
     description: 'Role assigned successfully',
     type: SuccessResponseDto
   })
-  async assignRole(@Param('userId') userId: string, @Param('roleId') roleId: string) {
-    await this.commandBus.execute(new AssignRoleCommand(userId, roleId));
+  async assignRole(@Param('userId') userId: string, @Param('roleId') roleId: string, @CurrentUser() currentUser: UserEntity) {
+    await this.commandBus.execute(new AssignRoleCommand(userId, roleId, currentUser.id));
     return ResponseUtil.success(null, 'Role assigned successfully');
   }
 
@@ -101,8 +103,8 @@ export class UserController {
     description: 'Role removed successfully',
     type: SuccessResponseDto
   })
-  async removeRole(@Param('userId') userId: string, @Param('roleId') roleId: string) {
-    await this.commandBus.execute(new RemoveRoleCommand(userId, roleId));
+  async removeRole(@Param('userId') userId: string, @Param('roleId') roleId: string, @CurrentUser() currentUser: UserEntity) {
+    await this.commandBus.execute(new RemoveRoleCommand(userId, roleId, currentUser.id));
     return ResponseUtil.success(null, 'Role removed successfully');
   }
 }

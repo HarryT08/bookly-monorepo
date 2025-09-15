@@ -1,4 +1,6 @@
 import { Controller, Get, Post, Body, Query, Param, HttpCode, HttpStatus } from '@nestjs/common';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { REPORTS_URLS } from '../../utils/maps/urls.map';
@@ -122,10 +124,11 @@ export class ReportsController {
     type: SuccessResponseDto
   })
   @ApiResponse({ status: 400, description: 'Invalid export data' })
-  async exportToCSV(@Body() reportData: ExportCsvDto) {
+  async exportToCSV(@Body() reportData: ExportCsvDto, @CurrentUser() currentUser: UserEntity) {
     const command = new ExportReportCommand(
       reportData.reportType,
       'CSV',
+      currentUser.id,
       reportData.filters
     );
     const exportResult = await this.commandBus.execute(command);
@@ -212,8 +215,8 @@ export class ReportsController {
     type: SuccessResponseDto
   })
   @ApiResponse({ status: 400, description: 'Invalid feedback data' })
-  async createFeedback(@Body() data: FeedbackDto) {
-    const command = new CreateFeedbackCommand(data);
+  async createFeedback(@Body() data: FeedbackDto, @CurrentUser() currentUser: UserEntity) {
+    const command = new CreateFeedbackCommand({ ...data, userId: currentUser.id }, currentUser.id);
     const feedback = await this.commandBus.execute(command);
     return ResponseUtil.success(feedback, 'Feedback created successfully');
   }

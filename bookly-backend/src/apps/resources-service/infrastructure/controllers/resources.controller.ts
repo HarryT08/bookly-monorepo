@@ -13,6 +13,8 @@ import {
   NotFoundException,
   ParseIntPipe 
 } from '@nestjs/common';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import {
   ApiTags,
   ApiOperation,
@@ -70,8 +72,8 @@ export class ResourcesController {
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Resource code already exists' })
-  async create(@Body(ValidationPipe) createResourceDto: CreateResourceDto) {
-    const command = new CreateResourceCommand(createResourceDto);
+  async create(@Body(ValidationPipe) createResourceDto: CreateResourceDto, @CurrentUser() currentUser: UserEntity) {
+    const command = new CreateResourceCommand(createResourceDto, currentUser.id);
     const resource: ResourceEntity = await this.commandBus.execute(command);
     const responseData = this.mapToResponseDto(resource);
     return ResponseUtil.success(responseData, 'Resource created successfully');
@@ -287,10 +289,11 @@ export class ResourcesController {
   async update(
     @Param('id') id: string,
     @Body(ValidationPipe) updateResourceDto: UpdateResourceDto,
+    @CurrentUser() currentUser: UserEntity,
   ) {
     const updateData = {
       ...updateResourceDto,
-      updatedBy: 'system', // TODO: Get from JWT token
+      updatedBy: currentUser.id,
     };
 
     const commandData = { id, ...updateData };
@@ -318,11 +321,12 @@ export class ResourcesController {
   @ApiResponse({ status: 404, description: 'Resource not found' })
   async delete(
     @Param('id') id: string,
+    @CurrentUser() currentUser: UserEntity,
     @Query('force') force?: boolean,
   ) {
     const deleteData = {
       id,
-      deletedBy: 'system', // TODO: Get from JWT token
+      deletedBy: currentUser.id,
       force: force || false,
     };
     const command = new DeleteResourceCommand(deleteData);

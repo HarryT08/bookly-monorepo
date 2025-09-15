@@ -14,17 +14,17 @@ export class UpdateUserHandler implements ICommandHandler<UpdateUserCommand> {
   ) {}
 
   async execute(command: UpdateUserCommand): Promise<any> {
-    const { id, data } = command;
+    const { id, data, updatedBy } = command;
 
     return AuthHandlerUtil.executeWithLogging(
-      () => this.userService.update(id, data),
+      () => this.userService.update(id, data, updatedBy),
       {
         operationName: 'Update user',
         handlerName: 'UpdateUserHandler',
         loggingService: this.loggingService,
         monitoringService: this.monitoringService,
         entityId: id,
-        metadata: { command: 'UpdateUserCommand', userId: id }
+        metadata: { command: 'UpdateUserCommand', userId: id, updatedBy }
       }
     );
   }

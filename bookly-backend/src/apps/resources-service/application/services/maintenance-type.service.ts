@@ -33,10 +33,11 @@ export class MaintenanceTypeService {
   /**
    * Creates a new maintenance type
    */
-  async createMaintenanceType(createDto: CreateMaintenanceTypeDto): Promise<MaintenanceTypeResponseDto> {
+  async createMaintenanceType(createDto: CreateMaintenanceTypeDto, createdBy?: string): Promise<MaintenanceTypeResponseDto> {
     this.loggingService.log('Creating new maintenance type', { 
       name: createDto.name,
-      priority: createDto.priority 
+      priority: createDto.priority,
+      createdBy 
     });
 
     // Check if maintenance type with same name already exists
@@ -68,9 +69,10 @@ export class MaintenanceTypeService {
    */
   async updateMaintenanceType(
     id: string, 
-    updateDto: UpdateMaintenanceTypeDto
+    updateDto: UpdateMaintenanceTypeDto,
+    updatedBy?: string
   ): Promise<MaintenanceTypeResponseDto> {
-    this.loggingService.log('Updating maintenance type', { typeId: id });
+    this.loggingService.log('Updating maintenance type', { typeId: id, updatedBy });
 
     const existingType = await this.maintenanceTypeRepository.findById(id);
     if (!existingType) {

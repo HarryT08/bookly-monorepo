@@ -8,6 +8,7 @@ import { CreateResourceDto } from '@libs/dto/resources/create-resource.dto';
  */
 export class CreateResourceCommand implements ICommand {
   constructor(
-    public readonly data: CreateResourceDto
+    public readonly data: CreateResourceDto,
+    public readonly createdBy?: string
   ) {}
 }

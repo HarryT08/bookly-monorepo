@@ -79,7 +79,8 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedSchedule);
 
       // WHEN
-      const result = await controller.createSchedule(createScheduleDto);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createSchedule(createScheduleDto, mockUser);
 
       // THEN
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -127,7 +128,8 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedSchedule);
 
       // WHEN
-      const result = await controller.createSchedule(createScheduleDto);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createSchedule(createScheduleDto, mockUser);
 
       // THEN
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -178,7 +180,8 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedSchedule);
 
       // WHEN
-      const result = await controller.createSchedule(createScheduleDto);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createSchedule(createScheduleDto, mockUser);
 
       // THEN
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -253,7 +256,8 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockRejectedValue(conflictError);
 
       // WHEN & THEN
-      await expect(controller.createSchedule(conflictingScheduleDto))
+      const mockUser = { id: 'user-123' } as any;
+      await expect(controller.createSchedule(conflictingScheduleDto, mockUser))
         .rejects.toThrow('Schedule conflicts with existing schedules');
       
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -285,7 +289,8 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockRejectedValue(validationError);
 
       // WHEN & THEN
-      await expect(controller.createSchedule(invalidScheduleDto))
+      const mockUser = { id: 'user-123' } as any;
+      await expect(controller.createSchedule(invalidScheduleDto, mockUser))
         .rejects.toThrow('Schedule outside institutional operating hours');
     });
   });

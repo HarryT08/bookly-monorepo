@@ -11,5 +11,6 @@ export class SendNotificationCommand implements ICommand {
     public readonly templateId: string,
     public readonly data: Record<string, unknown>,
     public readonly priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium',
+    public readonly createdBy: string,
   ) {}
 }

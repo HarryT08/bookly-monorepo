@@ -14,6 +14,7 @@ export class CreateScheduleCommand implements ICommand {
     public readonly endDate: Date | null,
     public readonly recurrenceRule: any | null,
     public readonly restrictions: any | null,
-    public readonly isActive: boolean = true
+    public readonly isActive: boolean = true,
+    public readonly createdBy: string
   ) {}
 }

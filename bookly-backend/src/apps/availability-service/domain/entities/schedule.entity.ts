@@ -14,7 +14,8 @@ export class ScheduleEntity {
     public readonly restrictions: ScheduleRestrictions | null,
     public readonly isActive: boolean,
     public readonly createdAt: Date,
-    public readonly updatedAt: Date
+    public readonly updatedAt: Date,
+    public readonly createdBy: string,
   ) {
     this.validateDateOrder();
   }

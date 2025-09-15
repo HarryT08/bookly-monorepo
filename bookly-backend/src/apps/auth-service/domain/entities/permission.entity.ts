@@ -12,6 +12,7 @@ export class PermissionEntity implements Permission {
     public isActive: boolean = true,
     public createdAt: Date = new Date(),
     public updatedAt: Date = new Date(),
+    public createdBy?: string,
   ) {}
 
   static create(
@@ -21,6 +22,7 @@ export class PermissionEntity implements Permission {
     scope: string = 'global',
     description?: string,
     conditions?: any,
+    createdBy?: string,
   ): PermissionEntity {
     return new PermissionEntity(
       '', // ID will be set by database
@@ -33,6 +35,7 @@ export class PermissionEntity implements Permission {
       true,
       new Date(),
       new Date(),
+      createdBy,
     );
   }
 

@@ -47,9 +47,10 @@ export class StockpileService {
    * RF-20: Validate and process reservation approval requests
    */
   async processReservationApproval(
-    request: ProcessReservationApprovalRequestDto
+    request: ProcessReservationApprovalRequestDto,
+    approvedBy?: string
   ): Promise<ProcessReservationApprovalResponseDto> {
-    this.loggingService.log('Processing reservation approval', 'StockpileService', LoggingHelper.logParams(request));
+    this.loggingService.log('Processing reservation approval', 'StockpileService', LoggingHelper.logParams({...request, approvedBy}));
 
     // Business validation: Check if reservation exists and is in valid state
     const existingRequests = await this.approvalFlowRepository.findApprovalRequestsByReservationId(request.reservationId);

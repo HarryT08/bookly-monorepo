@@ -32,10 +32,10 @@ export class ScheduleService {
     recurrenceRule?: any;
     restrictions?: any;
     isActive?: boolean;
-  }): Promise<ScheduleEntity> {
+  }, createdBy?: string): Promise<ScheduleEntity> {
     this.loggingService.log(
       `Creating schedule: ${data.name} for resource ${data.resourceId}`,
-      { resourceId: data.resourceId, name: data.name, type: data.type },
+      { resourceId: data.resourceId, name: data.name, type: data.type, createdBy },
       'ScheduleService'
     );
 
@@ -75,6 +75,7 @@ export class ScheduleService {
         endDate: data.endDate,
         recurrenceRule: data.recurrenceRule,
         restrictions: data.restrictions,
+        createdBy: createdBy,
         isActive: data.isActive !== false // default to true
       };
 

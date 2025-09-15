@@ -71,7 +71,8 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedReservation);
 
       // WHEN
-      const result = await controller.createReservation(createReservationDto);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createReservation(createReservationDto, mockUser);
 
       // THEN
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -124,7 +125,8 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedReservations);
 
       // WHEN
-      const result = await controller.createReservation(recurringReservationDto);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createReservation(recurringReservationDto, mockUser);
 
       // THEN
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -158,7 +160,8 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockRejectedValue(conflictError);
 
       // WHEN & THEN
-      await expect(controller.createReservation(conflictingReservationDto))
+      const mockUser = { id: 'user-123' } as any;
+      await expect(controller.createReservation(conflictingReservationDto, mockUser))
         .rejects.toThrow('Reservation conflicts with existing reservations');
       
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -185,7 +188,8 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockRejectedValue(restrictionError);
 
       // WHEN & THEN
-      await expect(controller.createReservation(lastMinuteReservationDto))
+      const mockUser = { id: 'user-123' } as any;
+      await expect(controller.createReservation(lastMinuteReservationDto, mockUser))
         .rejects.toThrow('Reservation does not meet minimum advance notice requirement');
     });
   });
@@ -208,7 +212,8 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockRejectedValue(userTypeError);
 
       // WHEN & THEN
-      await expect(controller.createReservation(studentReservationDto))
+      const mockUser = { id: 'user-123' } as any;
+      await expect(controller.createReservation(studentReservationDto, mockUser))
         .rejects.toThrow('User type not allowed for this resource');
     });
   });
@@ -231,7 +236,8 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       (commandBus.execute as jest.Mock).mockRejectedValue(durationError);
 
       // WHEN & THEN
-      await expect(controller.createReservation(longReservationDto))
+      const mockUser = { id: 'user-123' } as any;
+      await expect(controller.createReservation(longReservationDto, mockUser))
         .rejects.toThrow('Reservation exceeds maximum allowed duration');
     });
   });

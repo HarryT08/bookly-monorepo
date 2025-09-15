@@ -118,7 +118,7 @@ export class RoleEntity implements Role {
         rp.permission!.description,
         rp.permission!.isActive,
         rp.permission!.createdAt,
-        rp.permission!.updatedAt,
+        rp.permission!.updatedAt
       ));
   }
 

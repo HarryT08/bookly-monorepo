@@ -18,6 +18,7 @@ export interface ScheduleRepository {
     recurrenceRule?: any;
     restrictions?: any;
     isActive: boolean;
+    createdBy: string;
   }): Promise<ScheduleEntity>;
 
   /**

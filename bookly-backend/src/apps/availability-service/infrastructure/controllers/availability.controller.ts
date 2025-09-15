@@ -12,6 +12,8 @@ import {
   Logger,
   Res
 } from '@nestjs/common';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
+import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { AVAILABILITY_URLS } from '../../utils/maps/urls.map';
@@ -96,13 +98,14 @@ export class AvailabilityController {
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Time slot conflicts with existing availability' })
-  async createAvailability(@Body() createAvailabilityDto: CreateAvailabilityDto) {
+  async createAvailability(@Body() createAvailabilityDto: CreateAvailabilityDto, @CurrentUser() currentUser: UserEntity) {
     const command = new CreateAvailabilityCommand(
       createAvailabilityDto.resourceId,
       createAvailabilityDto.dayOfWeek,
       createAvailabilityDto.startTime,
       createAvailabilityDto.endTime,
-      createAvailabilityDto.isActive
+      createAvailabilityDto.isActive,
+      currentUser.id
     );
     
     const result = await this.commandBus.execute(command);
@@ -118,7 +121,7 @@ export class AvailabilityController {
   @ApiResponse({ status: 201, description: 'Schedule created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Schedule conflicts with existing schedules' })
-  async createSchedule(@Body() createScheduleDto: CreateScheduleDto) {
+  async createSchedule(@Body() createScheduleDto: CreateScheduleDto, @CurrentUser() currentUser: UserEntity) {
     const command = new CreateScheduleCommand(
       createScheduleDto.resourceId,
       createScheduleDto.name,
@@ -127,7 +130,8 @@ export class AvailabilityController {
       createScheduleDto.endDate ? new Date(createScheduleDto.endDate) : null,
       createScheduleDto.recurrenceRule,
       createScheduleDto.restrictions,
-      createScheduleDto.isActive
+      createScheduleDto.isActive,
+      currentUser.id
     );
     
     return await this.commandBus.execute(command);
@@ -220,15 +224,15 @@ export class AvailabilityController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Reservation conflicts with existing reservations' })
   @ApiResponse({ status: 403, description: 'Reservation violates schedule restrictions' })
-  async createReservation(@Body() createReservationDto: CreateReservationDto) {
+  async createReservation(@Body() createReservationDto: CreateReservationDto, @CurrentUser() currentUser: UserEntity) {
     const command = new CreateReservationCommand(
       createReservationDto.title,
       createReservationDto.description,
       new Date(createReservationDto.startDate),
       new Date(createReservationDto.endDate),
       createReservationDto.resourceId,
-      // TODO: Extract userId from JWT token
-      'temp-user-id', // This should come from authentication
+      createReservationDto.userId || currentUser.id,
+      currentUser.id, // createdBy
       createReservationDto.isRecurring,
       createReservationDto.recurrence
     );
@@ -284,7 +288,7 @@ export class AvailabilityController {
   @ApiResponse({ status: 201, description: 'Calendar integration created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid credentials or configuration' })
   @ApiResponse({ status: 409, description: 'Integration already exists for this resource and provider' })
-  async createCalendarIntegration(@Body() createCalendarIntegrationDto: CreateCalendarIntegrationDto) {
+  async createCalendarIntegration(@Body() createCalendarIntegrationDto: CreateCalendarIntegrationDto, @CurrentUser() currentUser: UserEntity) {
     const command = new CreateCalendarIntegrationCommand(
       createCalendarIntegrationDto.resourceId,
       createCalendarIntegrationDto.provider,
@@ -292,7 +296,8 @@ export class AvailabilityController {
       createCalendarIntegrationDto.credentials,
       createCalendarIntegrationDto.calendarId,
       createCalendarIntegrationDto.syncInterval,
-      createCalendarIntegrationDto.isActive
+      createCalendarIntegrationDto.isActive,
+      currentUser.id
     );
     return await this.commandBus.execute(command);
   }
@@ -415,11 +420,12 @@ export class AvailabilityController {
   @ApiBody({ type: CreateReservationHistoryDto })
   @ApiResponse({ status: 201, description: 'History entry created successfully' })
   async createReservationHistory(
-    @Body() createHistoryDto: CreateReservationHistoryDto
+    @Body() createHistoryDto: CreateReservationHistoryDto,
+    @CurrentUser() currentUser: UserEntity
   ) {
     const command = new CreateReservationHistoryCommand(
       createHistoryDto.reservationId,
-      createHistoryDto.userId,
+      currentUser.id,
       createHistoryDto.action,
       createHistoryDto.source,
       createHistoryDto.previousData,

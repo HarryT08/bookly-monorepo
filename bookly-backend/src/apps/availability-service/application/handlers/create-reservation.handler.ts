@@ -39,6 +39,6 @@ export class CreateReservationHandler implements ICommandHandler<CreateReservati
       description: command.description,
       attendees: 1, // Default value, could be extended in command
       equipment: [] // Default value, could be extended in command
-    });
+    }, command.createdBy);
   }
 }

@@ -256,14 +256,15 @@ export class ResourcesService {
    * Creates a new resource with full business logic validation
    * Implements RF-01 - Follows Clean Architecture patterns
    */
-  async createResource(data: CreateResourceDto): Promise<ResourceEntity> {
+  async createResource(data: CreateResourceDto, createdBy?: string): Promise<ResourceEntity> {
     this.loggingService.log(
       'Creating resource with business validation',
       {
         name: data.name,
         type: data.type,
         capacity: data.capacity,
-        location: data.location
+        location: data.location,
+        createdBy
       },
       'ResourcesService'
     );
@@ -376,6 +377,7 @@ export class ResourcesService {
         'Resource created successfully',
         {
           resourceId: savedResource.id,
+          createdBy,
           resourceCode: savedResource.code
         },
         'ResourcesService'

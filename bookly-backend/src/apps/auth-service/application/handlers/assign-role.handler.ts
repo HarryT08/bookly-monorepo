@@ -17,14 +17,14 @@ export class AssignRoleHandler implements ICommandHandler<AssignRoleCommand> {
   ) {}
 
   async execute(command: AssignRoleCommand): Promise<{ success: boolean; message: string }> {
-    const { userId, roleId } = command;
-    const assignedBy = 'system'; // Default assignedBy for now
+    const { userId, roleId, assignedBy } = command;
+    const actualAssignedBy = assignedBy; // Use provided assignedBy or default to 'system' for seeds
 
     try {
       this.loggingService.log(`Assigning role to user: ${userId}`, 'AssignRoleHandler');
 
       // Delegate business logic to service
-      await this.userService.assignRole(userId, roleId);
+      await this.userService.assignRole(userId, roleId, actualAssignedBy);
       
       // Publish RoleAssignedEvent
       const roleAssignedEvent = new RoleAssignedEvent(
@@ -33,10 +33,10 @@ export class AssignRoleHandler implements ICommandHandler<AssignRoleCommand> {
           userId,
           roleId,
           roleName: 'Role', // TODO: Get actual role name from service
-          assignedBy,
+          assignedBy: actualAssignedBy,
           timestamp: new Date(),
         },
-        assignedBy
+        actualAssignedBy
       );
       
       await this.eventBusService.publishEvent(roleAssignedEvent);

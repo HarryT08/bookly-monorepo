@@ -137,14 +137,15 @@ export class AvailabilityService {
     dayOfWeek: number;
     startTime: string;
     endTime: string;
-  }): Promise<AvailabilityEntity> {
+  }, createdBy?: string): Promise<AvailabilityEntity> {
     this.loggingService.log(
       'Creating availability',
       {
         resourceId: data.resourceId,
         dayOfWeek: data.dayOfWeek,
         startTime: data.startTime,
-        endTime: data.endTime
+        endTime: data.endTime,
+        createdBy
       },
       'AvailabilityService'
     );
@@ -199,7 +200,8 @@ export class AvailabilityService {
         'Availability created successfully',
         {
           availabilityId: availability.id,
-          resourceId: availability.resourceId
+          resourceId: availability.resourceId,
+          createdBy
         },
         'AvailabilityService'
       );
@@ -250,14 +252,15 @@ export class AvailabilityService {
     description?: string;
     attendees?: number;
     equipment?: string[];
-  }): Promise<ReservationEntity> {
+  }, createdBy?: string): Promise<ReservationEntity> {
     this.loggingService.log(
       'Creating reservation with business validation',
       {
         userId: data.userId,
         resourceId: data.resourceId,
         startTime: data.startTime,
-        endTime: data.endTime
+        endTime: data.endTime,
+        createdBy
       },
       'AvailabilityService'
     );
@@ -357,7 +360,8 @@ export class AvailabilityService {
         {
           reservationId: savedReservation.id,
           userId: data.userId,
-          resourceId: data.resourceId
+          resourceId: data.resourceId,
+          createdBy
         },
         'AvailabilityService'
       );
@@ -374,8 +378,8 @@ export class AvailabilityService {
     }
   }
 
-  async updateReservation(id: string, data: any): Promise<any> {
-    this.loggingService.log(`Updating reservation: ${id}`, 'AvailabilityService');
+  async updateReservation(id: string, data: any, updatedBy?: string): Promise<any> {
+    this.loggingService.log(`Updating reservation: ${id}`, { updatedBy }, 'AvailabilityService');
     
     const previousValues = {}; // In real implementation, fetch existing reservation
     const updatedReservation = {

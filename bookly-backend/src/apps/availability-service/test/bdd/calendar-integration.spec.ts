@@ -70,7 +70,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedIntegration);
 
       // WHEN: Creating the calendar integration
-      const result = await controller.createCalendarIntegration(integrationData);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createCalendarIntegration(integrationData, mockUser);
 
       // THEN: Integration should be created successfully
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -112,7 +113,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedIntegration);
 
       // WHEN: Creating the calendar integration
-      const result = await controller.createCalendarIntegration(integrationData);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createCalendarIntegration(integrationData, mockUser);
 
       // THEN: Integration should be created successfully
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -150,7 +152,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedIntegration);
 
       // WHEN: Creating the calendar integration
-      const result = await controller.createCalendarIntegration(integrationData);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createCalendarIntegration(integrationData, mockUser);
 
       // THEN: Integration should be created successfully
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -454,7 +457,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       (commandBus.execute as jest.Mock).mockResolvedValue(expectedIntegration);
 
       // WHEN: Creating internal calendar integration
-      const result = await controller.createCalendarIntegration(integrationData);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createCalendarIntegration(integrationData, mockUser);
 
       // THEN: Integration should be created successfully
       expect(commandBus.execute).toHaveBeenCalledWith(

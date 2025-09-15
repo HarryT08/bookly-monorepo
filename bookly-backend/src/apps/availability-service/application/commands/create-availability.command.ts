@@ -10,6 +10,7 @@ export class CreateAvailabilityCommand implements ICommand {
     public readonly dayOfWeek: number,
     public readonly startTime: string,
     public readonly endTime: string,
-    public readonly isActive: boolean = true
+    public readonly isActive: boolean = true,
+    public readonly createdBy: string
   ) {}
 }

@@ -81,10 +81,10 @@ export class ReportsService {
     return [];
   }
 
-  async createFeedback(createFeedbackDto: CreateFeedbackDto): Promise<any> {
+  async createFeedback(createFeedbackDto: CreateFeedbackDto, createdBy?: string): Promise<any> {
     this.loggingService.log(
       'Creating user feedback',
-      `ReportsService - userId: ${createFeedbackDto.userId}, rating: ${createFeedbackDto.rating}`,
+      `ReportsService - userId: ${createFeedbackDto.userId}, rating: ${createFeedbackDto.rating}, createdBy: ${createdBy}`,
       'ReportsService'
     );
 

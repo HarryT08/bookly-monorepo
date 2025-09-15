@@ -35,6 +35,6 @@ export class CreateAvailabilityHandler implements ICommandHandler<CreateAvailabi
       dayOfWeek: command.dayOfWeek,
       startTime: command.startTime,
       endTime: command.endTime
-    });
+    }, command.createdBy);
   }
 }

@@ -19,7 +19,7 @@ export class PermissionService {
     scope?: string;
     description?: string;
     conditions?: any;
-  }): Promise<Permission> {
+  }, createdBy?: string): Promise<Permission> {
     try {
       // Validate permission data
       const permission = PermissionEntity.create(
@@ -29,6 +29,7 @@ export class PermissionService {
         data.scope,
         data.description,
         data.conditions,
+        createdBy,
       );
 
       if (!permission.isValid()) {
@@ -95,7 +96,7 @@ export class PermissionService {
     return this.permissionRepository.findByResourceAndAction(resource, action, scope);
   }
 
-  async updatePermission(id: string, data: Partial<Permission>): Promise<Permission> {
+  async updatePermission(id: string, data: Partial<Permission>, updatedBy?: string): Promise<Permission> {
     try {
       // Check if permission exists
       const existing = await this.findPermissionById(id);
@@ -125,7 +126,7 @@ export class PermissionService {
     }
   }
 
-  async deletePermission(id: string): Promise<void> {
+  async deletePermission(id: string, deletedBy?: string): Promise<void> {
     try {
       // Check if permission exists
       await this.findPermissionById(id);
@@ -134,6 +135,7 @@ export class PermissionService {
 
       this.loggingService.log('Permission deleted successfully', {
         permissionId: id,
+        deletedBy,
       });
     } catch (error) {
       this.loggingService.error('Failed to delete permission', error, LoggingHelper.logParams({

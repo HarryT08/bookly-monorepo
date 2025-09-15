@@ -278,7 +278,8 @@ export class PrismaScheduleRepository implements ScheduleRepository {
       prismaSchedule.restrictions,
       prismaSchedule.isActive,
       prismaSchedule.createdAt,
-      prismaSchedule.updatedAt
+      prismaSchedule.updatedAt,
+      prismaSchedule.createdBy
     );
   }
 }

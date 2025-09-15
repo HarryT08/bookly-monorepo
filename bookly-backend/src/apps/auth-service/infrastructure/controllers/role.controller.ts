@@ -3,11 +3,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { RoleService } from '../../application/services/role.service';
 import { CreateRoleDto, UpdateRoleDto } from '@libs/dto/auth/user-operations.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
+import { UserEntity } from '../../domain/entities/user.entity';
 import { AUTH_URLS } from '../../utils/maps';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
-import { UserEntity } from '../../domain/entities/user.entity';
-import { CurrentUser } from '@/libs/common';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
@@ -94,8 +94,8 @@ export class RoleController {
     description: 'Role updated successfully',
     type: SuccessResponseDto
   })
-  async update(@Param('id') id: string, @Body() data: UpdateRoleDto) {
-    const role = await this.roleService.update(id, data, 'admin-user-id');
+  async update(@Param('id') id: string, @Body() data: UpdateRoleDto, @CurrentUser() user: UserEntity) {
+    const role = await this.roleService.update(id, data, user.id);
     return ResponseUtil.success(role, 'Role updated successfully');
   }
 
@@ -106,8 +106,8 @@ export class RoleController {
     description: 'Role deleted successfully',
     type: SuccessResponseDto
   })
-  async delete(@Param('id') id: string) {
-    await this.roleService.delete(id, 'admin-user-id');
+  async delete(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    await this.roleService.delete(id, user.id);
     return ResponseUtil.success(null, 'Role deleted successfully');
   }
 }

@@ -86,7 +86,8 @@ describe('RF-11: Detailed Reservation History Management (BDD)', () => {
       commandBus.execute.mockResolvedValue(expectedHistoryEntry);
 
       // When: Creating a history entry
-      const result = await controller.createReservationHistory(createHistoryDto);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createReservationHistory(createHistoryDto, mockUser);
 
       // Then: History entry should be created successfully
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -122,7 +123,8 @@ describe('RF-11: Detailed Reservation History Management (BDD)', () => {
       commandBus.execute.mockResolvedValue(expectedHistoryEntry);
 
       // When: Creating a modification history entry
-      const result = await controller.createReservationHistory(createHistoryDto);
+      const mockUser = { id: 'user-123' } as any;
+      const result = await controller.createReservationHistory(createHistoryDto, mockUser);
 
       // Then: History entry should capture the changes
       expect(commandBus.execute).toHaveBeenCalledWith(
@@ -404,8 +406,9 @@ describe('RF-11: Detailed Reservation History Management (BDD)', () => {
 
       // When: Attempting to create history with missing data
       // Then: Should handle validation errors appropriately
+      const mockUser = { id: 'user-123' } as any;
       await expect(async () => {
-        await controller.createReservationHistory(invalidDto);
+        await controller.createReservationHistory(invalidDto, mockUser);
       }).rejects.toThrow();
     });
 
