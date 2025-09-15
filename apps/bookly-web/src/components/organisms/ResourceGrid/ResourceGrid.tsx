@@ -64,11 +64,11 @@ export const ResourceGrid: React.FC<ResourceGridProps> = ({
 
       const result = await resourceService.getResources(params);
       
-      setResources(result.resources);
+      setResources(result.data);
       setPagination(prev => ({
         ...prev,
-        total: result.total,
-        totalPages: result.totalPages
+        total: result.meta.total || 0,
+        totalPages: result.meta.totalPages || 1
       }));
     } catch (error: any) {
       dispatch(addNotification({
@@ -85,7 +85,7 @@ export const ResourceGrid: React.FC<ResourceGridProps> = ({
   const loadFilterData = async () => {
     try {
       const [categoriesRes, programsRes] = await Promise.all([
-        resourceService.getResourceCategories(),
+        resourceService.getCategories(),
         resourceService.getAcademicPrograms()
       ]);
       

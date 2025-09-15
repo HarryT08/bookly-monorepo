@@ -1,5 +1,7 @@
 import ky from 'ky';
 import type { ApiResponse, ApiError } from './types';
+import { API_CONFIG } from '@/services/config/services';
+import { errorHandler } from './errorHandler';
 
 // Function to get current token (can be overridden by store)
 let getAuthToken: () => string | null = () => {
@@ -14,13 +16,12 @@ export const setAuthTokenGetter = (getter: () => string | null) => {
   getAuthToken = getter;
 };
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
+const { BASE_URL, VERSION, TIMEOUT } = API_CONFIG;
 
 // Create base client
 const client = ky.create({
-  prefixUrl: `${API_BASE_URL}/${API_VERSION}`,
-  timeout: 30000,
+  prefixUrl: `${BASE_URL}/${VERSION}`,
+  timeout: TIMEOUT,
   retry: {
     limit: 2,
     methods: ['get'],
@@ -58,19 +59,50 @@ const client = ky.create({
       async (error) => {
         const { response } = error;
         
+        let apiError: ApiError;
+        
         if (response && response.body) {
           try {
-            const errorBody = await response.json() as ApiError;
-            error.name = 'APIError';
-            error.message = errorBody.message || `HTTP ${response.status}`;
-            (error as any).code = errorBody.code;
-            (error as any).type = errorBody.type;
-            (error as any).httpCode = response.status;
+            apiError = await response.json() as ApiError;
+            // Enhance error with HTTP info
+            apiError.http_code = apiError.http_code || response.status;
+            apiError.statusCode = response.status;
+            apiError.path = apiError.path || response.url;
           } catch {
-            // If parsing fails, use default error message
-            error.message = `HTTP ${response.status}: ${response.statusText}`;
+            // Fallback error structure
+            apiError = {
+              success: false,
+              message: `HTTP ${response.status}: ${response.statusText}`,
+              http_code: response.status,
+              statusCode: response.status,
+              http_exception: response.statusText,
+              path: response.url
+            };
           }
+        } else {
+          // Network or other error
+          apiError = {
+            success: false,
+            message: error.message || 'Network error',
+            type: 'network_error',
+            http_code: 0,
+            http_exception: 'NetworkError'
+          };
         }
+
+        // Log error in development
+        errorHandler.logError(apiError, 'HTTP Client');
+        
+        // Create standardized error
+        const booklyError = errorHandler.createError(apiError);
+        
+        // Copy properties to original error for compatibility
+        error.name = 'BooklyApiError';
+        error.message = booklyError.message;
+        (error as any).code = booklyError.code;
+        (error as any).type = booklyError.type;
+        (error as any).httpCode = booklyError.httpCode;
+        (error as any).apiError = apiError;
 
         return error;
       },
@@ -85,7 +117,7 @@ const client = ky.create({
           if (refreshToken) {
             try {
               const refreshResponse = await ky.post('auth/refresh', {
-                prefixUrl: `${API_BASE_URL}/${API_VERSION}`,
+                prefixUrl: `${BASE_URL}/${VERSION}`,
                 json: { refreshToken },
               });
               

@@ -108,7 +108,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
     try {
       setLoadingData(true);
       const [categoriesRes, programsRes] = await Promise.all([
-        resourceService.getResourceCategories(),
+        resourceService.getCategories(),
         resourceService.getAcademicPrograms()
       ]);
       

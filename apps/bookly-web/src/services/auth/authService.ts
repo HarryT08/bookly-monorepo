@@ -1,5 +1,6 @@
 import { api, buildServiceUrl } from '../http/client';
 import type { ApiResponse } from '../http/types';
+import { SERVICES, AUTH_ENDPOINTS } from '@/services/config/services';
 import type {
   User,
   LoginRequest,
@@ -14,28 +15,42 @@ import type {
   GoogleSSORequest,
 } from './types';
 
-const AUTH_SERVICE = 'auth';
+const AUTH_SERVICE = SERVICES.AUTH;
 
 export const authService = {
   // Traditional Authentication
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await api.post<LoginResponse>(
-      buildServiceUrl(AUTH_SERVICE, 'login'),
+      buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.LOGIN),
       credentials
     );
-    return response as any as LoginResponse;
+    
+    if (response.success && response.data) {
+      return response.data;
+    }
+    
+    throw new Error(response.message || 'Login failed');
   },
 
   async register(userData: RegisterRequest): Promise<User> {
     const response = await api.post<User>(
-      buildServiceUrl(AUTH_SERVICE, 'register'),
+      buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.REGISTER),
       userData
     );
-    return response as any as User;
+    
+    if (response.success && response.data) {
+      return response.data;
+    }
+    
+    throw new Error(response.message || 'Registration failed');
   },
 
   async logout(): Promise<void> {
-    await api.post(buildServiceUrl(AUTH_SERVICE, 'logout'));
+    const response = await api.post(buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.LOGOUT));
+    
+    if (!response.success) {
+      throw new Error(response.message || 'Logout failed');
+    }
     
     // Clear local storage
     if (typeof window !== 'undefined') {
@@ -47,40 +62,63 @@ export const authService = {
 
   async refreshToken(refreshTokenData: RefreshTokenRequest): Promise<RefreshTokenResponse> {
     const response = await api.post<RefreshTokenResponse>(
-      buildServiceUrl(AUTH_SERVICE, 'refresh'),
+      buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.REFRESH),
       refreshTokenData
     );
-    return response as any as RefreshTokenResponse;
+    
+    if (response.success && response.data) {
+      return response.data;
+    }
+    
+    throw new Error(response.message || 'Token refresh failed');
   },
 
   async getUserProfile(): Promise<User> {
     const response = await api.get<User>(
-      buildServiceUrl(AUTH_SERVICE, 'profile')
+      buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.PROFILE)
     );
-    return response as any as User;
+    
+    if (response.success && response.data) {
+      return response.data;
+    }
+    
+    throw new Error(response.message || 'Failed to get user profile');
   },
 
   async updateProfile(profileData: UpdateProfileRequest): Promise<User> {
     const response = await api.patch<User>(
-      buildServiceUrl(AUTH_SERVICE, 'profile'),
+      buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.PROFILE),
       profileData
     );
-    return response as any as User;
+    
+    if (response.success && response.data) {
+      return response.data;
+    }
+    
+    throw new Error(response.message || 'Failed to update profile');
   },
 
   // Password Management
   async forgotPassword(forgotData: ForgotPasswordRequest): Promise<void> {
-    await api.post(
-      buildServiceUrl(AUTH_SERVICE, 'forgot-password'),
+    const response = await api.post(
+      buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.PASSWORD_RESET),
       forgotData
     );
+    
+    if (!response.success) {
+      throw new Error(response.message || 'Password reset request failed');
+    }
   },
 
   async resetPassword(resetData: ResetPasswordRequest): Promise<void> {
-    await api.post(
-      buildServiceUrl(AUTH_SERVICE, 'reset-password'),
+    const response = await api.post(
+      buildServiceUrl(AUTH_SERVICE, 'reset-password/confirm'),
       resetData
     );
+    
+    if (!response.success) {
+      throw new Error(response.message || 'Password reset failed');
+    }
   },
 
   async changePassword(changeData: ChangePasswordRequest): Promise<void> {
@@ -93,10 +131,15 @@ export const authService = {
   // Google SSO
   async googleLogin(googleData: GoogleSSORequest): Promise<LoginResponse> {
     const response = await api.post<LoginResponse>(
-      buildServiceUrl('oauth', 'google'),
+      buildServiceUrl(AUTH_SERVICE, AUTH_ENDPOINTS.OAUTH_GOOGLE),
       googleData
     );
-    return response.data!;
+    
+    if (response.success && response.data) {
+      return response.data;
+    }
+    
+    throw new Error(response.message || 'Google login failed');
   },
 
   // Utility methods

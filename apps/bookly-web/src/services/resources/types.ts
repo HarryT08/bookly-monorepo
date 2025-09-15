@@ -112,11 +112,15 @@ export interface ResourceListRequest {
 }
 
 export interface ResourceListResponse {
-  resources: Resource[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  success: boolean;
+  data: Resource[];
+  message?: string;
+  meta: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    totalPages?: number;
+  };
 }
 
 export interface ImportResourcesRequest {
