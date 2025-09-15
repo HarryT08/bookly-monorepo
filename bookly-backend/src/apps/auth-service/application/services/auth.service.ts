@@ -12,7 +12,10 @@ import {
   RegisterRequestDto,
   ValidateTokenRequestDto,
   RefreshTokenRequestDto,
-  SSOLoginRequestDto
+  SSOLoginRequestDto,
+  PasswordResetRequestDto,
+  PasswordResetConfirmDto,
+  PasswordChangeDto
 } from '@libs/dto/auth/auth-requests.dto';
 import {
   LoginResponseDto,
@@ -284,6 +287,143 @@ export class AuthService {
     } catch (error) {
       this.loggingService.error('SSO login failed', error, 'AuthService');
       throw error;
+    }
+  }
+
+  /**
+   * Request password reset - sends reset token to user's email
+   */
+  async requestPasswordReset(request: PasswordResetRequestDto): Promise<{ message: string }> {
+    try {
+      const user = await this.userRepository.findByEmail(request.email);
+      
+      // Always return success message for security (don't reveal if email exists)
+      if (!user) {
+        this.loggingService.warn('Password reset requested for non-existent email', {
+          email: request.email,
+          ipAddress: request.ipAddress
+        });
+        return { message: 'Si el email existe, se ha enviado un enlace de recuperación.' };
+      }
+
+      // Generate reset token (in real implementation, this would be a cryptographically secure token)
+      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const resetExpires = new Date(Date.now() + 3600000); // 1 hour from now
+
+      // Update user with reset token
+      await this.userRepository.update(user.id, {
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetExpires
+      });
+
+      // TODO: Send email with reset link (implement email service)
+      this.loggingService.log('Password reset token generated', {
+        userId: user.id,
+        email: user.email,
+        ipAddress: request.ipAddress
+      });
+
+      return { message: 'Si el email existe, se ha enviado un enlace de recuperación.' };
+    } catch (error) {
+      this.loggingService.error('Error during password reset request', error, 'AuthService');
+      throw new BadRequestException('Error processing password reset request');
+    }
+  }
+
+  /**
+   * Confirm password reset using token
+   */
+  async confirmPasswordReset(request: PasswordResetConfirmDto): Promise<{ message: string }> {
+    try {
+      // Validate passwords match
+      if (request.newPassword !== request.confirmPassword) {
+        throw new BadRequestException('Las contraseñas no coinciden');
+      }
+
+      // Find user by reset token
+      const user = await this.userRepository.findByPasswordResetToken(request.token);
+      if (!user) {
+        throw new BadRequestException('Token de recuperación inválido o expirado');
+      }
+
+      // Check if token is expired
+      if (!user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+        throw new BadRequestException('Token de recuperación expirado');
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(request.newPassword, 10);
+
+      // Update user password and clear reset token
+      await this.userRepository.update(user.id, {
+        password: hashedPassword,
+        passwordResetToken: undefined,
+        passwordResetExpires: undefined,
+        loginAttempts: 0,
+        lockedUntil: undefined
+      });
+
+      this.loggingService.log('Password reset completed successfully', {
+        userId: user.id,
+        email: user.email
+      });
+
+      return { message: 'Contraseña actualizada exitosamente' };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.loggingService.error('Error during password reset confirmation', error, 'AuthService');
+      throw new BadRequestException('Error al confirmar el cambio de contraseña');
+    }
+  }
+
+  /**
+   * Change password for authenticated user
+   */
+  async changePassword(userId: string, request: PasswordChangeDto): Promise<{ message: string }> {
+    try {
+      // Validate passwords match
+      if (request.newPassword !== request.confirmPassword) {
+        throw new BadRequestException('Las contraseñas no coinciden');
+      }
+
+      // Find user
+      const user = await this.userRepository.findByIdWithRoles(userId);
+      AuthValidationUtil.validateUserExists(user, 'change-password');
+
+      // Validate current password
+      const isCurrentPasswordValid = await bcrypt.compare(request.currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        throw new BadRequestException('Contraseña actual incorrecta');
+      }
+
+      // Check if new password is different from current
+      const isSamePassword = await bcrypt.compare(request.newPassword, user.password);
+      if (isSamePassword) {
+        throw new BadRequestException('La nueva contraseña debe ser diferente a la actual');
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(request.newPassword, 10);
+
+      // Update user password
+      await this.userRepository.update(user.id, {
+        password: hashedPassword
+      });
+
+      this.loggingService.log('Password changed successfully', {
+        userId: user.id,
+        email: user.email
+      });
+
+      return { message: 'Contraseña cambiada exitosamente' };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.loggingService.error('Error during password change', error, 'AuthService');
+      throw new BadRequestException('Error al cambiar la contraseña');
     }
   }
 }

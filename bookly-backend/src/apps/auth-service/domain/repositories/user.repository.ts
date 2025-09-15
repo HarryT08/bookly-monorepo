@@ -18,4 +18,5 @@ export abstract class UserRepository {
   abstract findUserRoles(userId: string): Promise<Array<{ role: { name: string } }>>;
   abstract updateSSOInfo(userId: string, ssoProvider: string, ssoId: string): Promise<void>;
   abstract updateLastLogin(userId: string): Promise<void>;
+  abstract findByPasswordResetToken(token: string): Promise<UserEntity | null>;
 }

@@ -5,9 +5,13 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { LoginDto, RegisterDto } from '@libs/dto';
+import { PasswordResetRequestDto, PasswordResetConfirmDto, PasswordChangeDto } from '@libs/dto/auth/auth-requests.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 import { LoginCommand } from '../../application/commands/login.command';
 import { RegisterCommand } from '../../application/commands/register.command';
+import { PasswordResetRequestCommand } from '../../application/commands/password-reset-request.command';
+import { PasswordResetConfirmCommand } from '../../application/commands/password-reset-confirm.command';
+import { PasswordChangeCommand } from '../../application/commands/password-change.command';
 import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { AUTH_URLS } from '../../utils/maps/urls.map';
@@ -70,5 +74,54 @@ export class AuthController {
   async logout() {
     // In a real implementation, you might want to blacklist the token
     return ResponseUtil.success(null, 'Logout successful');
+  }
+
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password reset request processed',
+    type: SuccessResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @Post(AUTH_URLS.PASSWORD_RESET_REQUEST)
+  async requestPasswordReset(@Body() passwordResetRequestDto: PasswordResetRequestDto) {
+    const result = await this.commandBus.execute(
+      new PasswordResetRequestCommand(passwordResetRequestDto),
+    );
+    return ResponseUtil.success(result, 'Password reset request processed');
+  }
+
+  @ApiOperation({ summary: 'Confirm password reset' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password reset confirmed successfully',
+    type: SuccessResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  @Post(AUTH_URLS.PASSWORD_RESET_CONFIRM)
+  async confirmPasswordReset(@Body() passwordResetConfirmDto: PasswordResetConfirmDto) {
+    const result = await this.commandBus.execute(
+      new PasswordResetConfirmCommand(passwordResetConfirmDto),
+    );
+    return ResponseUtil.success(result, 'Password reset confirmed successfully');
+  }
+
+  @ApiOperation({ summary: 'Change password for authenticated user' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Password changed successfully',
+    type: SuccessResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Invalid current password or request' })
+  @UseGuards(JwtAuthGuard)
+  @Post(AUTH_URLS.PASSWORD_CHANGE)
+  async changePassword(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() passwordChangeDto: PasswordChangeDto
+  ) {
+    const result = await this.commandBus.execute(
+      new PasswordChangeCommand(currentUser.id, passwordChangeDto),
+    );
+    return ResponseUtil.success(result, 'Password changed successfully');
   }
 }

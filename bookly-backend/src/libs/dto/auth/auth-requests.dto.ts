@@ -156,3 +156,84 @@ export class SSOLoginRequestDto {
   @IsString()
   picture?: string;
 }
+
+/**
+ * Password Reset Request DTO
+ */
+export class PasswordResetRequestDto {
+  @ApiProperty({
+    description: 'User email address to send reset link',
+    example: 'usuario@ufps.edu.co'
+  })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({
+    description: 'Client IP address for security logging',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  ipAddress?: string;
+}
+
+/**
+ * Password Reset Confirm DTO
+ */
+export class PasswordResetConfirmDto {
+  @ApiProperty({
+    description: 'Password reset token received via email'
+  })
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @ApiProperty({
+    description: 'New password',
+    example: 'NewSecurePassword123!'
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  newPassword: string;
+
+  @ApiProperty({
+    description: 'Confirm new password',
+    example: 'NewSecurePassword123!'
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  confirmPassword: string;
+}
+
+/**
+ * Password Change DTO
+ */
+export class PasswordChangeDto {
+  @ApiProperty({
+    description: 'Current password'
+  })
+  @IsString()
+  @IsNotEmpty()
+  currentPassword: string;
+
+  @ApiProperty({
+    description: 'New password',
+    example: 'NewSecurePassword123!'
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  newPassword: string;
+
+  @ApiProperty({
+    description: 'Confirm new password',
+    example: 'NewSecurePassword123!'
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  confirmPassword: string;
+}

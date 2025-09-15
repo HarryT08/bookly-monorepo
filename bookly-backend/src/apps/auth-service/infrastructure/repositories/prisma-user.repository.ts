@@ -234,4 +234,16 @@ export class PrismaUserRepository implements UserRepository {
       },
     });
   }
+
+  async findByPasswordResetToken(token: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { 
+        passwordResetToken: token,
+        passwordResetExpires: {
+          gte: new Date(), // Token not expired
+        },
+      },
+    });
+    return user ? this.toDomain(user) : null;
+  }
 }
