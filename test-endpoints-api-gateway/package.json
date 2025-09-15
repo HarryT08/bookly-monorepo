@@ -1,0 +1,85 @@
+{
+  "name": "bookly-api-gateway-testing",
+  "version": "1.0.0",
+  "description": "Sistema completo de testing para todos los endpoints del API Gateway de Bookly",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Use make commands for testing\" && exit 1",
+    "test-all": "make test-all",
+    "test-hito-1": "make test-hito-1",
+    "test-hito-2": "make test-hito-2",
+    "test-hito-3": "make test-hito-3",
+    "test-hito-4": "make test-hito-4",
+    "test-hito-5": "make test-hito-5",
+    "test-hito-6": "make test-hito-6",
+    "test-hito-7": "make test-hito-7",
+    "test-hito-8": "make test-hito-8",
+    "test-hito-9": "make test-hito-9",
+    "test-hito-10": "make test-hito-10",
+    "install-deps": "npm install",
+    "setup": "npm install && echo 'Dependencies installed successfully'",
+    "clean": "rm -rf node_modules && npm cache clean --force",
+    "lint": "eslint . --ext .js --fix",
+    "format": "prettier --write '**/*.{js,json,md}'",
+    "results": "find . -name '*.md' -path '*/results/*' | head -20",
+    "results-summary": "make results",
+    "sync-test-data": "node shared/sync-test-data.js",
+    "sync-endpoints": "node shared/sync-endpoints.js",
+    "sync-endpoints-and-test-data": "npm run sync-test-data && npm run sync-endpoints",
+    "refactor-setup": "npm run sync-endpoints-and-test-data && echo 'Refactoring setup completed'",
+    "backup-config": "cp shared/conf-test-data.js shared/conf-test-data.backup.js",
+    "restore-config": "cp shared/conf-test-data.backup.js shared/conf-test-data.js",
+    "check-config": "node -e \"console.log('Config files check:'); require('./shared/conf-test-data'); require('./shared/conf-urls-microservices'); console.log('✅ All config files are valid');\""
+  },
+  "keywords": [
+    "bookly",
+    "api-testing",
+    "endpoint-testing",
+    "integration-testing",
+    "microservices-testing"
+  ],
+  "author": "Bookly Development Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chalk": "^4.1.2",
+    "cli-progress": "^3.12.0",
+    "commander": "^11.1.0",
+    "dotenv": "^16.3.1",
+    "fs-extra": "^11.1.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "node-fetch": "^3.3.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "prettier": "^3.1.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/bookly-monorepo.git",
+    "directory": "test-endpoints-api-gateway"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/bookly-monorepo/issues"
+  },
+  "homepage": "https://github.com/your-org/bookly-monorepo#readme",
+  "directories": {
+    "test": "./",
+    "lib": "./shared"
+  },
+  "files": [
+    "hito-*/**/*",
+    "shared/**/*",
+    "Makefile",
+    "README.md"
+  ]
+}
