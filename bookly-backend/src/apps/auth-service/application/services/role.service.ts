@@ -83,7 +83,7 @@ export class RoleService {
         false, // Custom roles are not predefined
         new Date(),
         new Date(),
-        'system', // createdBy
+        createdBy, // createdBy
         [], // permissions array
         undefined, // programId - not in CreateRoleDto
         undefined, // metadata - not in CreateRoleDto
