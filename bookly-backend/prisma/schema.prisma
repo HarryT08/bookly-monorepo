@@ -36,6 +36,7 @@ model User {
 
   // Relations
   userRoles          UserRole[]
+  userCategories     UserCategory[] // Multiple categories per user
   reservations       Reservation[]
   feedbacks          Feedback[]
   reservationHistory ReservationHistory[]
@@ -53,6 +54,10 @@ model User {
   
   // HITO 6: Resource management relations
   assignedResourceCategories ResourceCategory[] @relation("AssignedResourceCategory")
+  assignedRoleCategories    RoleCategory[] @relation("AssignedRoleCategory")
+  assignedUserCategories    UserCategory[] @relation("AssignedUserCategory")
+  assignedProgramCategories ProgramCategory[] @relation("AssignedProgramCategory")
+  assignedIncidentReportCategories IncidentReportCategory[] @relation("AssignedIncidentReportCategory")
   resourceImports           ResourceImport[]    @relation("ResourceImports")
   responsibleForResources   ResourceResponsible[] @relation("ResponsibleForResources")
   assignedResponsibles      ResourceResponsible[] @relation("AssignedResponsible")
@@ -83,7 +88,7 @@ model Role {
   description String?
   isActive    Boolean  @default(true)
   isPredefined Boolean @default(false) // Cannot be edited/deleted if true
-  category    String? // STUDENT, TEACHER, ADMIN, GUARD, ADMINISTRATIVE
+  category    String? // DEPRECATED: Use RoleCategory table instead
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdBy   String?  @db.ObjectId // User who created this role
@@ -91,6 +96,7 @@ model Role {
   // Relations
   userRoles   UserRole[]
   rolePermissions RolePermission[]
+  roleCategories  RoleCategory[] // Multiple categories per role
 
   @@map("roles")
 }
@@ -185,6 +191,7 @@ model Program {
   resources     Resource[]    // Resources assigned to this program
   userRoles     UserRole[]    // User roles in this program
   approvalFlows ApprovalFlow[] // Program-specific approval flows
+  programCategories ProgramCategory[] // Multiple categories per program
   
   // HITO 7: Advanced availability relations
   penaltyEvents PenaltyEvent[]
@@ -272,6 +279,10 @@ model Category {
   // Relations
   resources           Resource[]
   resourceCategories  ResourceCategory[] // HITO 6: Multiple categories per resource
+  roleCategories      RoleCategory[] // Multiple categories per role
+  userCategories      UserCategory[] // Multiple categories per user
+  programCategories   ProgramCategory[] // Multiple categories per program
+  incidentReportCategories IncidentReportCategory[] // Multiple categories per incident report
   approvalFlows       ApprovalFlow[] // Approval flows for this category
   documentTemplates   DocumentTemplate[] // Document templates for this category
   notificationTemplates NotificationTemplate[] // Notification templates for this category
@@ -301,6 +312,71 @@ model ResourceCategory {
 
   @@unique([resourceId, categoryId])
   @@map("resource_categories")
+}
+
+// Junction tables for multiple categories per entity
+model RoleCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  roleId     String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  role     Role     @relation(fields: [roleId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  user     User     @relation("AssignedRoleCategory", fields: [assignedBy], references: [id])
+
+  @@unique([roleId, categoryId])
+  @@map("role_categories")
+}
+
+model UserCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id])
+  category     Category @relation(fields: [categoryId], references: [id])
+  assignedByUser User   @relation("AssignedUserCategory", fields: [assignedBy], references: [id])
+
+  @@unique([userId, categoryId])
+  @@map("user_categories")
+}
+
+model ProgramCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId  String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  program  Program  @relation(fields: [programId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  user     User     @relation("AssignedProgramCategory", fields: [assignedBy], references: [id])
+
+  @@unique([programId, categoryId])
+  @@map("program_categories")
+}
+
+model IncidentReportCategory {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  incidentReportId String   @db.ObjectId
+  categoryId       String   @db.ObjectId
+  assignedAt       DateTime @default(now())
+  assignedBy       String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  incidentReport IncidentReport @relation(fields: [incidentReportId], references: [id])
+  category       Category       @relation(fields: [categoryId], references: [id])
+  user           User           @relation("AssignedIncidentReportCategory", fields: [assignedBy], references: [id])
+
+  @@unique([incidentReportId, categoryId])
+  @@map("incident_report_categories")
 }
 
 // HITO 6: Dynamic maintenance types
@@ -1540,6 +1616,7 @@ model IncidentReport {
   
   // Relations
   maintenanceRecordIds String[] @db.ObjectId // Array of maintenance record IDs
+  incidentReportCategories IncidentReportCategory[] // Multiple categories per incident report
   
   @@map("incident_reports")
 }

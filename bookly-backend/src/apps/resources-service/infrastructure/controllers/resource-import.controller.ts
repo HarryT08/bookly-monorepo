@@ -40,15 +40,16 @@ import { SuccessResponseDto, PaginatedResponseDto } from '@libs/dto/common/respo
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
+import { UserEntity, UserRole } from '@apps/auth-service/domain/entities/user.entity';
 import { Multer } from 'multer';
+import { RESOURCES_URLS } from '../../utils/maps';
 
 /**
  * HITO 6 - RF-04: ResourceImport Controller
  * Handles HTTP requests for bulk resource imports
  */
-@ApiTags('Resource Import')
-@Controller('resource-import')
+@ApiTags(RESOURCES_URLS.IMPORT_TAG)
+@Controller(RESOURCES_URLS.IMPORT)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ResourceImportController {
@@ -60,8 +61,8 @@ export class ResourceImportController {
   /**
    * Previews CSV file before import
    */
-  @Post('preview')
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Post(RESOURCES_URLS.IMPORT_PREVIEW)
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
@@ -93,8 +94,8 @@ export class ResourceImportController {
   /**
    * Starts the import process
    */
-  @Post('start')
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Post(RESOURCES_URLS.IMPORT_START)
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @UseInterceptors(FileInterceptor('file'))
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiConsumes('multipart/form-data')
@@ -128,7 +129,7 @@ export class ResourceImportController {
   /**
    * Gets import status and details
    */
-  @Get(':id')
+  @Get(RESOURCES_URLS.IMPORT_FIND_BY_ID)
   @ApiOperation({
     summary: 'Get import by ID',
     description: 'Retrieves the status and details of a specific import operation.',
@@ -157,7 +158,7 @@ export class ResourceImportController {
   /**
    * Gets imports by current user
    */
-  @Get('user/my-imports')
+  @Get(RESOURCES_URLS.IMPORT_HISTORY)
   @ApiOperation({
     summary: 'Get my imports',
     description: 'Retrieves all import operations initiated by the current user.',
@@ -177,8 +178,8 @@ export class ResourceImportController {
   /**
    * Gets imports with pagination and filters
    */
-  @Get()
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Get(RESOURCES_URLS.IMPORT_PAGINATED)
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get all imports with pagination',
     description: 'Retrieves all import operations with optional filtering. Only administrators can access this.',
@@ -267,8 +268,8 @@ export class ResourceImportController {
   /**
    * Gets import statistics
    */
-  @Get('statistics/overview')
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Get(RESOURCES_URLS.IMPORT_STATISTICS_OVERVIEW)
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get import statistics',
     description: 'Retrieves overall statistics about import operations.',
@@ -314,7 +315,7 @@ export class ResourceImportController {
   /**
    * Gets user's import statistics
    */
-  @Get('statistics/my-stats')
+  @Get(RESOURCES_URLS.IMPORT_STATISTICS_MY_STATS)
   @ApiOperation({
     summary: 'Get my import statistics',
     description: 'Retrieves import statistics for the current user.',

@@ -14,6 +14,16 @@ export interface CategoryFilter {
   metadata?: any;
 }
 
+export interface BaseCategoryFilter {
+  type?: string;
+  subtype?: string;
+  isActive?: boolean;
+  parentId?: string;
+  search?: string;
+  metadata?: any;
+  service?: string;
+}
+
 export interface CategoryRepository {
   findById(id: string): Promise<CategoryEntity | null>;
   findByCode(type: string, subtype: string, code: string): Promise<CategoryEntity | null>;
@@ -47,14 +57,15 @@ export abstract class BaseCategoryRepository implements CategoryRepository {
    * Find categories by type and subtype with automatic service filtering
    */
   async findByTypeAndSubtype(type: string, subtype: string, filter?: CategoryFilter): Promise<CategoryEntity[]> {
-    const serviceFilter: CategoryFilter = {
+    const serviceFilter: BaseCategoryFilter = {
       ...filter,
       type: type.toUpperCase(),
       subtype: subtype.toUpperCase(),
+      service: this.serviceName,
     };
 
     const categories = await this.findAll(serviceFilter);
-    return categories.filter(category => category.service === this.serviceName);
+    return categories;
   }
 
   /**

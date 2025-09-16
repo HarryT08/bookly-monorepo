@@ -36,14 +36,15 @@ import { SuccessResponseDto, PaginatedResponseDto } from '@libs/dto/common/respo
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
+import { UserEntity, UserRole } from '@apps/auth-service/domain/entities/user.entity';
+import { RESOURCES_URLS } from '@apps/resources-service/utils/maps/urls.map';
 
 /**
  * HITO 6 - RF-02: Program Controller
  * Handles HTTP requests for academic program management
  */
-@ApiTags('Programs')
-@Controller('programs')
+@ApiTags(RESOURCES_URLS.PROGRAMS_TAG)
+@Controller(RESOURCES_URLS.PROGRAMS)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ProgramController {
@@ -55,7 +56,7 @@ export class ProgramController {
   /**
    * Creates a new academic program
    */
-  @Post()
+  @Post(RESOURCES_URLS.PROGRAMS_CREATE)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -88,7 +89,7 @@ export class ProgramController {
   /**
    * Gets all programs with pagination
    */
-  @Get()
+  @Get(RESOURCES_URLS.PROGRAMS_FIND)
   @ApiOperation({
     summary: 'Get all programs with pagination',
     description: 'Retrieves all academic programs with optional search and filtering.',
@@ -136,7 +137,7 @@ export class ProgramController {
   /**
    * Gets active programs only
    */
-  @Get('active')
+  @Get(RESOURCES_URLS.PROGRAMS_ACTIVE)
   @ApiOperation({
     summary: 'Get all active programs',
     description: 'Retrieves all active academic programs without pagination.',
@@ -155,7 +156,7 @@ export class ProgramController {
   /**
    * Gets a program by ID
    */
-  @Get(':id')
+  @Get(RESOURCES_URLS.PROGRAMS_FIND_BY_ID)
   @ApiOperation({
     summary: 'Get program by ID',
     description: 'Retrieves a specific academic program by its ID.',
@@ -183,7 +184,7 @@ export class ProgramController {
   /**
    * Gets a program by code
    */
-  @Get('code/:code')
+  @Get(RESOURCES_URLS.PROGRAMS_FIND_BY_CODE)
   @ApiOperation({
     summary: 'Get program by code',
     description: 'Retrieves a specific academic program by its code.',
@@ -211,7 +212,7 @@ export class ProgramController {
   /**
    * Updates an existing program
    */
-  @Put(':id')
+  @Put(RESOURCES_URLS.PROGRAMS_UPDATE)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @ApiOperation({
     summary: 'Update program',
@@ -253,7 +254,7 @@ export class ProgramController {
   /**
    * Deactivates a program
    */
-  @Delete(':id')
+  @Delete(RESOURCES_URLS.PROGRAMS_DELETE)
   @Roles('ADMIN_GENERAL')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -292,8 +293,8 @@ export class ProgramController {
   /**
    * Reactivates a program
    */
-  @Put(':id/reactivate')
-  @Roles('ADMIN_GENERAL')
+  @Put(RESOURCES_URLS.PROGRAMS_REACTIVATE)
+  @Roles(UserRole.GENERAL_ADMIN)
   @ApiOperation({
     summary: 'Reactivate program',
     description: 'Reactivates a deactivated academic program. Only general administrators can reactivate programs.',

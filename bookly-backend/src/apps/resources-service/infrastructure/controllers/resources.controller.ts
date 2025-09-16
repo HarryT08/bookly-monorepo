@@ -40,6 +40,7 @@ import { UpdateResourceCommand } from '@apps/resources-service/application/comma
 import { DeleteResourceCommand } from '@apps/resources-service/application/commands/delete-resource.command';
 import { GetResourceQuery, GetResourceByCodeQuery } from '@apps/resources-service/application/queries/get-resource.query';
 import { GetResourcesQuery, GetResourcesWithPaginationQuery, SearchResourcesQuery, CheckResourceAvailabilityQuery } from '@apps/resources-service/application/queries/get-resources.query';
+import { RESOURCES_URLS } from '../../utils/maps/urls.map';
 
 /**
  * Resources Controller
@@ -47,7 +48,7 @@ import { GetResourcesQuery, GetResourcesWithPaginationQuery, SearchResourcesQuer
  * RESTful API for resource management with CQRS pattern
  */
 @ApiTags('Resources')
-@Controller('resources')
+@Controller(RESOURCES_URLS.RESOURCES)
 export class ResourcesController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -58,7 +59,7 @@ export class ResourcesController {
    * Create a new resource
    * Implements RF-01 (create resource)
    */
-  @Post()
+  @Post(RESOURCES_URLS.RESOURCE_CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ 
     summary: 'Create new resource',
@@ -82,7 +83,7 @@ export class ResourcesController {
   /**
    * Get all resources with optional filters
    */
-  @Get()
+  @Get('/')
   @ApiOperation({ 
     summary: 'Get all resources',
     description: 'Retrieves all resources with optional filtering by type, status, category, etc.'
@@ -121,7 +122,7 @@ export class ResourcesController {
   /**
    * Get resources with pagination
    */
-  @Get('paginated')
+  @Get('/paginated')
   @ApiOperation({ 
     summary: 'Get resources with pagination',
     description: 'Retrieves resources with pagination support and optional filtering.'
@@ -164,7 +165,7 @@ export class ResourcesController {
   /**
    * Search resources by name or description
    */
-  @Get('search')
+  @Get('/search')
   @ApiOperation({ 
     summary: 'Search resources',
     description: 'Search resources by name, description, or code.'
@@ -189,7 +190,7 @@ export class ResourcesController {
   /**
    * Get resource by ID
    */
-  @Get(':id')
+  @Get(RESOURCES_URLS.RESOURCE_UPDATE)
   @ApiOperation({ 
     summary: 'Get resource by ID',
     description: 'Retrieves a single resource by its unique identifier.'
@@ -211,7 +212,7 @@ export class ResourcesController {
   /**
    * Get resource by code
    */
-  @Get('code/:code')
+  @Get('/code/:code')
   @ApiOperation({ 
     summary: 'Get resource by code',
     description: 'Retrieves a single resource by its unique code.'
@@ -234,7 +235,7 @@ export class ResourcesController {
    * Check resource availability
    * Implements RF-05 (availability rules)
    */
-  @Get(':id/availability')
+  @Get('/:id/availability')
   @ApiOperation({ 
     summary: 'Check resource availability',
     description: 'Checks if a resource is available for reservation based on configured rules. Implements RF-05.'
@@ -272,7 +273,7 @@ export class ResourcesController {
    * Update an existing resource
    * Implements RF-01 (edit resource)
    */
-  @Put(':id')
+  @Put(RESOURCES_URLS.RESOURCE_UPDATE)
   @ApiOperation({ 
     summary: 'Update resource',
     description: 'Updates an existing resource. Implements RF-01 and RF-03.'
@@ -308,7 +309,7 @@ export class ResourcesController {
    * Implements RF-01 (delete resource)
    * Supports both soft delete (when has relations) and hard delete (when no relations)
    */
-  @Delete(':id')
+  @Delete(RESOURCES_URLS.RESOURCE_DELETE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
     summary: 'Delete resource',

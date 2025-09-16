@@ -11,7 +11,7 @@ import { RemoveRoleCommand } from '../../application/commands/remove-role.comman
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
 import { UserEntity } from '../../domain/entities/user.entity';
-import { AUTH_URLS } from '../../utils/maps';
+import { AUTH_URLS } from '../../utils/maps/urls.map';
 import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 

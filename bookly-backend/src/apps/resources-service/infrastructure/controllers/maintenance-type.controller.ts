@@ -30,17 +30,18 @@ import { MaintenanceTypeEntity } from '@apps/resources-service/domain/entities/m
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
+import { UserEntity, UserRole } from '@apps/auth-service/domain/entities/user.entity';
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 import { SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { RESOURCES_URLS } from '@apps/resources-service/utils/maps/urls.map';
 
 /**
  * HITO 6 - RF-06: MaintenanceType Controller
  * Handles HTTP requests for maintenance type management
  */
-@ApiTags('Maintenance Types')
-@Controller('maintenance-types')
+@ApiTags(RESOURCES_URLS.MAINTENANCE_TYPES_TAG)
+@Controller(RESOURCES_URLS.MAINTENANCE_TYPES)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class MaintenanceTypeController {
@@ -52,8 +53,8 @@ export class MaintenanceTypeController {
   /**
    * Creates a new maintenance type
    */
-  @Post()
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Post(RESOURCES_URLS.MAINTENANCE_TYPES_CREATE)
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create a new maintenance type',
@@ -84,7 +85,7 @@ export class MaintenanceTypeController {
   /**
    * Gets all active maintenance types
    */
-  @Get()
+  @Get(RESOURCES_URLS.MAINTENANCE_TYPES_ACTIVE)
   @ApiOperation({
     summary: 'Get all active maintenance types',
     description: 'Retrieves all active maintenance types ordered by priority.',
@@ -103,8 +104,8 @@ export class MaintenanceTypeController {
   /**
    * Gets all maintenance types (active and inactive)
    */
-  @Get('all')
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Get(RESOURCES_URLS.MAINTENANCE_TYPES_ALL)
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get all maintenance types',
     description: 'Retrieves all maintenance types including inactive ones. Only administrators can access this.',
@@ -127,7 +128,7 @@ export class MaintenanceTypeController {
   /**
    * Gets default maintenance types
    */
-  @Get('defaults')
+  @Get(RESOURCES_URLS.MAINTENANCE_TYPES_DEFAULTS)
   @ApiOperation({
     summary: 'Get default maintenance types',
     description: 'Retrieves all default system maintenance types.',
@@ -147,7 +148,7 @@ export class MaintenanceTypeController {
   /**
    * Gets custom maintenance types
    */
-  @Get('custom')
+  @Get(RESOURCES_URLS.MAINTENANCE_TYPES_CUSTOM)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @ApiOperation({
     summary: 'Get custom maintenance types',
@@ -172,7 +173,7 @@ export class MaintenanceTypeController {
   /**
    * Gets a maintenance type by ID
    */
-  @Get(':id')
+  @Get(RESOURCES_URLS.MAINTENANCE_TYPES_ID)
   @ApiOperation({
     summary: 'Get maintenance type by ID',
     description: 'Retrieves a specific maintenance type by its ID.',
@@ -200,7 +201,7 @@ export class MaintenanceTypeController {
   /**
    * Gets a maintenance type by name
    */
-  @Get('name/:name')
+  @Get(RESOURCES_URLS.MAINTENANCE_TYPES_NAME)
   @ApiOperation({
     summary: 'Get maintenance type by name',
     description: 'Retrieves a specific maintenance type by its name.',
@@ -228,7 +229,7 @@ export class MaintenanceTypeController {
   /**
    * Updates an existing maintenance type
    */
-  @Put(':id')
+  @Put(RESOURCES_URLS.MAINTENANCE_TYPES_ID)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @ApiOperation({
     summary: 'Update maintenance type',
@@ -274,7 +275,7 @@ export class MaintenanceTypeController {
   /**
    * Deactivates a maintenance type
    */
-  @Delete(':id')
+  @Delete(RESOURCES_URLS.MAINTENANCE_TYPES_ID)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -317,7 +318,7 @@ export class MaintenanceTypeController {
   /**
    * Reactivates a maintenance type
    */
-  @Put(':id/reactivate')
+  @Put(RESOURCES_URLS.MAINTENANCE_TYPES_REACTIVATE)
   @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
   @ApiOperation({
     summary: 'Reactivate maintenance type',
@@ -357,7 +358,7 @@ export class MaintenanceTypeController {
   /**
    * Validates if a maintenance type can be used
    */
-  @Get(':id/validate')
+  @Get(RESOURCES_URLS.MAINTENANCE_TYPES_VALIDATE)
   @ApiOperation({
     summary: 'Validate maintenance type',
     description: 'Checks if a maintenance type exists and is active for use.',

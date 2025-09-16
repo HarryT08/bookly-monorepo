@@ -29,13 +29,14 @@ import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
 import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { RESOURCES_URLS } from '@apps/resources-service/utils/maps/urls.map';
+import { UserRole } from '@libs/common/enums/user-role.enum';
 
 /**
  * HITO 6 - RF-02: ResourceCategory Controller
  * Handles HTTP requests for resource-category associations
  */
-@ApiTags('Resource Categories')
-@Controller('resource-categories')
+@ApiTags(RESOURCES_URLS.RESOURCE_CATEGORY_TAG)
+@Controller(RESOURCES_URLS.RESOURCE_CATEGORY)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ResourceCategoryController {
@@ -45,7 +46,7 @@ export class ResourceCategoryController {
    * Assigns a single category to a resource
    */
   @Post(RESOURCES_URLS.RESOURCE_CATEGORY_ASSIGN)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Assign category to resource',
@@ -90,7 +91,7 @@ export class ResourceCategoryController {
    * Assigns multiple categories to a resource
    */
   @Post(RESOURCES_URLS.RESOURCE_CATEGORY_ASSIGN_MULTIPLE)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Assign multiple categories to resource',
@@ -130,7 +131,7 @@ export class ResourceCategoryController {
    * Replaces all categories for a resource
    */
   @Put(RESOURCES_URLS.RESOURCE_CATEGORY_REPLACE)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Replace resource categories',
     description: 'Replaces all categories assigned to a resource with new ones.',
@@ -286,7 +287,7 @@ export class ResourceCategoryController {
    * Removes a category from a resource
    */
   @Delete(RESOURCES_URLS.RESOURCE_CATEGORY_REMOVE)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Remove category from resource',
@@ -326,7 +327,7 @@ export class ResourceCategoryController {
    * Removes all categories from a resource
    */
   @Delete(RESOURCES_URLS.RESOURCE_CATEGORY_REMOVE_ALL)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Remove all categories from resource',
@@ -356,7 +357,7 @@ export class ResourceCategoryController {
    * Bulk assigns a category to multiple resources
    */
   @Post(RESOURCES_URLS.CATEGORY_BULK_ASSIGN)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Bulk assign category to resources',
@@ -396,7 +397,7 @@ export class ResourceCategoryController {
    * Validates resource-category assignment data
    */
   @Post(RESOURCES_URLS.RESOURCE_CATEGORY_VALIDATE)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Validate resource-category assignment',
     description: 'Validates resource-category assignment data before processing.',

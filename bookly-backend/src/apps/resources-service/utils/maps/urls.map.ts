@@ -9,6 +9,7 @@ export const RESOURCES_URLS = {
   API_VERSION: '/api/v1',
   
   // Resource endpoints
+  RESOURCES_TAG: 'Resources',
   RESOURCES: '/resources',
   RESOURCE_CREATE: '/create',
   RESOURCE_UPDATE: '/:id',
@@ -19,6 +20,8 @@ export const RESOURCES_URLS = {
   RESOURCE_DETAILS: '/:id/details',
   
   // Resource Category Association endpoints
+  RESOURCE_CATEGORY_TAG: 'Resource Category Association',
+  RESOURCE_CATEGORY: '/resource-categories',
   RESOURCE_CATEGORY_ASSIGN: '/:resourceId/categories/:categoryId',
   RESOURCE_CATEGORY_ASSIGN_MULTIPLE: '/:resourceId/categories',
   RESOURCE_CATEGORY_REPLACE: '/:resourceId/categories',
@@ -31,6 +34,7 @@ export const RESOURCES_URLS = {
   RESOURCE_CATEGORY_VALIDATE: '/validate',
   
   // Resource Categories
+  CATEGORIES_TAG: 'Categories',
   CATEGORIES: '/categories',
   CATEGORY_CREATE: '/categories/create',
   CATEGORY_UPDATE: '/categories/:id',
@@ -39,11 +43,17 @@ export const RESOURCES_URLS = {
   CATEGORY_RESOURCES: '/categories/:id/resources',
   
   // Program Association
+  PROGRAMS_TAG: 'Programs',
   PROGRAMS: '/programs',
-  RESOURCE_PROGRAMS: '/resources/:id/programs',
-  PROGRAM_RESOURCES: '/programs/:id/resources',
-  ASSIGN_PROGRAM: '/resources/:id/programs/assign',
-  REMOVE_PROGRAM: '/resources/:id/programs/remove',
+  PROGRAMS_CREATE: '/create',
+  PROGRAMS_UPDATE: '/:id',
+  PROGRAMS_DELETE: '/:id',
+  PROGRAMS_FIND: '/',
+  PROGRAMS_FIND_BY_ID: '/:id',
+  PROGRAMS_FIND_BY_CODE: '/code/:code',
+  PROGRAMS_ACTIVE: '/active',
+  PROGRAMS_REACTIVATE: '/:id/reactivate',
+  
   
   // Resource Attributes
   RESOURCE_ATTRIBUTES: '/resources/:id/attributes',
@@ -53,15 +63,20 @@ export const RESOURCES_URLS = {
   RESOURCE_EQUIPMENT: '/resources/:id/equipment',
   
   // Import endpoints
+  IMPORT_TAG: 'Import',
   IMPORT: '/import',
-  IMPORT_VALIDATE: '/import/validate',
-  IMPORT_PROCESS: '/import/process',
-  IMPORT_STATUS: '/import/:id/status',
-  IMPORT_HISTORY: '/import/history',
-  IMPORT_TEMPLATE: '/import/template',
+  IMPORT_PREVIEW: '/preview',
+  IMPORT_START: '/start',
+  IMPORT_FIND_BY_ID: '/:id',
+  IMPORT_HISTORY: '/history',
+  IMPORT_PAGINATED: '/paginated',
+  IMPORT_STATISTICS_OVERVIEW: '/statistics/overview',
+  IMPORT_STATISTICS_MY_STATS: '/statistics/my-stats',
+  IMPORT_TEMPLATE: '/template',
   BULK_CREATE: '/resources/bulk-create',
   
   // Maintenance endpoints
+  MAINTENANCE_TAG: 'Maintenance',
   MAINTENANCE: '/maintenance',
   MAINTENANCE_SCHEDULE: '/maintenance/schedule',
   MAINTENANCE_UPDATE: '/maintenance/:id',
@@ -69,6 +84,19 @@ export const RESOURCES_URLS = {
   MAINTENANCE_COMPLETE: '/maintenance/:id/complete',
   RESOURCE_MAINTENANCE: '/resources/:id/maintenance',
   MAINTENANCE_HISTORY: '/resources/:id/maintenance/history',
+
+  // Maintenance Types
+  MAINTENANCE_TYPES_TAG: 'Maintenance Types',
+  MAINTENANCE_TYPES: '/maintenance-types',
+  MAINTENANCE_TYPES_CREATE: '/create',
+  MAINTENANCE_TYPES_ALL: '/all',
+  MAINTENANCE_TYPES_ACTIVE: '/active',
+  MAINTENANCE_TYPES_DEFAULTS: '/defaults',
+  MAINTENANCE_TYPES_CUSTOM: '/custom',
+  MAINTENANCE_TYPES_ID: '/:id',
+  MAINTENANCE_TYPES_NAME: '/name/:name',
+  MAINTENANCE_TYPES_REACTIVATE: '/reactivate',
+  MAINTENANCE_TYPES_VALIDATE: '/validate',
   
   // Damage and Repair
   DAMAGE_REPORT: '/resources/:id/damage/report',

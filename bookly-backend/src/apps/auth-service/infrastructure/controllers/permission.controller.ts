@@ -19,7 +19,7 @@ import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { PermissionService } from '../../application/services/permission.service';
 import { CreatePermissionDto, UpdatePermissionDto, PermissionResponseDto } from '../../../../libs/dto/auth/permission.dto';
-import { AUTH_URLS } from '../../utils/maps';
+import { AUTH_URLS } from '../../utils/maps/urls.map';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()
