@@ -34,13 +34,17 @@ export const RESOURCES_URLS = {
   RESOURCE_CATEGORY_VALIDATE: '/validate',
   
   // Resource Categories
-  CATEGORIES_TAG: 'Categories',
-  CATEGORIES: '/categories',
-  CATEGORY_CREATE: '/categories/create',
-  CATEGORY_UPDATE: '/categories/:id',
-  CATEGORY_DELETE: '/categories/:id',
-  RESOURCE_CATEGORIES: '/resources/:id/categories',
-  CATEGORY_RESOURCES: '/categories/:id/resources',
+  RESOURCE_CATEGORIES_TAG: 'Resource Categories',
+  RESOURCE_CATEGORIES: '/resources/categories',
+  RESOURCE_CATEGORIES_FIND_ALL: '/',
+  RESOURCE_CATEGORY_CREATE: '/',
+  RESOURCE_CATEGORY_UPDATE: '/:id',
+  RESOURCE_CATEGORY_DELETE: '/:id',
+  RESOURCE_CATEGORIES_DEFAULTS: '/defaults',
+  RESOURCE_CATEGORIES_ACTIVE: '/active',
+  RESOURCE_CATEGORIES_FIND_BY_ID: '/:id',
+  RESOURCE_CATEGORY_REACTIVATE: '/:id/reactivate',
+  
   
   // Program Association
   PROGRAMS_TAG: 'Programs',

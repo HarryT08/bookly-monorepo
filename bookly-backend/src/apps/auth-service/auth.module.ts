@@ -41,12 +41,12 @@ import { AssignRoleHandler } from './application/handlers/assign-role.handler';
 import { RemoveRoleHandler } from './application/handlers/remove-role.handler';
 
 // Category Handlers
-import { CreateCategoryHandler } from './application/handlers/category/create-category.handler';
-import { UpdateCategoryHandler } from './application/handlers/category/update-category.handler';
-import { DeleteCategoryHandler } from './application/handlers/category/delete-category.handler';
-import { FindAllCategoriesHandler } from './application/handlers/category/find-all-categories.handler';
-import { FindCategoryByIdHandler } from './application/handlers/category/find-category-by-id.handler';
-import { FindDefaultCategoriesHandler } from './application/handlers/category/find-default-categories.handler';
+import { CreateCategoryHandler } from './application/handlers/category/create-role-category.handler';
+import { UpdateCategoryHandler } from './application/handlers/category/update-role-category.handler';
+import { DeleteCategoryHandler } from './application/handlers/category/delete-role-category.handler';
+import { FindAllCategoriesHandler } from './application/handlers/category/find-role-categories.handler';
+import { FindCategoryByIdHandler } from './application/handlers/category/find-role-category-by-id.handler';
+import { FindDefaultCategoriesHandler } from './application/handlers/category/find-default-role-categories.handler';
 
 // Role-Category Handlers
 import { AssignCategoriesToRoleHandler } from './application/handlers/role-category/assign-categories-to-role.handler';

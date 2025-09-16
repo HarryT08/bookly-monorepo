@@ -152,7 +152,7 @@ export class CategoryEntity {
   /**
    * Update category properties
    */
-  update(updates: Partial<Pick<CategoryProps, 'name' | 'description' | 'metadata' | 'isActive' | 'sortOrder'>>, updatedBy?: string): void {
+  update(updates: Partial<Pick<CategoryProps, 'name' | 'description' | 'metadata' | 'isActive' | 'sortOrder'>>, updatedBy?: string): CategoryEntity {
     const changes: Partial<CategoryProps> = {};
 
     if (updates.name !== undefined && updates.name !== this._name) {
@@ -200,12 +200,13 @@ export class CategoryEntity {
         },
       } as CategoryUpdatedEvent);
     }
+    return this;
   }
 
   /**
    * Deactivate category (soft delete)
    */
-  deactivate(deactivatedBy?: string): void {
+  deactivate(deactivatedBy?: string): CategoryEntity {
     if (this._isActive) {
       this._isActive = false;
       this._updatedAt = new Date();
@@ -227,12 +228,21 @@ export class CategoryEntity {
         },
       } as CategoryUpdatedEvent);
     }
+    return this;
+  }
+
+
+  /**
+   * Reactivates the category
+   */
+  reactivate(): CategoryEntity {
+    return new CategoryEntity({...this.toProps(), isActive: true});
   }
 
   /**
    * Mark category for deletion
    */
-  markForDeletion(deletedBy?: string): void {
+  markForDeletion(deletedBy?: string): CategoryEntity {
     this._updatedAt = new Date();
     this._updatedBy = deletedBy;
 
@@ -250,6 +260,7 @@ export class CategoryEntity {
         service: this.service,
       },
     } as CategoryDeletedEvent);
+    return this;
   }
 
   /**

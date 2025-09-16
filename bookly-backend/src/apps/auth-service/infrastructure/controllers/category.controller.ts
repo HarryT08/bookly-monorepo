@@ -17,8 +17,6 @@ import { ResponseUtil } from '@libs/common/utils/response.util';
 import { LoggingService } from '@libs/logging/logging.service';
 
 // DTOs
-import { CreateCategoryDto } from '../../application/dto/category/create-category.dto';
-import { UpdateCategoryDto } from '../../application/dto/category/update-category.dto';
 import { CategoryResponseDto } from '../../application/dto/category/category-response.dto';
 
 // Commands
@@ -32,6 +30,7 @@ import { FindRoleCategoryByIdQuery } from '../../application/queries/category/fi
 import { FindDefaultRoleCategoriesQuery } from '../../application/queries/category/find-default-categories.query';
 import { AUTH_URLS } from '../../utils/maps/urls.map';
 import { FindRoleCategoryByActiveQuery } from '../../application/queries/category/find-category-by-active.query';
+import { CreateCategoryDto, UpdateCategoryDto } from '@/libs/dto/categories';
 
 @ApiTags('Role Categories')
 @Controller(AUTH_URLS.CATEGORY)

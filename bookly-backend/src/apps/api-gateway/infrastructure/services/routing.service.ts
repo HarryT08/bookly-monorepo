@@ -7,6 +7,13 @@ import { AxiosResponse, AxiosRequestConfig } from 'axios';
 import { LoadBalancerService } from './load-balancer.service';
 import { CircuitBreakerService } from './circuit-breaker.service';
 
+// Import URL maps from all services
+import { AUTH_URLS } from '../../../auth-service/utils/maps/urls.map';
+import { RESOURCES_URLS } from '../../../resources-service/utils/maps/urls.map';
+import { AVAILABILITY_URLS } from '../../../availability-service/utils/maps/urls.map';
+import { STOCKPILE_URLS } from '../../../stockpile-service/utils/maps/urls.map';
+import { REPORTS_URLS } from '../../../reports-service/utils/maps/urls.map';
+
 export interface RouteConfig {
   service: string;
   path: string;
@@ -60,118 +67,148 @@ export class RoutingService {
     this.logger.log(`Initialized ${this.routes.size} versioned routes`);
   }
 
+  /**
+   * Helper function to build versioned routes using URL maps
+   */
+  private buildRouteVersion(service: string, endpoint: string, version: string = 'v1'): string {
+    return `${version}/${service}${endpoint}`;
+  }
+
   private initializeV1Routes(): void {
     // V1 Aggregated health route (handled by gateway)
     this.addVersionedRoute('GET', '/v1/health', 'gateway', 'v1', { auth: false });
     
     // V1 Health routes - individual microservice health checks
-    this.addVersionedRoute('GET', '/v1/auth/health', 'auth', 'v1', { auth: false });
-    this.addVersionedRoute('GET', '/v1/resources/health', 'resources', 'v1', { auth: false });
-    this.addVersionedRoute('GET', '/v1/availability/health', 'availability', 'v1', { auth: false });
-    this.addVersionedRoute('GET', '/v1/stockpile/health', 'stockpile', 'v1', { auth: false });
-    this.addVersionedRoute('GET', '/v1/reports/health', 'reports', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('auth', AUTH_URLS.HEALTH), 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('resources', RESOURCES_URLS.HEALTH), 'resources', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('availability', AVAILABILITY_URLS.HEALTH), 'availability', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.HEALTH), 'stockpile', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.HEALTH), 'reports', 'v1', { auth: false });
     
     // V1 Authentication routes
-    this.addVersionedRoute('POST', '/v1/auth/login', 'auth', 'v1', { auth: false, rateLimit: true });
-    this.addVersionedRoute('POST', '/v1/auth/register', 'auth', 'v1', { auth: false, rateLimit: true });
-    this.addVersionedRoute('POST', '/v1/auth/refresh', 'auth', 'v1', { auth: false, rateLimit: true });
-    this.addVersionedRoute('POST', '/v1/auth/logout', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('POST', '/v1/auth/profile', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/auth/profile', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('POST', '/v1/auth/forgot-password', 'auth', 'v1', { auth: false, rateLimit: true });
-    this.addVersionedRoute('POST', '/v1/auth/reset-password', 'auth', 'v1', { auth: false, rateLimit: true });
-    this.addVersionedRoute('POST', '/v1/auth/verify-email', 'auth', 'v1', { auth: false });
-    this.addVersionedRoute('GET', '/v1/auth/categories', 'auth', 'v1', { auth: false });
-    this.addVersionedRoute('GET', '/v1/auth/categories/defaults', 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('POST', this.buildRouteVersion('auth', AUTH_URLS.AUTH_LOGIN), 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('auth', AUTH_URLS.AUTH_REGISTER), 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', '/v1/auth/refresh', 'auth', 'v1', { auth: false, rateLimit: true }); // Not in AUTH_URLS
+    this.addVersionedRoute('POST', this.buildRouteVersion('auth', AUTH_URLS.AUTH_LOGOUT), 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('auth', AUTH_URLS.AUTH_USER_PROFILE), 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('auth', AUTH_URLS.AUTH_USER_PROFILE), 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('auth', AUTH_URLS.PASSWORD_RESET_REQUEST), 'auth', 'v1', { auth: false, rateLimit: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('auth', AUTH_URLS.PASSWORD_RESET_CONFIRM), 'auth', 'v1', { auth: false, rateLimit: true }); // Not in AUTH_URLS
+    this.addVersionedRoute('POST', this.buildRouteVersion('auth', AUTH_URLS.EMAIL_VERIFY), 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', '/v1/auth/categories', 'auth', 'v1', { auth: false }); // Not in AUTH_URLS
+    this.addVersionedRoute('GET', '/v1/auth/categories/defaults', 'auth', 'v1', { auth: false }); // Not in AUTH_URLS
     
     // V1 OAuth routes
-    this.addVersionedRoute('GET', '/v1/auth/oauth/google', 'auth', 'v1', { auth: false });
-    this.addVersionedRoute('GET', '/v1/auth/oauth/google/callback', 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('auth', AUTH_URLS.OAUTH_GOOGLE), 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('auth', AUTH_URLS.OAUTH_GOOGLE_CALLBACK), 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('auth', AUTH_URLS.OAUTH_MICROSOFT), 'auth', 'v1', { auth: false });
+    this.addVersionedRoute('GET', this.buildRouteVersion('auth', AUTH_URLS.OAUTH_MICROSOFT_CALLBACK), 'auth', 'v1', { auth: false });
 
     // V1 User management routes
-    this.addVersionedRoute('GET', '/v1/users', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('GET', '/v1/users/:id', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/users/:id', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/users/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('users', ''), 'users', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('users', AUTH_URLS.USER_FIND_BY_ID), 'users', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('users', AUTH_URLS.USER_UPDATE), 'users', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('users', AUTH_URLS.USER_DELETE), 'users', 'v1', { auth: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('users', AUTH_URLS.USER_ASSIGN_ROLE), 'users', 'v1', { auth: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('users', AUTH_URLS.USER_REMOVE_ROLE), 'users', 'v1', { auth: true });
 
     // V1 Role management routes
-    this.addVersionedRoute('GET', '/v1/roles', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/roles', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/roles/:id', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/roles/:id', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/roles/:id', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/roles/active', 'auth', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('roles', ''), 'roles', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('roles', AUTH_URLS.ROLE_CREATE), 'roles', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('roles', AUTH_URLS.ROLE_FIND), 'roles', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('roles', AUTH_URLS.ROLE_FIND_BY_ID), 'roles', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('roles', AUTH_URLS.ROLE_UPDATE), 'roles', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('roles', AUTH_URLS.ROLE_DELETE), 'roles', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('roles', AUTH_URLS.ROLE_FIND_BY_ACTIVE), 'roles', 'v1', { auth: true, cache: true });
+
+    // V1 Category Role management routes
+    this.addVersionedRoute('GET', this.buildRouteVersion('role/categories', ''), 'categories', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('role/categories', ''), 'categories', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('role/categories', AUTH_URLS.CATEGORY_FIND_BY_ID), 'categories', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('role/categories', AUTH_URLS.CATEGORY_FIND_BY_ACTIVE), 'categories', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('role/categories', AUTH_URLS.CATEGORY_UPDATE), 'categories', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('role/categories', AUTH_URLS.CATEGORY_DELETE), 'categories', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('role/categories', AUTH_URLS.CATEGORY_DEFAULTS), 'categories', 'v1', { auth: true, cache: true });
 
     // V1 Permission management routes
-    this.addVersionedRoute('GET', '/v1/permissions', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/permissions', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/permissions/:id', 'auth', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/permissions/:id', 'auth', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/permissions/:id', 'auth', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('permissions', ''), 'permissions', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('permissions', ''), 'permissions', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_FIND_BY_ID), 'permissions', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_FIND_BY_ACTIVE), 'permissions', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_FIND_BY_RESOURCE), 'permissions', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_UPDATE), 'permissions', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_DELETE), 'permissions', 'v1', { auth: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_ACTIVATE), 'permissions', 'v1', { auth: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_DEACTIVATE), 'permissions', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('permissions', AUTH_URLS.PERMISSION_SEED_DEFAULTS), 'permissions', 'v1', { auth: true });
 
     // V1 Resources routes
-    this.addVersionedRoute('GET', '/v1/resources', 'resources', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/resources', 'resources', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/resources/:id', 'resources', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/resources/:id', 'resources', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/resources/:id', 'resources', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/resources/search', 'resources', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/resources/bulk', 'resources', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/resources/categories', 'resources', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/resources/categories', 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('resources', ''), 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('resources', ''), 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('resources', RESOURCES_URLS.RESOURCE_UPDATE), 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('resources', RESOURCES_URLS.RESOURCE_UPDATE), 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('resources', RESOURCES_URLS.RESOURCE_DELETE), 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('resources', RESOURCES_URLS.SEARCH), 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('resources', RESOURCES_URLS.BULK_CREATE), 'resources', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('resources', RESOURCES_URLS.RESOURCE_CATEGORIES), 'resources', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('resources', RESOURCES_URLS.RESOURCE_CATEGORY_CREATE), 'resources', 'v1', { auth: true });
 
     // V1 Availability routes
-    this.addVersionedRoute('GET', '/v1/availability', 'availability', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/availability/check', 'availability', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/availability/calendar', 'availability', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('GET', '/v1/availability/schedules', 'availability', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/availability/schedules', 'availability', 'v1', { auth: true });
-    this.addVersionedRoute('PUT', '/v1/availability/schedules/:id', 'availability', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/availability/schedules/:id', 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('availability', AVAILABILITY_URLS.AVAILABILITY_GET), 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('availability', AVAILABILITY_URLS.AVAILABILITY_CHECK), 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('availability', AVAILABILITY_URLS.CALENDAR_VIEW), 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('availability', AVAILABILITY_URLS.SCHEDULES), 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('availability', AVAILABILITY_URLS.SCHEDULE_CREATE), 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('availability', AVAILABILITY_URLS.SCHEDULE_UPDATE), 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('availability', AVAILABILITY_URLS.SCHEDULE_DELETE), 'availability', 'v1', { auth: true });
 
     // V1 Reservations routes
-    this.addVersionedRoute('GET', '/v1/reservations', 'availability', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/reservations', 'availability', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/reservations/:id', 'availability', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/reservations/:id', 'availability', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/reservations/:id', 'availability', 'v1', { auth: true });
-    this.addVersionedRoute('POST', '/v1/reservations/:id/cancel', 'availability', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/reservations/history', 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('availability', AVAILABILITY_URLS.RESERVATIONS), 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('availability', AVAILABILITY_URLS.RESERVATION_CREATE), 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('availability', AVAILABILITY_URLS.RESERVATIONS + '/:id'), 'availability', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('availability', AVAILABILITY_URLS.RESERVATION_UPDATE), 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('availability', AVAILABILITY_URLS.RESERVATIONS + '/:id'), 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('availability', AVAILABILITY_URLS.RESERVATION_CANCEL), 'availability', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('availability', AVAILABILITY_URLS.HISTORY), 'availability', 'v1', { auth: true, cache: true });
 
     // V1 Stockpile (Approval) routes
-    this.addVersionedRoute('GET', '/v1/approvals', 'stockpile', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/approvals', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/approvals/:id', 'stockpile', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/approvals/:id', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('POST', '/v1/approvals/:id/approve', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('POST', '/v1/approvals/:id/reject', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/approvals/flows', 'stockpile', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/approvals/flows', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_REQUESTS), 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_REQUESTS), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_REQUESTS + '/:id'), 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_REQUESTS + '/:id'), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_REQUEST_APPROVE), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_REQUEST_REJECT), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_FLOWS), 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.APPROVAL_FLOW_CREATE), 'stockpile', 'v1', { auth: true });
 
     // V1 Document templates routes
-    this.addVersionedRoute('GET', '/v1/documents/templates', 'stockpile', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/documents/templates', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/documents/templates/:id', 'stockpile', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/documents/templates/:id', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/documents/templates/:id', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('POST', '/v1/documents/generate', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.DOCUMENT_TEMPLATES), 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.DOCUMENT_TEMPLATE_CREATE), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.DOCUMENT_TEMPLATES + '/:id'), 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('stockpile', STOCKPILE_URLS.DOCUMENT_TEMPLATE_UPDATE), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('stockpile', STOCKPILE_URLS.DOCUMENT_TEMPLATE_DELETE), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.DOCUMENT_GENERATE), 'stockpile', 'v1', { auth: true });
 
     // V1 Notification templates routes
-    this.addVersionedRoute('GET', '/v1/notifications/templates', 'stockpile', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/notifications/templates', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/notifications/templates/:id', 'stockpile', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('PUT', '/v1/notifications/templates/:id', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('DELETE', '/v1/notifications/templates/:id', 'stockpile', 'v1', { auth: true });
-    this.addVersionedRoute('POST', '/v1/notifications/send', 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.NOTIFICATION_TEMPLATES), 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.NOTIFICATION_TEMPLATE_CREATE), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('stockpile', STOCKPILE_URLS.NOTIFICATION_TEMPLATE_BY_ID), 'stockpile', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('PUT', this.buildRouteVersion('stockpile', STOCKPILE_URLS.NOTIFICATION_TEMPLATE_UPDATE), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('DELETE', this.buildRouteVersion('stockpile', STOCKPILE_URLS.NOTIFICATION_TEMPLATE_DELETE), 'stockpile', 'v1', { auth: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('stockpile', STOCKPILE_URLS.NOTIFICATION_SEND), 'stockpile', 'v1', { auth: true });
 
     // V1 Reports routes
-    this.addVersionedRoute('GET', '/v1/reports', 'reports', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/reports/generate', 'reports', 'v1', { auth: true });
-    this.addVersionedRoute('GET', '/v1/reports/:id', 'reports', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('GET', '/v1/reports/usage', 'reports', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('GET', '/v1/reports/analytics', 'reports', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('GET', '/v1/reports/dashboard', 'reports', 'v1', { auth: true, cache: true });
-    this.addVersionedRoute('POST', '/v1/reports/export', 'reports', 'v1', { auth: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', ''), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.USAGE_REPORTS), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('reports', REPORTS_URLS.USAGE_REPORT_GENERATE), 'reports', 'v1', { auth: true }); // Generic generate endpoint
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.USAGE_REPORTS + '/:id'), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.USAGE_BY_RESOURCE), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.USAGE_BY_PROGRAM), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.USAGE_BY_PERIOD), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.USAGE_SUMMARY), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.ANALYTICS), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('GET', this.buildRouteVersion('reports', REPORTS_URLS.DASHBOARD), 'reports', 'v1', { auth: true, cache: true });
+    this.addVersionedRoute('POST', this.buildRouteVersion('reports', REPORTS_URLS.EXPORT), 'reports', 'v1', { auth: true });
   }
 
   private initializeV2Routes(): void {

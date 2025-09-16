@@ -9,11 +9,12 @@ export const REPORTS_URLS = {
   API_VERSION: '/api/v1',
   
   // Usage Reports endpoints
-  USAGE_REPORTS: '/reports/usage',
-  USAGE_BY_RESOURCE: '/reports/usage/resource/:resourceId',
-  USAGE_BY_PROGRAM: '/reports/usage/program/:programId',
-  USAGE_BY_PERIOD: '/reports/usage/period',
-  USAGE_SUMMARY: '/reports/usage/summary',
+  USAGE_REPORTS: '/usage',
+  USAGE_BY_RESOURCE: '/usage/resource/:resourceId',
+  USAGE_BY_PROGRAM: '/usage/program/:programId',
+  USAGE_BY_PERIOD: '/usage/period',
+  USAGE_SUMMARY: '/usage/summary',
+  USAGE_REPORT_GENERATE: '/usage/generate',
   
   // User Reports endpoints
   USER_REPORTS: '/reports/user',
@@ -126,6 +127,17 @@ export const REPORTS_URLS = {
   FILTER_OPTIONS: '/filter-options',
   ADVANCED_SEARCH: '/search/advanced',
   
+  // Categories endpoints
+  REPORTS_CATEGORIES_TAG: 'Report Categories',
+  REPORTS_CATEGORIES: '/categories',
+  REPORTS_CATEGORY_CREATE: '/create',
+  REPORTS_CATEGORY_UPDATE: '/:id',
+  REPORTS_CATEGORY_DELETE: '/:id',
+  REPORTS_CATEGORY_BY_ID: '/:id',
+  REPORTS_CATEGORIES_ACTIVE: '/active',
+  REPORTS_CATEGORIES_DEFAULTS: '/defaults',
+  REPORTS_CATEGORY_REACTIVATE: '/:id/reactivate',
+
   // Health and monitoring
   HEALTH: '/health',
   METRICS: '/metrics'

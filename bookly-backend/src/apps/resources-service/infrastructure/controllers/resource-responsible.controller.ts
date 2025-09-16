@@ -49,6 +49,7 @@ import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
 import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
+import { UserRole } from '@libs/common/enums/user-role.enum';
 
 /**
  * HITO 6 - RF-06: ResourceResponsible Controller
@@ -68,7 +69,7 @@ export class ResourceResponsibleController {
    * Assigns a user as responsible for a resource
    */
   @Post(':resourceId/users/:userId')
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Assign user as responsible for resource',

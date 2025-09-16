@@ -1,4 +1,19 @@
-import { CategoryEntity } from '../entities/category.entity';
+import { CategoryEntity } from "@/libs/common/entities/category.entity";
+
+
+export interface CategoryFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  type?: string;
+  service?: string;
+  isActive?: boolean;
+}
+
+export interface CategoryRepositoryResponse {
+  data: CategoryEntity[];
+  total: number;
+}
 
 /**
  * Category Repository Interface
@@ -13,7 +28,7 @@ export interface CategoryRepository {
   /**
    * Updates an existing category
    */
-  update(category: CategoryEntity): Promise<CategoryEntity>;
+  update(id: string, category: CategoryEntity): Promise<CategoryEntity>;
 
   /**
    * Finds a category by ID
@@ -26,9 +41,19 @@ export interface CategoryRepository {
   findByName(name: string): Promise<CategoryEntity | null>;
 
   /**
+   * Finds a category by name and service
+   */
+  findByNameAndService(name: string, service: string): Promise<CategoryEntity | null>;
+
+  /**
    * Finds all categories
    */
   findAll(): Promise<CategoryEntity[]>;
+
+  /**
+   * Finds categories by service
+   */
+  findByService(service: string): Promise<CategoryEntity[]>;
 
   /**
    * Finds all active categories
@@ -36,14 +61,19 @@ export interface CategoryRepository {
   findActive(): Promise<CategoryEntity[]>;
 
   /**
-   * Finds all default categories
+   * Finds default categories by service
    */
-  findDefaults(): Promise<CategoryEntity[]>;
+  findDefaults(service: string): Promise<CategoryEntity[]>;
 
   /**
    * Finds all custom (non-default) categories
    */
   findCustom(): Promise<CategoryEntity[]>;
+
+  /**
+   * Finds categories with filters and pagination
+   */
+  findWithFilters(filters: CategoryFilters): Promise<CategoryRepositoryResponse>;
 
   /**
    * Deactivates a category

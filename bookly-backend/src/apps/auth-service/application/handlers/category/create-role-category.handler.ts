@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { CreateRoleCategoryCommand } from '../../commands/category/create-category.command';
-import { RoleCategoryService } from '../../services/category.service';
+import { RoleCategoryService } from '../../services/role-category.service';
 import { CategoryEntity } from '@libs/common/entities/category.entity';
 import { LoggingService } from '@libs/logging/logging.service';
 

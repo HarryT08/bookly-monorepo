@@ -1,6 +1,6 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { FindAllRoleCategoriesQuery } from '../../queries/category/find-all-categories.query';
-import { RoleCategoryService } from '../../services/category.service';
+import { RoleCategoryService } from '../../services/role-category.service';
 import { LoggingService } from '@libs/logging/logging.service';
 
 @QueryHandler(FindAllRoleCategoriesQuery)

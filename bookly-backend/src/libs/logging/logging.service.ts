@@ -67,8 +67,8 @@ export class LoggingService {
   }
 
   log(message: string, context?: string): void;
-  log(message: string, meta?: any, context?: string): void;
-  log(message: string, metaOrContext?: any, context?: string): void {
+  log(message: string, meta?: any, context?: string, p0?: { categoryId: string; userId: string; }): void;
+  log(message: string, metaOrContext?: any, context?: string, p0?: { categoryId: string; userId: string; }): void {
     if (typeof metaOrContext === 'string') {
       this.logger.info(message, { context: metaOrContext });
     } else {

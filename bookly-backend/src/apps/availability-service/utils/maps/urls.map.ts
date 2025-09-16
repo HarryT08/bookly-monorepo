@@ -24,13 +24,13 @@ export const AVAILABILITY_URLS = {
   
   // Reservation endpoints
   RESERVATIONS: '/reservations',
-  RESERVATION_CREATE: '/reservations/create',
-  RESERVATION_UPDATE: '/reservations/:id',
-  RESERVATION_CANCEL: '/reservations/:id/cancel',
-  RESERVATION_CONFIRM: '/reservations/:id/confirm',
-  RESERVATION_COMPLETE: '/reservations/:id/complete',
-  RESERVATION_CHECK_AVAILABILITY: '/reservations/check-availability',
-  RESERVATION_CONFLICTS: '/reservations/conflicts',
+  RESERVATION_CREATE: '/',
+  RESERVATION_UPDATE: '/:id',
+  RESERVATION_CANCEL: '/:id/cancel',
+  RESERVATION_CONFIRM: '/:id/confirm',
+  RESERVATION_COMPLETE: '/:id/complete',
+  RESERVATION_CHECK_AVAILABILITY: '/check-availability',
+  RESERVATION_CONFLICTS: '/conflicts',
   
   // Recurring Reservation endpoints
   RECURRING_RESERVATIONS: '/recurring-reservations',

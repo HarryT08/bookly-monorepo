@@ -1,4 +1,4 @@
-import { UpdateCategoryDto } from '../../dto/category/update-category.dto';
+import { UpdateCategoryDto } from '@/libs/dto/categories/update-category.dto';
 
 export class UpdateRoleCategoryCommand {
   constructor(

@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteRoleCategoryCommand } from '../../commands/category/delete-category.command';
-import { RoleCategoryService } from '../../services/category.service';
+import { RoleCategoryService } from '../../services/role-category.service';
 import { LoggingService } from '@libs/logging/logging.service';
 
 @CommandHandler(DeleteRoleCategoryCommand)
