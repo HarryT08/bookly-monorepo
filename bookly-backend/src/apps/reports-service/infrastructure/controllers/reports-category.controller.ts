@@ -48,7 +48,7 @@ import { GetDefaultCategoriesQuery } from '@apps/reports-service/application/que
 @Controller(REPORTS_URLS.REPORTS_CATEGORIES)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
-export class CategoryController {
+export class ReportsCategoryController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

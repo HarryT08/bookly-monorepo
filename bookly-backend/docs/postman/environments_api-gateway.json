@@ -1,0 +1,30 @@
+{
+  "key": "API Gateway Environment",
+  "name": "API Gateway",
+  "values": [
+    {
+      "key": "host",
+      "value": "http://localhost:3000",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "service_port",
+      "value": "3000",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "environment",
+      "value": "gateway",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "base_path",
+      "value": "/api/v1",
+      "enabled": true,
+      "type": "default"
+    }
+  ]
+}

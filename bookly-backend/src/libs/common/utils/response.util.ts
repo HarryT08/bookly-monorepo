@@ -3,7 +3,7 @@
  * Helper functions to create standardized responses
  */
 
-import { ApiResponse, PaginationMeta } from '@libs/dto/common/response.dto';
+import { AdvancedSearchPaginationMeta, ApiResponse, PaginationMeta } from '@libs/dto/common/response.dto';
 
 export class ResponseUtil {
   /**
@@ -12,7 +12,7 @@ export class ResponseUtil {
   static success<T>(
     data: T,
     message?: string,
-    meta?: PaginationMeta
+    meta?: PaginationMeta | AdvancedSearchPaginationMeta
   ): ApiResponse<T> {
     const response: ApiResponse<T> = {
       success: true,
@@ -45,6 +45,31 @@ export class ResponseUtil {
       limit,
       total,
       totalPages: Math.ceil(total / limit),
+    };
+
+    return this.success(data, message, meta);
+  }
+
+  /**
+   * Create a successful advanced search paginated response
+   */
+  static advancedSearchPaginated<T>(
+    data: T[],
+    pagination: PaginationMeta,
+    startTime: number,
+    filters: any,
+    message?: string
+  ): ApiResponse<T[]> {
+    const meta: AdvancedSearchPaginationMeta = {
+      pagination: {
+        ...pagination,
+        page: pagination.page || 1,
+        limit: pagination.limit || 20,
+        totalPages: pagination.totalPages || Math.ceil(pagination.total / pagination.limit),
+      },
+      executionTimeMs: Date.now() - startTime,
+      timestamp: new Date(),
+      filters
     };
 
     return this.success(data, message, meta);

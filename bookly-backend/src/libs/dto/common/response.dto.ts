@@ -11,6 +11,16 @@ export interface PaginationMeta {
 }
 
 /**
+ * Metadata for advanced search paginated responses
+ */
+export interface AdvancedSearchPaginationMeta {
+  pagination: PaginationMeta;
+  executionTimeMs: number;
+  timestamp: Date;
+  filters: any;
+}
+
+/**
  * Standard API Response Interface
  * Complies with Bookly response standard
  */
@@ -19,7 +29,7 @@ export interface ApiResponse<T = any> {
   data?: T;
   message?: string;
   errors?: Record<string, string[]>;
-  meta?: PaginationMeta;
+  meta?: PaginationMeta | AdvancedSearchPaginationMeta;
   timestamp?: string;
   path?: string;
   method?: string;

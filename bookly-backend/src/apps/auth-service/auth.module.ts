@@ -18,6 +18,7 @@ import { UserService } from '@apps/auth-service/application/services/user.servic
 import { RoleService } from '@apps/auth-service/application/services/role.service';
 import { PermissionService } from '@apps/auth-service/application/services/permission.service';
 import { AuthRoleCategoryService } from './application/services/auth-role-category.service';
+import { RoleCategoryService } from './application/services/role-category.service';
 import { AuthUserCategoryService } from './application/services/auth-user-category.service';
 
 // Infrastructure
@@ -69,6 +70,7 @@ import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 import { RoleCategoryRepository } from '@libs/common/repositories/role-category.repository';
 import { UserCategoryRepository } from '@libs/common/repositories/user-category.repository';
+import { PrismaCategoryRepository } from '../resources-service/infrastructure/repositories/prisma-category.repository';
 
 const CommandHandlers = [
   LoginHandler, 
@@ -137,11 +139,9 @@ const QueryHandlers = [
     UserService,
     RoleService,
     PermissionService,
-    RoleCategoryRepository,
-    UserCategoryRepository,
     AuthRoleCategoryService,
     AuthUserCategoryService,
-    RoleCategoryRepository,
+    RoleCategoryService,
     SeedService,
 
     // Strategies
@@ -167,6 +167,12 @@ const QueryHandlers = [
       provide: PermissionRepository,
       useClass: PrismaPermissionRepository,
     },
+    {
+      provide: 'CategoryRepository',
+      useClass: PrismaCategoryRepository,
+    },
+    RoleCategoryRepository,
+    UserCategoryRepository,
 
     // CQRS Handlers
     ...CommandHandlers,
