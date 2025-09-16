@@ -17,7 +17,8 @@ import { AuthService } from '@apps/auth-service/application/services/auth.servic
 import { UserService } from '@apps/auth-service/application/services/user.service';
 import { RoleService } from '@apps/auth-service/application/services/role.service';
 import { PermissionService } from '@apps/auth-service/application/services/permission.service';
-import { RoleCategoryService } from '@apps/auth-service/application/services/category.service';
+import { AuthRoleCategoryService } from './application/services/auth-role-category.service';
+import { AuthUserCategoryService } from './application/services/auth-user-category.service';
 
 // Infrastructure
 import { AuthController } from './infrastructure/controllers/auth.controller';
@@ -25,7 +26,8 @@ import { UserController } from './infrastructure/controllers/user.controller';
 import { RoleController } from './infrastructure/controllers/role.controller';
 import { PermissionController } from './infrastructure/controllers/permission.controller';
 import { SeedController } from './infrastructure/controllers/seed.controller';
-import { RoleCategoryController } from './infrastructure/controllers/category.controller';
+import { RoleCategoryController } from './infrastructure/controllers/role-category.controller';
+import { UserCategoryController } from './infrastructure/controllers/user-category.controller';
 import { OAuthController } from '@apps/auth-service/infrastructure/controllers/oauth.controller';
 import { SeedService } from '@/libs/common/services/seed.service';
 import { SSOConfigGuard } from './infrastructure/guards/sso-config.guard';
@@ -45,6 +47,18 @@ import { DeleteCategoryHandler } from './application/handlers/category/delete-ca
 import { FindAllCategoriesHandler } from './application/handlers/category/find-all-categories.handler';
 import { FindCategoryByIdHandler } from './application/handlers/category/find-category-by-id.handler';
 import { FindDefaultCategoriesHandler } from './application/handlers/category/find-default-categories.handler';
+
+// Role-Category Handlers
+import { AssignCategoriesToRoleHandler } from './application/handlers/role-category/assign-categories-to-role.handler';
+import { RemoveCategoriesFromRoleHandler } from './application/handlers/role-category/remove-categories-from-role.handler';
+import { GetRoleCategoriesHandler } from './application/handlers/role-category/get-role-categories.handler';
+
+// User Category imports
+import { AssignCategoriesToUserCommand } from './application/commands/user-category/assign-categories-to-user.command';
+import { RemoveCategoriesFromUserCommand } from './application/commands/user-category/remove-categories-from-user.command';
+import { AssignCategoriesToUserHandler } from './application/handlers/user-category/assign-categories-to-user.handler';
+import { RemoveCategoriesFromUserHandler } from './application/handlers/user-category/remove-categories-from-user.handler';
+import { GetUserCategoriesHandler } from './application/handlers/user-category/get-user-categories.handler';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
 import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
@@ -53,6 +67,8 @@ import { HealthModule } from '../../health/health.module';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
+import { RoleCategoryRepository } from '@libs/common/repositories/role-category.repository';
+import { UserCategoryRepository } from '@libs/common/repositories/user-category.repository';
 
 const CommandHandlers = [
   LoginHandler, 
@@ -65,6 +81,12 @@ const CommandHandlers = [
   CreateCategoryHandler,
   UpdateCategoryHandler,
   DeleteCategoryHandler,
+  // Role-Category Command Handlers
+  AssignCategoriesToRoleHandler,
+  RemoveCategoriesFromRoleHandler,
+  // User-Category Command Handlers
+  AssignCategoriesToUserHandler,
+  RemoveCategoriesFromUserHandler,
 ];
 
 const QueryHandlers = [
@@ -74,6 +96,10 @@ const QueryHandlers = [
   FindAllCategoriesHandler,
   FindCategoryByIdHandler,
   FindDefaultCategoriesHandler,
+  // Role-Category Query Handler
+  GetRoleCategoriesHandler,
+  // User-Category Query Handler
+  GetUserCategoriesHandler,
 ];
 
 @Module({
@@ -102,6 +128,7 @@ const QueryHandlers = [
     OAuthController,
     SeedController,
     RoleCategoryController,
+    UserCategoryController,
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [OAuthController] : []),
   ],
   providers: [
@@ -110,7 +137,11 @@ const QueryHandlers = [
     UserService,
     RoleService,
     PermissionService,
-    RoleCategoryService,
+    RoleCategoryRepository,
+    UserCategoryRepository,
+    AuthRoleCategoryService,
+    AuthUserCategoryService,
+    RoleCategoryRepository,
     SeedService,
 
     // Strategies

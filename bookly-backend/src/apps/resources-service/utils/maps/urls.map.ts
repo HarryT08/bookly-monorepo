@@ -10,13 +10,13 @@ export const RESOURCES_URLS = {
   
   // Resource endpoints
   RESOURCES: '/resources',
-  RESOURCE_CREATE: '/resources/create',
-  RESOURCE_UPDATE: '/resources/:id',
-  RESOURCE_DELETE: '/resources/:id',
-  RESOURCE_ENABLE: '/resources/:id/enable',
-  RESOURCE_DISABLE: '/resources/:id/disable',
-  RESOURCE_ARCHIVE: '/resources/:id/archive',
-  RESOURCE_DETAILS: '/resources/:id/details',
+  RESOURCE_CREATE: '/create',
+  RESOURCE_UPDATE: '/:id',
+  RESOURCE_DELETE: '/:id',
+  RESOURCE_ENABLE: '/:id/enable',
+  RESOURCE_DISABLE: '/:id/disable',
+  RESOURCE_ARCHIVE: '/:id/archive',
+  RESOURCE_DETAILS: '/:id/details',
   
   // Resource Category Association endpoints
   RESOURCE_CATEGORY_ASSIGN: '/:resourceId/categories/:categoryId',

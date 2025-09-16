@@ -1,11 +1,20 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ResourcesController } from '@apps/resources-service/infrastructure/controllers/resources.controller';
+import { ResourcesResourceCategoryController } from '@apps/resources-service/infrastructure/controllers/resources-resource-category.controller';
+import { ResourcesProgramCategoryController } from '@apps/resources-service/infrastructure/controllers/resources-program-category.controller';
+import { ResourcesIncidentReportCategoryController } from '@apps/resources-service/infrastructure/controllers/resources-incident-report-category.controller';
 import { PrismaResourceRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource.repository';
 import { PrismaCategoryRepository } from '@apps/resources-service/infrastructure/repositories/prisma-category.repository';
 import { PrismaResourceCategoryRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource-category.repository';
+import { ResourceCategoryRepository } from '@libs/common/repositories/resource-category.repository';
+import { ProgramCategoryRepository } from '@libs/common/repositories/program-category.repository';
+import { IncidentReportCategoryRepository } from '@libs/common/repositories/incident-report-category.repository';
 import { ResourcesService } from '@apps/resources-service/application/services/resources.service';
 import { ResourceCategoryService } from '@apps/resources-service/application/services/resource-category.service';
+import { ResourcesResourceCategoryService } from '@apps/resources-service/application/services/resources-resource-category.service';
+import { ResourcesProgramCategoryService } from '@apps/resources-service/application/services/resources-program-category.service';
+import { ResourcesIncidentReportCategoryService } from '@apps/resources-service/application/services/resources-incident-report-category.service';
 import { MaintenanceTypeService } from '@apps/resources-service/application/services/maintenance-type.service';
 import { ResourceImportService } from '@apps/resources-service/application/services/resource-import.service';
 import { ResourceResponsibleService } from '@apps/resources-service/application/services/resource-responsible.service';
@@ -33,6 +42,21 @@ import {
   GetResourcesByCategoryHandler,
   CheckResourceCategoryAssignmentHandler 
 } from '@apps/resources-service/application/handlers/get-resource-category.handler';
+
+// New ResourceCategory CQRS Handlers
+import { AssignCategoriesToResourceHandler } from '@apps/resources-service/application/handlers/resource-category/assign-categories-to-resource.handler';
+import { RemoveCategoriesFromResourceHandler } from '@apps/resources-service/application/handlers/resource-category/remove-categories-from-resource.handler';
+import { GetResourceCategoriesHandler as GetResourceCategoriesQueryHandler } from '@apps/resources-service/application/handlers/resource-category/get-resource-categories.handler';
+
+// ProgramCategory CQRS Handlers
+import { AssignCategoriesToProgramHandler } from '@apps/resources-service/application/handlers/program-category/assign-categories-to-program.handler';
+import { RemoveCategoriesFromProgramHandler } from '@apps/resources-service/application/handlers/program-category/remove-categories-from-program.handler';
+import { GetProgramCategoriesHandler } from '@apps/resources-service/application/handlers/program-category/get-program-categories.handler';
+
+// IncidentReportCategory CQRS Handlers
+import { AssignCategoriesToIncidentReportHandler } from '@apps/resources-service/application/handlers/incident-report-category/assign-categories-to-incident-report.handler';
+import { RemoveCategoriesFromIncidentReportHandler } from '@apps/resources-service/application/handlers/incident-report-category/remove-categories-from-incident-report.handler';
+import { GetIncidentReportCategoriesHandler } from '@apps/resources-service/application/handlers/incident-report-category/get-incident-report-categories.handler';
 
 // Maintenance Type Handlers
 import { CreateMaintenanceTypeHandler } from '@apps/resources-service/application/handlers/create-maintenance-type.handler';
@@ -79,6 +103,15 @@ const CommandHandlers = [
   AssignCategoryToResourceHandler,
   ReplaceResourceCategoriesHandler,
   RemoveCategoryFromResourceHandler,
+  // New CQRS Resource Category Commands
+  AssignCategoriesToResourceHandler,
+  RemoveCategoriesFromResourceHandler,
+  // Program Category Commands
+  AssignCategoriesToProgramHandler,
+  RemoveCategoriesFromProgramHandler,
+  // IncidentReport Category Commands
+  AssignCategoriesToIncidentReportHandler,
+  RemoveCategoriesFromIncidentReportHandler,
   // Maintenance Type Commands
   CreateMaintenanceTypeHandler,
   UpdateMaintenanceTypeHandler,
@@ -111,6 +144,12 @@ const QueryHandlers = [
   GetResourceCategoriesHandler,
   GetResourcesByCategoryHandler,
   CheckResourceCategoryAssignmentHandler,
+  // New CQRS Resource Category Queries
+  GetResourceCategoriesQueryHandler,
+  // Program Category Queries
+  GetProgramCategoriesHandler,
+  // IncidentReport Category Queries
+  GetIncidentReportCategoriesHandler,
   // Maintenance Type Queries
   GetMaintenanceTypeHandler,
   // Resource Import Queries
@@ -136,11 +175,19 @@ const QueryHandlers = [
     EventBusModule,
     HealthModule,
   ],
-  controllers: [ResourcesController],
+  controllers: [
+    ResourcesController,
+    ResourcesResourceCategoryController,
+    ResourcesProgramCategoryController,
+    ResourcesIncidentReportCategoryController,
+  ],
   providers: [
     // Services
     ResourcesService,
     ResourceCategoryService,
+    ResourcesResourceCategoryService,
+    ResourcesProgramCategoryService,
+    ResourcesIncidentReportCategoryService,
     MaintenanceTypeService,
     ResourceImportService,
     ResourceResponsibleService,
@@ -157,6 +204,9 @@ const QueryHandlers = [
       provide: 'ResourceCategoryRepository',
       useClass: PrismaResourceCategoryRepository,
     },
+    ResourceCategoryRepository,
+    ProgramCategoryRepository,
+    IncidentReportCategoryRepository,
     {
       provide: 'MaintenanceTypeRepository',
       useClass: PrismaMaintenanceTypeRepository,
