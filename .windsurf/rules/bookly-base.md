@@ -88,4 +88,12 @@ Bookly implementa una arquitectura moderna basada en:
 - **BDD con Jasmine**: pruebas estructuradas usando el patrón Given-When-Then, validadas automáticamente en cada commit vía GitHub Actions.
 - **Swagger + AsyncAPI**: documentación automática de APIs REST y eventos distribuidos, centralizada en el `api-gateway`.
 
-Estas arquitecturas debe asegurar modularidad, escalabilidad y trazabilidad.
+Recuerda Siempre lo siguiente:
+- Los import siempre deben ser con alias.
+- Los handlers solo usan los servicios.
+- Los servicios son los unicos queejecutan la logica del negocio.
+- Evitar el ciclo de controller->handler->service->controller cuando un command/query llame a un handler que llama a un service que llama de nuevo al command/query.
+- Siempre usar los estandares definidos (Response, Events, Requests, etc). Recuerda evitar duplicar codigo.
+- Siempre tipar los contratos y sus firmas.
+- Las firmas de cada funcion deben ser DTO facilitando la comprension y validacion.
+- Siempre asegurar modularidad, escalabilidad y trazabilidad.
