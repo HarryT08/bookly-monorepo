@@ -4,6 +4,11 @@ import { CqrsModule } from '@nestjs/cqrs';
 // Controllers
 import { AvailabilityController } from './infrastructure/controllers/availability.controller';
 import { AdvancedSearchController } from './infrastructure/controllers/advanced-search.controller';
+import { PenaltiesController } from './infrastructure/controllers/penalties.controller';
+import { ReassignmentController } from './infrastructure/controllers/reassignment.controller';
+import { RecurringReservationsController } from './infrastructure/controllers/recurring-reservations.controller';
+import { WaitingListController } from './infrastructure/controllers/waiting-list.controller';
+import { NotificationsController } from './infrastructure/controllers/notifications.controller';
 
 // Services
 import { AvailabilityService } from './application/services/availability.service';
@@ -13,6 +18,7 @@ import { ScheduleService } from './application/services/schedule.service';
 import { ReassignmentService } from './application/services/reassignment.service';
 import { WaitingListService } from './application/services/waiting-list.service';
 import { RecurringReservationService } from './application/services/recurring-reservation.service';
+import { PenaltyService } from './application/services/penalty.service';
 
 // Domain Services
 import { AdvancedSearchDomainService } from './domain/services/advanced-search-domain.service';
@@ -344,6 +350,11 @@ const infrastructureServices = [
   controllers: [
     AvailabilityController,
     AdvancedSearchController,
+    PenaltiesController,
+    ReassignmentController,
+    RecurringReservationsController,
+    WaitingListController,
+    NotificationsController,
   ],
   providers: [
     AvailabilityService,
@@ -354,6 +365,7 @@ const infrastructureServices = [
     ReassignmentService,
     WaitingListService,
     RecurringReservationService,
+    PenaltyService,
     {
       provide: 'RecurringReservationDomainService',
       useClass: RecurringReservationDomainServiceImpl,

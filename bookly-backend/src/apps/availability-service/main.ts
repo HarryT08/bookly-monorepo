@@ -73,10 +73,10 @@ async function bootstrap() {
           'JWT-auth',
         )
         .addTag('Availability', 'Resource availability management')
-        .addTag('Reservations', 'Reservation management endpoints')
-        .addTag('Schedules', 'Schedule configuration and management')
-        .addTag('Calendar', 'Calendar integration endpoints')
-        .addTag('History', 'Reservation history and auditing')
+        //.addTag('Reservations', 'Reservation management endpoints')11223344
+        //.addTag('Schedules', 'Schedule configuration and management')
+        //.addTag('Calendar', 'Calendar integration endpoints')
+        //.addTag('History', 'Reservation history and auditing')
         .addTag('Health', 'Service health check endpoints')
         .build();
 

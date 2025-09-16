@@ -44,8 +44,10 @@ import { NotificationTemplateDto } from '../dtos/notification-template.dto';
 import { CreateNotificationTemplateDto } from '../dtos/create-notification-template.dto';
 import { UpdateNotificationTemplateDto } from '../dtos/update-notification-template.dto';
 import { NotificationChannelType, NotificationPriority } from '../../utils';
+import { UserRole } from '@/libs/common';
+import { ResponseUtil } from '@/libs/common/utils/response.util';
 
-@ApiTags('Notifications')
+@ApiTags(AVAILABILITY_URLS.NOTIFICATION_TAG)
 @Controller(AVAILABILITY_URLS.NOTIFICATION)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
@@ -61,7 +63,7 @@ export class NotificationsController {
    */
   @Post(AVAILABILITY_URLS.NOTIFICATION_SEND)
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Send manual notification',
     description: 'Send a notification to specific users through multiple channels'
@@ -74,7 +76,7 @@ export class NotificationsController {
   async sendNotification(
     @Body() createNotificationDto: CreateNotificationDto,
     @CurrentUser() user: any
-  ): Promise<NotificationResult> {
+  ) {
     this.logger.log('Manual notification request', {
       userId: user.id,
       eventType: createNotificationDto.eventType,
@@ -98,7 +100,8 @@ export class NotificationsController {
       }
     };
 
-    return await this.notificationService.sendNotification(payload);
+    const result = await this.notificationService.sendNotification(payload);
+    return ResponseUtil.success(result, 'Notification sent successfully');
   }
 
   /**
@@ -121,7 +124,7 @@ export class NotificationsController {
     @Query('eventType') eventType?: string,
     @Query('channel') channel?: string,
     @Query('language') language?: string
-  ): Promise<NotificationTemplateDto[]> {
+  ) {
     this.logger.log('Getting notification templates', {
       eventType,
       channel,
@@ -147,7 +150,7 @@ export class NotificationsController {
     // Get templates with filters - using public method
     if (eventType) {
       const templates = await this.templateRepository.getTemplatesByEventType(eventType);
-      return templates.map(t => {
+      return ResponseUtil.success(templates.map(t => {
         return {
           ...t,
           isActive: true,
@@ -158,12 +161,12 @@ export class NotificationsController {
         if (channel && t.channel !== channel) return false;
         if (language && t.language !== language) return false;
         return true;
-      });
+      }), 'Templates retrieved successfully');
     }
     
     // TODO: Implement getTemplatesWithFilters method in repository
     this.logger.warn('Getting all templates without eventType filter not yet implemented');
-    return [];
+    return ResponseUtil.success([], 'Templates retrieved successfully');
   }
 
   /**
@@ -191,7 +194,7 @@ export class NotificationsController {
     @Param('channel') channel: string,
     @Param('language') language: string,
     @Query('programId') programId?: string
-  ): Promise<NotificationTemplateDto> {
+  ) {
     this.logger.log('Getting specific notification template', {
       eventType,
       channel,
@@ -210,12 +213,12 @@ export class NotificationsController {
       throw new Error('Template not found');
     }
 
-    return {
+    return ResponseUtil.success({
       ...template,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    }, 'Template retrieved successfully');
   }
 
   /**
@@ -223,7 +226,7 @@ export class NotificationsController {
    */
   @Post(AVAILABILITY_URLS.NOTIFICATION_TEMPLATES_CREATE)
   @HttpCode(HttpStatus.CREATED)
-  @Roles('ADMIN_GENERAL')
+  @Roles(UserRole.GENERAL_ADMIN)
   @ApiOperation({
     summary: 'Create notification template',
     description: 'Create a new notification template'
@@ -235,7 +238,7 @@ export class NotificationsController {
   async createTemplate(
     @Body() createTemplateDto: CreateNotificationTemplateDto,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     this.logger.log('Creating notification template', {
       userId: user.id,
       eventType: createTemplateDto.eventType,
@@ -253,7 +256,8 @@ export class NotificationsController {
       }
     };
 
-    await this.templateRepository.saveTemplate(template);
+    const result = await this.templateRepository.saveTemplate(template);
+    return ResponseUtil.success(result, 'Template created successfully');
   }
 
   /**
@@ -261,7 +265,7 @@ export class NotificationsController {
    */
   @Put(AVAILABILITY_URLS.NOTIFICATION_TEMPLATES_UPDATE)
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN_GENERAL')
+  @Roles(UserRole.GENERAL_ADMIN)
   @ApiOperation({
     summary: 'Update notification template',
     description: 'Update an existing notification template'
@@ -275,7 +279,7 @@ export class NotificationsController {
     @Param('templateId') templateId: string,
     @Body() updateTemplateDto: UpdateNotificationTemplateDto,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     this.logger.log('Updating notification template', {
       userId: user.id,
       templateId
@@ -292,7 +296,8 @@ export class NotificationsController {
       }
     };
 
-    await this.templateRepository.saveTemplate(updatedTemplate as any);
+    const result = await this.templateRepository.saveTemplate(updatedTemplate as any);
+    return ResponseUtil.success(result, 'Template updated successfully');
   }
 
   /**
@@ -300,7 +305,7 @@ export class NotificationsController {
    */
   @Delete(AVAILABILITY_URLS.NOTIFICATION_TEMPLATES_DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles('ADMIN_GENERAL')
+  @Roles(UserRole.GENERAL_ADMIN)
   @ApiOperation({
     summary: 'Delete notification template',
     description: 'Delete a notification template'
@@ -313,13 +318,14 @@ export class NotificationsController {
   async deleteTemplate(
     @Param('templateId') templateId: string,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     this.logger.log('Deleting notification template', {
       userId: user.id,
       templateId
     });
 
     await this.templateRepository.deleteTemplate(templateId);
+    return ResponseUtil.success(null, 'Template deleted successfully');
   }
 
   /**
@@ -327,7 +333,7 @@ export class NotificationsController {
    */
   @Post(AVAILABILITY_URLS.NOTIFICATION_TEMPLATES_TEST)
   @HttpCode(HttpStatus.OK)
-  @Roles('ADMIN_GENERAL', 'ADMIN_PROGRAMA')
+  @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Test notification template',
     description: 'Send a test notification using a specific template'
@@ -344,7 +350,7 @@ export class NotificationsController {
       templateVariables: Record<string, any>;
     },
     @CurrentUser() user: any
-  ): Promise<NotificationResult> {
+  ) {
     this.logger.log('Testing notification template', {
       userId: user.id,
       templateId,
@@ -367,7 +373,8 @@ export class NotificationsController {
       }
     };
 
-    return await this.notificationService.sendNotification(payload);
+    const result = await this.notificationService.sendNotification(payload);
+    return ResponseUtil.success(result, 'Test notification sent successfully');
   }
 
   /**
@@ -391,7 +398,7 @@ export class NotificationsController {
     @Query('endDate') endDate?: string,
     @Query('eventType') eventType?: string,
     @Query('channel') channel?: string
-  ): Promise<any> {
+  ) {
     this.logger.log('Getting notification statistics', {
       startDate,
       endDate,
@@ -400,7 +407,7 @@ export class NotificationsController {
     });
 
     // TODO: Implement notification statistics
-    return {
+    return ResponseUtil.success({
       totalSent: 0,
       totalDelivered: 0,
       totalFailed: 0,
@@ -408,7 +415,7 @@ export class NotificationsController {
       channelStats: {},
       eventTypeStats: {},
       timeSeriesData: []
-    };
+    }, 'Statistics retrieved successfully');
   }
 
   /**
@@ -427,7 +434,7 @@ export class NotificationsController {
   async getUserPreferences(
     @Param('userId') userId: string,
     @CurrentUser() user: any
-  ): Promise<any> {
+  ) {
     // Only allow users to see their own preferences or admins to see any
     if (user.id !== userId && !user.roles.some(r => r.includes('ADMIN'))) {
       throw new Error('Unauthorized to view preferences');
@@ -439,7 +446,7 @@ export class NotificationsController {
     });
 
     // TODO: Get user preferences from database
-    return {
+    return ResponseUtil.success({
       email: true,
       sms: false,
       push: true,
@@ -447,7 +454,7 @@ export class NotificationsController {
       whatsapp: false,
       language: 'es',
       timezone: 'America/Bogota'
-    };
+    }, 'Preferences retrieved successfully');
   }
 
   /**
@@ -476,7 +483,7 @@ export class NotificationsController {
       timezone?: string;
     },
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     // Only allow users to update their own preferences or admins to update any
     if (user.id !== userId && !user.roles.some(r => r.includes('ADMIN'))) {
       throw new Error('Unauthorized to update preferences');
@@ -489,5 +496,6 @@ export class NotificationsController {
     });
 
     // TODO: Update user preferences in database
+    return ResponseUtil.success(null, 'Preferences updated successfully');
   }
 }

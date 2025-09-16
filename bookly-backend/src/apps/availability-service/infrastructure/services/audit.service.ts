@@ -86,7 +86,7 @@ export class AuditService {
       traceId?: string;
       spanId?: string;
     } = {}
-  ): Promise<void> {
+  ): Promise<AuditEntry> {
     const auditEntry: AuditEntry = {
       id: this.generateAuditId(),
       eventType,
@@ -120,6 +120,8 @@ export class AuditService {
 
     // Publish audit event for external systems
     await this.publishAuditEvent(auditEntry);
+
+    return auditEntry;
   }
 
   /**

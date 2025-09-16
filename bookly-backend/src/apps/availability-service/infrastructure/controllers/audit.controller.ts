@@ -18,8 +18,8 @@ import { LoggingHelper } from '@/libs/logging/logging.helper';
 import { JwtAuthGuard, RolesGuard, Roles, UserRole, CurrentUser } from '@/libs/common';
 import { AuditCategory, AuditEventType } from '../../utils';
 
-@ApiTags('Audit')
-@Controller('audit')
+@ApiTags(AVAILABILITY_URLS.AUDIT_TAG)
+@Controller(AVAILABILITY_URLS.AUDIT)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class AuditController {
@@ -32,7 +32,7 @@ export class AuditController {
   /**
    * Get audit entries with filtering and pagination
    */
-  @Get('entries')
+  @Get(AVAILABILITY_URLS.AUDIT_ENTRIES)
   @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get audit entries',
@@ -116,16 +116,7 @@ export class AuditController {
         filters
       });
 
-      return {
-        success: true,
-        data: {
-          entries,
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit)
-        }
-      };
+      return ResponseUtil.paginated(entries, total, page, limit);
 
     } catch (error) {
       this.logger.error('Failed to get audit entries via API', error, LoggingHelper.logParams({ query }));
@@ -136,7 +127,7 @@ export class AuditController {
   /**
    * Get audit entry by ID
    */
-  @Get('entries/:id')
+  @Get(AVAILABILITY_URLS.AUDIT_ENTRIES_FIND_BY_ID)
   @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get audit entry by ID',
@@ -172,11 +163,7 @@ export class AuditController {
 
       this.logger.log('Audit entry retrieved by ID via API', { id, userId: user.id });
 
-      return {
-        success: true,
-        data: entry
-      };
-
+      return ResponseUtil.success(entry, 'Audit entry retrieved successfully');
     } catch (error) {
       this.logger.error('Failed to get audit entry by ID via API', error, LoggingHelper.logParams({ id }));
       throw error;
@@ -186,7 +173,7 @@ export class AuditController {
   /**
    * Get audit statistics
    */
-  @Get('statistics')
+  @Get(AVAILABILITY_URLS.AUDIT_STATISTICS)
   @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get audit statistics',
@@ -216,10 +203,7 @@ export class AuditController {
 
       this.logger.log('Audit statistics retrieved via API', { filters, userId: user.id });
 
-      return {
-        success: true,
-        data: statistics
-      };
+      return ResponseUtil.success(statistics, 'Audit statistics retrieved successfully');
 
     } catch (error) {
       this.logger.error('Failed to get audit statistics via API', error, LoggingHelper.logParams({ query }));
@@ -230,7 +214,7 @@ export class AuditController {
   /**
    * Export audit entries to JSON
    */
-  @Post('export')
+  @Post(AVAILABILITY_URLS.AUDIT_EXPORT)
   @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Export audit entries',
@@ -290,14 +274,11 @@ export class AuditController {
         filename
       });
 
-      return {
-        success: true,
-        data: {
-          exportData,
-          filename,
-          count: JSON.parse(exportData).count
-        }
-      };
+      return ResponseUtil.success({
+        exportData,
+        filename,
+        count: JSON.parse(exportData).count
+      }, 'Audit entries exported successfully');
 
     } catch (error) {
       this.logger.error('Failed to export audit entries via API', error, LoggingHelper.logParams({ filters }));
@@ -308,7 +289,7 @@ export class AuditController {
   /**
    * Get audit event types
    */
-  @Get('event-types')
+  @Get(AVAILABILITY_URLS.AUDIT_EVENT_TYPES)
   @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get available audit event types',
@@ -332,10 +313,7 @@ export class AuditController {
     try {
       const eventTypes = Object.values(AuditEventType);
 
-      return {
-        success: true,
-        data: eventTypes
-      };
+      return ResponseUtil.success(eventTypes, 'Audit event types retrieved successfully');
 
     } catch (error) {
       this.logger.error('Failed to get audit event types via API', error);
@@ -346,7 +324,7 @@ export class AuditController {
   /**
    * Get audit categories
    */
-  @Get('categories')
+  @Get(AVAILABILITY_URLS.AUDIT_CATEGORIES)
   @Roles(UserRole.GENERAL_ADMIN, UserRole.PROGRAM_ADMIN)
   @ApiOperation({
     summary: 'Get available audit categories',
@@ -370,10 +348,7 @@ export class AuditController {
     try {
       const categories = Object.values(AuditCategory);
 
-      return {
-        success: true,
-        data: categories
-      };
+      return ResponseUtil.success(categories, 'Audit categories retrieved successfully');
 
     } catch (error) {
       this.logger.error('Failed to get audit categories via API', error);
@@ -384,7 +359,7 @@ export class AuditController {
   /**
    * Clean up old audit entries
    */
-  @Delete('cleanup')
+  @Delete(AVAILABILITY_URLS.AUDIT_CLEANUP)
   @Roles(UserRole.GENERAL_ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -420,13 +395,10 @@ export class AuditController {
         retentionDays: retention
       });
 
-      return {
-        success: true,
-        data: {
-          deletedCount,
-          retentionDays: retention
-        }
-      };
+      return ResponseUtil.success({
+        deletedCount,
+        retentionDays: retention
+      }, 'Old audit entries cleaned up successfully');
 
     } catch (error) {
       this.logger.error('Failed to cleanup old audit entries via API', error, LoggingHelper.logParams({ retentionDays }));
@@ -437,7 +409,7 @@ export class AuditController {
   /**
    * Manual audit entry creation (for testing)
    */
-  @Post('test-entry')
+  @Post(AVAILABILITY_URLS.AUDIT_TEST_ENTRY)
   @Roles(UserRole.GENERAL_ADMIN)
   @ApiOperation({
     summary: 'Create test audit entry',
@@ -484,7 +456,7 @@ export class AuditController {
         correlationId: `test-${Date.now()}`
       };
 
-      await this.auditService.audit(
+      const audit = await this.auditService.audit(
         testData.eventType,
         testData.category,
         testData.action,
@@ -499,12 +471,7 @@ export class AuditController {
 
       this.logger.log('Test audit entry created via API', { testData, userId: user.id });
 
-      return {
-        success: true,
-        data: {
-          message: 'Test audit entry created successfully'
-        }
-      };
+      return ResponseUtil.success(audit, 'Test audit entry created successfully');
 
     } catch (error) {
       this.logger.error('Failed to create test audit entry via API', error, LoggingHelper.logParams({ testData }));

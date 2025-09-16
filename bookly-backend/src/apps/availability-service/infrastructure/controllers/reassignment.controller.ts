@@ -31,6 +31,7 @@ import { JwtAuthGuard } from '@apps/auth-service/infrastructure/guards/jwt-auth.
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@apps/auth-service/infrastructure/decorators/roles.decorator';
 import { UserRole, CurrentUser } from '@libs/common';
+import { AVAILABILITY_URLS } from '@/apps/availability-service/utils/maps/urls.map';
 
 // DTOs
 import { CreateReassignmentRequestDto } from '@/apps/availability-service/infrastructure/dtos/create-reassignment-request.dto';
@@ -42,17 +43,18 @@ import { ReassignmentAnalyticsDto } from '@/apps/availability-service/infrastruc
 
 // Services
 import { ReassignmentService } from '@/apps/availability-service/application/services/reassignment.service';
+import { ResponseUtil } from '@/libs/common/utils/response.util';
 
-@ApiTags('Reassignment')
+@ApiTags(AVAILABILITY_URLS.REASSIGNMENTS_TAG)
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('reassignment')
+@Controller(AVAILABILITY_URLS.REASSIGNMENTS)
 export class ReassignmentController {
   constructor(
     private readonly reassignmentService: ReassignmentService
   ) {}
 
-  @Post('request')
+  @Post(AVAILABILITY_URLS.REASSIGNMENT_REQUEST_CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create reassignment request',
@@ -84,7 +86,7 @@ export class ReassignmentController {
     });
   }
 
-  @Get('requests')
+  @Get(AVAILABILITY_URLS.REASSIGNMENT_REQUEST)
   @ApiOperation({
     summary: 'Get reassignment requests',
     description: 'Retrieves reassignment requests with optional filtering and pagination'
@@ -107,21 +109,17 @@ export class ReassignmentController {
   async getReassignmentRequests(
     @Query(ValidationPipe) queryDto: ReassignmentQueryDto,
     @CurrentUser() user: any
-  ): Promise<{
-    data: ReassignmentRequestResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
+  ) {
     // Students and teachers can only see their own requests
     const filteredQuery = user.role === UserRole.STUDENT || user.role === UserRole.TEACHER
       ? { ...queryDto, userId: user.id }
       : queryDto;
 
-    return await this.reassignmentService.findAll(filteredQuery);
+    const result = await this.reassignmentService.findAll(filteredQuery);
+    return ResponseUtil.success(result, "Reassignment requests retrieved successfully");
   }
 
-  @Get('requests/:id')
+  @Get(AVAILABILITY_URLS.REASSIGNMENT_REQUEST_FIND_BY_ID)
   @ApiOperation({
     summary: 'Get reassignment request by ID',
     description: 'Retrieves a specific reassignment request with suggested resources'
@@ -149,7 +147,7 @@ export class ReassignmentController {
     return await this.reassignmentService.findById(id, user.id);
   }
 
-  @Post('requests/:id/respond')
+  @Post(AVAILABILITY_URLS.REASSIGNMENT_REQUEST_RESPOND)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Respond to reassignment request',
@@ -203,17 +201,18 @@ export class ReassignmentController {
     @CurrentUser() user: any,
     @Body('selectedResourceId') selectedResourceId?: string,
     @Body('reason') reason?: string,
-  ): Promise<ProcessReassignmentResponseDto> {
-    return await this.reassignmentService.processUserResponse(
+  ) {
+    const result = await this.reassignmentService.processUserResponse(
       id,
       user.id,
       response,
       selectedResourceId,
       reason
     );
+    return ResponseUtil.success(result, "Response processed successfully");
   }
 
-  @Get('equivalent-resources/:resourceId')
+  @Get(AVAILABILITY_URLS.REASSIGNMENT_EQUIVALENT_RESOURCES)
   @ApiOperation({
     summary: 'Find equivalent resources',
     description: 'Finds equivalent resources for reassignment purposes'
@@ -283,12 +282,7 @@ export class ReassignmentController {
     @Query('date') date?: string,
     @Query('startTime') startTime?: string,
     @Query('endTime') endTime?: string,
-  ): Promise<{
-    exactMatches: ResourceEquivalenceResponseDto[];
-    goodMatches: ResourceEquivalenceResponseDto[];
-    acceptableMatches: ResourceEquivalenceResponseDto[];
-    recommendations: any[];
-  }> {
+  ) {
     const timeSlot = date && startTime && endTime ? {
       date: new Date(date),
       startTime,
@@ -297,7 +291,7 @@ export class ReassignmentController {
 
     const preferredFeatures = features ? features.split(',').map(f => f.trim()) : undefined;
 
-    return await this.reassignmentService.findEquivalentResources(
+    const result = await this.reassignmentService.findEquivalentResources(
       resourceId,
       new Date(timeSlot?.startTime),
       new Date(timeSlot?.endTime),
@@ -305,9 +299,10 @@ export class ReassignmentController {
       null,
       preferredFeatures,
     );
+    return ResponseUtil.success(result, "Equivalent resources found");
   }
 
-  @Post('validate-request')
+  @Post(AVAILABILITY_URLS.REASSIGNMENT_REQUEST_VALIDATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Validate reassignment request',
@@ -332,28 +327,22 @@ export class ReassignmentController {
   async validateReassignmentRequest(
     @Body(ValidationPipe) createDto: CreateReassignmentRequestDto,
     @CurrentUser() user: any
-  ): Promise<{
-    canCreate: boolean;
-    violations: string[];
-    warnings: string[];
-    existingRequests: any[];
-    suggestedResources: number;
-  }> {
+  ) {
     const validation = await this.reassignmentService.validateRequest({
       ...createDto,
       requestedBy: user.id
     });
     
-    return {
+    return ResponseUtil.success({
       canCreate: validation.isValid,
       violations: validation.errors,
       warnings: validation.warnings,
       existingRequests: [],
       suggestedResources: 0
-    };
+    }, "Validation completed");
   }
 
-  @Delete('requests/:id')
+  @Delete(AVAILABILITY_URLS.REASSIGNMENT_REQUEST_CANCEL)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Cancel reassignment request',
@@ -381,11 +370,12 @@ export class ReassignmentController {
   async cancelReassignmentRequest(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     await this.reassignmentService.cancelRequest(id, user.id, 'Cancelled by admin');
+    return ResponseUtil.success(null, "Reassignment request cancelled successfully");
   }
 
-  @Post('requests/:id/auto-process')
+  @Post(AVAILABILITY_URLS.REASSIGNMENT_REQUEST_AUTO_PROCESS)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Auto-process reassignment request',
@@ -427,16 +417,12 @@ export class ReassignmentController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body('hoursUntilEvent') hoursUntilEvent: number,
     @CurrentUser() user: any
-  ): Promise<{
-    autoApproved: boolean;
-    selectedResource: any | null;
-    reason: string;
-    notificationsSent: boolean;
-  }> {
-    return await this.reassignmentService.autoProcessRequest(id, hoursUntilEvent);
+  ) {
+    const result = await this.reassignmentService.autoProcessRequest(id, hoursUntilEvent);
+    return ResponseUtil.success(result, "Auto-processing completed");
   }
 
-  @Get('analytics')
+  @Get(AVAILABILITY_URLS.REASSIGNMENT_ANALYTICS)
   @ApiOperation({
     summary: 'Get reassignment analytics',
     description: 'Retrieves comprehensive reassignment analytics and insights'
@@ -462,7 +448,7 @@ export class ReassignmentController {
     @CurrentUser() user: any,
     @Query('programId') programId?: string,
     @Query('timeRange') timeRangeParam: string = '30d',
-  ): Promise<ReassignmentAnalyticsDto> {
+  ) {
     const timeRangeMap = {
       '7d': { start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), end: new Date() },
       '30d': { start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), end: new Date() },
@@ -470,14 +456,15 @@ export class ReassignmentController {
     };
 
     const selectedRange = timeRangeMap[timeRangeParam] || timeRangeMap['30d'];
-    return await this.reassignmentService.generateAnalytics({
+    const result = await this.reassignmentService.generateAnalytics({
       programId,
       startDate: selectedRange.start,
       endDate: selectedRange.end
     });
+    return ResponseUtil.success(result, "Analytics generated successfully");
   }
 
-  @Post('bulk-process')
+  @Post(AVAILABILITY_URLS.REASSIGNMENT_BULK_PROCESS)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Bulk process reassignment requests',
@@ -525,15 +512,12 @@ export class ReassignmentController {
       priority: 'LOW' | 'MEDIUM' | 'HIGH';
     }>,
     @CurrentUser() user: any
-  ): Promise<{
-    successful: any[];
-    failed: any[];
-    summary: any;
-  }> {
-    return await this.reassignmentService.processBulkReassignment(operations);
+  ) {
+    const result = await this.reassignmentService.processBulkReassignment(operations);
+    return ResponseUtil.success(result, "Bulk processing completed");
   }
 
-  @Get('requests/:id/success-prediction')
+  @Get(AVAILABILITY_URLS.REASSIGNMENT_SUCCESS_PREDICTION)
   @ApiOperation({
     summary: 'Predict reassignment success',
     description: 'Predicts the success probability of a reassignment request'
@@ -561,16 +545,12 @@ export class ReassignmentController {
   async predictReassignmentSuccess(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: any
-  ): Promise<{
-    successProbability: number;
-    confidenceLevel: number;
-    keyFactors: any[];
-    recommendations: string[];
-  }> {
-    return await this.reassignmentService.predictSuccess(id);
+  ) {
+    const result = await this.reassignmentService.predictSuccess(id);
+    return ResponseUtil.success(result, "Success prediction completed");
   }
 
-  @Get('user/:userId/history')
+  @Get(AVAILABILITY_URLS.REASSIGNMENT_USER_HISTORY)
   @ApiOperation({
     summary: 'Get user reassignment history',
     description: 'Retrieves reassignment history for a specific user (admin only)'
@@ -597,11 +577,12 @@ export class ReassignmentController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query('limit') limit: number = 50,
     @CurrentUser() user: any
-  ): Promise<ReassignmentRequestResponseDto[]> {
-    return await this.reassignmentService.getUserHistory(userId, limit);
+  ) {
+    const result = await this.reassignmentService.getUserHistory(userId, limit);
+    return ResponseUtil.success(result, "User reassignment history retrieved successfully");
   }
 
-  @Post('configuration/optimize')
+  @Post(AVAILABILITY_URLS.REASSIGNMENT_CONFIGURATION_OPTIMIZE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Optimize reassignment configuration',
@@ -636,12 +617,9 @@ export class ReassignmentController {
   async optimizeReassignmentConfiguration(
     @Body('programId') programId: string,
     @CurrentUser() user: any
-  ): Promise<{
-    currentConfig: any;
-    recommendedChanges: any[];
-    testResults?: any;
-  }> {
-    return await this.reassignmentService.optimizeConfiguration(programId);
+  ) {
+    const result = await this.reassignmentService.optimizeConfiguration(programId);
+    return ResponseUtil.success(result, "Configuration optimized successfully");
   }
 
   // Helper method to determine user priority based on role

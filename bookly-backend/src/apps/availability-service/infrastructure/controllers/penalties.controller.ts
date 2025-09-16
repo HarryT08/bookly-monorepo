@@ -30,9 +30,9 @@ import {
 import { JwtAuthGuard } from "@apps/auth-service/infrastructure/guards/jwt-auth.guard";
 import { RolesGuard } from "@libs/common/guards/roles.guard";
 import { Roles } from "@apps/auth-service/infrastructure/decorators/roles.decorator";
-import { CurrentUser } from '@libs/common';
-import { UserRole } from '@libs/common';
-import { AVAILABILITY_URLS } from '../../utils/maps/urls.map';
+import { CurrentUser } from "@libs/common";
+import { UserRole } from "@libs/common";
+import { AVAILABILITY_URLS } from "../../utils/maps/urls.map";
 
 // DTOs (to be created)
 import { CreatePenaltyEventDto } from "../dtos/create-penalty-event.dto";
@@ -40,17 +40,21 @@ import { CreatePenaltyDto } from "../dtos/create-penalty.dto";
 import { ApplyPenaltyDto } from "../dtos/apply-penalty.dto";
 import { PenaltyEventResponseDto } from "../dtos/penalty-event-response.dto";
 import { PenaltyResponseDto } from "../dtos/penalty-response.dto";
-import { UserPenaltyResponseDto, UserPenaltyStatus } from "../dtos/user-penalty-response.dto";
+import {
+  UserPenaltyResponseDto,
+  UserPenaltyStatus,
+} from "../dtos/user-penalty-response.dto";
 import { PenaltyAnalyticsDto } from "../dtos/penalty-analytics.dto";
 import { PenaltyQueryDto } from "../dtos/penalty-query.dto";
 
 // Services (to be created in application layer)
 import { PenaltyService } from "../../application/services/penalty.service";
+import { ResponseUtil } from "@/libs/common/utils/response.util";
 
-@ApiTags("Penalties")
+@ApiTags(AVAILABILITY_URLS.PENALTIES_TAG)
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller("penalties")
+@Controller(AVAILABILITY_URLS.PENALTIES)
 export class PenaltiesController {
   constructor(private readonly penaltyService: PenaltyService) {}
 
@@ -75,11 +79,12 @@ export class PenaltiesController {
   async createPenaltyEvent(
     @Body(ValidationPipe) createDto: CreatePenaltyEventDto,
     @CurrentUser() user: any
-  ): Promise<PenaltyEventResponseDto> {
-    return await this.penaltyService.createPenaltyEvent({
+  ) {
+    const result = await this.penaltyService.createPenaltyEvent({
       ...createDto,
       createdBy: user.id,
     });
+    return ResponseUtil.success(result, "Penalty event created successfully");
   }
 
   @Get(AVAILABILITY_URLS.PENALTY_EVENTS)
@@ -123,15 +128,19 @@ export class PenaltiesController {
     @Query("programId") programId?: string,
     @Query("isActive") isActive?: boolean,
     @Query("eventType") eventType?: string
-  ): Promise<PenaltyEventResponseDto[]> {
-    return await this.penaltyService.getPenaltyEvents({
+  ) {
+    const result = await this.penaltyService.getPenaltyEvents({
       programId,
       isActive,
       eventType,
     });
+    return ResponseUtil.success(
+      result,
+      "Penalty events retrieved successfully"
+    );
   }
 
-  @Put(AVAILABILITY_URLS.PENALTY_EVENTS + "/:id")
+  @Put(AVAILABILITY_URLS.PENALTY_EVENTS_UPDATE)
   @ApiOperation({
     summary: "Update penalty event",
     description: "Updates a penalty event configuration",
@@ -153,11 +162,16 @@ export class PenaltiesController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body(ValidationPipe) updateDto: CreatePenaltyEventDto,
     @CurrentUser() user: any
-  ): Promise<PenaltyEventResponseDto> {
-    return await this.penaltyService.updatePenaltyEvent(id, updateDto, user.id);
+  ) {
+    const result = await this.penaltyService.updatePenaltyEvent(
+      id,
+      updateDto,
+      user.id
+    );
+    return ResponseUtil.success(result, "Penalty event updated successfully");
   }
 
-  @Delete(AVAILABILITY_URLS.PENALTY_EVENTS + "/:id")
+  @Delete(AVAILABILITY_URLS.PENALTY_EVENTS_DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: "Deactivate penalty event",
@@ -177,8 +191,9 @@ export class PenaltiesController {
   async deactivatePenaltyEvent(
     @Param("id", ParseUUIDPipe) id: string,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     await this.penaltyService.deactivatePenaltyEvent(id, user.id);
+    return ResponseUtil.success(null, "Penalty event deactivated successfully");
   }
 
   // Penalty Configurations Management
@@ -198,11 +213,15 @@ export class PenaltiesController {
   async createPenalty(
     @Body(ValidationPipe) createDto: CreatePenaltyDto,
     @CurrentUser() user: any
-  ): Promise<PenaltyResponseDto> {
-    return await this.penaltyService.createPenalty({
+  ) {
+    const result = await this.penaltyService.createPenalty({
       ...createDto,
       createdBy: user.id,
     });
+    return ResponseUtil.success(
+      result,
+      "Penalty configuration created successfully"
+    );
   }
 
   @Get(AVAILABILITY_URLS.PENALTY_CONFIGURATIONS)
@@ -220,8 +239,12 @@ export class PenaltiesController {
   async getPenalties(
     @Query(ValidationPipe) queryDto: PenaltyQueryDto,
     @CurrentUser() user: any
-  ): Promise<PenaltyResponseDto[]> {
-    return await this.penaltyService.getPenalties(queryDto);
+  ) {
+    const result = await this.penaltyService.getPenalties(queryDto);
+    return ResponseUtil.success(
+      result,
+      "Penalty configurations retrieved successfully"
+    );
   }
 
   // User Penalties Management
@@ -245,14 +268,15 @@ export class PenaltiesController {
   async applyPenalty(
     @Body(ValidationPipe) applyDto: ApplyPenaltyDto,
     @CurrentUser() user: any
-  ): Promise<UserPenaltyResponseDto> {
-    return await this.penaltyService.applyPenalty({
+  ) {
+    const result = await this.penaltyService.applyPenalty({
       ...applyDto,
       appliedBy: user.id,
     });
+    return ResponseUtil.success(result, "Penalty applied successfully");
   }
 
-  @Get(AVAILABILITY_URLS.USER_PENALTIES)
+  @Get(AVAILABILITY_URLS.PENALTY_USER_PENALTIES)
   @ApiOperation({
     summary: "Get user penalties",
     description: "Retrieves all penalties for a specific user",
@@ -286,11 +310,15 @@ export class PenaltiesController {
     @CurrentUser() user: any,
     @Query("status") status?: string,
     @Query("includeExpired") includeExpired: boolean = false
-  ): Promise<UserPenaltyResponseDto[]> {
-    return await this.penaltyService.getUserPenalties(
+  ) {
+    const result = await this.penaltyService.getUserPenalties(
       userId,
       status,
       includeExpired
+    );
+    return ResponseUtil.success(
+      result,
+      "User penalties retrieved successfully"
     );
   }
 
@@ -319,11 +347,19 @@ export class PenaltiesController {
   async getMyPenalties(
     @Query("includeExpired") includeExpired: boolean = false,
     @CurrentUser() user: any
-  ): Promise<UserPenaltyResponseDto[]> {
-    return await this.penaltyService.getUserPenalties(user.id, UserPenaltyStatus.ACTIVE, includeExpired);
+  ) {
+    const result = await this.penaltyService.getUserPenalties(
+      user.id,
+      UserPenaltyStatus.ACTIVE,
+      includeExpired
+    );
+    return ResponseUtil.success(
+      result,
+      "Current user penalties retrieved successfully"
+    );
   }
 
-  @Delete(AVAILABILITY_URLS.PENALTY_USER_PENALTIES)
+  @Delete(AVAILABILITY_URLS.PENALTY_USER_DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: "Remove user penalty",
@@ -356,12 +392,13 @@ export class PenaltiesController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body("reason") reason: string,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     await this.penaltyService.removePenalty(id, user.id, reason);
+    return ResponseUtil.success(null, "Penalty removed successfully");
   }
 
   // Penalty Validation and Checking
-  @Post("validate-action")
+  @Post(AVAILABILITY_URLS.PENALTY_VALIDATION_AND_CHECKING)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Validate user action",
@@ -418,27 +455,23 @@ export class PenaltiesController {
     @CurrentUser() user: any,
     @Body("resourceId") resourceId?: string,
     @Body("programId") programId?: string
-  ): Promise<{
-    allowed: boolean;
-    restrictions: any[];
-    warnings: string[];
-    remainingActions?: number;
-  }> {
+  ) {
     // Users can only validate their own actions unless they're admin
     const targetUserId =
       user.role === UserRole.STUDENT || user.role === UserRole.TEACHER
         ? user.id
         : userId;
 
-    return await this.penaltyService.validateUserAction(
+    const result = await this.penaltyService.validateUserAction(
       targetUserId,
       action,
       resourceId,
       programId
     );
+    return ResponseUtil.success(result, "Action validated successfully");
   }
 
-  @Get("user/:userId/score")
+  @Get(AVAILABILITY_URLS.PENALTY_USER_SCORE)
   @ApiOperation({
     summary: "Get user penalty score",
     description: "Calculates the accumulated penalty score for a user",
@@ -483,12 +516,7 @@ export class PenaltiesController {
     @CurrentUser() user: any,
     @Query("programId") programId?: string,
     @Query("timeRange") timeRange: string = "30d"
-  ): Promise<{
-    totalScore: number;
-    scoreBreakdown: any[];
-    riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-    recommendedActions: string[];
-  }> {
+  ) {
     const timeRangeMap = {
       "7d": {
         start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -504,15 +532,19 @@ export class PenaltiesController {
       },
     };
 
-    return await this.penaltyService.calculatePenaltyScore(
+    const result = await this.penaltyService.calculatePenaltyScore(
       userId,
       programId,
       timeRangeMap[timeRange] || timeRangeMap["30d"]
     );
+    return ResponseUtil.success(
+      result,
+      "Penalty score calculated successfully"
+    );
   }
 
   // Analytics and Reporting
-  @Get("analytics")
+  @Get(AVAILABILITY_URLS.PENALTY_ANALYTICS)
   @ApiOperation({
     summary: "Get penalty analytics",
     description: "Retrieves comprehensive penalty analytics and patterns",
@@ -539,7 +571,7 @@ export class PenaltiesController {
     @CurrentUser() user: any,
     @Query("programId") programId?: string,
     @Query("timeRange") timeRange: string = "30d"
-  ): Promise<PenaltyAnalyticsDto> {
+  ) {
     const timeRangeMap = {
       "7d": {
         start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -555,13 +587,14 @@ export class PenaltiesController {
       },
     };
 
-    return await this.penaltyService.generateAnalytics(
+    const result = await this.penaltyService.generateAnalytics(
       programId,
       timeRangeMap[timeRange] || timeRangeMap["30d"]
     );
+    return ResponseUtil.success(result, "Analytics retrieved successfully");
   }
 
-  @Post("process-expired")
+  @Post(AVAILABILITY_URLS.PENALTY_PROCESS_EXPIRED)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Process expired penalties",
@@ -581,15 +614,15 @@ export class PenaltiesController {
     },
   })
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
-  async processExpiredPenalties(@CurrentUser() user: any): Promise<{
-    expiredCount: number;
-    usersAffected: string[];
-    restoredPermissions: any[];
-  }> {
-    return await this.penaltyService.processExpiredPenalties();
+  async processExpiredPenalties(@CurrentUser() user: any) {
+    const result = await this.penaltyService.processExpiredPenalties();
+    return ResponseUtil.success(
+      result,
+      "Expired penalties processed successfully"
+    );
   }
 
-  @Post("bulk-apply")
+  @Post(AVAILABILITY_URLS.PENALTY_BULK_APPLY)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Bulk apply penalties",
@@ -638,15 +671,15 @@ export class PenaltiesController {
       customDuration?: number;
     }>,
     @CurrentUser() user: any
-  ): Promise<{
-    successful: any[];
-    failed: any[];
-    summary: any;
-  }> {
-    return await this.penaltyService.bulkApplyPenalties(operations, user.id);
+  ) {
+    const result = await this.penaltyService.bulkApplyPenalties(
+      operations,
+      user.id
+    );
+    return ResponseUtil.success(result, "Bulk penalty application completed");
   }
 
-  @Get("user/:userId/risk-prediction")
+  @Get(AVAILABILITY_URLS.PENALTY_RISK_PREDICTION)
   @ApiOperation({
     summary: "Predict penalty risk",
     description: "Predicts the penalty risk for a user based on patterns",
@@ -685,17 +718,15 @@ export class PenaltiesController {
     @Param("userId", ParseUUIDPipe) userId: string,
     @CurrentUser() user: any,
     @Query("programId") programId?: string
-  ): Promise<{
-    riskScore: number;
-    riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-    riskFactors: any[];
-    preventiveRecommendations: string[];
-    monitoringRequired: boolean;
-  }> {
-    return await this.penaltyService.predictPenaltyRisk(userId, programId);
+  ) {
+    const result = await this.penaltyService.predictPenaltyRisk(
+      userId,
+      programId
+    );
+    return ResponseUtil.success(result, "Risk prediction completed");
   }
 
-  @Post("user-penalties/:id/appeal")
+  @Post(AVAILABILITY_URLS.PENALTY_APPEAL)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Appeal penalty",
@@ -750,22 +781,18 @@ export class PenaltiesController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body("reason") reason: string,
     @CurrentUser() user: any,
-    @Body("evidence") evidence?: string[],
-  ): Promise<{
-    appealProcessed: boolean;
-    decision: "APPROVED" | "DENIED" | "PENDING_REVIEW";
-    reviewNotes?: string;
-    nextSteps: string[];
-  }> {
-    return await this.penaltyService.processPenaltyAppeal({
+    @Body("evidence") evidence?: string[]
+  ) {
+    const result = await this.penaltyService.processPenaltyAppeal({
       userPenaltyId: id,
       appealedBy: user.id,
       reason,
       evidence,
     });
+    return ResponseUtil.success(result, "Appeal processed successfully");
   }
 
-  @Post("configuration/optimize")
+  @Post(AVAILABILITY_URLS.PENALTY_CONFIGURATION_OPTIMIZE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Optimize penalty configuration",
@@ -801,11 +828,8 @@ export class PenaltiesController {
   async optimizePenaltyConfiguration(
     @Body("programId") programId: string,
     @CurrentUser() user: any
-  ): Promise<{
-    currentEffectiveness: number;
-    recommendedChanges: any[];
-    newPenaltyRecommendations: any[];
-  }> {
-    return await this.penaltyService.optimizePenaltyConfiguration(programId);
+  ) {
+    const result = await this.penaltyService.optimizePenaltyConfiguration(programId);
+    return ResponseUtil.success(result, "Configuration optimization completed");
   }
 }

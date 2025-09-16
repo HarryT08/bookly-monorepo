@@ -73,7 +73,7 @@ import {
  * @version 2.0.0
  * @since Hito 2
  */
-@ApiTags('Availability Service')
+@ApiTags('Availability')
 @Controller('availability')
 export class AvailabilityController {
   constructor(
@@ -134,7 +134,8 @@ export class AvailabilityController {
       currentUser.id
     );
     
-    return await this.commandBus.execute(command);
+    const result =await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Schedule created successfully');
   }
 
   @Get(AVAILABILITY_URLS.AVAILABILITY_GET)
@@ -189,7 +190,8 @@ export class AvailabilityController {
       includeScheduleRestrictions === 'true'
     );
     
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Calendar availability retrieved successfully');
   }
 
   @Post(AVAILABILITY_URLS.AVAILABILITY_CHECK)
@@ -207,7 +209,8 @@ export class AvailabilityController {
       new Date(availabilityQuery.endDate)
     );
     
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Availability checked successfully');
   }
 
   // ========================================
@@ -237,7 +240,8 @@ export class AvailabilityController {
       createReservationDto.recurrence
     );
     
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Reservation created successfully');
   }
 
   // ========================================
@@ -299,7 +303,8 @@ export class AvailabilityController {
       createCalendarIntegrationDto.isActive,
       currentUser.id
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'Calendar integration created successfully');
   }
 
   @Get(AVAILABILITY_URLS.CALENDAR_INTEGRATIONS)
@@ -321,7 +326,8 @@ export class AvailabilityController {
       provider,
       isActive
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Calendar integrations retrieved successfully');
   }
 
   @Post(AVAILABILITY_URLS.CALENDAR_SYNC)
@@ -360,7 +366,8 @@ export class AvailabilityController {
       new Date(endDate),
       includeConflicts
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Availability with conflicts retrieved successfully');
   }
 
   // ========================================
@@ -405,7 +412,8 @@ export class AvailabilityController {
       includeExternalEvents !== false, // Default to true
       userId
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Calendar view retrieved successfully');
   }
 
   // ========================================
@@ -434,7 +442,8 @@ export class AvailabilityController {
       createHistoryDto.ipAddress,
       createHistoryDto.userAgent
     );
-    return await this.commandBus.execute(command);
+    const result = await this.commandBus.execute(command);
+    return ResponseUtil.success(result, 'History entry created successfully');
   }
 
   @Get(AVAILABILITY_URLS.RESERVATION_HISTORY_DETAILED)
@@ -474,7 +483,8 @@ export class AvailabilityController {
       queryDto.includeReservationData || false,
       queryDto.includeUserData || false
     );
-    return await this.queryBus.execute(query);
+    const result = await this.queryBus.execute(query);
+    return ResponseUtil.success(result, 'Detailed history retrieved successfully');
   }
 
   @Get(AVAILABILITY_URLS.RESERVATION_HISTORY_EXPORT)

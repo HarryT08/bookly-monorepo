@@ -31,6 +31,7 @@ import { JwtAuthGuard } from "@apps/auth-service/infrastructure/guards/jwt-auth.
 import { RolesGuard } from "@libs/common/guards/roles.guard";
 import { Roles } from "@apps/auth-service/infrastructure/decorators/roles.decorator";
 import { CurrentUser, UserRole } from "@libs/common";
+import { AVAILABILITY_URLS } from "@/apps/availability-service/utils/maps/urls.map";
 
 // DTOs (to be created)
 import { CreateRecurringReservationDto } from "../dtos/create-recurring-reservation.dto";
@@ -41,17 +42,18 @@ import { RecurringReservationStatsDto } from "../dtos/recurring-reservation-stat
 
 // Services (to be created in application layer)
 import { RecurringReservationService } from "../../application/services/recurring-reservation.service";
+import { ResponseUtil } from "@/libs/common/utils/response.util";
 
-@ApiTags("Recurring Reservations")
+@ApiTags(AVAILABILITY_URLS.RECURRING_RESERVATIONS_TAG)
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller("recurring-reservations")
+@Controller(AVAILABILITY_URLS.RECURRING_RESERVATIONS)
 export class RecurringReservationsController {
   constructor(
     private readonly recurringReservationService: RecurringReservationService
   ) {}
 
-  @Post()
+  @Post(AVAILABILITY_URLS.RECURRING_RESERVATION_CREATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Create a new recurring reservation",
@@ -81,15 +83,16 @@ export class RecurringReservationsController {
   async createRecurringReservation(
     @Body(ValidationPipe) createDto: CreateRecurringReservationDto,
     @CurrentUser() user: any
-  ): Promise<RecurringReservationResponseDto> {
-    return await this.recurringReservationService.create({
+  ) {
+    const result = await this.recurringReservationService.create({
       ...createDto,
       userId: user.id,
       createdBy: user.id,
     });
+    return ResponseUtil.success(result, "Recurring reservation created successfully");
   }
 
-  @Get()
+  @Get(AVAILABILITY_URLS.RECURRING_RESERVATIONS_FIND_ALL)
   @ApiOperation({
     summary: "Get recurring reservations",
     description:
@@ -110,19 +113,21 @@ export class RecurringReservationsController {
   async getRecurringReservations(
     @Query(ValidationPipe) queryDto: RecurringReservationQueryDto,
     @CurrentUser() user: any
-  ): Promise<{
-    data: RecurringReservationResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    return await this.recurringReservationService.findAll({
+  ) {
+    const result = await this.recurringReservationService.findAll({
       ...queryDto,
       userId: user.role === UserRole.STUDENT ? user.id : queryDto.userId,
     });
+    return ResponseUtil.paginated(
+      result.data,
+      result.total,
+      result.page,
+      result.limit,
+      "Recurring reservations retrieved successfully"
+    );
   }
 
-  @Get(":id")
+  @Get(AVAILABILITY_URLS.RECURRING_RESERVATION_BY_ID)
   @ApiOperation({
     summary: "Get recurring reservation by ID",
     description:
@@ -152,11 +157,12 @@ export class RecurringReservationsController {
   async getRecurringReservationById(
     @Param("id", ParseUUIDPipe) id: string,
     @CurrentUser() user: any
-  ): Promise<RecurringReservationResponseDto> {
-    return await this.recurringReservationService.findById(id, user.id);
+  ) {
+    const result = await this.recurringReservationService.findById(id, user.id);
+    return ResponseUtil.success(result, "Recurring reservation found");
   }
 
-  @Put(":id")
+  @Put(AVAILABILITY_URLS.RECURRING_RESERVATION_UPDATE)
   @ApiOperation({
     summary: "Update recurring reservation",
     description:
@@ -192,15 +198,19 @@ export class RecurringReservationsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body(ValidationPipe) updateDto: UpdateRecurringReservationDto,
     @CurrentUser() user: any
-  ): Promise<RecurringReservationResponseDto> {
-    return await this.recurringReservationService.update(
+  ) {
+    const result = await this.recurringReservationService.update(
       id,
       updateDto,
       user.id
     );
+    return ResponseUtil.success(
+      result,
+      "Recurring reservation updated successfully"
+    );
   }
 
-  @Delete(":id")
+  @Delete(AVAILABILITY_URLS.RECURRING_RESERVATION_CANCEL)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: "Cancel recurring reservation",
@@ -234,16 +244,20 @@ export class RecurringReservationsController {
   async cancelRecurringReservation(
     @Param("id", ParseUUIDPipe) id: string,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     await this.recurringReservationService.cancel(
       id,
       "Cancelled by user",
-      'FUTURE_ONLY',
+      "FUTURE_ONLY",
       user.id
+    );
+    return ResponseUtil.success(
+      null,
+      "Recurring reservation cancelled successfully"
     );
   }
 
-  @Get(":id/instances")
+  @Get(AVAILABILITY_URLS.RECURRING_INSTANCES)
   @ApiOperation({
     summary: "Get recurring reservation instances",
     description:
@@ -288,17 +302,18 @@ export class RecurringReservationsController {
     @CurrentUser() user: any,
     @Query("status") status?: string,
     @Query("from") from?: string,
-    @Query("to") to?: string,
-  ): Promise<any[]> {
-    return await this.recurringReservationService.getInstances(id, {
+    @Query("to") to?: string
+  ) {
+    const result = await this.recurringReservationService.getInstances(id, {
       status,
       from: from ? new Date(from) : undefined,
       to: to ? new Date(to) : undefined,
       userId: user.id,
     });
+    return ResponseUtil.success(result, "Instances retrieved successfully");
   }
 
-  @Delete(":id/instances/:instanceId")
+  @Delete(AVAILABILITY_URLS.RECURRING_INSTANCE_SKIP)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: "Cancel single recurring reservation instance",
@@ -335,16 +350,17 @@ export class RecurringReservationsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Param("instanceId", ParseUUIDPipe) instanceId: string,
     @CurrentUser() user: any
-  ): Promise<void> {
+  ) {
     await this.recurringReservationService.cancelInstance(
       id,
       instanceId,
       user.id,
       "Cancelled by user"
     );
+    return ResponseUtil.success(null, "Instance cancelled successfully");
   }
 
-  @Post(":id/generate-instances")
+  @Post(AVAILABILITY_URLS.RECURRING_INSTANCE_GENERATE)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "Generate additional instances",
@@ -379,15 +395,16 @@ export class RecurringReservationsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body("generateUntil") generateUntil: string,
     @CurrentUser() user: any
-  ): Promise<{ generatedCount: number; totalInstances: number }> {
-    return await this.recurringReservationService.generateInstances(
+  ) {
+    const result = await this.recurringReservationService.generateInstances(
       id,
       new Date(generateUntil),
       user.id
     );
+    return ResponseUtil.success(result, "Instances generated successfully");
   }
 
-  @Get(":id/stats")
+  @Get(AVAILABILITY_URLS.RECURRING_RESERVATION_STATS)
   @ApiOperation({
     summary: "Get recurring reservation statistics",
     description:
@@ -408,11 +425,15 @@ export class RecurringReservationsController {
   async getRecurringReservationStats(
     @Param("id", ParseUUIDPipe) id: string,
     @CurrentUser() user: any
-  ): Promise<RecurringReservationStatsDto> {
-    return await this.recurringReservationService.getStatistics(id, user.id);
+  ) {
+    const result = await this.recurringReservationService.getStatistics(
+      id,
+      user.id
+    );
+    return ResponseUtil.success(result, "Statistics retrieved successfully");
   }
 
-  @Post("validate")
+  @Post(AVAILABILITY_URLS.RECURRING_RESERVATION_VALIDATE)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Validate recurring reservation",
@@ -443,20 +464,15 @@ export class RecurringReservationsController {
   async validateRecurringReservation(
     @Body(ValidationPipe) createDto: CreateRecurringReservationDto,
     @CurrentUser() user: any
-  ): Promise<{
-    isValid: boolean;
-    violations: string[];
-    warnings: string[];
-    estimatedInstances: number;
-    conflicts: any[];
-  }> {
-    return await this.recurringReservationService.validate({
+  ) {
+    const result = await this.recurringReservationService.validate({
       ...createDto,
       userId: user.id,
     });
+    return ResponseUtil.success(result, "Validation completed");
   }
 
-  @Get("user/:userId")
+  @Get(AVAILABILITY_URLS.RECURRING_RESERVATIONS_USER)
   @ApiOperation({
     summary: "Get user recurring reservations",
     description:
@@ -478,19 +494,21 @@ export class RecurringReservationsController {
     @Param("userId", ParseUUIDPipe) userId: string,
     @Query(ValidationPipe) queryDto: RecurringReservationQueryDto,
     @CurrentUser() user: any
-  ): Promise<{
-    data: RecurringReservationResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    return await this.recurringReservationService.findAll({
+  ) {
+    const result = await this.recurringReservationService.findAll({
       ...queryDto,
       userId,
     });
+    return ResponseUtil.paginated(
+      result.data,
+      result.total,
+      result.page,
+      result.limit,
+      "User recurring reservations retrieved successfully"
+    );
   }
 
-  @Get("resource/:resourceId")
+  @Get(AVAILABILITY_URLS.RECURRING_RESERVATIONS_RESOURCE)
   @ApiOperation({
     summary: "Get resource recurring reservations",
     description:
@@ -512,19 +530,21 @@ export class RecurringReservationsController {
     @Param("resourceId", ParseUUIDPipe) resourceId: string,
     @Query(ValidationPipe) queryDto: RecurringReservationQueryDto,
     @CurrentUser() user: any
-  ): Promise<{
-    data: RecurringReservationResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    return await this.recurringReservationService.findAll({
+  ) {
+    const result = await this.recurringReservationService.findAll({
       ...queryDto,
       resourceId,
     });
+    return ResponseUtil.paginated(
+      result.data,
+      result.total,
+      result.page,
+      result.limit,
+      "Resource recurring reservations retrieved successfully"
+    );
   }
 
-  @Post("bulk-cancel")
+  @Post(AVAILABILITY_URLS.RECURRING_RESERVATIONS_BULK_CANCEL)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Bulk cancel recurring reservations",
@@ -564,16 +584,13 @@ export class RecurringReservationsController {
     @Body("reservationIds") reservationIds: string[],
     @Body("reason") reason: string,
     @CurrentUser() user: any
-  ): Promise<{
-    successful: string[];
-    failed: Array<{ id: string; error: string }>;
-    totalProcessed: number;
-  }> {
-    return await this.recurringReservationService.bulkCancel(
+  ) {
+    const result = await this.recurringReservationService.bulkCancel(
       reservationIds,
       reason,
-      'FUTURE_ONLY',
+      "FUTURE_ONLY",
       user.id
     );
+    return ResponseUtil.success(result, "Bulk cancellation completed");
   }
 }
