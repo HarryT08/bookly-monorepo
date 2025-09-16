@@ -11,6 +11,7 @@ export interface CategoryFilter {
   isActive?: boolean;
   parentId?: string;
   search?: string;
+  metadata?: any;
 }
 
 export interface CategoryRepository {

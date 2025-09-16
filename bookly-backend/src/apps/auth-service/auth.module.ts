@@ -17,7 +17,7 @@ import { AuthService } from '@apps/auth-service/application/services/auth.servic
 import { UserService } from '@apps/auth-service/application/services/user.service';
 import { RoleService } from '@apps/auth-service/application/services/role.service';
 import { PermissionService } from '@apps/auth-service/application/services/permission.service';
-import { AuthCategoryService } from '@apps/auth-service/application/services/category.service';
+import { RoleCategoryService } from '@apps/auth-service/application/services/category.service';
 
 // Infrastructure
 import { AuthController } from './infrastructure/controllers/auth.controller';
@@ -25,7 +25,7 @@ import { UserController } from './infrastructure/controllers/user.controller';
 import { RoleController } from './infrastructure/controllers/role.controller';
 import { PermissionController } from './infrastructure/controllers/permission.controller';
 import { SeedController } from './infrastructure/controllers/seed.controller';
-import { AuthCategoryController } from './infrastructure/controllers/category.controller';
+import { RoleCategoryController } from './infrastructure/controllers/category.controller';
 import { OAuthController } from '@apps/auth-service/infrastructure/controllers/oauth.controller';
 import { SeedService } from '@/libs/common/services/seed.service';
 import { SSOConfigGuard } from './infrastructure/guards/sso-config.guard';
@@ -37,6 +37,14 @@ import { UpdateUserHandler } from './application/handlers/update-user.handler';
 import { DeleteUserHandler } from './application/handlers/delete-user.handler';
 import { AssignRoleHandler } from './application/handlers/assign-role.handler';
 import { RemoveRoleHandler } from './application/handlers/remove-role.handler';
+
+// Category Handlers
+import { CreateCategoryHandler } from './application/handlers/category/create-category.handler';
+import { UpdateCategoryHandler } from './application/handlers/category/update-category.handler';
+import { DeleteCategoryHandler } from './application/handlers/category/delete-category.handler';
+import { FindAllCategoriesHandler } from './application/handlers/category/find-all-categories.handler';
+import { FindCategoryByIdHandler } from './application/handlers/category/find-category-by-id.handler';
+import { FindDefaultCategoriesHandler } from './application/handlers/category/find-default-categories.handler';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { PrismaRoleRepository } from './infrastructure/repositories/prisma-role.repository';
 import { PrismaPermissionRepository } from './infrastructure/repositories/prisma-permission.repository';
@@ -52,9 +60,21 @@ const CommandHandlers = [
   UpdateUserHandler,
   DeleteUserHandler,
   AssignRoleHandler,
-  RemoveRoleHandler
+  RemoveRoleHandler,
+  // Category Command Handlers
+  CreateCategoryHandler,
+  UpdateCategoryHandler,
+  DeleteCategoryHandler,
 ];
-const QueryHandlers = [GetUserHandler, GetUsersHandler];
+
+const QueryHandlers = [
+  GetUserHandler, 
+  GetUsersHandler,
+  // Category Query Handlers
+  FindAllCategoriesHandler,
+  FindCategoryByIdHandler,
+  FindDefaultCategoriesHandler,
+];
 
 @Module({
   imports: [
@@ -81,7 +101,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     PermissionController,
     OAuthController,
     SeedController,
-    AuthCategoryController,
+    RoleCategoryController,
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [OAuthController] : []),
   ],
   providers: [
@@ -90,7 +110,7 @@ const QueryHandlers = [GetUserHandler, GetUsersHandler];
     UserService,
     RoleService,
     PermissionService,
-    AuthCategoryService,
+    RoleCategoryService,
     SeedService,
 
     // Strategies

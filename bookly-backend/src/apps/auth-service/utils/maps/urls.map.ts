@@ -36,8 +36,8 @@ export const AUTH_URLS = {
   USER_CREATE: '/',
   USER_UPDATE: '/:id',
   USER_DELETE: '/delete',
-  USER_ASSIGN_ROLE: '/:id/roles/assign',
-  USER_REMOVE_ROLE: '/:id/roles/remove',
+  USER_ASSIGN_ROLE: '/:id/roles/assign/:roleId',
+  USER_REMOVE_ROLE: '/:id/roles/remove/:roleId',
   
   // Role and permission management
   ROLE: '/roles',
@@ -47,6 +47,16 @@ export const AUTH_URLS = {
   ROLE_CREATE: '/',
   ROLE_UPDATE: '/:id',
   ROLE_DELETE: '/:id',
+
+  // Category management
+  CATEGORY: '/role/categories',
+  CATEGORY_DEFAULTS: '/defaults',
+  CATEGORY_FIND: '/',
+  CATEGORY_FIND_BY_ACTIVE: '/active',
+  CATEGORY_FIND_BY_ID: '/:id',
+  CATEGORY_CREATE: '/',
+  CATEGORY_UPDATE: '/:id',
+  CATEGORY_DELETE: '/:id',
   
   // Permissions
   PERMISSION: '/permissions',
@@ -57,7 +67,7 @@ export const AUTH_URLS = {
   PERMISSION_DELETE: '/:id',
   PERMISSION_ACTIVATE: '/activate',
   PERMISSION_DEACTIVATE: '/deactivate',
-  PERMISSIONS_SEED_DEFAULTS: '/seed-defaults',
+  PERMISSION_SEED_DEFAULTS: '/seed-defaults',
   
   // Session management
   SESSIONS: '/sessions',

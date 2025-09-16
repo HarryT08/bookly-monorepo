@@ -193,7 +193,7 @@ export class PermissionController {
     return ResponseUtil.success(null, 'Permission deleted successfully');
   }
 
-  @Post(AUTH_URLS.PERMISSIONS_SEED_DEFAULTS)
+  @Post(AUTH_URLS.PERMISSION_SEED_DEFAULTS)
   @Roles('Administrador General')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create default system permissions' })
