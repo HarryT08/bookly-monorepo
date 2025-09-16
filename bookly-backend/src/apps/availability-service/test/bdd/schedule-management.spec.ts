@@ -87,8 +87,8 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
         expect.any(CreateScheduleCommand)
       );
       expect(result).toEqual(expectedSchedule);
-      expect(result.resourceId).toBe(resourceId);
-      expect(result.isActive).toBe(true);
+      expect(result.data.resourceId).toBe(resourceId);
+      expect(result.data.isActive).toBe(true);
     });
   });
 
@@ -142,7 +142,7 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
           })
         })
       );
-      expect(result.type).toBe(ScheduleType.RESTRICTED);
+      expect(result.data.type).toBe(ScheduleType.RESTRICTED);
     });
   });
 
@@ -192,7 +192,7 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
           })
         })
       );
-      expect(result.type).toBe(ScheduleType.MAINTENANCE);
+      expect(result.data.type).toBe(ScheduleType.MAINTENANCE);
     });
   });
 
@@ -226,9 +226,9 @@ describe('RF-07: Schedule Management - BDD Tests', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetAvailabilityQuery)
       );
-      expect(result.resourceId).toBe(resourceId);
-      expect(result.availableSlots).toBeDefined();
-      expect(result.restrictions).toBeDefined();
+      expect(result.data.resourceId).toBe(resourceId);
+      expect(result.data.availableSlots).toBeDefined();
+      expect(result.data.restrictions).toBeDefined();
     });
   });
 

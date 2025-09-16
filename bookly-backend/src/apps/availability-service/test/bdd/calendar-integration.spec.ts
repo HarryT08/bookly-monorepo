@@ -78,8 +78,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
         expect.any(CreateCalendarIntegrationCommand)
       );
       expect(result).toEqual(expectedIntegration);
-      expect(result.provider).toBe(CalendarProvider.GOOGLE);
-      expect(result.isActive).toBe(true);
+      expect(result.data.provider).toBe(CalendarProvider.GOOGLE);
+      expect(result.data.isActive).toBe(true);
     });
 
     it('should create Outlook Calendar integration with valid credentials', async () => {
@@ -121,8 +121,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
         expect.any(CreateCalendarIntegrationCommand)
       );
       expect(result).toEqual(expectedIntegration);
-      expect(result.provider).toBe(CalendarProvider.OUTLOOK);
-      expect(result.syncInterval).toBe(15);
+      expect(result.data.provider).toBe(CalendarProvider.OUTLOOK);
+      expect(result.data.syncInterval).toBe(15);
     });
 
     it('should create iCal feed integration', async () => {
@@ -160,7 +160,7 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
         expect.any(CreateCalendarIntegrationCommand)
       );
       expect(result).toEqual(expectedIntegration);
-      expect(result.provider).toBe(CalendarProvider.ICAL);
+      expect(result.data.provider).toBe(CalendarProvider.ICAL);
     });
   });
 
@@ -242,8 +242,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarIntegrationsQuery)
       );
-      expect(result.integrations).toHaveLength(2);
-      expect(result.total).toBe(2);
+      expect(result.data.integrations).toHaveLength(2);
+      expect(result.data.total).toBe(2);
     });
 
     it('should filter integrations by resource ID', async () => {
@@ -273,8 +273,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarIntegrationsQuery)
       );
-      expect(result.integrations).toHaveLength(1);
-      expect(result.integrations[0].resourceId).toBe(resourceId);
+      expect(result.data.integrations).toHaveLength(1);
+      expect(result.data.integrations[0].resourceId).toBe(resourceId);
     });
 
     it('should filter integrations by provider', async () => {
@@ -304,8 +304,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarIntegrationsQuery)
       );
-      expect(result.integrations).toHaveLength(1);
-      expect(result.integrations[0].provider).toBe(provider);
+      expect(result.data.integrations).toHaveLength(1);
+      expect(result.data.integrations[0].provider).toBe(provider);
     });
   });
 
@@ -374,10 +374,10 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetAvailabilityWithConflictsQuery)
       );
-      expect(result.resourceId).toBe(resourceId);
-      expect(result.availableSlots).toHaveLength(2);
-      expect(result.conflicts).toHaveLength(1);
-      expect(result.summary.conflictSources.external).toBe(1);
+      expect(result.data.resourceId).toBe(resourceId);
+      expect(result.data.availableSlots).toHaveLength(2);
+      expect(result.data.conflicts).toHaveLength(1);
+      expect(result.data.summary.conflictSources.external).toBe(1);
     });
 
     it('should return availability without external conflicts when disabled', async () => {
@@ -426,8 +426,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetAvailabilityWithConflictsQuery)
       );
-      expect(result.conflicts).toHaveLength(0);
-      expect(result.summary.conflictSources.external).toBe(0);
+      expect(result.data.conflicts).toHaveLength(0);
+      expect(result.data.summary.conflictSources.external).toBe(0);
     });
   });
 
@@ -464,8 +464,8 @@ describe('RF-08: Calendar Integration Management (BDD)', () => {
       expect(commandBus.execute).toHaveBeenCalledWith(
         expect.any(CreateCalendarIntegrationCommand)
       );
-      expect(result.provider).toBe(CalendarProvider.INTERNAL);
-      expect(result.syncInterval).toBe(5);
+      expect(result.data.provider).toBe(CalendarProvider.INTERNAL);
+      expect(result.data.syncInterval).toBe(5);
     });
   });
 });

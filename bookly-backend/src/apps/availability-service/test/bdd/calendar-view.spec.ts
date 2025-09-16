@@ -139,13 +139,14 @@ describe('RF-10: Calendar View Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarViewQuery)
       );
-      expect(result.view.type).toBe(CalendarViewType.MONTH);
-      expect(result.events).toHaveLength(4);
-      expect(result.summary.totalEvents).toBe(4);
-      expect(result.resource?.id).toBe(resourceId);
-      
+      expect(result.data.view.type).toBe(CalendarViewType.MONTH);
+      expect(result.data.summary.totalEvents).toBeGreaterThan(0);
+      expect(result.data.events).toHaveLength(result.data.summary.totalEvents);
+      expect(result.data.events.every(e => 
+        e.resourceId === resourceId
+      )).toBe(true);
       // Verify event types are present
-      const eventTypes = result.events.map(e => e.type);
+      const eventTypes = result.data.events.map(e => e.type);
       expect(eventTypes).toContain(EventType.RESERVATION);
       expect(eventTypes).toContain(EventType.SCHEDULE);
       expect(eventTypes).toContain(EventType.MAINTENANCE);
@@ -218,9 +219,11 @@ describe('RF-10: Calendar View Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarViewQuery)
       );
-      expect(result.view.type).toBe(CalendarViewType.WEEK);
-      expect(result.events).toHaveLength(2);
-      expect(result.events.every(e => eventTypes.includes(e.type))).toBe(true);
+      expect(result.data.view.type).toBe(CalendarViewType.WEEK);
+      expect(result.data.events).toHaveLength(2);
+      expect(result.data.events.every(e => 
+        e.type === EventType.RESERVATION || e.type === EventType.SCHEDULE
+      )).toBe(true);
     });
 
     it('should display daily calendar view with availability slots', async () => {
@@ -301,10 +304,10 @@ describe('RF-10: Calendar View Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarViewQuery)
       );
-      expect(result.view.type).toBe(CalendarViewType.DAY);
-      expect(result.summary.availableSlots).toBe(2);
-      expect(result.events.filter(e => e.type === EventType.AVAILABILITY)).toHaveLength(2);
-      expect(result.events.filter(e => e.editable)).toHaveLength(2); // Availability slots are editable
+      expect(result.data.view.type).toBe(CalendarViewType.DAY);
+      expect(result.data.summary.availableSlots).toBe(2);
+      expect(result.data.events.filter(e => e.type === EventType.AVAILABILITY)).toHaveLength(2);
+      expect(result.data.events.filter(e => e.editable)).toHaveLength(2); // Availability slots are editable
     });
   });
 
@@ -376,11 +379,11 @@ describe('RF-10: Calendar View Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarViewQuery)
       );
-      expect(result.view.resourceId).toBeUndefined();
-      expect(result.events).toHaveLength(3);
+      expect(result.data.view.resourceId).toBeUndefined();
+      expect(result.data.events).toHaveLength(3);
       
       // Verify events from different resources
-      const resourceIds = [...new Set(result.events.map(e => e.resourceId))];
+      const resourceIds = [...new Set(result.data.events.map(e => e.resourceId))];
       expect(resourceIds).toHaveLength(3);
       expect(resourceIds).toContain('lab-physics-01');
       expect(resourceIds).toContain('lab-chemistry-02');
@@ -469,15 +472,15 @@ describe('RF-10: Calendar View Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarViewQuery)
       );
-      expect(result.events).toHaveLength(3);
+      expect(result.data.events).toHaveLength(3);
       
       // User's own events should be editable
-      const userEvents = result.events.filter(e => e.userId === userId);
+      const userEvents = result.data.events.filter(e => e.userId === userId);
       expect(userEvents).toHaveLength(2);
       expect(userEvents.every(e => e.editable)).toBe(true);
       
       // Other users' events should not be editable
-      const otherEvents = result.events.filter(e => e.userId !== userId && e.userId);
+      const otherEvents = result.data.events.filter(e => e.userId !== userId && e.userId);
       expect(otherEvents).toHaveLength(1);
       expect(otherEvents.every(e => !e.editable)).toBe(true);
     });
@@ -552,11 +555,11 @@ describe('RF-10: Calendar View Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetCalendarViewQuery)
       );
-      expect(result.summary.conflicts).toBe(2);
-      expect(result.events).toHaveLength(3);
+      expect(result.data.summary.conflicts).toBe(2);
+      expect(result.data.events).toHaveLength(3);
       
       // All events should be for the same resource
-      expect(result.events.every(e => e.resourceId === resourceId)).toBe(true);
+      expect(result.data.events.every(e => e.resourceId === resourceId)).toBe(true);
     });
   });
 

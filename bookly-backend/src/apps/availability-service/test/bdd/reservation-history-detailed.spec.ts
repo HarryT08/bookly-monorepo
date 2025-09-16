@@ -198,11 +198,11 @@ describe('RF-11: Detailed Reservation History Management (BDD)', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetReservationHistoryDetailedQuery)
       );
-      expect(result.entries).toHaveLength(1);
-      expect(result.entries[0].userId).toBe('user-456');
-      expect(result.entries[0].reservation).toBeDefined();
-      expect(result.entries[0].user).toBeDefined();
-      expect(result.pagination.total).toBe(1);
+      expect(result.data.entries).toHaveLength(1);
+      expect(result.data.entries[0].userId).toBe('user-456');
+      expect(result.data.entries[0].reservation).toBeDefined();
+      expect(result.data.entries[0].user).toBeDefined();
+      expect(result.data.pagination.total).toBe(1);
     });
 
     it('should filter history by action types', async () => {
@@ -243,12 +243,12 @@ describe('RF-11: Detailed Reservation History Management (BDD)', () => {
       const result = await controller.getDetailedReservationHistory(queryDto);
 
       // Then: Should return only entries with specified actions
-      expect(result.entries).toHaveLength(2);
-      expect(result.entries.every(entry => 
+      expect(result.data.entries).toHaveLength(2);
+      expect(result.data.entries.every(entry => 
         [HistoryAction.CREATED, HistoryAction.UPDATED].includes(entry.action)
       )).toBe(true);
-      expect(result.summary.actionCounts[HistoryAction.CREATED]).toBe(1);
-      expect(result.summary.actionCounts[HistoryAction.UPDATED]).toBe(1);
+      expect(result.data.summary.actionCounts[HistoryAction.CREATED]).toBe(1);
+      expect(result.data.summary.actionCounts[HistoryAction.UPDATED]).toBe(1);
     });
 
     it('should filter history by source types', async () => {
@@ -290,12 +290,12 @@ describe('RF-11: Detailed Reservation History Management (BDD)', () => {
       const result = await controller.getDetailedReservationHistory(queryDto);
 
       // Then: Should return only entries from specified sources
-      expect(result.entries).toHaveLength(2);
-      expect(result.entries.every(entry => 
+      expect(result.data.entries).toHaveLength(2);
+      expect(result.data.entries.every(entry => 
         [HistorySource.ADMIN, HistorySource.SYSTEM].includes(entry.source)
       )).toBe(true);
-      expect(result.summary.sourceCounts[HistorySource.ADMIN]).toBe(1);
-      expect(result.summary.sourceCounts[HistorySource.SYSTEM]).toBe(1);
+      expect(result.data.summary.sourceCounts[HistorySource.ADMIN]).toBe(1);
+      expect(result.data.summary.sourceCounts[HistorySource.SYSTEM]).toBe(1);
     });
   });
 
@@ -389,13 +389,13 @@ describe('RF-11: Detailed Reservation History Management (BDD)', () => {
       const result = await controller.getDetailedReservationHistory(queryDto);
 
       // Then: Should provide comprehensive statistics
-      expect(result.summary.totalEntries).toBe(25);
-      expect(result.summary.actionCounts[HistoryAction.CREATED]).toBe(10);
-      expect(result.summary.sourceCounts[HistorySource.USER]).toBe(18);
-      expect(result.summary.uniqueUsers).toBe(12);
-      expect(result.summary.uniqueReservations).toBe(20);
-      expect(result.summary.dateRange.earliest).toBeDefined();
-      expect(result.summary.dateRange.latest).toBeDefined();
+      expect(result.data.summary.totalEntries).toBe(25);
+      expect(result.data.summary.actionCounts[HistoryAction.CREATED]).toBe(10);
+      expect(result.data.summary.sourceCounts[HistorySource.USER]).toBe(18);
+      expect(result.data.summary.uniqueUsers).toBe(12);
+      expect(result.data.summary.uniqueReservations).toBe(20);
+      expect(result.data.summary.dateRange.earliest).toBeDefined();
+      expect(result.data.summary.dateRange.latest).toBeDefined();
     });
   });
 

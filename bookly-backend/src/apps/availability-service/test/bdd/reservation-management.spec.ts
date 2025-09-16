@@ -78,9 +78,9 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       expect(commandBus.execute).toHaveBeenCalledWith(
         expect.any(CreateReservationCommand)
       );
-      expect(result.title).toBe(createReservationDto.title);
-      expect(result.status).toBe(ReservationStatus.PENDING);
-      expect(result.resourceId).toBe(createReservationDto.resourceId);
+      expect(result.data.title).toBe(createReservationDto.title);
+      expect(result.data.status).toBe(ReservationStatus.PENDING);
+      expect(result.data.resourceId).toBe(createReservationDto.resourceId);
     });
   });
 
