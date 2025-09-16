@@ -1,39 +1,39 @@
-import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
+import { Module } from "@nestjs/common";
+import { CqrsModule } from "@nestjs/cqrs";
 
 // Controllers
-import { AvailabilityController } from './infrastructure/controllers/availability.controller';
-import { AdvancedSearchController } from './infrastructure/controllers/advanced-search.controller';
-import { PenaltiesController } from './infrastructure/controllers/penalties.controller';
-import { ReassignmentController } from './infrastructure/controllers/reassignment.controller';
-import { RecurringReservationsController } from './infrastructure/controllers/recurring-reservations.controller';
-import { WaitingListController } from './infrastructure/controllers/waiting-list.controller';
-import { NotificationsController } from './infrastructure/controllers/notifications.controller';
+import { AvailabilityController } from "./infrastructure/controllers/availability.controller";
+import { AdvancedSearchController } from "./infrastructure/controllers/advanced-search.controller";
+import { PenaltiesController } from "./infrastructure/controllers/penalties.controller";
+import { ReassignmentController } from "./infrastructure/controllers/reassignment.controller";
+import { RecurringReservationsController } from "./infrastructure/controllers/recurring-reservations.controller";
+import { WaitingListController } from "./infrastructure/controllers/waiting-list.controller";
+import { NotificationsController } from "./infrastructure/controllers/notifications.controller";
 
 // Services
-import { AvailabilityService } from './application/services/availability.service';
-import { CalendarIntegrationService } from './application/services/calendar-integration.service';
-import { AdvancedSearchService } from './application/services/advanced-search.service';
-import { ScheduleService } from './application/services/schedule.service';
-import { ReassignmentService } from './application/services/reassignment.service';
-import { WaitingListService } from './application/services/waiting-list.service';
-import { RecurringReservationService } from './application/services/recurring-reservation.service';
-import { PenaltyService } from './application/services/penalty.service';
+import { AvailabilityService } from "./application/services/availability.service";
+import { CalendarIntegrationService } from "./application/services/calendar-integration.service";
+import { AdvancedSearchService } from "./application/services/advanced-search.service";
+import { ScheduleService } from "./application/services/schedule.service";
+import { ReassignmentService } from "./application/services/reassignment.service";
+import { WaitingListService } from "./application/services/waiting-list.service";
+import { RecurringReservationService } from "./application/services/recurring-reservation.service";
+import { PenaltyService } from "./application/services/penalty.service";
 
 // Domain Services
-import { AdvancedSearchDomainService } from './domain/services/advanced-search-domain.service';
-import { RecurringReservationDomainServiceImpl } from './domain/services/recurring-reservation-domain.service';
-import { ReservationLimitsDomainServiceImpl } from './domain/services/reservation-limits-domain.service';
-import { WaitingListDomainServiceImpl } from './domain/services/waiting-list-domain.service';
-import { PenaltyDomainServiceImpl } from './domain/services/penalty-domain.service';
-import { ReassignmentDomainServiceImpl } from './domain/services/reassignment-domain.service';
+import { AdvancedSearchDomainService } from "./domain/services/advanced-search-domain.service";
+import { RecurringReservationDomainServiceImpl } from "./domain/services/recurring-reservation-domain.service";
+import { ReservationLimitsDomainServiceImpl } from "./domain/services/reservation-limits-domain.service";
+import { WaitingListDomainServiceImpl } from "./domain/services/waiting-list-domain.service";
+import { PenaltyDomainServiceImpl } from "./domain/services/penalty-domain.service";
+import { ReassignmentDomainServiceImpl } from "./domain/services/reassignment-domain.service";
 
 // Command Handlers
-import { CreateCalendarIntegrationHandler } from './application/commands/create-calendar-integration.handler';
-import { SyncCalendarHandler } from './application/commands/sync-calendar.handler';
-import { CreateAvailabilityHandler } from './application/handlers/create-availability.handler';
-import { CreateReservationHandler } from './application/handlers/create-reservation.handler';
-import { CreateScheduleHandler } from './application/handlers/create-schedule.handler';
+import { CreateCalendarIntegrationHandler } from "./application/commands/create-calendar-integration.handler";
+import { SyncCalendarHandler } from "./application/commands/sync-calendar.handler";
+import { CreateAvailabilityHandler } from "./application/handlers/create-availability.handler";
+import { CreateReservationHandler } from "./application/handlers/create-reservation.handler";
+import { CreateScheduleHandler } from "./application/handlers/create-schedule.handler";
 
 // Reassignment Command Handlers
 import {
@@ -44,8 +44,8 @@ import {
   CancelReassignmentRequestHandler,
   AutoProcessReassignmentRequestsHandler,
   ApplyReassignmentHandler,
-  OptimizeReassignmentQueueHandler
-} from './application/handlers/reassignment.command-handlers';
+  OptimizeReassignmentQueueHandler,
+} from "./application/handlers/reassignment.command-handlers";
 
 // Recurring Reservation Command Handlers
 import {
@@ -55,8 +55,8 @@ import {
   GenerateRecurringReservationInstancesHandler,
   ConfirmRecurringReservationInstanceHandler,
   ValidateRecurringReservationHandler,
-  BulkCancelRecurringReservationsHandler
-} from './application/handlers/recurring-reservation.command-handlers';
+  BulkCancelRecurringReservationsHandler,
+} from "./application/handlers/recurring-reservation.command-handlers";
 
 // Waiting List Command Handlers
 import {
@@ -67,15 +67,21 @@ import {
   EscalatePriorityHandler,
   ProcessExpiredEntriesHandler,
   BulkNotifyWaitingListHandler,
-  OptimizeWaitingListHandler
-} from './application/handlers/waiting-list.command-handlers';
+  OptimizeWaitingListHandler,
+} from "./application/handlers/waiting-list.command-handlers";
 
 // Query Handlers
-import { GetCalendarIntegrationsHandler } from './application/queries/get-calendar-integrations.handler';
-import { GetAvailabilityWithConflictsHandler } from './application/queries/get-availability-with-conflicts.handler';
-import { GetCalendarViewHandler } from './application/queries/get-calendar-view.handler';
-import { GetReservationHistoryHandler, ExportReservationHistoryHandler } from './application/handlers/get-reservation-history.handler';
-import { GetAvailabilityHandler, GetResourceAvailabilityHandler } from './application/handlers/get-availability.handler';
+import { GetCalendarIntegrationsHandler } from "./application/queries/get-calendar-integrations.handler";
+import { GetAvailabilityWithConflictsHandler } from "./application/queries/get-availability-with-conflicts.handler";
+import { GetCalendarViewHandler } from "./application/queries/get-calendar-view.handler";
+import {
+  GetReservationHistoryHandler,
+  ExportReservationHistoryHandler,
+} from "./application/handlers/get-reservation-history.handler";
+import {
+  GetAvailabilityHandler,
+  GetResourceAvailabilityHandler,
+} from "./application/handlers/get-availability.handler";
 
 // Reassignment Query Handlers
 import {
@@ -94,10 +100,10 @@ import {
   GetResourceReassignmentRequestsHandler,
   GetProgramReassignmentRequestsHandler,
   GetUserReassignmentHistoryHandler,
-  GetReassignmentTrendsHandler
-} from './application/handlers/reassignment.query-handlers';
+  GetReassignmentTrendsHandler,
+} from "./application/handlers/reassignment.query-handlers";
 
-// Recurring Reservation Query Handlers  
+// Recurring Reservation Query Handlers
 import {
   GetRecurringReservationHandler,
   GetRecurringReservationsHandler,
@@ -107,8 +113,8 @@ import {
   GetRecurringReservationConflictsHandler,
   GetUserRecurringReservationsHandler,
   GetRecurringReservationAnalyticsHandler,
-  GetUpcomingRecurringInstancesHandler
-} from './application/handlers/recurring-reservation.query-handlers';
+  GetUpcomingRecurringInstancesHandler,
+} from "./application/handlers/recurring-reservation.query-handlers";
 
 // Waiting List Query Handlers
 import {
@@ -121,8 +127,8 @@ import {
   ValidateWaitingListEntryQueryHandler,
   GetWaitingListAlternativesHandler,
   GetExpiredWaitingListEntriesHandler,
-  SearchWaitingListsHandler
-} from './application/handlers/waiting-list.query-handlers';
+  SearchWaitingListsHandler,
+} from "./application/handlers/waiting-list.query-handlers";
 
 // Advanced Search Query Handlers - RF-09
 import {
@@ -130,46 +136,46 @@ import {
   RealTimeAvailabilitySearchHandler,
   SearchHistoryHandler,
   PopularResourcesHandler,
-  QuickSearchHandler
-} from './application/handlers/advanced-search.query-handlers';
+  QuickSearchHandler,
+} from "./application/handlers/advanced-search.query-handlers";
 
 // Repository implementations (Prisma-based)
-import { PrismaAvailabilityRepository } from './infrastructure/repositories/prisma-availability.repository';
-import { PrismaScheduleRepository } from './infrastructure/repositories/prisma-schedule.repository';
-import { PrismaReservationRepository } from './infrastructure/repositories/prisma-reservation.repository';
-import { PrismaCalendarEventRepository } from './infrastructure/repositories/prisma-calendar-event.repository';
-import { PrismaCalendarIntegrationRepository } from './infrastructure/repositories/prisma-calendar-integration.repository';
-import { PrismaReservationHistoryRepository } from './infrastructure/repositories/prisma-reservation-history.repository';
+import { PrismaAvailabilityRepository } from "./infrastructure/repositories/prisma-availability.repository";
+import { PrismaScheduleRepository } from "./infrastructure/repositories/prisma-schedule.repository";
+import { PrismaReservationRepository } from "./infrastructure/repositories/prisma-reservation.repository";
+import { PrismaCalendarEventRepository } from "./infrastructure/repositories/prisma-calendar-event.repository";
+import { PrismaCalendarIntegrationRepository } from "./infrastructure/repositories/prisma-calendar-integration.repository";
+import { PrismaReservationHistoryRepository } from "./infrastructure/repositories/prisma-reservation-history.repository";
 
 // Simple stub repository implementations (temporary)
-import { SimpleRecurringReservationRepository } from './infrastructure/repositories/simple-recurring-reservation.repository';
-import { SimpleRecurringReservationInstanceRepository } from './infrastructure/repositories/simple-recurring-reservation-instance.repository';
-import { SimpleReservationLimitRepository } from './infrastructure/repositories/simple-reservation-limit.repository';
-import { SimpleWaitingListEntryRepository } from './infrastructure/repositories/simple-waiting-list-entry.repository';
-import { SimplePenaltyRepository } from './infrastructure/repositories/simple-penalty.repository';
-import { SimplePenaltyEventRepository } from './infrastructure/repositories/simple-penalty-event.repository';
-import { SimpleUserPenaltyRepository } from './infrastructure/repositories/simple-user-penalty.repository';
-import { SimpleReassignmentRequestRepository } from './infrastructure/repositories/simple-reassignment-request.repository';
-import { SimpleResourceEquivalenceRepository } from './infrastructure/repositories/simple-resource-equivalence.repository';
-import { SimpleReassignmentConfigurationRepository } from './infrastructure/repositories/simple-reassignment-configuration.repository';
+import { SimpleRecurringReservationRepository } from "./infrastructure/repositories/simple-recurring-reservation.repository";
+import { SimpleRecurringReservationInstanceRepository } from "./infrastructure/repositories/simple-recurring-reservation-instance.repository";
+import { SimpleReservationLimitRepository } from "./infrastructure/repositories/simple-reservation-limit.repository";
+import { SimpleWaitingListEntryRepository } from "./infrastructure/repositories/simple-waiting-list-entry.repository";
+import { SimplePenaltyRepository } from "./infrastructure/repositories/simple-penalty.repository";
+import { SimplePenaltyEventRepository } from "./infrastructure/repositories/simple-penalty-event.repository";
+import { SimpleUserPenaltyRepository } from "./infrastructure/repositories/simple-user-penalty.repository";
+import { SimpleReassignmentRequestRepository } from "./infrastructure/repositories/simple-reassignment-request.repository";
+import { SimpleResourceEquivalenceRepository } from "./infrastructure/repositories/simple-resource-equivalence.repository";
+import { SimpleReassignmentConfigurationRepository } from "./infrastructure/repositories/simple-reassignment-configuration.repository";
 
 // Infrastructure Services
-import { GoogleCalendarService } from './infrastructure/services/google-calendar.service';
-import { OutlookCalendarService } from './infrastructure/services/outlook-calendar.service';
-import { ICalService } from './infrastructure/services/ical.service';
-import { InternalCalendarService } from './infrastructure/services/internal-calendar.service';
+import { GoogleCalendarService } from "./infrastructure/services/google-calendar.service";
+import { OutlookCalendarService } from "./infrastructure/services/outlook-calendar.service";
+import { ICalService } from "./infrastructure/services/ical.service";
+import { InternalCalendarService } from "./infrastructure/services/internal-calendar.service";
 
 // Advanced booking modules
-import { NotificationModule as LocalNotificationModule } from './infrastructure/modules/notification.module';
-import { AuditModule } from './infrastructure/modules/audit.module';
+import { NotificationModule as LocalNotificationModule } from "./infrastructure/modules/notification.module";
+import { AuditModule } from "./infrastructure/modules/audit.module";
 
 // Shared modules
-import { CommonModule } from '../../libs/common/common.module';
-import { EventBusModule } from '../../libs/event-bus/event-bus.module';
-import { LoggingModule } from '../../libs/logging/logging.module';
-import { NotificationModule } from '../../libs/notification/notification.module';
-import { ResourcesModule } from '../resources-service/resources.module';
-import { HealthModule } from '../../health/health.module';
+import { CommonModule } from "../../libs/common/common.module";
+import { EventBusModule } from "../../libs/event-bus/event-bus.module";
+import { LoggingModule } from "../../libs/logging/logging.module";
+import { NotificationModule } from "../../libs/notification/notification.module";
+import { ResourcesModule } from "../resources-service/resources.module";
+import { HealthModule } from "../../health/health.module";
 
 const commandHandlers = [
   CreateCalendarIntegrationHandler,
@@ -262,68 +268,68 @@ const queryHandlers = [
 
 const repositories = [
   {
-    provide: 'AvailabilityRepository',
+    provide: "AvailabilityRepository",
     useClass: PrismaAvailabilityRepository,
   },
   {
-    provide: 'ScheduleRepository',
+    provide: "ScheduleRepository",
     useClass: PrismaScheduleRepository,
   },
   {
-    provide: 'ReservationRepository',
+    provide: "ReservationRepository",
     useClass: PrismaReservationRepository,
   },
   {
-    provide: 'ReservationHistoryRepository',
+    provide: "ReservationHistoryRepository",
     useClass: PrismaReservationHistoryRepository,
   },
   {
-    provide: 'CalendarIntegrationRepository',
+    provide: "CalendarIntegrationRepository",
     useClass: PrismaCalendarIntegrationRepository,
   },
   {
-    provide: 'CalendarEventRepository',
+    provide: "CalendarEventRepository",
     useClass: PrismaCalendarEventRepository,
   },
   // New repositories - using simple stubs for now
   {
-    provide: 'RecurringReservationRepository',
+    provide: "RecurringReservationRepository",
     useClass: SimpleRecurringReservationRepository,
   },
   {
-    provide: 'RecurringReservationInstanceRepository',
+    provide: "RecurringReservationInstanceRepository",
     useClass: SimpleRecurringReservationInstanceRepository,
   },
   {
-    provide: 'ReservationLimitRepository',
+    provide: "ReservationLimitRepository",
     useClass: SimpleReservationLimitRepository,
   },
   {
-    provide: 'WaitingListEntryRepository',
+    provide: "WaitingListEntryRepository",
     useClass: SimpleWaitingListEntryRepository,
   },
   {
-    provide: 'PenaltyRepository',
+    provide: "PenaltyRepository",
     useClass: SimplePenaltyRepository,
   },
   {
-    provide: 'PenaltyEventRepository',
+    provide: "PenaltyEventRepository",
     useClass: SimplePenaltyEventRepository,
   },
   {
-    provide: 'UserPenaltyRepository',
+    provide: "UserPenaltyRepository",
     useClass: SimpleUserPenaltyRepository,
   },
   {
-    provide: 'ReassignmentRequestRepository',
+    provide: "ReassignmentRequestRepository",
     useClass: SimpleReassignmentRequestRepository,
   },
   {
-    provide: 'ResourceEquivalenceRepository',
+    provide: "ResourceEquivalenceRepository",
     useClass: SimpleResourceEquivalenceRepository,
   },
   {
-    provide: 'ReassignmentConfigurationRepository',
+    provide: "ReassignmentConfigurationRepository",
     useClass: SimpleReassignmentConfigurationRepository,
   },
 ];
@@ -367,15 +373,15 @@ const infrastructureServices = [
     RecurringReservationService,
     PenaltyService,
     {
-      provide: 'RecurringReservationDomainService',
+      provide: "RecurringReservationDomainService",
       useClass: RecurringReservationDomainServiceImpl,
     },
     {
-      provide: 'ReservationLimitsDomainService',
+      provide: "ReservationLimitsDomainService",
       useClass: ReservationLimitsDomainServiceImpl,
     },
     {
-      provide: 'WaitingListDomainService',
+      provide: "WaitingListDomainService",
       useClass: WaitingListDomainServiceImpl,
     },
     PenaltyDomainServiceImpl,

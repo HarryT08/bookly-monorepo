@@ -1,14 +1,19 @@
 import { Module } from "@nestjs/common";
 import { CqrsModule } from "@nestjs/cqrs";
-import { ReportsService } from "@apps/reports-service/application/services/reports.service";
+
+// Controllers
+import { ReportsCategoryController } from "./infrastructure/controllers/reports-category.controller";
 import { ReportsController } from "@apps/reports-service/infrastructure/controllers/reports.controller";
 import { UsageReportsController } from "@apps/reports-service/infrastructure/controllers/usage-reports.controller";
 import { UserReportsController } from "@apps/reports-service/infrastructure/controllers/user-reports.controller";
 import { ExportReportsController } from "@apps/reports-service/infrastructure/controllers/export-reports.controller";
+
+// Modules
 import { LoggingModule } from "@/libs/logging/logging.module";
 import { CommonModule } from "@/libs/common/common.module";
 import { EventBusModule } from "@/libs/event-bus/event-bus.module";
 import { HealthModule } from "../../health/health.module";
+import { AuthModule } from "@apps/auth-service/auth.module";
 
 // Command Handlers
 import { CreateFeedbackHandler } from "@apps/reports-service/application/handlers/create-feedback.handler";
@@ -38,7 +43,7 @@ import { PrismaReportExportsRepository } from "@apps/reports-service/infrastruct
 
 // Services
 import { ReportsAuditService } from "@apps/reports-service/application/services/audit.service";
-import { AuthModule } from "@apps/auth-service/auth.module";
+import { ReportsService } from "@apps/reports-service/application/services/reports.service";
 
 const commandHandlers = [
   CreateFeedbackHandler,
@@ -89,9 +94,9 @@ const repositories = [
     UsageReportsController,
     UserReportsController,
     ExportReportsController,
+    ReportsCategoryController,
   ],
   providers: [
-    ReportsService,
     ReportsAuditService,
     ...commandHandlers,
     ...queryHandlers,
