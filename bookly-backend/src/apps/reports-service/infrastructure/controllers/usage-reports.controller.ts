@@ -20,7 +20,7 @@ import {
 import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@libs/common/guards/roles.guard';
 import { Roles } from '@libs/common/decorators/roles.decorator';
-import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ApiResponseBookly, PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 import { UsageReportFiltersDto } from '@dto/reports/usage-report-filters.dto';
 import { UsageReportResponseDto } from '@dto/reports/report-response.dto';
@@ -70,7 +70,7 @@ export class UsageReportsController {
   async generateUsageReport(
     @Query() filters: UsageReportFiltersDto,
     @Request() req: any,
-  ) {
+  ): Promise<ApiResponseBookly<UsageReportResponseDto>> {
     const startTime = Date.now();
     const requestId = req.headers['x-request-id'] || `req_${Date.now()}`;
 
@@ -148,7 +148,7 @@ export class UsageReportsController {
   async getUsageReportSummary(
     @Query() filters: UsageReportFiltersDto,
     @Request() req: any,
-  ) {
+  ): Promise<ApiResponseBookly<any>> {
     try {
       this.loggingService.log(
         `Usage report summary requested`,
@@ -167,7 +167,7 @@ export class UsageReportsController {
 
       const result = await this.queryBus.execute(query);
 
-      return result;
+      return ResponseUtil.success(result, 'Usage report summary retrieved successfully');
 
     } catch (error) {
       this.loggingService.error(
@@ -214,7 +214,7 @@ export class UsageReportsController {
     @Query('filterType') filterType: 'programs' | 'resourceTypes' | 'categories' | 'users',
     @Query('userType') userType?: string,
     @Request() req?: any,
-  ) {
+  ): Promise<ApiResponseBookly<any>> {
     try {
       this.loggingService.log(
         `Filter options requested`,
@@ -235,7 +235,7 @@ export class UsageReportsController {
 
       const result = await this.queryBus.execute(query);
 
-      return result;
+      return ResponseUtil.success(result, 'Filter options retrieved successfully');
 
     } catch (error) {
       this.loggingService.error(

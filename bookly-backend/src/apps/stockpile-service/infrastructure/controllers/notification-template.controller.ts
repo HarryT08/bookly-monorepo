@@ -11,11 +11,11 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ResponseUtil } from '@libs/common/utils/response.util';
-import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ApiResponseBookly, PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { 
   ApiTags, 
   ApiOperation, 
-  ApiResponse, 
+  ApiResponse as SwaggerApiResponse, 
   ApiParam, 
   ApiQuery,
   ApiBearerAuth
@@ -80,11 +80,11 @@ export class NotificationTemplateController {
   @Post(STOCKPILE_URLS.NOTIFICATION_CHANNEL_CREATE)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Create notification channel' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification channel created successfully', type: NotificationChannelDto })
-  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Insufficient permissions' })
+  @SwaggerApiResponse({ status: HttpStatus.CREATED, description: 'Notification channel created successfully', type: NotificationChannelDto })
+  @SwaggerApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Insufficient permissions' })
   async createNotificationChannel(
     @Body() dto: CreateNotificationChannelDto
-  ): Promise<SuccessResponseDto<NotificationChannelDto>> {
+  ): Promise<ApiResponseBookly<NotificationChannelDto>> {
     const command = new CreateNotificationChannelCommand(
       dto.name,
       dto.channel,
@@ -101,10 +101,10 @@ export class NotificationTemplateController {
   @Get(STOCKPILE_URLS.NOTIFICATION_CHANNELS)
   @ApiOperation({ summary: 'Get notification channels' })
   @ApiQuery({ name: 'isActive', required: false, description: 'Filter by active status' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification channels retrieved successfully', type: [NotificationChannelDto] })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification channels retrieved successfully', type: [NotificationChannelDto] })
   async getNotificationChannels(
     @Query('isActive') isActive?: boolean
-  ): Promise<SuccessResponseDto<NotificationChannelDto[]>> {
+  ): Promise<ApiResponseBookly<NotificationChannelDto[]>> {
     const query = new GetNotificationChannelsQuery(isActive);
     const result = await this.queryBus.execute(query);
     return ResponseUtil.success(result, 'Notification channels retrieved successfully');
@@ -113,9 +113,9 @@ export class NotificationTemplateController {
   @Get(STOCKPILE_URLS.NOTIFICATION_CHANNEL_BY_ID)
   @ApiOperation({ summary: 'Get notification channel by ID' })
   @ApiParam({ name: 'id', description: 'Notification channel ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification channel retrieved successfully', type: NotificationChannelDto })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification channel not found' })
-  async getNotificationChannelById(@Param('id') id: string): Promise<SuccessResponseDto<NotificationChannelDto | null>> {
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification channel retrieved successfully', type: NotificationChannelDto })
+  @SwaggerApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification channel not found' })
+  async getNotificationChannelById(@Param('id') id: string): Promise<ApiResponseBookly<NotificationChannelDto | null>> {
     const query = new GetNotificationChannelByIdQuery(id);
     const result = await this.queryBus.execute(query);
     return ResponseUtil.success(result, 'Notification channel retrieved successfully');
@@ -124,12 +124,12 @@ export class NotificationTemplateController {
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_CREATE)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Create notification template' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification template created successfully', type: NotificationTemplateDto })
-  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Insufficient permissions' })
+  @SwaggerApiResponse({ status: HttpStatus.CREATED, description: 'Notification template created successfully', type: NotificationTemplateDto })
+  @SwaggerApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Insufficient permissions' })
   async createNotificationTemplate(
     @Body() dto: CreateNotificationTemplateDto,
     @CurrentUser() user: any
-  ): Promise<SuccessResponseDto<NotificationTemplateDto>> {
+  ): Promise<ApiResponseBookly<NotificationTemplateDto>> {
     const command = new CreateNotificationTemplateCommand(
       dto.name,
       dto.channelId,
@@ -154,12 +154,12 @@ export class NotificationTemplateController {
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Update notification template' })
   @ApiParam({ name: 'id', description: 'Notification template ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification template updated successfully', type: NotificationTemplateDto })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification template not found' })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification template updated successfully', type: NotificationTemplateDto })
+  @SwaggerApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification template not found' })
   async updateNotificationTemplate(
     @Param('id') id: string,
     @Body() dto: UpdateNotificationTemplateDto
-  ): Promise<SuccessResponseDto<NotificationTemplateDto>> {
+  ): Promise<ApiResponseBookly<NotificationTemplateDto>> {
     const command = new UpdateNotificationTemplateCommand(
       id,
       dto.name,
@@ -181,7 +181,7 @@ export class NotificationTemplateController {
   @ApiQuery({ name: 'isActive', required: false, description: 'Filter by active status' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number', type: Number })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page', type: Number })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification templates retrieved successfully' })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification templates retrieved successfully' })
   async getNotificationTemplates(
     @Query('channelId') channelId?: string,
     @Query('eventType') eventType?: NotificationEventType,
@@ -190,7 +190,7 @@ export class NotificationTemplateController {
     @Query('isActive') isActive?: boolean,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
-  ): Promise<SuccessResponseDto<NotificationTemplateDto[]>> {
+  ): Promise<ApiResponseBookly<NotificationTemplateDto[]>> {
     const query = new GetNotificationTemplatesQuery(
       channelId,
       eventType,
@@ -208,9 +208,9 @@ export class NotificationTemplateController {
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_BY_ID)
   @ApiOperation({ summary: 'Get notification template by ID' })
   @ApiParam({ name: 'id', description: 'Notification template ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification template retrieved successfully', type: NotificationTemplateDto })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification template not found' })
-  async getNotificationTemplateById(@Param('id') id: string): Promise<SuccessResponseDto<NotificationTemplateDto | null>> {
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification template retrieved successfully', type: NotificationTemplateDto })
+  @SwaggerApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification template not found' })
+  async getNotificationTemplateById(@Param('id') id: string): Promise<ApiResponseBookly<NotificationTemplateDto | null>> {
     const query = new GetNotificationTemplateByIdQuery(id);
     const result = await this.queryBus.execute(query);
     return ResponseUtil.success(result, 'Notification template retrieved successfully');
@@ -222,13 +222,13 @@ export class NotificationTemplateController {
   @ApiQuery({ name: 'eventType', required: true, enum: NotificationEventType, description: 'Event type' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Resource type' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Category ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Default notification template retrieved successfully', type: NotificationTemplateDto })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Default notification template retrieved successfully', type: NotificationTemplateDto })
   async getDefaultNotificationTemplate(
     @Query('channelId') channelId: string,
     @Query('eventType') eventType: NotificationEventType,
     @Query('resourceType') resourceType?: string,
     @Query('categoryId') categoryId?: string
-  ): Promise<SuccessResponseDto<NotificationTemplateDto | null>> {
+  ): Promise<ApiResponseBookly<NotificationTemplateDto | null>> {
     const query = new GetDefaultNotificationTemplateQuery(
       channelId,
       eventType,
@@ -242,7 +242,7 @@ export class NotificationTemplateController {
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_VARIABLES)
   @ApiOperation({ summary: 'Get notification template variables' })
   @ApiParam({ name: 'id', description: 'Notification template ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification template variables retrieved successfully' })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification template variables retrieved successfully' })
   async getNotificationTemplateVariables(@Param('id') id: string): Promise<any> {
     const query = new GetNotificationTemplateVariablesQuery(id);
     return await this.queryBus.execute(query);
@@ -252,7 +252,7 @@ export class NotificationTemplateController {
   @ApiOperation({ summary: 'Get available notification variables' })
   @ApiQuery({ name: 'eventType', required: true, enum: NotificationEventType, description: 'Event type' })
   @ApiQuery({ name: 'resourceType', required: false, description: 'Resource type' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Available notification variables retrieved successfully' })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Available notification variables retrieved successfully' })
   async getAvailableNotificationVariables(
     @Query('eventType') eventType: NotificationEventType,
     @Query('resourceType') resourceType?: string
@@ -264,12 +264,12 @@ export class NotificationTemplateController {
   @Post(STOCKPILE_URLS.NOTIFICATION_CONFIGS)
   @Roles('COORDINATOR', 'ADMIN')
   @ApiOperation({ summary: 'Create notification config' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification config created successfully', type: NotificationConfigDto })
-  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Insufficient permissions' })
+  @SwaggerApiResponse({ status: HttpStatus.CREATED, description: 'Notification config created successfully', type: NotificationConfigDto })
+  @SwaggerApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Insufficient permissions' })
   async createNotificationConfig(
     @Body() dto: CreateNotificationConfigDto,
     @CurrentUser() user: any
-  ): Promise<SuccessResponseDto<NotificationConfigDto>> {
+  ): Promise<ApiResponseBookly<NotificationConfigDto>> {
     const command = new CreateNotificationConfigCommand(
       dto.programId,
       dto.resourceType,
@@ -293,14 +293,14 @@ export class NotificationTemplateController {
   @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category ID' })
   @ApiQuery({ name: 'channelId', required: false, description: 'Filter by channel ID' })
   @ApiQuery({ name: 'isEnabled', required: false, description: 'Filter by enabled status' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification configs retrieved successfully', type: [NotificationConfigDto] })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification configs retrieved successfully', type: [NotificationConfigDto] })
   async getNotificationConfigs(
     @Query('programId') programId?: string,
     @Query('resourceType') resourceType?: string,
     @Query('categoryId') categoryId?: string,
     @Query('channelId') channelId?: string,
     @Query('isEnabled') isEnabled?: boolean
-  ): Promise<SuccessResponseDto<NotificationConfigDto[]>> {
+  ): Promise<ApiResponseBookly<NotificationConfigDto[]>> {
     const query = new GetNotificationConfigsQuery(
       programId,
       resourceType,
@@ -315,9 +315,9 @@ export class NotificationTemplateController {
   @Get(STOCKPILE_URLS.NOTIFICATION_CONFIGS_BY_ID)
   @ApiOperation({ summary: 'Get notification config by ID' })
   @ApiParam({ name: 'id', description: 'Notification config ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification config retrieved successfully', type: NotificationConfigDto })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification config not found' })
-  async getNotificationConfigById(@Param('id') id: string): Promise<SuccessResponseDto<NotificationConfigDto | null>> {
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification config retrieved successfully', type: NotificationConfigDto })
+  @SwaggerApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Notification config not found' })
+  async getNotificationConfigById(@Param('id') id: string): Promise<ApiResponseBookly<NotificationConfigDto | null>> {
     const query = new GetNotificationConfigByIdQuery(id);
     const result = await this.queryBus.execute(query);
     return ResponseUtil.success(result, 'Notification config retrieved successfully');
@@ -325,10 +325,10 @@ export class NotificationTemplateController {
 
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SEND)
   @ApiOperation({ summary: 'Send notification' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'Notification sent successfully', type: SentNotificationDto })
+  @SwaggerApiResponse({ status: HttpStatus.CREATED, description: 'Notification sent successfully', type: SentNotificationDto })
   async sendNotification(
     @Body() dto: SendNotificationDto
-  ): Promise<SuccessResponseDto<SentNotificationDto>> {
+  ): Promise<ApiResponseBookly<SentNotificationDto>> {
     const command = new SendNotificationCommand(
       dto.channel,
       dto.templateId,
@@ -345,7 +345,7 @@ export class NotificationTemplateController {
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SEND_BATCH)
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Send batch notifications' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Batch notifications sent successfully' })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Batch notifications sent successfully' })
   async sendBatchNotifications(
     @Body() body: { channelId: string; notificationIds: string[] }
   ): Promise<void> {
@@ -359,10 +359,10 @@ export class NotificationTemplateController {
   @Get(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_SENT_BY_RESERVATION)
   @ApiOperation({ summary: 'Get sent notifications by reservation' })
   @ApiParam({ name: 'reservationId', description: 'Reservation ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Sent notifications retrieved successfully', type: [SentNotificationDto] })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Sent notifications retrieved successfully', type: [SentNotificationDto] })
   async getSentNotificationsByReservation(
     @Param('reservationId') reservationId: string
-  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+  ): Promise<ApiResponseBookly<SentNotificationDto[]>> {
     const query = new GetSentNotificationsByReservationQuery(reservationId);
     const result = await this.queryBus.execute(query);
     return ResponseUtil.success(result, 'Sent notifications retrieved successfully');
@@ -375,14 +375,14 @@ export class NotificationTemplateController {
   @ApiQuery({ name: 'status', required: false, description: 'Filter by status' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number', type: Number })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page', type: Number })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Sent notifications retrieved successfully' })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Sent notifications retrieved successfully' })
   async getSentNotificationsByRecipient(
     @Param('recipientId') recipientId: string,
     @Query('channel') channel?: NotificationChannelType,
     @Query('status') status?: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10
-  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+  ): Promise<ApiResponseBookly<SentNotificationDto[]>> {
     const query = new GetSentNotificationsByRecipientQuery(
       recipientId,
       channel,
@@ -399,10 +399,10 @@ export class NotificationTemplateController {
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Get pending notifications' })
   @ApiQuery({ name: 'channelId', required: false, description: 'Filter by channel ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Pending notifications retrieved successfully', type: [SentNotificationDto] })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Pending notifications retrieved successfully', type: [SentNotificationDto] })
   async getPendingNotifications(
     @Query('channelId') channelId?: string
-  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+  ): Promise<ApiResponseBookly<SentNotificationDto[]>> {
     const query = new GetPendingNotificationsQuery(channelId);
     const result = await this.queryBus.execute(query);
     return ResponseUtil.success(result, 'Pending notifications retrieved successfully');
@@ -413,11 +413,11 @@ export class NotificationTemplateController {
   @ApiOperation({ summary: 'Get notifications for batch processing' })
   @ApiParam({ name: 'channelId', description: 'Channel ID' })
   @ApiQuery({ name: 'batchInterval', required: true, description: 'Batch interval in milliseconds', type: Number })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notifications for batch retrieved successfully', type: [SentNotificationDto] })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notifications for batch retrieved successfully', type: [SentNotificationDto] })
   async getNotificationsForBatch(
     @Param('channelId') channelId: string,
     @Query('batchInterval') batchInterval: number
-  ): Promise<SuccessResponseDto<SentNotificationDto[]>> {
+  ): Promise<ApiResponseBookly<SentNotificationDto[]>> {
     const query = new GetNotificationsForBatchQuery(channelId, batchInterval);
     const result = await this.queryBus.execute(query);
     return ResponseUtil.success(result, 'Notifications for batch retrieved successfully');
@@ -426,11 +426,11 @@ export class NotificationTemplateController {
   @Post(STOCKPILE_URLS.NOTIFICATION_TEMPLATE_MARK_READ)
   @ApiOperation({ summary: 'Mark notification as read' })
   @ApiParam({ name: 'id', description: 'Notification ID' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Notification marked as read successfully' })
+  @SwaggerApiResponse({ status: HttpStatus.OK, description: 'Notification marked as read successfully' })
   async markNotificationAsRead(
     @Param('id') id: string,
     @CurrentUser() user: any
-  ): Promise<SuccessResponseDto<void>> {
+  ): Promise<ApiResponseBookly<void>> {
     const command = new MarkNotificationAsReadCommand(id, user.id);
     const result = await this.commandBus.execute(command);
     return ResponseUtil.success(result, 'Notification marked as read successfully');

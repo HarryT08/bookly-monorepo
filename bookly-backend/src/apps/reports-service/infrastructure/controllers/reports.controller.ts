@@ -4,7 +4,7 @@ import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { REPORTS_URLS } from '../../utils/maps/urls.map';
-import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ApiResponseBookly, PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { ExportCsvDto, FeedbackDto } from '@libs/dto';
 import { ResponseUtil } from '@libs/common/utils/response.util';
 
@@ -58,7 +58,7 @@ export class ReportsController {
     type: SuccessResponseDto
   })
   @ApiResponse({ status: 400, description: 'Invalid filter parameters' })
-  async generateUsageReport(@Query() filters: any) {
+  async generateUsageReport(@Query() filters: any): Promise<ApiResponseBookly<any>> {
     const generateUsageReportDto: any = {
       startDate: filters.startDate || new Date().toISOString(),
       endDate: filters.endDate || new Date().toISOString(),
@@ -89,7 +89,7 @@ export class ReportsController {
     @Param('userId') userId: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
-  ) {
+  ): Promise<ApiResponseBookly<any>> {
     const generateUserReportDto: any = {
       userId,
       startDate,
@@ -124,7 +124,7 @@ export class ReportsController {
     type: SuccessResponseDto
   })
   @ApiResponse({ status: 400, description: 'Invalid export data' })
-  async exportToCSV(@Body() reportData: ExportCsvDto, @CurrentUser() currentUser: UserEntity) {
+  async exportToCSV(@Body() reportData: ExportCsvDto, @CurrentUser() currentUser: UserEntity): Promise<ApiResponseBookly<any>> {
     const command = new ExportReportCommand(
       reportData.reportType,
       'CSV',
@@ -146,7 +146,7 @@ export class ReportsController {
     description: 'Dashboard data retrieved successfully',
     type: SuccessResponseDto
   })
-  async getDashboardData(@Query('refresh') refresh?: boolean) {
+  async getDashboardData(@Query('refresh') refresh?: boolean): Promise<ApiResponseBookly<any>> {
     const query = new GetDashboardDataQuery(
       undefined, // userId
       refresh ? 'force-refresh' : 'default', // timeRange
@@ -177,7 +177,7 @@ export class ReportsController {
     @Query('rating') rating?: number,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
-  ) {
+  ): Promise<ApiResponseBookly<any>> {
     const query = new GetFeedbackQuery(
       resourceId,
       userId,
@@ -215,7 +215,7 @@ export class ReportsController {
     type: SuccessResponseDto
   })
   @ApiResponse({ status: 400, description: 'Invalid feedback data' })
-  async createFeedback(@Body() data: FeedbackDto, @CurrentUser() currentUser: UserEntity) {
+  async createFeedback(@Body() data: FeedbackDto, @CurrentUser() currentUser: UserEntity): Promise<ApiResponseBookly<any>> {
     const command = new CreateFeedbackCommand({ ...data, userId: currentUser.id }, currentUser.id);
     const feedback = await this.commandBus.execute(command);
     return ResponseUtil.success(feedback, 'Feedback created successfully');
@@ -238,7 +238,7 @@ export class ReportsController {
     description: 'Audit logs retrieved successfully',
     type: PaginatedResponseDto
   })
-  async getAuditLogs(@Query() filters: any) {
+  async getAuditLogs(@Query() filters: any): Promise<ApiResponseBookly<any>> {
     const query = new GetAuditLogsQuery(
       filters.resourceId,
       filters.entityType,
@@ -278,7 +278,7 @@ export class ReportsController {
     @Query('programId') programId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
-  ) {
+  ): Promise<ApiResponseBookly<any>> {
     const generateDemandReportDto: any = {
       startDate: startDate || new Date().toISOString(),
       endDate: endDate || new Date().toISOString(),

@@ -17,6 +17,7 @@ import {
   HttpCode,
   ValidationPipe,
   ParseUUIDPipe,
+  BadRequestException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -43,6 +44,8 @@ import { RecurringReservationStatsDto } from "../dtos/recurring-reservation-stat
 // Services (to be created in application layer)
 import { RecurringReservationService } from "../../application/services/recurring-reservation.service";
 import { ResponseUtil } from "@/libs/common/utils/response.util";
+import { UserEntity } from "@/apps/auth-service/domain/entities/user.entity";
+import { ApiResponseBookly } from "@/libs/dto";
 
 @ApiTags(AVAILABILITY_URLS.RECURRING_RESERVATIONS_TAG)
 @ApiBearerAuth()
@@ -82,14 +85,17 @@ export class RecurringReservationsController {
   )
   async createRecurringReservation(
     @Body(ValidationPipe) createDto: CreateRecurringReservationDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<RecurringReservationResponseDto>> {
     const result = await this.recurringReservationService.create({
       ...createDto,
       userId: user.id,
       createdBy: user.id,
     });
-    return ResponseUtil.success(result, "Recurring reservation created successfully");
+    return ResponseUtil.success(
+      result,
+      "Recurring reservation created successfully"
+    );
   }
 
   @Get(AVAILABILITY_URLS.RECURRING_RESERVATIONS_FIND_ALL)
@@ -112,11 +118,15 @@ export class RecurringReservationsController {
   )
   async getRecurringReservations(
     @Query(ValidationPipe) queryDto: RecurringReservationQueryDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<RecurringReservationResponseDto[]>> {
+    const userId = user.hasRole(UserRole.STUDENT) ? user.id : queryDto.userId;
+    if (!userId) {
+      throw new BadRequestException("User ID is required");
+    }
     const result = await this.recurringReservationService.findAll({
       ...queryDto,
-      userId: user.role === UserRole.STUDENT ? user.id : queryDto.userId,
+      userId,
     });
     return ResponseUtil.paginated(
       result.data,
@@ -156,9 +166,11 @@ export class RecurringReservationsController {
   )
   async getRecurringReservationById(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ) {
-    const result = await this.recurringReservationService.findById(id, user.id);
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<RecurringReservationResponseDto>> {
+    const result = await this.recurringReservationService.findById(id, {
+      userId: user.id,
+    });
     return ResponseUtil.success(result, "Recurring reservation found");
   }
 
@@ -197,8 +209,8 @@ export class RecurringReservationsController {
   async updateRecurringReservation(
     @Param("id", ParseUUIDPipe) id: string,
     @Body(ValidationPipe) updateDto: UpdateRecurringReservationDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<RecurringReservationResponseDto>> {
     const result = await this.recurringReservationService.update(
       id,
       updateDto,
@@ -243,8 +255,8 @@ export class RecurringReservationsController {
   )
   async cancelRecurringReservation(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<void>> {
     await this.recurringReservationService.cancel(
       id,
       "Cancelled by user",
@@ -299,11 +311,11 @@ export class RecurringReservationsController {
   )
   async getRecurringReservationInstances(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("status") status?: string,
     @Query("from") from?: string,
     @Query("to") to?: string
-  ) {
+  ): Promise<ApiResponseBookly<any[]>> {
     const result = await this.recurringReservationService.getInstances(id, {
       status,
       from: from ? new Date(from) : undefined,
@@ -349,9 +361,9 @@ export class RecurringReservationsController {
   async cancelRecurringReservationInstance(
     @Param("id", ParseUUIDPipe) id: string,
     @Param("instanceId", ParseUUIDPipe) instanceId: string,
-    @CurrentUser() user: any
-  ) {
-    await this.recurringReservationService.cancelInstance(
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<void>> {
+    this.recurringReservationService.cancelInstance(
       id,
       instanceId,
       user.id,
@@ -394,8 +406,10 @@ export class RecurringReservationsController {
   async generateAdditionalInstances(
     @Param("id", ParseUUIDPipe) id: string,
     @Body("generateUntil") generateUntil: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<
+    ApiResponseBookly<{ generatedCount: number; totalInstances: number }>
+  > {
     const result = await this.recurringReservationService.generateInstances(
       id,
       new Date(generateUntil),
@@ -424,8 +438,8 @@ export class RecurringReservationsController {
   @Roles(UserRole.TEACHER, UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async getRecurringReservationStats(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<RecurringReservationStatsDto>> {
     const result = await this.recurringReservationService.getStatistics(
       id,
       user.id
@@ -463,8 +477,16 @@ export class RecurringReservationsController {
   )
   async validateRecurringReservation(
     @Body(ValidationPipe) createDto: CreateRecurringReservationDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<
+    ApiResponseBookly<{
+      isValid: boolean;
+      violations: string[];
+      warnings: string[];
+      estimatedInstances: number;
+      conflicts: any[];
+    }>
+  > {
     const result = await this.recurringReservationService.validate({
       ...createDto,
       userId: user.id,
@@ -493,8 +515,8 @@ export class RecurringReservationsController {
   async getUserRecurringReservations(
     @Param("userId", ParseUUIDPipe) userId: string,
     @Query(ValidationPipe) queryDto: RecurringReservationQueryDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<RecurringReservationResponseDto[]>> {
     const result = await this.recurringReservationService.findAll({
       ...queryDto,
       userId,
@@ -529,8 +551,8 @@ export class RecurringReservationsController {
   async getResourceRecurringReservations(
     @Param("resourceId", ParseUUIDPipe) resourceId: string,
     @Query(ValidationPipe) queryDto: RecurringReservationQueryDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<RecurringReservationResponseDto[]>> {
     const result = await this.recurringReservationService.findAll({
       ...queryDto,
       resourceId,
@@ -583,8 +605,14 @@ export class RecurringReservationsController {
   async bulkCancelRecurringReservations(
     @Body("reservationIds") reservationIds: string[],
     @Body("reason") reason: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<
+    ApiResponseBookly<{
+      successful: string[];
+      failed: { id: string; error: string }[];
+      totalProcessed: number;
+    }>
+  > {
     const result = await this.recurringReservationService.bulkCancel(
       reservationIds,
       reason,

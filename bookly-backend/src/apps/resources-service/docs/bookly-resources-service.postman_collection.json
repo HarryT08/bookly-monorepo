@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Bookly Resources Service API v2.0",
-    "description": "Sistema de Gestión de Recursos Físicos - Bookly UFPS\n\nCaracterísticas principales:\n- RF-01 al RF-06: Gestión completa de recursos físicos\n- CRUD de recursos con códigos únicos\n- Sistema de categorización jerárquica\n- Importación masiva CSV/Excel\n- Gestión de mantenimiento\n- Asociación con programas académicos\n- Event-driven architecture",
-    "version": "2.0.0",
+    "name": "Bookly Resources Service",
+    "description": "Complete API collection for Bookly Resources Service - Microservice for resource management, categories, programs, maintenance types, imports, and responsibilities",
+    "version": "1.0.0",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -10,56 +10,49 @@
     "bearer": [
       {
         "key": "token",
-        "value": "{{access_token}}",
+        "value": "{{authToken}}",
         "type": "string"
       }
     ]
   },
   "variable": [
     {
-      "key": "base_url",
+      "key": "baseUrl",
       "value": "http://localhost:3003",
       "type": "string"
     },
     {
-      "key": "ws_url",
-      "value": "ws://localhost:3003", 
+      "key": "apiPrefix",
+      "value": "/api/v1",
       "type": "string"
     },
     {
-      "key": "access_token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "resource_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "category_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "program_id",
-      "value": "ING-SIS",
-      "type": "string"
-    },
-    {
-      "key": "import_id",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "maintenance_id",
-      "value": "",
+      "key": "authToken",
+      "value": "your-jwt-token-here",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "Resources Management (RF-01)",
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Get Health Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "health"]
+            },
+            "description": "Check the health status of the resources service including database, redis, and memory checks"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources",
       "item": [
         {
           "name": "Create Resource",
@@ -73,56 +66,193 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Salón 201-A\",\n  \"description\": \"Salón de clases con capacidad para 30 estudiantes\",\n  \"type\": \"SALON\",\n  \"capacity\": 30,\n  \"location\": {\n    \"building\": \"Ingeniería de Sistemas\",\n    \"floor\": 2,\n    \"room\": \"201-A\"\n  },\n  \"attributes\": {\n    \"hasProjector\": true,\n    \"hasAirConditioning\": true,\n    \"boardType\": \"smartboard\"\n  },\n  \"equipment\": [\n    {\n      \"name\": \"Proyector Epson\",\n      \"quantity\": 1\n    }\n  ],\n  \"status\": \"ACTIVE\"\n}"
+              "raw": "{\n  \"name\": \"Aula 101\",\n  \"type\": \"SALON\",\n  \"description\": \"Aula de clases con capacidad para 40 estudiantes\",\n  \"capacity\": 40,\n  \"location\": \"Edificio A - Piso 1\",\n  \"programId\": \"program-id-here\",\n  \"categoryId\": \"category-id-here\",\n  \"attributes\": {\n    \"equipment\": [\"projector\", \"whiteboard\"],\n    \"accessibility\": [\"wheelchair-accessible\"],\n    \"specialConditions\": []\n  },\n  \"availableSchedules\": [\n    {\n      \"dayOfWeek\": 1,\n      \"startTime\": \"08:00\",\n      \"endTime\": \"18:00\"\n    }\n  ]\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/resources",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources"]
             },
-            "description": "RF-01: Crear nuevo recurso con código único autogenerado"
+            "description": "Create a new resource with auto-generated unique code. Implements RF-01 and RF-03."
           }
         },
         {
           "name": "Get All Resources",
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/resources?type=SALON&status=ACTIVE&page=1&limit=20",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources"],
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources?type=SALON&status=ACTIVE&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources"],
               "query": [
                 {
                   "key": "type",
-                  "value": "SALON"
+                  "value": "SALON",
+                  "description": "Filter by resource type"
                 },
                 {
-                  "key": "status", 
-                  "value": "ACTIVE"
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "description": "Filter by resource status"
                 },
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status"
                 },
                 {
-                  "key": "limit",
-                  "value": "20"
+                  "key": "categoryId",
+                  "value": "",
+                  "description": "Filter by category ID",
+                  "disabled": true
+                },
+                {
+                  "key": "location",
+                  "value": "",
+                  "description": "Filter by location (partial match)",
+                  "disabled": true
                 }
               ]
             },
-            "description": "RF-01: Listar recursos con filtros"
+            "description": "Retrieves all resources with optional filtering by type, status, category, etc."
+          }
+        },
+        {
+          "name": "Get Resources Paginated",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/paginated?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", "paginated"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by resource type",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter by resource status",
+                  "disabled": true
+                },
+                {
+                  "key": "categoryId",
+                  "value": "",
+                  "description": "Filter by category ID",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "",
+                  "description": "Filter by active status",
+                  "disabled": true
+                },
+                {
+                  "key": "location",
+                  "value": "",
+                  "description": "Filter by location (partial match)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieves resources with pagination support and optional filtering."
+          }
+        },
+        {
+          "name": "Search Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/search?query=aula",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "aula",
+                  "description": "Search query"
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by resource type",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search resources by name, description, or code."
           }
         },
         {
           "name": "Get Resource by ID",
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources", "{{resource_id}}"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id"]
             },
-            "description": "RF-01: Obtener recurso específico"
+            "description": "Retrieves a single resource by its unique identifier."
+          }
+        },
+        {
+          "name": "Get Resource by Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/code/:code",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", "code", ":code"]
+            },
+            "description": "Retrieves a single resource by its unique code."
+          }
+        },
+        {
+          "name": "Check Resource Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id/availability?date=2024-01-15T09:00:00.000Z&userType=STUDENT&duration=120",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id", "availability"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15T09:00:00.000Z",
+                  "description": "Requested date (ISO string)"
+                },
+                {
+                  "key": "userType",
+                  "value": "STUDENT",
+                  "description": "User type making the request"
+                },
+                {
+                  "key": "duration",
+                  "value": "120",
+                  "description": "Reservation duration in minutes"
+                }
+              ]
+            },
+            "description": "Checks if a resource is available for reservation based on configured rules. Implements RF-05."
           }
         },
         {
@@ -137,32 +267,40 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Salón 201-A Renovado\",\n  \"capacity\": 35,\n  \"attributes\": {\n    \"hasProjector\": true,\n    \"hasAirConditioning\": true,\n    \"soundSystem\": true\n  }\n}"
+              "raw": "{\n  \"name\": \"Aula 101 - Actualizada\",\n  \"description\": \"Aula de clases renovada con capacidad para 45 estudiantes\",\n  \"capacity\": 45,\n  \"location\": \"Edificio A - Piso 1\",\n  \"attributes\": {\n    \"equipment\": [\"projector\", \"whiteboard\", \"sound-system\"],\n    \"accessibility\": [\"wheelchair-accessible\"],\n    \"specialConditions\": []\n  }\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources", "{{resource_id}}"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id"]
             },
-            "description": "RF-01: Actualizar recurso"
+            "description": "Updates an existing resource. Implements RF-01 and RF-03."
           }
         },
         {
           "name": "Delete Resource",
           "request": {
             "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources", "{{resource_id}}"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id?force=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id"],
+              "query": [
+                {
+                  "key": "force",
+                  "value": "false",
+                  "description": "Force hard delete even with relations"
+                }
+              ]
             },
-            "description": "RF-01: Eliminar recurso (soft delete)"
+            "description": "Deletes a resource. Uses soft delete if resource has active relations, hard delete otherwise. Implements RF-01."
           }
         }
       ]
     },
     {
-      "name": "Categories Management (RF-02)",
+      "name": "Categories",
       "item": [
         {
           "name": "Create Category",
@@ -176,182 +314,82 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Laboratorios de Biotecnología\",\n  \"description\": \"Espacios especializados\",\n  \"color\": \"#28A745\",\n  \"icon\": \"microscope\"\n}"
+              "raw": "{\n  \"name\": \"Sala de Conferencias\",\n  \"code\": \"CONF\",\n  \"description\": \"Categoría para salas de conferencias y reuniones\",\n  \"color\": \"#3B82F6\",\n  \"type\": \"RESOURCE_TYPE\",\n  \"subtype\": \"ROOM\",\n  \"service\": \"resources-service\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "categories"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories"]
             },
-            "description": "RF-02: Crear nueva categoría"
+            "description": "Creates a new resource category. Only administrators can create categories."
           }
         },
         {
           "name": "Get All Categories",
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "categories"]
-            },
-            "description": "RF-02: Listar categorías"
-          }
-        },
-        {
-          "name": "Assign Resource to Categories",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"categoryIds\": [\n    \"{{category_id}}\"\n  ]\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources", "{{resource_id}}", "categories"]
-            },
-            "description": "RF-02: Asignar categorías a recurso"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Bulk Import (RF-04)",
-      "item": [
-        {
-          "name": "Preview Import",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "multipart/form-data"
-              }
-            ],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file"
-                },
-                {
-                  "key": "previewRows",
-                  "value": "10",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/import/preview",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "import", "preview"]
-            },
-            "description": "RF-04: Previsualizar importación"
-          }
-        },
-        {
-          "name": "Start Import Job",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "multipart/form-data"
-              }
-            ],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "file",
-                  "type": "file"
-                },
-                {
-                  "key": "generateCodes",
-                  "value": "true",
-                  "type": "text"
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/import/start",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "import", "start"]
-            },
-            "description": "RF-04: Iniciar importación masiva"
-          }
-        },
-        {
-          "name": "Get Import Status",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/api/v1/import/{{import_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "import", "{{import_id}}"]
-            },
-            "description": "RF-04: Estado de importación"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Maintenance Management (RF-06)",
-      "item": [
-        {
-          "name": "Create Maintenance Schedule",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"maintenanceTypeId\": \"{{maintenance_type_id}}\",\n  \"title\": \"Mantenimiento Mensual\",\n  \"description\": \"Limpieza y calibración\",\n  \"scheduledDate\": \"2024-02-15T08:00:00Z\",\n  \"estimatedDuration\": 240,\n  \"priority\": \"MEDIUM\",\n  \"assignedTo\": \"technician-user-id\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/maintenance",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "maintenance"]
-            },
-            "description": "RF-06: Programar mantenimiento"
-          }
-        },
-        {
-          "name": "Get Maintenance Schedules",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/api/v1/maintenance?resourceId={{resource_id}}&status=SCHEDULED",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "maintenance"],
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories"],
               "query": [
                 {
-                  "key": "resourceId",
-                  "value": "{{resource_id}}"
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
                 },
                 {
-                  "key": "status",
-                  "value": "SCHEDULED"
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
                 }
               ]
             },
-            "description": "RF-06: Listar mantenimientos"
+            "description": "Retrieves all categories with optional filtering and pagination."
           }
         },
         {
-          "name": "Update Maintenance Status",
+          "name": "Get Active Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", "active"]
+            },
+            "description": "Retrieves all active categories without pagination."
+          }
+        },
+        {
+          "name": "Get Default Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/defaults",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", "defaults"]
+            },
+            "description": "Retrieves all default system categories."
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id"]
+            },
+            "description": "Retrieves a specific category by its ID."
+          }
+        },
+        {
+          "name": "Update Category",
           "request": {
             "method": "PUT",
             "header": [
@@ -362,177 +400,43 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"notes\": \"Mantenimiento completado exitosamente\",\n  \"cost\": 150000\n}"
+              "raw": "{\n  \"name\": \"Sala de Conferencias Ejecutivas\",\n  \"description\": \"Categoría actualizada para salas de conferencias de alto nivel\",\n  \"color\": \"#1E40AF\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/maintenance/{{maintenance_id}}",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "maintenance", "{{maintenance_id}}"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id"]
             },
-            "description": "RF-06: Actualizar estado de mantenimiento"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Programs Management (RF-02)",
-      "item": [
-        {
-          "name": "Create Program",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"code\": \"ING-SIS\",\n  \"name\": \"Ingeniería de Sistemas\",\n  \"description\": \"Programa de Ingeniería de Sistemas\",\n  \"faculty\": \"Ingeniería\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/programs",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "programs"]
-            },
-            "description": "RF-02: Crear programa académico"
+            "description": "Updates an existing category. Default categories have restricted updates."
           }
         },
         {
-          "name": "Associate Resource to Program",
+          "name": "Deactivate Category",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"programId\": \"{{program_id}}\",\n  \"accessLevel\": \"FULL\",\n  \"restrictions\": []\n}"
-            },
+            "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}/programs",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources", "{{resource_id}}", "programs"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id"]
             },
-            "description": "RF-02: Asociar recurso a programa"
-          }
-        }
-      ]
-    },
-    {
-      "name": "WebSocket Testing",
-      "item": [
-        {
-          "name": "Test WebSocket Connection",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"event\": \"test-resources-connection\",\n  \"data\": {\n    \"token\": \"{{access_token}}\",\n    \"subscriptions\": [\"resource-updates\", \"maintenance-notifications\"]\n  }\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/resources/websocket/test-connection",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources", "websocket", "test-connection"]
-            },
-            "description": "Test WebSocket connection for real-time updates"
+            "description": "Deactivates a category. Default categories cannot be deactivated."
           }
         },
         {
-          "name": "Emit Resource Updated",
+          "name": "Reactivate Category",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"event\": \"resource-updated\",\n  \"data\": {\n    \"resourceId\": \"{{resource_id}}\",\n    \"changes\": {\n      \"status\": \"MAINTENANCE\",\n      \"attributes\": {\n        \"hasProjector\": false\n      }\n    },\n    \"updatedBy\": \"admin-user\",\n    \"timestamp\": \"2024-01-15T10:30:00Z\"\n  }\n}"
-            },
+            "method": "PUT",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/resources/websocket/emit",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "resources", "websocket", "emit"]
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id/reactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id", "reactivate"]
             },
-            "description": "Test resource update event emission"
+            "description": "Reactivates a deactivated category."
           }
         }
       ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Set base URL if not set",
-          "if (!pm.collectionVariables.get('base_url')) {",
-          "    pm.collectionVariables.set('base_url', 'http://localhost:3003');",
-          "}",
-          "",
-          "// Common headers",
-          "pm.request.headers.add({",
-          "    key: 'Accept',",
-          "    value: 'application/json'",
-          "});",
-          "",
-          "pm.request.headers.add({",
-          "    key: 'User-Agent',",
-          "    value: 'Bookly-Resources-API-Client/2.0'",
-          "});"
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "pm.test('Response time is acceptable', function () {",
-          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
-          "});",
-          "",
-          "pm.test('Content-Type is JSON', function () {",
-          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
-          "});",
-          "",
-          "// Extract IDs from successful requests",
-          "if (pm.response.code === 201 || pm.response.code === 200) {",
-          "    const responseJson = pm.response.json();",
-          "    ",
-          "    if (pm.info.requestName.includes('Create Resource') && responseJson.id) {",
-          "        pm.collectionVariables.set('resource_id', responseJson.id);",
-          "        console.log('Resource ID extracted:', responseJson.id);",
-          "    }",
-          "    ",
-          "    if (pm.info.requestName.includes('Create Category') && responseJson.id) {",
-          "        pm.collectionVariables.set('category_id', responseJson.id);",
-          "        console.log('Category ID extracted:', responseJson.id);",
-          "    }",
-          "    ",
-          "    if (pm.info.requestName.includes('Import') && responseJson.importId) {",
-          "        pm.collectionVariables.set('import_id', responseJson.importId);",
-          "        console.log('Import ID extracted:', responseJson.importId);",
-          "    }",
-          "}",
-          "",
-          "console.log('Response Status:', pm.response.code);"
-        ]
-      }
     }
   ]
 }

@@ -50,6 +50,8 @@ import { PenaltyQueryDto } from "../dtos/penalty-query.dto";
 // Services (to be created in application layer)
 import { PenaltyService } from "../../application/services/penalty.service";
 import { ResponseUtil } from "@/libs/common/utils/response.util";
+import { ApiResponseBookly } from "@/libs/dto";
+import { UserEntity } from "@/apps/auth-service/domain/entities/user.entity";
 
 @ApiTags(AVAILABILITY_URLS.PENALTIES_TAG)
 @ApiBearerAuth()
@@ -78,8 +80,8 @@ export class PenaltiesController {
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async createPenaltyEvent(
     @Body(ValidationPipe) createDto: CreatePenaltyEventDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<PenaltyEventResponseDto>> {
     const result = await this.penaltyService.createPenaltyEvent({
       ...createDto,
       createdBy: user.id,
@@ -124,11 +126,11 @@ export class PenaltiesController {
   })
   @Roles(UserRole.TEACHER, UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async getPenaltyEvents(
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("programId") programId?: string,
     @Query("isActive") isActive?: boolean,
     @Query("eventType") eventType?: string
-  ) {
+  ): Promise<ApiResponseBookly<PenaltyEventResponseDto[]>> {
     const result = await this.penaltyService.getPenaltyEvents({
       programId,
       isActive,
@@ -161,8 +163,8 @@ export class PenaltiesController {
   async updatePenaltyEvent(
     @Param("id", ParseUUIDPipe) id: string,
     @Body(ValidationPipe) updateDto: CreatePenaltyEventDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<PenaltyEventResponseDto>> {
     const result = await this.penaltyService.updatePenaltyEvent(
       id,
       updateDto,
@@ -190,8 +192,8 @@ export class PenaltiesController {
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async deactivatePenaltyEvent(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<boolean>> {
     await this.penaltyService.deactivatePenaltyEvent(id, user.id);
     return ResponseUtil.success(null, "Penalty event deactivated successfully");
   }
@@ -212,8 +214,8 @@ export class PenaltiesController {
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async createPenalty(
     @Body(ValidationPipe) createDto: CreatePenaltyDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<PenaltyResponseDto>> {
     const result = await this.penaltyService.createPenalty({
       ...createDto,
       createdBy: user.id,
@@ -238,8 +240,8 @@ export class PenaltiesController {
   @Roles(UserRole.TEACHER, UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async getPenalties(
     @Query(ValidationPipe) queryDto: PenaltyQueryDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<PenaltyResponseDto[]>> {
     const result = await this.penaltyService.getPenalties(queryDto);
     return ResponseUtil.success(
       result,
@@ -268,7 +270,7 @@ export class PenaltiesController {
   async applyPenalty(
     @Body(ValidationPipe) applyDto: ApplyPenaltyDto,
     @CurrentUser() user: any
-  ) {
+  ): Promise<ApiResponseBookly<UserPenaltyResponseDto>> {
     const result = await this.penaltyService.applyPenalty({
       ...applyDto,
       appliedBy: user.id,
@@ -307,10 +309,10 @@ export class PenaltiesController {
   @Roles(UserRole.TEACHER, UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async getUserPenalties(
     @Param("userId", ParseUUIDPipe) userId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("status") status?: string,
     @Query("includeExpired") includeExpired: boolean = false
-  ) {
+  ): Promise<ApiResponseBookly<UserPenaltyResponseDto[]>> {
     const result = await this.penaltyService.getUserPenalties(
       userId,
       status,
@@ -346,8 +348,8 @@ export class PenaltiesController {
   )
   async getMyPenalties(
     @Query("includeExpired") includeExpired: boolean = false,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<UserPenaltyResponseDto[]>> {
     const result = await this.penaltyService.getUserPenalties(
       user.id,
       UserPenaltyStatus.ACTIVE,
@@ -391,8 +393,8 @@ export class PenaltiesController {
   async removePenalty(
     @Param("id", ParseUUIDPipe) id: string,
     @Body("reason") reason: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<boolean>> {
     await this.penaltyService.removePenalty(id, user.id, reason);
     return ResponseUtil.success(null, "Penalty removed successfully");
   }
@@ -452,13 +454,24 @@ export class PenaltiesController {
       | "MODIFY_RESERVATION"
       | "CANCEL_RESERVATION"
       | "JOIN_WAITING_LIST",
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Body("resourceId") resourceId?: string,
     @Body("programId") programId?: string
-  ) {
+  ): Promise<
+    ApiResponseBookly<{
+      allowed: boolean;
+      restrictions: any[];
+      warnings: string[];
+      remainingActions?: number;
+    }>
+  > {
     // Users can only validate their own actions unless they're admin
+    if (user.id !== userId || !user.hasRole(UserRole.GENERAL_ADMIN)) {
+      throw new Error("Unauthorized to validate action");
+    }
+
     const targetUserId =
-      user.role === UserRole.STUDENT || user.role === UserRole.TEACHER
+      user.hasRole(UserRole.STUDENT) || user.hasRole(UserRole.TEACHER)
         ? user.id
         : userId;
 
@@ -513,10 +526,17 @@ export class PenaltiesController {
   @Roles(UserRole.TEACHER, UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async getUserPenaltyScore(
     @Param("userId", ParseUUIDPipe) userId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("programId") programId?: string,
     @Query("timeRange") timeRange: string = "30d"
-  ) {
+  ): Promise<
+    ApiResponseBookly<{
+      totalScore: number;
+      scoreBreakdown: any[];
+      riskLevel: string;
+      recommendedActions: string[];
+    }>
+  > {
     const timeRangeMap = {
       "7d": {
         start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -568,10 +588,10 @@ export class PenaltiesController {
   })
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async getPenaltyAnalytics(
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("programId") programId?: string,
     @Query("timeRange") timeRange: string = "30d"
-  ) {
+  ): Promise<ApiResponseBookly<PenaltyAnalyticsDto>> {
     const timeRangeMap = {
       "7d": {
         start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -614,7 +634,13 @@ export class PenaltiesController {
     },
   })
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
-  async processExpiredPenalties(@CurrentUser() user: any) {
+  async processExpiredPenalties(@CurrentUser() user: UserEntity): Promise<
+    ApiResponseBookly<{
+      expiredCount: number;
+      usersAffected: string[];
+      restoredPermissions: any[];
+    }>
+  > {
     const result = await this.penaltyService.processExpiredPenalties();
     return ResponseUtil.success(
       result,
@@ -670,8 +696,10 @@ export class PenaltiesController {
       reason: string;
       customDuration?: number;
     }>,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<
+    ApiResponseBookly<{ successful: any[]; failed: any[]; summary: any }>
+  > {
     const result = await this.penaltyService.bulkApplyPenalties(
       operations,
       user.id
@@ -716,9 +744,9 @@ export class PenaltiesController {
   @Roles(UserRole.TEACHER, UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async predictPenaltyRisk(
     @Param("userId", ParseUUIDPipe) userId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("programId") programId?: string
-  ) {
+  ): Promise<ApiResponseBookly<any>> {
     const result = await this.penaltyService.predictPenaltyRisk(
       userId,
       programId
@@ -780,9 +808,9 @@ export class PenaltiesController {
   async appealPenalty(
     @Param("id", ParseUUIDPipe) id: string,
     @Body("reason") reason: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Body("evidence") evidence?: string[]
-  ) {
+  ): Promise<ApiResponseBookly<any>> {
     const result = await this.penaltyService.processPenaltyAppeal({
       userPenaltyId: id,
       appealedBy: user.id,
@@ -827,9 +855,10 @@ export class PenaltiesController {
   @Roles(UserRole.GENERAL_ADMIN)
   async optimizePenaltyConfiguration(
     @Body("programId") programId: string,
-    @CurrentUser() user: any
-  ) {
-    const result = await this.penaltyService.optimizePenaltyConfiguration(programId);
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<any>> {
+    const result =
+      await this.penaltyService.optimizePenaltyConfiguration(programId);
     return ResponseUtil.success(result, "Configuration optimization completed");
   }
 }

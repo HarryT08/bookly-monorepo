@@ -43,9 +43,6 @@ import {
 import {
   AdvancedSearchRequestDto,
   AvailabilityCheckRequestDto,
-  SearchHistoryRequestDto,
-  PopularResourcesRequestDto,
-  QuickSearchRequestDto,
   AdvancedSearchResponseDto,
   AvailabilityResponseDto,
   SearchHistoryResponseDto,
@@ -54,6 +51,7 @@ import {
 } from "../../application/dto/advanced-search.dto";
 import { AVAILABILITY_URLS } from "../../utils/maps";
 import { ResponseUtil } from "@/libs/common/utils/response.util";
+import { ApiResponseBookly } from "@/libs/dto";
 
 @ApiTags(AVAILABILITY_URLS.ADVANCED_SEARCH_TAG)
 @Controller(AVAILABILITY_URLS.ADVANCED_SEARCH)
@@ -96,7 +94,7 @@ export class AdvancedSearchController {
   async advancedSearch(
     @Body() searchRequest: AdvancedSearchRequestDto,
     @CurrentUser() user: any
-  ) {
+  ): Promise<ApiResponseBookly<any | any[]>> {
     const startTime = Date.now();
 
     try {
@@ -140,7 +138,7 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return ResponseUtil.advancedSearchPaginated(
+      return ResponseUtil.advancedSearchPaginated<any>(
         result.data,
         result.pagination,
         startTime,
@@ -158,23 +156,24 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return {
-        success: false,
-        error: {
+      return ResponseUtil.error(
+        "Error performing advanced search",
+        error.message,
+        {
           code: "SEARCH_ERROR",
           message: "Error performing advanced search",
           details: error.message,
-        },
-        data: [],
-        pagination: {
-          page: searchRequest.page || 1,
-          limit: searchRequest.limit || 20,
-          total: 0,
-          totalPages: 0,
-          hasNext: false,
-          hasPrev: false,
-        },
-      };
+          data: [],
+          pagination: {
+            page: searchRequest.page || 1,
+            limit: searchRequest.limit || 20,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          },
+        }
+      );
     }
   }
 
@@ -199,7 +198,7 @@ export class AdvancedSearchController {
   async checkAvailability(
     @Body() availabilityRequest: AvailabilityCheckRequestDto,
     @CurrentUser() user: any
-  ) {
+  ): Promise<ApiResponseBookly<AvailabilityResponseDto>> {
     const startTime = Date.now();
 
     try {
@@ -258,18 +257,15 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return {
-        success: false,
-        error: {
-          code: "AVAILABILITY_CHECK_ERROR",
-          message: "Error checking resource availability",
-          details: error.message,
-        },
+      return ResponseUtil.error("Error checking availability", error.message, {
+        code: "AVAILABILITY_CHECK_ERROR",
+        message: "Error checking resource availability",
+        details: error.message,
         available: [],
         unavailable: [],
         conflicts: [],
         alternatives: [],
-      };
+      });
     }
   }
 
@@ -307,7 +303,7 @@ export class AdvancedSearchController {
     @Query("types") searchTypes: string = "resources,locations,categories",
     @Query("limit") limit: number = 10,
     @CurrentUser() user: any
-  ) {
+  ): Promise<ApiResponseBookly<any | any[]>> {
     const startTime = Date.now();
 
     try {
@@ -364,19 +360,20 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return {
-        success: false,
-        error: {
+      return ResponseUtil.error(
+        "Error performing quick search",
+        error.message,
+        {
           code: "QUICK_SEARCH_ERROR",
           message: "Error performing quick search",
           details: error.message,
-        },
-        results: {
-          resources: [],
-          locations: [],
-          categories: [],
-        },
-      };
+          results: {
+            resources: [],
+            locations: [],
+            categories: [],
+          },
+        }
+      );
     }
   }
 
@@ -422,7 +419,7 @@ export class AdvancedSearchController {
     @Query("categories") categories: string = "",
     @Query("academicPrograms") academicPrograms: string = "",
     @CurrentUser() user: any
-  ){
+  ): Promise<ApiResponseBookly<any | any[]>> {
     const startTime = Date.now();
 
     try {
@@ -450,12 +447,17 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return ResponseUtil.advancedSearchPaginated(result, {
-        page: 1,
-        limit: limit || 10,
-        total: result.length,
-        totalPages: Math.ceil(result.length / (limit || 10)),
-      }, startTime, query);
+      return ResponseUtil.advancedSearchPaginated(
+        result,
+        {
+          page: 1,
+          limit: limit || 10,
+          total: result.length,
+          totalPages: Math.ceil(result.length / (limit || 10)),
+        },
+        startTime,
+        query
+      );
     } catch (error) {
       this.logger.error("Error retrieving popular resources", {
         userId: user.id,
@@ -463,15 +465,16 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return {
-        success: false,
-        error: {
+      return ResponseUtil.error(
+        "Error retrieving popular resources",
+        error.message,
+        {
           code: "POPULAR_RESOURCES_ERROR",
           message: "Error retrieving popular resources",
           details: error.message,
-        },
-        data: [],
-      };
+          data: [],
+        }
+      );
     }
   }
 
@@ -518,7 +521,7 @@ export class AdvancedSearchController {
     @Query("startDate") startDate: string = "",
     @Query("endDate") endDate: string = "",
     @CurrentUser() user: any
-  ) {
+  ): Promise<ApiResponseBookly<any | any[]>> {
     const startTime = Date.now();
 
     try {
@@ -545,7 +548,12 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return ResponseUtil.advancedSearchPaginated(result.data, result.pagination, startTime, query);
+      return ResponseUtil.advancedSearchPaginated(
+        result.data,
+        result.pagination,
+        startTime,
+        query
+      );
     } catch (error) {
       this.logger.error("Error retrieving search history", {
         userId: user?.id,
@@ -553,23 +561,24 @@ export class AdvancedSearchController {
         executionTimeMs: Date.now() - startTime,
       });
 
-      return {
-        success: false,
-        error: {
+      return ResponseUtil.error(
+        "Error retrieving search history",
+        error.message,
+        {
           code: "SEARCH_HISTORY_ERROR",
           message: "Error retrieving search history",
           details: error.message,
         },
-        data: [],
-        pagination: {
+        [],
+        {
           page: page || 1,
           limit: limit || 20,
           total: 0,
           totalPages: 0,
           hasNext: false,
           hasPrev: false,
-        },
-      };
+        }
+      );
     }
   }
 

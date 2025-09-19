@@ -30,6 +30,7 @@ export const AUTH_URLS = {
   SSO_MICROSOFT_CALLBACK: '/oauth/microsoft/callback',
   
   // User management
+  USER_TAG: 'Users',
   USER: '/users',
   USER_FIND: '/',
   USER_FIND_BY_ID: '/:id',

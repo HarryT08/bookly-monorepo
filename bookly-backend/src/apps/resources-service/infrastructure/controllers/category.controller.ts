@@ -29,7 +29,7 @@ import { Roles } from '@libs/common/decorators/roles.decorator';
 import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
 import { UserEntity, UserRole } from '@apps/auth-service/domain/entities/user.entity';
 import { ResponseUtil } from '@libs/common/utils/response.util';
-import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ApiResponseBookly, PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { RESOURCES_URLS } from '../../utils/maps/urls.map';
 
 // Import commands and queries
@@ -47,6 +47,7 @@ import { GetDefaultCategoriesQuery } from '../../application/queries/get-default
 import { CategoryFiltersDto } from '@libs/dto/categories/filter-categories.dto';
 import { CreateCategoryDto } from '@/libs/dto/categories/create-category.dto';
 import { UpdateCategoryDto } from '@/libs/dto/categories/update-category.dto';
+import { CategoryEntity } from '@/libs/common/entities/category.entity';
 
 /**
  * Categories Controller
@@ -92,7 +93,7 @@ export class CategoryController {
   async createCategory(
     @Body() createCategoryDto: CreateCategoryDto,
     @CurrentUser() currentUser: UserEntity,
-  ) {
+  ): Promise<ApiResponseBookly<CategoryEntity>> {
     const command = new CreateCategoryCommand(createCategoryDto, currentUser.id);
     const category = await this.commandBus.execute(command);
     return ResponseUtil.success(category, 'Category created successfully');
@@ -112,7 +113,7 @@ export class CategoryController {
     description: 'Categories retrieved successfully',
     type: PaginatedResponseDto,
   })
-  async findAllCategories(@Query() filters: CategoryFiltersDto) {
+  async findAllCategories(@Query() filters: CategoryFiltersDto): Promise<ApiResponseBookly<CategoryEntity[]>> {
     const query = new GetCategoriesQuery({
       page: filters.page || 1,
       limit: filters.limit || 20,
@@ -140,7 +141,7 @@ export class CategoryController {
     description: 'Active categories retrieved successfully',
     type: SuccessResponseDto,
   })
-  async getActiveCategories() {
+  async getActiveCategories(): Promise<ApiResponseBookly<CategoryEntity[]>> {
     const query = new GetActiveCategoriesQuery();
     const categories = await this.queryBus.execute(query);
     return ResponseUtil.success(categories, 'Active categories retrieved successfully');
@@ -156,7 +157,7 @@ export class CategoryController {
     description: 'Default categories retrieved successfully',
     type: SuccessResponseDto,
   })
-  async getDefaultCategories() {
+  async getDefaultCategories(): Promise<ApiResponseBookly<CategoryEntity[]>> {
     const query = new GetDefaultCategoriesQuery();
     const categories = await this.queryBus.execute(query);
     return ResponseUtil.success(categories, 'Default categories retrieved successfully');
@@ -174,7 +175,7 @@ export class CategoryController {
     type: SuccessResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Category not found' })
-  async getCategoryById(@Param('id') id: string) {
+  async getCategoryById(@Param('id') id: string): Promise<ApiResponseBookly<CategoryEntity>> {
     const query = new GetCategoryByIdQuery(id);
     const category = await this.queryBus.execute(query);
     return ResponseUtil.success(category, 'Category retrieved successfully');
@@ -203,7 +204,7 @@ export class CategoryController {
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
     @CurrentUser() currentUser: UserEntity,
-  ) {
+  ): Promise<ApiResponseBookly<CategoryEntity>> {
     const command = new UpdateCategoryCommand(id, updateCategoryDto, currentUser.id);
     const category = await this.commandBus.execute(command);
     return ResponseUtil.success(category, 'Category updated successfully');
@@ -226,7 +227,7 @@ export class CategoryController {
   async deleteCategory(
     @Param('id') id: string,
     @CurrentUser() currentUser: UserEntity,
-  ) {
+  ): Promise<ApiResponseBookly<CategoryEntity>> {
     const command = new DeleteCategoryCommand(id, currentUser.id);
     await this.commandBus.execute(command);
     return ResponseUtil.success(null, 'Category deactivated successfully');
@@ -248,7 +249,7 @@ export class CategoryController {
   async reactivateCategory(
     @Param('id') id: string,
     @CurrentUser() currentUser: UserEntity,
-  ) {
+  ): Promise<ApiResponseBookly<CategoryEntity>> {
     const command = new ReactivateCategoryCommand(id, currentUser.id);
     const category = await this.commandBus.execute(command);
     return ResponseUtil.success(category, 'Category reactivated successfully');

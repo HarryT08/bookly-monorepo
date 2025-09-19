@@ -1,0 +1,538 @@
+{
+  "info": {
+    "name": "Bookly Resources Service API v2.0",
+    "description": "Sistema de Gestión de Recursos Físicos - Bookly UFPS\n\nCaracterísticas principales:\n- RF-01 al RF-06: Gestión completa de recursos físicos\n- CRUD de recursos con códigos únicos\n- Sistema de categorización jerárquica\n- Importación masiva CSV/Excel\n- Gestión de mantenimiento\n- Asociación con programas académicos\n- Event-driven architecture",
+    "version": "2.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "ws_url",
+      "value": "ws://localhost:3003", 
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resource_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "program_id",
+      "value": "ING-SIS",
+      "type": "string"
+    },
+    {
+      "key": "import_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "maintenance_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Resources Management (RF-01)",
+      "item": [
+        {
+          "name": "Create Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Salón 201-A\",\n  \"description\": \"Salón de clases con capacidad para 30 estudiantes\",\n  \"type\": \"SALON\",\n  \"capacity\": 30,\n  \"location\": {\n    \"building\": \"Ingeniería de Sistemas\",\n    \"floor\": 2,\n    \"room\": \"201-A\"\n  },\n  \"attributes\": {\n    \"hasProjector\": true,\n    \"hasAirConditioning\": true,\n    \"boardType\": \"smartboard\"\n  },\n  \"equipment\": [\n    {\n      \"name\": \"Proyector Epson\",\n      \"quantity\": 1\n    }\n  ],\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources"]
+            },
+            "description": "RF-01: Crear nuevo recurso con código único autogenerado"
+          }
+        },
+        {
+          "name": "Get All Resources",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources?type=SALON&status=ACTIVE&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "SALON"
+                },
+                {
+                  "key": "status", 
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "RF-01: Listar recursos con filtros"
+          }
+        },
+        {
+          "name": "Get Resource by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources", "{{resource_id}}"]
+            },
+            "description": "RF-01: Obtener recurso específico"
+          }
+        },
+        {
+          "name": "Update Resource",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Salón 201-A Renovado\",\n  \"capacity\": 35,\n  \"attributes\": {\n    \"hasProjector\": true,\n    \"hasAirConditioning\": true,\n    \"soundSystem\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources", "{{resource_id}}"]
+            },
+            "description": "RF-01: Actualizar recurso"
+          }
+        },
+        {
+          "name": "Delete Resource",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources", "{{resource_id}}"]
+            },
+            "description": "RF-01: Eliminar recurso (soft delete)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories Management (RF-02)",
+      "item": [
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Laboratorios de Biotecnología\",\n  \"description\": \"Espacios especializados\",\n  \"color\": \"#28A745\",\n  \"icon\": \"microscope\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories"]
+            },
+            "description": "RF-02: Crear nueva categoría"
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories"]
+            },
+            "description": "RF-02: Listar categorías"
+          }
+        },
+        {
+          "name": "Assign Resource to Categories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryIds\": [\n    \"{{category_id}}\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources", "{{resource_id}}", "categories"]
+            },
+            "description": "RF-02: Asignar categorías a recurso"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Import (RF-04)",
+      "item": [
+        {
+          "name": "Preview Import",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file"
+                },
+                {
+                  "key": "previewRows",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/import/preview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "import", "preview"]
+            },
+            "description": "RF-04: Previsualizar importación"
+          }
+        },
+        {
+          "name": "Start Import Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file"
+                },
+                {
+                  "key": "generateCodes",
+                  "value": "true",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/import/start",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "import", "start"]
+            },
+            "description": "RF-04: Iniciar importación masiva"
+          }
+        },
+        {
+          "name": "Get Import Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/import/{{import_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "import", "{{import_id}}"]
+            },
+            "description": "RF-04: Estado de importación"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Maintenance Management (RF-06)",
+      "item": [
+        {
+          "name": "Create Maintenance Schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"maintenanceTypeId\": \"{{maintenance_type_id}}\",\n  \"title\": \"Mantenimiento Mensual\",\n  \"description\": \"Limpieza y calibración\",\n  \"scheduledDate\": \"2024-02-15T08:00:00Z\",\n  \"estimatedDuration\": 240,\n  \"priority\": \"MEDIUM\",\n  \"assignedTo\": \"technician-user-id\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/maintenance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "maintenance"]
+            },
+            "description": "RF-06: Programar mantenimiento"
+          }
+        },
+        {
+          "name": "Get Maintenance Schedules",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/maintenance?resourceId={{resource_id}}&status=SCHEDULED",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "maintenance"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resource_id}}"
+                },
+                {
+                  "key": "status",
+                  "value": "SCHEDULED"
+                }
+              ]
+            },
+            "description": "RF-06: Listar mantenimientos"
+          }
+        },
+        {
+          "name": "Update Maintenance Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"notes\": \"Mantenimiento completado exitosamente\",\n  \"cost\": 150000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/maintenance/{{maintenance_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "maintenance", "{{maintenance_id}}"]
+            },
+            "description": "RF-06: Actualizar estado de mantenimiento"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Programs Management (RF-02)",
+      "item": [
+        {
+          "name": "Create Program",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ING-SIS\",\n  \"name\": \"Ingeniería de Sistemas\",\n  \"description\": \"Programa de Ingeniería de Sistemas\",\n  \"faculty\": \"Ingeniería\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/programs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "programs"]
+            },
+            "description": "RF-02: Crear programa académico"
+          }
+        },
+        {
+          "name": "Associate Resource to Program",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"programId\": \"{{program_id}}\",\n  \"accessLevel\": \"FULL\",\n  \"restrictions\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources/{{resource_id}}/programs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources", "{{resource_id}}", "programs"]
+            },
+            "description": "RF-02: Asociar recurso a programa"
+          }
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Testing",
+      "item": [
+        {
+          "name": "Test WebSocket Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"test-resources-connection\",\n  \"data\": {\n    \"token\": \"{{access_token}}\",\n    \"subscriptions\": [\"resource-updates\", \"maintenance-notifications\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources/websocket/test-connection",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources", "websocket", "test-connection"]
+            },
+            "description": "Test WebSocket connection for real-time updates"
+          }
+        },
+        {
+          "name": "Emit Resource Updated",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"resource-updated\",\n  \"data\": {\n    \"resourceId\": \"{{resource_id}}\",\n    \"changes\": {\n      \"status\": \"MAINTENANCE\",\n      \"attributes\": {\n        \"hasProjector\": false\n      }\n    },\n    \"updatedBy\": \"admin-user\",\n    \"timestamp\": \"2024-01-15T10:30:00Z\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/resources/websocket/emit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "resources", "websocket", "emit"]
+            },
+            "description": "Test resource update event emission"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set base URL if not set",
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:3003');",
+          "}",
+          "",
+          "// Common headers",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});",
+          "",
+          "pm.request.headers.add({",
+          "    key: 'User-Agent',",
+          "    value: 'Bookly-Resources-API-Client/2.0'",
+          "});"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Content-Type is JSON', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "// Extract IDs from successful requests",
+          "if (pm.response.code === 201 || pm.response.code === 200) {",
+          "    const responseJson = pm.response.json();",
+          "    ",
+          "    if (pm.info.requestName.includes('Create Resource') && responseJson.id) {",
+          "        pm.collectionVariables.set('resource_id', responseJson.id);",
+          "        console.log('Resource ID extracted:', responseJson.id);",
+          "    }",
+          "    ",
+          "    if (pm.info.requestName.includes('Create Category') && responseJson.id) {",
+          "        pm.collectionVariables.set('category_id', responseJson.id);",
+          "        console.log('Category ID extracted:', responseJson.id);",
+          "    }",
+          "    ",
+          "    if (pm.info.requestName.includes('Import') && responseJson.importId) {",
+          "        pm.collectionVariables.set('import_id', responseJson.importId);",
+          "        console.log('Import ID extracted:', responseJson.importId);",
+          "    }",
+          "}",
+          "",
+          "console.log('Response Status:', pm.response.code);"
+        ]
+      }
+    }
+  ]
+}

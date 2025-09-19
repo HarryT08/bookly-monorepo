@@ -44,6 +44,8 @@ import { WaitingListService } from "@/apps/availability-service/application/serv
 // URL Map
 import { AVAILABILITY_URLS } from "../../utils/maps/urls.map";
 import { ResponseUtil } from "@/libs/common/utils/response.util";
+import { UserEntity } from "@/apps/auth-service/domain/entities/user.entity";
+import { ApiResponseBookly } from "@/libs/dto";
 
 @ApiTags(AVAILABILITY_URLS.WAITING_LIST_TAG)
 @ApiBearerAuth()
@@ -81,15 +83,40 @@ export class WaitingListController {
   )
   async joinWaitingList(
     @Body(ValidationPipe) joinDto: JoinWaitingListDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<WaitingListEntryResponseDto>> {
+    for (const role of [
+      UserRole.TEACHER,
+      UserRole.PROGRAM_ADMIN,
+      UserRole.GENERAL_ADMIN,
+    ]) {
+      if (user.hasRole(role)) {
+        return ResponseUtil.success(
+          this.mapToResponseDto(
+            (
+              await this.waitingListService.joinWaitingList({
+                userId: user.id,
+                resourceId: joinDto.resourceId,
+                programId: joinDto.programId,
+                desiredStartTime: new Date(joinDto.desiredStartTime),
+                desiredEndTime: new Date(joinDto.desiredEndTime),
+                priority: this.getUserPriority(role),
+                confirmationTimeLimit: joinDto.confirmationTimeLimit,
+                requestedBy: user.id,
+              })
+            ).entry
+          ),
+          "Successfully joined waiting list"
+        );
+      }
+    }
     const result = await this.waitingListService.joinWaitingList({
       userId: user.id,
       resourceId: joinDto.resourceId,
       programId: joinDto.programId,
       desiredStartTime: new Date(joinDto.desiredStartTime),
       desiredEndTime: new Date(joinDto.desiredEndTime),
-      priority: this.getUserPriority(user.role),
+      priority: this.getUserPriority(UserRole.STUDENT),
       confirmationTimeLimit: joinDto.confirmationTimeLimit,
       requestedBy: user.id,
     });
@@ -123,9 +150,9 @@ export class WaitingListController {
     UserRole.GENERAL_ADMIN
   )
   async getMyWaitingListEntries(
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("status") status?: string
-  ) {
+  ): Promise<ApiResponseBookly<WaitingListEntryResponseDto[]>> {
     const entries = await this.waitingListService.getUserEntries(
       user.id,
       status
@@ -164,10 +191,13 @@ export class WaitingListController {
   )
   async getWaitingListEntry(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ): Promise<WaitingListEntryResponseDto> {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<WaitingListEntryResponseDto>> {
     const entry = await this.waitingListService.getEntry(id, user.id);
-    return this.mapToResponseDto(entry);
+    return ResponseUtil.success(
+      this.mapToResponseDto(entry),
+      "Waiting list entry found"
+    );
   }
 
   @Post(AVAILABILITY_URLS.WAITING_LIST_ENTRY_CONFIRM)
@@ -204,10 +234,10 @@ export class WaitingListController {
   )
   async confirmWaitingListEntry(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<WaitingListEntryResponseDto>> {
     return ResponseUtil.success(
-      this.waitingListService.confirmEntry(id, user.id),
+      await this.waitingListService.confirmEntry(id, user.id),
       "Waiting list entry confirmed successfully"
     );
   }
@@ -244,8 +274,8 @@ export class WaitingListController {
   )
   async leaveWaitingList(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<boolean>> {
     await this.waitingListService.leaveWaitingList(id, user.id);
     return ResponseUtil.success(true, "Successfully left waiting list");
   }
@@ -282,8 +312,8 @@ export class WaitingListController {
   async getResourceWaitingList(
     @Param("resourceId", ParseUUIDPipe) resourceId: string,
     @Query(ValidationPipe) queryDto: WaitingListQueryDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<WaitingListEntryResponseDto[]>> {
     return ResponseUtil.success(
       await this.waitingListService.getResourceWaitingList(
         resourceId,
@@ -319,8 +349,8 @@ export class WaitingListController {
   async escalatePriority(
     @Param("id", ParseUUIDPipe) id: string,
     @Body(ValidationPipe) escalateDto: EscalatePriorityDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<WaitingListEntryResponseDto>> {
     // Get the entry first to find waitingListId
     const entry = await this.waitingListService.getEntry(id, user.id);
 
@@ -378,9 +408,18 @@ export class WaitingListController {
   async processAvailableSlots(
     @Body("resourceId") resourceId: string,
     @Body("availableSlots") availableSlots: number,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Body("timeSlot") timeSlot?: any
-  ) {
+  ): Promise<
+    ApiResponseBookly<{
+      remaining: number;
+      skipped: number;
+      notified: number;
+      notifiedUsers: string[];
+      remainingInQueue: number;
+      skippedUsers: { userId: string; reason: string }[];
+    }>
+  > {
     return ResponseUtil.success(
       await this.waitingListService.processAvailableSlots(
         resourceId,
@@ -418,8 +457,8 @@ export class WaitingListController {
   async getWaitingListStats(
     @Param("resourceId", ParseUUIDPipe) resourceId: string,
     @Query("timeRange") timeRange: string = "30d",
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<ApiResponseBookly<WaitingListStatsDto>> {
     return ResponseUtil.success(
       await this.waitingListService.getStatistics(resourceId, timeRange),
       "Statistics retrieved successfully"
@@ -456,15 +495,41 @@ export class WaitingListController {
   )
   async validateJoinWaitingList(
     @Body(ValidationPipe) joinDto: JoinWaitingListDto,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<
+    ApiResponseBookly<{
+      canJoin: boolean;
+      violations: string[];
+      warnings: string[];
+      estimatedPosition: number;
+      estimatedWaitTime: number;
+    }>
+  > {
+    for (const role of [
+      UserRole.TEACHER,
+      UserRole.PROGRAM_ADMIN,
+      UserRole.GENERAL_ADMIN,
+    ]) {
+      if (user.hasRole(role)) {
+        return ResponseUtil.success(
+          await this.waitingListService.validateJoin({
+            resourceId: joinDto.resourceId,
+            userId: user.id,
+            desiredStartTime: new Date(joinDto.desiredStartTime),
+            desiredEndTime: new Date(joinDto.desiredEndTime),
+            priority: this.getUserPriority(role),
+          }),
+          "Validation completed"
+        );
+      }
+    }
     return ResponseUtil.success(
       await this.waitingListService.validateJoin({
         resourceId: joinDto.resourceId,
         userId: user.id,
         desiredStartTime: new Date(joinDto.desiredStartTime),
         desiredEndTime: new Date(joinDto.desiredEndTime),
-        priority: this.getUserPriority(user.role),
+        priority: this.getUserPriority(UserRole.STUDENT),
       }),
       "Validation completed"
     );
@@ -503,8 +568,15 @@ export class WaitingListController {
   )
   async getWaitingListPosition(
     @Param("id", ParseUUIDPipe) id: string,
-    @CurrentUser() user: any
-  ) {
+    @CurrentUser() user: UserEntity
+  ): Promise<
+    ApiResponseBookly<{
+      currentPosition: number;
+      totalInQueue: number;
+      estimatedWaitTime: number;
+      lastUpdated: Date;
+    }>
+  > {
     return ResponseUtil.success(
       await this.waitingListService.getPosition(id, user.id),
       "Position information retrieved successfully"
@@ -550,9 +622,16 @@ export class WaitingListController {
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async bulkNotifyUsers(
     @Body("entryIds") entryIds: string[],
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Body("message") message?: string
-  ) {
+  ): Promise<
+    ApiResponseBookly<{
+      notifiedCount: number;
+      successful: string[];
+      failed: { id: string; error: string }[];
+      totalProcessed: number;
+    }>
+  > {
     return ResponseUtil.success(
       await this.waitingListService.bulkNotify(entryIds, message),
       "Bulk notification completed"
@@ -579,7 +658,15 @@ export class WaitingListController {
     },
   })
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
-  async processExpiredNotifications(@CurrentUser() user: any) {
+  async processExpiredNotifications(
+    @CurrentUser() user: UserEntity
+  ): Promise<
+    ApiResponseBookly<{
+      expiredCount: number;
+      newlyNotified: number;
+      totalProcessed: number;
+    }>
+  > {
     return ResponseUtil.success(
       await this.waitingListService.processExpiredNotifications(),
       "Expired notifications processed successfully"
@@ -610,10 +697,10 @@ export class WaitingListController {
   })
   @Roles(UserRole.PROGRAM_ADMIN, UserRole.GENERAL_ADMIN)
   async getPerformanceAnalytics(
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserEntity,
     @Query("programId") programId?: string,
     @Query("timeRange") timeRange: string = "30d"
-  ) {
+  ): Promise<ApiResponseBookly<void>> {
     return ResponseUtil.success(
       await this.waitingListService.getPerformanceAnalytics(
         programId,

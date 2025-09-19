@@ -7,6 +7,12 @@ import { ReportsController } from "@apps/reports-service/infrastructure/controll
 import { UsageReportsController } from "@apps/reports-service/infrastructure/controllers/usage-reports.controller";
 import { UserReportsController } from "@apps/reports-service/infrastructure/controllers/user-reports.controller";
 import { ExportReportsController } from "@apps/reports-service/infrastructure/controllers/export-reports.controller";
+import { AlertsController } from "@apps/reports-service/infrastructure/controllers/alerts.controller";
+import { CustomReportsController } from "@apps/reports-service/infrastructure/controllers/custom-reports.controller";
+import { DataProcessingController } from "@apps/reports-service/infrastructure/controllers/data-processing.controller";
+import { PerformanceController } from "@apps/reports-service/infrastructure/controllers/performance.controller";
+import { ScheduledReportsController } from "@apps/reports-service/infrastructure/controllers/scheduled-reports.controller";
+import { TemplatesController } from "@apps/reports-service/infrastructure/controllers/templates.controller";
 
 // Modules
 import { LoggingModule } from "@/libs/logging/logging.module";
@@ -14,6 +20,7 @@ import { CommonModule } from "@/libs/common/common.module";
 import { EventBusModule } from "@/libs/event-bus/event-bus.module";
 import { HealthModule } from "../../health/health.module";
 import { AuthModule } from "@apps/auth-service/auth.module";
+import { ResourcesModule } from "@apps/resources-service/resources.module";
 
 // Command Handlers
 import { CreateFeedbackHandler } from "@apps/reports-service/application/handlers/create-feedback.handler";
@@ -44,6 +51,7 @@ import { PrismaReportExportsRepository } from "@apps/reports-service/infrastruct
 // Services
 import { ReportsAuditService } from "@apps/reports-service/application/services/audit.service";
 import { ReportsService } from "@apps/reports-service/application/services/reports.service";
+import { CategoryService } from "@apps/reports-service/application/services/category.service";
 
 const commandHandlers = [
   CreateFeedbackHandler,
@@ -88,6 +96,7 @@ const repositories = [
     EventBusModule,
     AuthModule,
     HealthModule,
+    ResourcesModule,
   ],
   controllers: [
     ReportsController,
@@ -95,13 +104,21 @@ const repositories = [
     UserReportsController,
     ExportReportsController,
     ReportsCategoryController,
+    AlertsController,
+    CustomReportsController,
+    DataProcessingController,
+    PerformanceController,
+    ScheduledReportsController,
+    TemplatesController,
   ],
   providers: [
     ReportsAuditService,
+    ReportsService,
+    CategoryService,
     ...commandHandlers,
     ...queryHandlers,
     ...repositories,
   ],
-  exports: [ReportsService],
+  exports: [ReportsService, CategoryService, ReportsAuditService],
 })
 export class ReportsModule {}

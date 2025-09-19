@@ -8,7 +8,7 @@ import { Controller, Get, Post, Body, Query, Param, Logger, HttpStatus, HttpExce
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AVAILABILITY_URLS } from '../../utils/maps/urls.map';
 import { ResponseUtil } from '@libs/common/utils/response.util';
-import { SuccessResponseDto } from '@libs/dto/common/response.dto';
+import { ApiResponseBookly, SuccessResponseDto } from '@libs/dto/common/response.dto';
 import { AuditExportDto, CreateTestAuditDto } from '@libs/dto';
 import { Inject } from '@nestjs/common';
 import { LoggingService } from '@logging/logging.service';
@@ -75,7 +75,7 @@ export class AuditController {
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default: 50)' })
   @ApiQuery({ name: 'sortBy', required: false, description: 'Sort field (timestamp, severity, duration)' })
   @ApiQuery({ name: 'sortOrder', required: false, description: 'Sort order (asc, desc)' })
-  async getAuditEntries(@Query() query: any, @CurrentUser() user: any) {
+  async getAuditEntries(@Query() query: any, @CurrentUser() user: any): Promise<ApiResponseBookly<any>> {
     try {
       const page = parseInt(query.page) || 1;
       const limit = parseInt(query.limit) || 50;
@@ -149,16 +149,12 @@ export class AuditController {
     status: 404,
     description: 'Audit entry not found'
   })
-  async getAuditEntryById(@Param('id') id: string, @CurrentUser() user: any) {
+  async getAuditEntryById(@Param('id') id: string, @CurrentUser() user: any): Promise<ApiResponseBookly<any>> {
     try {
       const entry = await this.auditRepository.findById(id);
 
       if (!entry) {
-        return {
-          success: false,
-          error: 'Audit entry not found',
-          code: 'AUDIT_ENTRY_NOT_FOUND'
-        };
+        return ResponseUtil.notFound('Audit entry not found');
       }
 
       this.logger.log('Audit entry retrieved by ID via API', { id, userId: user.id });
@@ -192,7 +188,7 @@ export class AuditController {
   })
   @ApiQuery({ name: 'dateFrom', required: false, description: 'Statistics from date (ISO string)' })
   @ApiQuery({ name: 'dateTo', required: false, description: 'Statistics to date (ISO string)' })
-  async getAuditStatistics(@Query() query: any, @CurrentUser() user: any) {
+  async getAuditStatistics(@Query() query: any, @CurrentUser() user: any): Promise<ApiResponseBookly<any>> {
     try {
       const filters: AuditQueryFilters = {
         dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
@@ -253,7 +249,7 @@ export class AuditController {
       }
     }
   })
-  async exportAuditEntries(@Body() filters: AuditExportDto, @CurrentUser() user: any) {
+  async exportAuditEntries(@Body() filters: AuditExportDto, @CurrentUser() user: any): Promise<ApiResponseBookly<any>> {
     try {
       const exportFilters: AuditQueryFilters = {
         eventType: filters.eventType,
@@ -309,7 +305,7 @@ export class AuditController {
       }
     }
   })
-  async getAuditEventTypes() {
+  async getAuditEventTypes(): Promise<ApiResponseBookly<any>> {
     try {
       const eventTypes = Object.values(AuditEventType);
 
@@ -344,7 +340,7 @@ export class AuditController {
       }
     }
   })
-  async getAuditCategories() {
+  async getAuditCategories(): Promise<ApiResponseBookly<any>> {
     try {
       const categories = Object.values(AuditCategory);
 
@@ -384,7 +380,7 @@ export class AuditController {
       }
     }
   })
-  async cleanupOldEntries(@CurrentUser() user: any, @Query('retentionDays') retentionDays?: string) {
+  async cleanupOldEntries(@CurrentUser() user: any, @Query('retentionDays') retentionDays?: string): Promise<ApiResponseBookly<any>> {
     try {
       const retention = parseInt(retentionDays || '365');
       const deletedCount = await this.auditRepository.deleteOldEntries(retention);
@@ -446,7 +442,7 @@ export class AuditController {
       }
     }
   })
-  async createTestAuditEntry(@Body() testData: CreateTestAuditDto, @CurrentUser() user: any) {
+  async createTestAuditEntry(@Body() testData: CreateTestAuditDto, @CurrentUser() user: any): Promise<ApiResponseBookly<any>> {
     try {
       const auditContext = {
         userId: user.id,

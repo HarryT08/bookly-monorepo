@@ -4,6 +4,12 @@ import { ResourcesController } from '@apps/resources-service/infrastructure/cont
 import { ResourcesResourceCategoryController } from '@apps/resources-service/infrastructure/controllers/resources-resource-category.controller';
 import { ResourcesProgramCategoryController } from '@apps/resources-service/infrastructure/controllers/resources-program-category.controller';
 import { ResourcesIncidentReportCategoryController } from '@apps/resources-service/infrastructure/controllers/resources-incident-report-category.controller';
+import { CategoryController } from '@apps/resources-service/infrastructure/controllers/category.controller';
+import { MaintenanceTypeController } from '@apps/resources-service/infrastructure/controllers/maintenance-type.controller';
+import { ProgramController } from '@apps/resources-service/infrastructure/controllers/program.controller';
+import { ResourceCategoryController } from '@apps/resources-service/infrastructure/controllers/resource-category.controller';
+import { ResourceImportController } from '@apps/resources-service/infrastructure/controllers/resource-import.controller';
+import { ResourceResponsibleController } from '@apps/resources-service/infrastructure/controllers/resource-responsible.controller';
 import { PrismaResourceRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource.repository';
 import { PrismaCategoryRepository } from '@apps/resources-service/infrastructure/repositories/prisma-category.repository';
 import { PrismaResourceCategoryRepository } from '@apps/resources-service/infrastructure/repositories/prisma-resource-category.repository';
@@ -180,6 +186,12 @@ const QueryHandlers = [
     ResourcesResourceCategoryController,
     ResourcesProgramCategoryController,
     ResourcesIncidentReportCategoryController,
+    CategoryController,
+    MaintenanceTypeController,
+    ProgramController,
+    ResourceCategoryController,
+    ResourceImportController,
+    ResourceResponsibleController,
   ],
   providers: [
     // Services

@@ -1,0 +1,508 @@
+{
+  "info": {
+    "name": "Bookly Resources Service - Import & Responsible",
+    "description": "Endpoints for Resource Import and Resource Responsible management",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "apiPrefix",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Resource Import",
+      "item": [
+        {
+          "name": "Preview CSV Import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "CSV file to preview"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/import/preview",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "import", "preview"]
+            },
+            "description": "Validates and previews a CSV file before starting the actual import process."
+          }
+        },
+        {
+          "name": "Start Resource Import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "CSV file to import"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/import/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "import", "start"]
+            },
+            "description": "Starts the bulk import process for resources from a CSV file."
+          }
+        },
+        {
+          "name": "Get Import by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/import/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "import", ":id"]
+            },
+            "description": "Retrieves the status and details of a specific import operation."
+          }
+        },
+        {
+          "name": "Get My Imports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/import/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "import", "history"]
+            },
+            "description": "Retrieves all import operations initiated by the current user."
+          }
+        },
+        {
+          "name": "Get All Imports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/import/paginated?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "import", "paginated"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "Filter by user ID",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter by import status",
+                  "disabled": true
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "",
+                  "description": "Filter by start date (ISO string)",
+                  "disabled": true
+                },
+                {
+                  "key": "dateTo",
+                  "value": "",
+                  "description": "Filter by end date (ISO string)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieves all import operations with optional filtering. Only administrators can access this."
+          }
+        },
+        {
+          "name": "Get Import Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/import/statistics/overview",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "import", "statistics", "overview"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "Get statistics for specific user (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieves overall statistics about import operations."
+          }
+        },
+        {
+          "name": "Get My Import Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/import/statistics/my-stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "import", "statistics", "my-stats"]
+            },
+            "description": "Retrieves import statistics for the current user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resource Responsible",
+      "item": [
+        {
+          "name": "Assign User as Responsible",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-id-here\",\n  \"userId\": \"user-id-here\",\n  \"notes\": \"Responsable principal del recurso\",\n  \"startDate\": \"2024-01-01T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/:resourceId/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", ":resourceId", "users", ":userId"]
+            },
+            "description": "Assigns a user as responsible for a resource. Only administrators can manage resource responsibilities."
+          }
+        },
+        {
+          "name": "Assign Multiple Users as Responsible",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\"user-id-1\", \"user-id-2\", \"user-id-3\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/:resourceId/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", ":resourceId", "users"]
+            },
+            "description": "Assigns multiple users as responsible for a resource."
+          }
+        },
+        {
+          "name": "Replace Resource Responsible Users",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\"new-user-id-1\", \"new-user-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/:resourceId/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", ":resourceId", "users"]
+            },
+            "description": "Replaces all responsible users for a resource with new ones."
+          }
+        },
+        {
+          "name": "Get Resource Responsible Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/:resourceId/users?page=1&limit=10&activeOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", ":resourceId", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "activeOnly",
+                  "value": "true",
+                  "description": "Filter by active assignments only (default: true)"
+                }
+              ]
+            },
+            "description": "Retrieves all users responsible for a specific resource."
+          }
+        },
+        {
+          "name": "Get User Responsibilities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/users/:userId/resources?page=1&limit=10&activeOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", "users", ":userId", "resources"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "activeOnly",
+                  "value": "true",
+                  "description": "Filter by active assignments only (default: true)"
+                }
+              ]
+            },
+            "description": "Retrieves all resources a user is responsible for."
+          }
+        },
+        {
+          "name": "Get My Responsibilities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/my-resources?page=1&limit=50&activeOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", "my-resources"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "activeOnly",
+                  "value": "true",
+                  "description": "Filter by active assignments only (default: true)"
+                }
+              ]
+            },
+            "description": "Retrieves all resources the current user is responsible for."
+          }
+        },
+        {
+          "name": "Check User Responsibility",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/:resourceId/users/:userId/exists",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", ":resourceId", "users", ":userId", "exists"]
+            },
+            "description": "Checks if a user is responsible for a specific resource."
+          }
+        },
+        {
+          "name": "Deactivate User Responsibility",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/:resourceId/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", ":resourceId", "users", ":userId"]
+            },
+            "description": "Deactivates a user's responsibility for a resource."
+          }
+        },
+        {
+          "name": "Deactivate All Resource Responsibilities",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/:resourceId/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", ":resourceId", "users"]
+            },
+            "description": "Deactivates all user responsibilities for a resource."
+          }
+        },
+        {
+          "name": "Get All Responsibilities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                },
+                {
+                  "key": "resourceId",
+                  "value": "",
+                  "description": "Filter by resource ID",
+                  "disabled": true
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "Filter by user ID",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "",
+                  "description": "Filter by active status",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieves all responsibility assignments with optional filtering."
+          }
+        },
+        {
+          "name": "Bulk Assign User to Resources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceIds\": [\"resource-id-1\", \"resource-id-2\", \"resource-id-3\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/users/:userId/resources",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", "users", ":userId", "resources"]
+            },
+            "description": "Assigns a user as responsible for multiple resources in bulk."
+          }
+        },
+        {
+          "name": "Transfer Responsibilities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromUserId\": \"current-responsible-user-id\",\n  \"toUserId\": \"new-responsible-user-id\",\n  \"resourceIds\": [\"resource-id-1\", \"resource-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", "transfer"]
+            },
+            "description": "Transfers resource responsibilities from one user to another."
+          }
+        },
+        {
+          "name": "Validate Responsibility Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-id-here\",\n  \"userIds\": [\"user-id-1\", \"user-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resource-responsibles/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resource-responsibles", "validate"]
+            },
+            "description": "Validates responsibility assignment data before processing."
+          }
+        }
+      ]
+    }
+  ]
+}

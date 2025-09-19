@@ -15,7 +15,7 @@ import {
 import { Response, Request } from 'express';
 import { I18nService } from 'nestjs-i18n';
 import { ValidationError } from 'class-validator';
-import { ApiResponse } from '@libs/dto/common/response.dto';
+import { ApiResponseBookly } from '@libs/dto/common/response.dto';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -74,7 +74,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     );
 
     // Construct error response following Bookly standard
-    const errorResponse: ApiResponse<null> = {
+    const errorResponse: ApiResponseBookly<null> = {
       success: false,
       data: null,
       message: message,

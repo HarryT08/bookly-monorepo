@@ -24,7 +24,7 @@ export interface AdvancedSearchPaginationMeta {
  * Standard API Response Interface
  * Complies with Bookly response standard
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponseBookly<T = any> {
   success: boolean;
   data?: T;
   message?: string;

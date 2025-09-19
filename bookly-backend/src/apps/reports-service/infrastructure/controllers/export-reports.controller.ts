@@ -1,60 +1,64 @@
-import { 
-  Controller, 
+import {
+  Controller,
   Post,
   Get,
-  Query, 
+  Query,
   Body,
   Param,
-  UseGuards, 
+  UseGuards,
   Request,
   Response,
   HttpException,
   HttpStatus,
   ValidationPipe,
-  UsePipes
-} from '@nestjs/common';
-import { CurrentUser } from '@libs/common/decorators/current-user.decorator';
-import { UserEntity } from '@apps/auth-service/domain/entities/user.entity';
-import { QueryBus } from '@nestjs/cqrs';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
+  UsePipes,
+} from "@nestjs/common";
+import { CurrentUser } from "@libs/common/decorators/current-user.decorator";
+import { UserEntity } from "@apps/auth-service/domain/entities/user.entity";
+import { QueryBus } from "@nestjs/cqrs";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
   ApiBearerAuth,
   ApiParam,
   ApiConsumes,
-  ApiProduces
-} from '@nestjs/swagger';
-import { JwtAuthGuard } from '@libs/common/guards/jwt-auth.guard';
-import { RolesGuard } from '@libs/common/guards/roles.guard';
-import { Roles } from '@libs/common/decorators/roles.decorator';
-import { PaginatedResponseDto, SuccessResponseDto } from '@libs/dto/common/response.dto';
-import { ResponseUtil } from '@libs/common/utils/response.util';
-import { ExportCsvDto } from '@dto/reports/export-csv.dto';
-import { ExportResponseDto } from '@dto/reports/report-response.dto';
-import { 
-  ExportReportQuery, 
-  ExportHistoryQuery, 
+  ApiProduces,
+} from "@nestjs/swagger";
+import { JwtAuthGuard } from "@libs/common/guards/jwt-auth.guard";
+import { RolesGuard } from "@libs/common/guards/roles.guard";
+import { Roles } from "@libs/common/decorators/roles.decorator";
+import {
+  ApiResponseBookly,
+  PaginatedResponseDto,
+  SuccessResponseDto,
+} from "@libs/dto/common/response.dto";
+import { ResponseUtil } from "@libs/common/utils/response.util";
+import { ExportCsvDto } from "@dto/reports/export-csv.dto";
+import { ExportResponseDto } from "@dto/reports/report-response.dto";
+import {
+  ExportReportQuery,
+  ExportHistoryQuery,
   DownloadExportQuery,
-  CachedReportQuery 
-} from '../../application/queries/export-report.query';
-import { LoggingService } from '@libs/logging/logging.service';
-import { LoggingHelper } from '@libs/logging/logging.helper';
-import { Response as ExpressResponse } from 'express';
-import { REPORTS_URLS } from '../../utils/maps/urls.map';
+  CachedReportQuery,
+} from "../../application/queries/export-report.query";
+import { LoggingService } from "@libs/logging/logging.service";
+import { LoggingHelper } from "@libs/logging/logging.helper";
+import { Response as ExpressResponse } from "express";
+import { REPORTS_URLS } from "../../utils/maps/urls.map";
 
 /**
  * RF-33: Export Reports Controller
  * Handles endpoints for exporting reports in CSV format and managing exports
  */
-@ApiTags('Export Reports')
+@ApiTags("Export Reports")
 @Controller(REPORTS_URLS.EXPORT)
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class ExportReportsController {
   constructor(
     private readonly queryBus: QueryBus,
-    private readonly loggingService: LoggingService,
+    private readonly loggingService: LoggingService
   ) {}
 
   /**
@@ -62,39 +66,40 @@ export class ExportReportsController {
    * RF-33: Export reports in CSV format with customizable options
    */
   @Post(REPORTS_URLS.EXPORT_CSV)
-  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
-  @ApiOperation({ 
-    summary: 'Export report to CSV',
-    description: 'Export usage or user report to CSV format with customizable columns and options' 
+  @Roles("ADMIN", "PROGRAM_ADMIN", "ADMINISTRATIVE")
+  @ApiOperation({
+    summary: "Export report to CSV",
+    description:
+      "Export usage or user report to CSV format with customizable columns and options",
   })
-  @ApiConsumes('application/json')
-  @ApiResponse({ 
-    status: 201, 
-    description: 'Export initiated successfully',
-    type: SuccessResponseDto 
+  @ApiConsumes("application/json")
+  @ApiResponse({
+    status: 201,
+    description: "Export initiated successfully",
+    type: SuccessResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid export configuration' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiResponse({ status: 400, description: "Invalid export configuration" })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({ status: 403, description: "Insufficient permissions" })
+  @ApiResponse({ status: 500, description: "Internal server error" })
   @UsePipes(new ValidationPipe({ transform: true }))
   async exportToCsv(
     @Body() exportConfig: ExportCsvDto,
     @CurrentUser() currentUser: UserEntity,
-    @Request() req: any,
-  ) {
+    @Request() req: any
+  ): Promise<ApiResponseBookly<ExportResponseDto>> {
     const startTime = Date.now();
-    const requestId = req.headers['x-request-id'] || `exp_${Date.now()}`;
+    const requestId = req.headers["x-request-id"] || `exp_${Date.now()}`;
 
     try {
       this.loggingService.log(
         `CSV export requested`,
-        'ExportReportsController',
-        LoggingHelper.logParams({ 
-          userId: currentUser.id, 
+        "ExportReportsController",
+        LoggingHelper.logParams({
+          userId: currentUser.id,
           reportType: exportConfig.reportType,
           format: exportConfig.format,
-          requestId 
+          requestId,
         })
       );
 
@@ -102,44 +107,46 @@ export class ExportReportsController {
         exportConfig,
         null, // reportData will be generated by the handler
         currentUser.id!,
-        currentUser.userRoles?.map(ur => ur.role?.name).filter(Boolean) || [],
-        requestId,
+        currentUser.userRoles?.map((ur) => ur.role?.name).filter(Boolean) || [],
+        requestId
       );
 
-      const result = await this.queryBus.execute<ExportReportQuery, ExportResponseDto>(query);
+      const result = await this.queryBus.execute<
+        ExportReportQuery,
+        ExportResponseDto
+      >(query);
 
       const executionTime = Date.now() - startTime;
 
       this.loggingService.log(
         `CSV export completed successfully`,
-        'ExportReportsController',
-        LoggingHelper.logParams({ 
+        "ExportReportsController",
+        LoggingHelper.logParams({
           userId: currentUser.id,
           filename: result.filename,
           executionTime,
-          requestId 
+          requestId,
         })
       );
 
-      return ResponseUtil.success(result, 'Export initiated successfully');
-
+      return ResponseUtil.success(result, "Export initiated successfully");
     } catch (error) {
       const executionTime = Date.now() - startTime;
 
       this.loggingService.error(
         `Error exporting to CSV: ${error.message}`,
         error.stack,
-        LoggingHelper.logParams({ 
+        LoggingHelper.logParams({
           userId: currentUser?.id,
           reportType: exportConfig?.reportType,
           executionTime,
-          requestId 
+          requestId,
         })
       );
 
       throw new HttpException(
-        'Error exporting report to CSV',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Error exporting report to CSV",
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -148,61 +155,67 @@ export class ExportReportsController {
    * Download exported file
    */
   @Get(REPORTS_URLS.EXPORT_DOWNLOAD)
-  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
-  @ApiOperation({ 
-    summary: 'Download exported file',
-    description: 'Download a previously exported report file' 
+  @Roles("ADMIN", "PROGRAM_ADMIN", "ADMINISTRATIVE", "TEACHER", "STUDENT")
+  @ApiOperation({
+    summary: "Download exported file",
+    description: "Download a previously exported report file",
   })
-  @ApiParam({ 
-    name: 'exportId', 
-    description: 'ID of the export to download' 
+  @ApiParam({
+    name: "exportId",
+    description: "ID of the export to download",
   })
-  @ApiProduces('application/octet-stream')
-  @ApiResponse({ 
-    status: 200, 
-    description: 'File downloaded successfully',
+  @ApiProduces("application/octet-stream")
+  @ApiResponse({
+    status: 200,
+    description: "File downloaded successfully",
     schema: {
-      type: 'string',
-      format: 'binary',
-    }
+      type: "string",
+      format: "binary",
+    },
   })
-  @ApiResponse({ status: 404, description: 'Export not found or expired' })
-  @ApiResponse({ status: 403, description: 'Access denied to this export' })
+  @ApiResponse({ status: 404, description: "Export not found or expired" })
+  @ApiResponse({ status: 403, description: "Access denied to this export" })
   async downloadExport(
-    @Param('exportId') exportId: string,
+    @Param("exportId") exportId: string,
     @CurrentUser() currentUser: UserEntity,
     @Request() req: any,
-    @Response() res: ExpressResponse,
+    @Response() res: ExpressResponse
   ): Promise<void> {
     try {
       this.loggingService.log(
         `Export download requested`,
-        'ExportReportsController',
-        LoggingHelper.logParams({ 
-          userId: currentUser.id, 
-          exportId 
+        "ExportReportsController",
+        LoggingHelper.logParams({
+          userId: currentUser.id,
+          exportId,
         })
       );
 
       const query = new DownloadExportQuery(
         exportId,
         currentUser.id!,
-        currentUser.userRoles?.map(ur => ur.role?.name).filter(Boolean) || [],
+        currentUser.userRoles?.map((ur) => ur.role?.name).filter(Boolean) || []
       );
 
       const result = await this.queryBus.execute(query);
 
       if (!result || !result.filePath) {
         throw new HttpException(
-          'Export not found or expired',
-          HttpStatus.NOT_FOUND,
+          "Export not found or expired",
+          HttpStatus.NOT_FOUND
         );
       }
 
       // Set appropriate headers for file download
-      res.setHeader('Content-Type', result.mimeType || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-      res.setHeader('Content-Length', result.fileSize);
+      res.setHeader(
+        "Content-Type",
+        result.mimeType || "application/octet-stream"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${result.filename}"`
+      );
+      res.setHeader("Content-Length", result.fileSize);
 
       // Stream the file
       res.sendFile(result.filePath, (err) => {
@@ -210,32 +223,31 @@ export class ExportReportsController {
           this.loggingService.error(
             `Error streaming file: ${err.message}`,
             err.stack,
-            LoggingHelper.logParams({ 
+            LoggingHelper.logParams({
               userId: currentUser.id,
               exportId,
-              filePath: result.filePath 
+              filePath: result.filePath,
             })
           );
         } else {
           this.loggingService.log(
             `Export downloaded successfully`,
-            'ExportReportsController',
-            LoggingHelper.logParams({ 
+            "ExportReportsController",
+            LoggingHelper.logParams({
               userId: currentUser.id,
               exportId,
-              filename: result.filename 
+              filename: result.filename,
             })
           );
         }
       });
-
     } catch (error) {
       this.loggingService.error(
         `Error downloading export: ${error.message}`,
         error.stack,
-        LoggingHelper.logParams({ 
+        LoggingHelper.logParams({
           userId: currentUser?.id,
-          exportId 
+          exportId,
         })
       );
 
@@ -244,8 +256,8 @@ export class ExportReportsController {
       }
 
       throw new HttpException(
-        'Error downloading export',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Error downloading export",
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -254,74 +266,72 @@ export class ExportReportsController {
    * Get export history for current user
    */
   @Get(REPORTS_URLS.EXPORT_HISTORY)
-  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
-  @ApiOperation({ 
-    summary: 'Get export history',
-    description: 'Get history of exports created by the current user' 
+  @Roles("ADMIN", "PROGRAM_ADMIN", "ADMINISTRATIVE", "TEACHER", "STUDENT")
+  @ApiOperation({
+    summary: "Get export history",
+    description: "Get history of exports created by the current user",
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Export history retrieved successfully',
+  @ApiResponse({
+    status: 200,
+    description: "Export history retrieved successfully",
     schema: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
+        type: "object",
         properties: {
-          id: { type: 'string' },
-          reportType: { type: 'string' },
-          format: { type: 'string' },
-          filename: { type: 'string' },
-          status: { type: 'string' },
-          createdAt: { type: 'string', format: 'date-time' },
-          completedAt: { type: 'string', format: 'date-time' },
-          expiresAt: { type: 'string', format: 'date-time' },
-          fileSize: { type: 'number' },
-          downloadCount: { type: 'number' },
-          isAvailable: { type: 'boolean' },
+          id: { type: "string" },
+          reportType: { type: "string" },
+          format: { type: "string" },
+          filename: { type: "string" },
+          status: { type: "string" },
+          createdAt: { type: "string", format: "date-time" },
+          completedAt: { type: "string", format: "date-time" },
+          expiresAt: { type: "string", format: "date-time" },
+          fileSize: { type: "number" },
+          downloadCount: { type: "number" },
+          isAvailable: { type: "boolean" },
         },
       },
-    }
+    },
   })
   async getExportHistory(
     @CurrentUser() currentUser: UserEntity,
-    @Query('limit') limit?: number,
-    @Query('reportType') reportType?: string,
-  ) {
+    @Query("limit") limit?: number,
+    @Query("reportType") reportType?: string
+  ): Promise<ApiResponseBookly<any>> {
     try {
       this.loggingService.log(
         `Export history requested`,
-        'ExportReportsController',
-        LoggingHelper.logParams({ 
-          userId: currentUser.id, 
-          limit, 
-          reportType 
+        "ExportReportsController",
+        LoggingHelper.logParams({
+          userId: currentUser.id,
+          limit,
+          reportType,
         })
       );
 
-      const query = new ExportHistoryQuery(
-        currentUser.id!,
-        reportType,
-        limit,
-      );
+      const query = new ExportHistoryQuery(currentUser.id!, reportType, limit);
 
       const result = await this.queryBus.execute(query);
 
-      return ResponseUtil.success(result, 'Export history retrieved successfully');
-
+      return ResponseUtil.success(
+        result,
+        "Export history retrieved successfully"
+      );
     } catch (error) {
       this.loggingService.error(
         `Error getting export history: ${error.message}`,
         error.stack,
-        LoggingHelper.logParams({ 
+        LoggingHelper.logParams({
           userId: currentUser?.id,
           limit,
-          reportType 
+          reportType,
         })
       );
 
       throw new HttpException(
-        'Error getting export history',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Error getting export history",
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -330,71 +340,77 @@ export class ExportReportsController {
    * Get cached report data (for quick re-export)
    */
   @Get(REPORTS_URLS.EXPORT_CACHED)
-  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE')
-  @ApiOperation({ 
-    summary: 'Get cached report data',
-    description: 'Get cached report data for quick re-export without regenerating' 
+  @Roles("ADMIN", "PROGRAM_ADMIN", "ADMINISTRATIVE")
+  @ApiOperation({
+    summary: "Get cached report data",
+    description:
+      "Get cached report data for quick re-export without regenerating",
   })
-  @ApiParam({ 
-    name: 'reportId', 
-    description: 'ID of the cached report' 
+  @ApiParam({
+    name: "reportId",
+    description: "ID of the cached report",
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Cached report data retrieved successfully',
+  @ApiResponse({
+    status: 200,
+    description: "Cached report data retrieved successfully",
     schema: {
-      type: 'object',
+      type: "object",
       properties: {
-        id: { type: 'string' },
-        reportType: { type: 'string' },
-        data: { type: 'object' },
-        metadata: { type: 'object' },
-        summary: { type: 'object' },
-        createdAt: { type: 'string', format: 'date-time' },
-        expiresAt: { type: 'string', format: 'date-time' },
-        isValid: { type: 'boolean' },
+        id: { type: "string" },
+        reportType: { type: "string" },
+        data: { type: "object" },
+        metadata: { type: "object" },
+        summary: { type: "object" },
+        createdAt: { type: "string", format: "date-time" },
+        expiresAt: { type: "string", format: "date-time" },
+        isValid: { type: "boolean" },
       },
-    }
+    },
   })
-  @ApiResponse({ status: 404, description: 'Cached report not found or expired' })
+  @ApiResponse({
+    status: 404,
+    description: "Cached report not found or expired",
+  })
   async getCachedReport(
-    @Param('reportId') reportId: string,
-    @CurrentUser() currentUser: UserEntity,
-  ) {
+    @Param("reportId") reportId: string,
+    @CurrentUser() currentUser: UserEntity
+  ): Promise<ApiResponseBookly<void>> {
     try {
       this.loggingService.log(
         `Cached report requested`,
-        'ExportReportsController',
-        LoggingHelper.logParams({ 
-          userId: currentUser.id, 
-          reportId 
+        "ExportReportsController",
+        LoggingHelper.logParams({
+          userId: currentUser.id,
+          reportId,
         })
       );
 
       const query = new CachedReportQuery(
         reportId,
         currentUser.id!,
-        currentUser.userRoles?.map(ur => ur.role?.name).filter(Boolean) || [],
+        currentUser.userRoles?.map((ur) => ur.role?.name).filter(Boolean) || []
       );
 
       const result = await this.queryBus.execute(query);
 
       if (!result) {
         throw new HttpException(
-          'Cached report not found or expired',
-          HttpStatus.NOT_FOUND,
+          "Cached report not found or expired",
+          HttpStatus.NOT_FOUND
         );
       }
 
-      return ResponseUtil.success(result, 'Cached report retrieved successfully');
-
+      return ResponseUtil.success(
+        result,
+        "Cached report retrieved successfully"
+      );
     } catch (error) {
       this.loggingService.error(
         `Error getting cached report: ${error.message}`,
         error.stack,
-        LoggingHelper.logParams({ 
+        LoggingHelper.logParams({
           userId: currentUser?.id,
-          reportId 
+          reportId,
         })
       );
 
@@ -403,8 +419,8 @@ export class ExportReportsController {
       }
 
       throw new HttpException(
-        'Error getting cached report',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Error getting cached report",
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -413,82 +429,100 @@ export class ExportReportsController {
    * Get export status
    */
   @Get(REPORTS_URLS.EXPORT_STATUS)
-  @Roles('ADMIN', 'PROGRAM_ADMIN', 'ADMINISTRATIVE', 'TEACHER', 'STUDENT')
-  @ApiOperation({ 
-    summary: 'Get export status',
-    description: 'Get current status of an export operation' 
+  @Roles("ADMIN", "PROGRAM_ADMIN", "ADMINISTRATIVE", "TEACHER", "STUDENT")
+  @ApiOperation({
+    summary: "Get export status",
+    description: "Get current status of an export operation",
   })
-  @ApiParam({ 
-    name: 'exportId', 
-    description: 'ID of the export to check' 
+  @ApiParam({
+    name: "exportId",
+    description: "ID of the export to check",
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Export status retrieved successfully',
+  @ApiResponse({
+    status: 200,
+    description: "Export status retrieved successfully",
     schema: {
-      type: 'object',
+      type: "object",
       properties: {
-        id: { type: 'string' },
-        status: { type: 'string', enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'EXPIRED'] },
-        progress: { type: 'number', minimum: 0, maximum: 100 },
-        message: { type: 'string' },
-        createdAt: { type: 'string', format: 'date-time' },
-        completedAt: { type: 'string', format: 'date-time' },
-        expiresAt: { type: 'string', format: 'date-time' },
-        isAvailable: { type: 'boolean' },
-        downloadUrl: { type: 'string' },
+        id: { type: "string" },
+        status: {
+          type: "string",
+          enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED", "EXPIRED"],
+        },
+        progress: { type: "number", minimum: 0, maximum: 100 },
+        message: { type: "string" },
+        createdAt: { type: "string", format: "date-time" },
+        completedAt: { type: "string", format: "date-time" },
+        expiresAt: { type: "string", format: "date-time" },
+        isAvailable: { type: "boolean" },
+        downloadUrl: { type: "string" },
       },
-    }
+    },
   })
   async getExportStatus(
-    @Param('exportId') exportId: string,
+    @Param("exportId") exportId: string,
     @CurrentUser() currentUser: UserEntity,
-    @Query('reportType') reportType?: string,
-    @Query('limit') limit?: number,
-  ) {
+    @Query("reportType") reportType?: string,
+    @Query("limit") limit?: number
+  ): Promise<
+    ApiResponseBookly<{
+      id: string;
+      status: string;
+      progress: number;
+      message: string;
+      createdAt: string;
+      completedAt: string;
+      expiresAt: string;
+      isAvailable: boolean;
+      downloadUrl: string;
+    }>
+  > {
     try {
-      const query = new ExportHistoryQuery(
-        currentUser.id!,
-        reportType,
-        limit,
-      );
+      const query = new ExportHistoryQuery(currentUser.id!, reportType, limit);
 
       const result = await this.queryBus.execute(query);
       const exportData = result[0];
 
       if (!exportData) {
-        throw new HttpException(
-          'Export not found',
-          HttpStatus.NOT_FOUND,
-        );
+        throw new HttpException("Export not found", HttpStatus.NOT_FOUND);
       }
-
+      let progress = 0;
+      let message = "Export pending";
+      if (exportData.status === "COMPLETED") {
+        progress = 100;
+        message = "Export completed successfully";
+      } else if (exportData.status === "PROCESSING") {
+        progress = 50;
+        message = "Export in progress";
+      } else if (exportData.status === "FAILED") {
+        progress = 0;
+        message = "Export failed";
+      }
       const statusData = {
         id: exportData.id,
-        status: exportData.status,
-        progress: exportData.status === 'COMPLETED' ? 100 : 
-                 exportData.status === 'PROCESSING' ? 50 : 
-                 exportData.status === 'PENDING' ? 0 : 0,
-        message: exportData.status === 'COMPLETED' ? 'Export completed successfully' :
-                exportData.status === 'FAILED' ? 'Export failed' :
-                exportData.status === 'PROCESSING' ? 'Export in progress' :
-                'Export pending',
+        status: message,
+        progress,
+        message,
         createdAt: exportData.createdAt,
         completedAt: exportData.completedAt,
         expiresAt: exportData.expiresAt,
         isAvailable: exportData.isAvailable,
-        downloadUrl: exportData.isAvailable ? `/reports/export/download/${exportId}` : null,
+        downloadUrl: exportData.isAvailable
+          ? `/reports/export/download/${exportId}`
+          : null,
       };
 
-      return ResponseUtil.success(statusData, 'Export status retrieved successfully');
-
+      return ResponseUtil.success(
+        statusData,
+        "Export status retrieved successfully"
+      );
     } catch (error) {
       this.loggingService.error(
         `Error getting export status: ${error.message}`,
         error.stack,
-        LoggingHelper.logParams({ 
+        LoggingHelper.logParams({
           userId: currentUser?.id,
-          exportId 
+          exportId,
         })
       );
 
@@ -497,8 +531,8 @@ export class ExportReportsController {
       }
 
       throw new HttpException(
-        'Error getting export status',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Error getting export status",
+        HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }

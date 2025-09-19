@@ -285,8 +285,8 @@ describe('RF-07: Reservation Management - BDD Tests', () => {
       expect(queryBus.execute).toHaveBeenCalledWith(
         expect.any(GetReservationHistoryQuery)
       );
-      expect(result.reservations).toHaveLength(2);
-      expect(result.pagination.total).toBe(2);
+      expect(result.data.reservations).toHaveLength(2);
+      expect(result.data.pagination.total).toBe(2);
     });
   });
 });

@@ -14,13 +14,13 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
-import { ApiResponse, PaginationMeta } from '@libs/dto/common/response.dto';
+import { ApiResponseBookly, PaginationMeta } from '@libs/dto/common/response.dto';
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponseBookly<T>> {
   constructor(private readonly i18n: I18nService) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponseBookly<T>> {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest();
     const response = ctx.getResponse<Response>();
@@ -28,7 +28,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, ApiResponse<T
 
     return next.handle().pipe(
       map((data) => {
-        const baseResponse: ApiResponse<T> = {
+        const baseResponse: ApiResponseBookly<T> = {
           success: true,
           timestamp: new Date().toISOString(),
           path: request.url,

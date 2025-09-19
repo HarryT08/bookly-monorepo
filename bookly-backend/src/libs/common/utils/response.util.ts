@@ -3,7 +3,11 @@
  * Helper functions to create standardized responses
  */
 
-import { AdvancedSearchPaginationMeta, ApiResponse, PaginationMeta } from '@libs/dto/common/response.dto';
+import {
+  AdvancedSearchPaginationMeta,
+  ApiResponseBookly,
+  PaginationMeta,
+} from "@libs/dto/common/response.dto";
 
 export class ResponseUtil {
   /**
@@ -13,8 +17,8 @@ export class ResponseUtil {
     data: T,
     message?: string,
     meta?: PaginationMeta | AdvancedSearchPaginationMeta
-  ): ApiResponse<T> {
-    const response: ApiResponse<T> = {
+  ): ApiResponseBookly<T> {
+    const response: ApiResponseBookly<T> = {
       success: true,
       data,
     };
@@ -39,7 +43,7 @@ export class ResponseUtil {
     page: number = 1,
     limit: number = 20,
     message?: string
-  ): ApiResponse<T[]> {
+  ): ApiResponseBookly<T[]> {
     const meta: PaginationMeta = {
       page,
       limit,
@@ -47,7 +51,7 @@ export class ResponseUtil {
       totalPages: Math.ceil(total / limit),
     };
 
-    return this.success(data, message, meta);
+    return this.success<T[]>(data, message, meta);
   }
 
   /**
@@ -59,20 +63,22 @@ export class ResponseUtil {
     startTime: number,
     filters: any,
     message?: string
-  ): ApiResponse<T[]> {
+  ): ApiResponseBookly<T[]> {
     const meta: AdvancedSearchPaginationMeta = {
       pagination: {
         ...pagination,
         page: pagination.page || 1,
         limit: pagination.limit || 20,
-        totalPages: pagination.totalPages || Math.ceil(pagination.total / pagination.limit),
+        totalPages:
+          pagination.totalPages ||
+          Math.ceil(pagination.total / pagination.limit),
       },
       executionTimeMs: Date.now() - startTime,
       timestamp: new Date(),
-      filters
+      filters,
     };
 
-    return this.success(data, message, meta);
+    return this.success<T[]>(data, message, meta);
   }
 
   /**
@@ -81,9 +87,18 @@ export class ResponseUtil {
   static error(
     message: string,
     errors?: Record<string, string[]>,
-    data?: any
-  ): ApiResponse<any> {
-    const response: ApiResponse<any> = {
+    data?: any,
+    p0?: any[],
+    p1?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    }
+  ): ApiResponseBookly<any> {
+    const response: ApiResponseBookly<any> = {
       success: false,
       message,
       data: data || null,
@@ -101,8 +116,8 @@ export class ResponseUtil {
    */
   static validationError(
     errors: Record<string, string[]>,
-    message: string = 'Validation failed'
-  ): ApiResponse<null> {
+    message: string = "Validation failed"
+  ): ApiResponseBookly<null> {
     return {
       success: false,
       data: null,
@@ -115,9 +130,9 @@ export class ResponseUtil {
    * Create not found error response
    */
   static notFound(
-    resource: string = 'Resource',
+    resource: string = "Resource",
     message?: string
-  ): ApiResponse<null> {
+  ): ApiResponseBookly<null> {
     return {
       success: false,
       data: null,
@@ -129,8 +144,8 @@ export class ResponseUtil {
    * Create unauthorized error response
    */
   static unauthorized(
-    message: string = 'Unauthorized access'
-  ): ApiResponse<null> {
+    message: string = "Unauthorized access"
+  ): ApiResponseBookly<null> {
     return {
       success: false,
       data: null,
@@ -142,8 +157,8 @@ export class ResponseUtil {
    * Create forbidden error response
    */
   static forbidden(
-    message: string = 'Access forbidden'
-  ): ApiResponse<null> {
+    message: string = "Access forbidden"
+  ): ApiResponseBookly<null> {
     return {
       success: false,
       data: null,
@@ -161,7 +176,7 @@ export class ResponseUtil {
     page?: number;
     limit?: number;
     message?: string;
-  }): ApiResponse<T[] | T> {
+  }): ApiResponseBookly<T[] | T> {
     // Handle paginated service responses
     if (serviceResponse.items && serviceResponse.total !== undefined) {
       return this.paginated(
@@ -181,10 +196,7 @@ export class ResponseUtil {
   /**
    * Transform array of entities to list response
    */
-  static list<T>(
-    items: T[],
-    message?: string
-  ): ApiResponse<T[]> {
-    return this.success(items, message || 'List retrieved successfully');
+  static list<T>(items: T[], message?: string): ApiResponseBookly<T[]> {
+    return this.success(items, message || "List retrieved successfully");
   }
 }
