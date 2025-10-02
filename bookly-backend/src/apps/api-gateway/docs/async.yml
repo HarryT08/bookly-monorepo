@@ -1,0 +1,636 @@
+asyncapi: 3.0.0
+info:
+  title: Bookly API Gateway AsyncAPI
+  version: 1.0.0
+  description: |
+    AsyncAPI documentation for Bookly API Gateway message broker integration.
+    
+    The API Gateway handles asynchronous events for:
+    - Service health monitoring
+    - Circuit breaker state changes  
+    - Rate limiting events
+    - Request/response aggregation
+    - Load balancer notifications
+    - Protocol translation events
+    
+  contact:
+    name: Bookly Development Team
+    url: https://github.com/bookly-monorepo
+    email: dev@ufps.edu.co
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+defaultContentType: application/json
+
+servers:
+  production:
+    host: rabbitmq.bookly.ufps.edu.co:5672
+    protocol: amqp
+    description: Production RabbitMQ server
+    variables:
+      port:
+        default: '5672'
+        description: RabbitMQ port
+    security:
+      - user-password: []
+  development:
+    host: localhost:5672
+    protocol: amqp
+    description: Development RabbitMQ server
+    variables:
+      port:
+        default: '5672'
+        description: RabbitMQ port
+
+channels:
+  gateway/health:
+    description: Gateway health monitoring events
+    messages:
+      healthStatusChanged:
+        $ref: '#/components/messages/HealthStatusChanged'
+    
+  gateway/circuit-breaker:
+    description: Circuit breaker state change events
+    messages:
+      circuitBreakerOpened:
+        $ref: '#/components/messages/CircuitBreakerOpened'
+      circuitBreakerClosed:
+        $ref: '#/components/messages/CircuitBreakerClosed'
+      circuitBreakerHalfOpen:
+        $ref: '#/components/messages/CircuitBreakerHalfOpen'
+    
+  gateway/rate-limit:
+    description: Rate limiting events
+    messages:
+      rateLimitExceeded:
+        $ref: '#/components/messages/RateLimitExceeded'
+      rateLimitReset:
+        $ref: '#/components/messages/RateLimitReset'
+    
+  gateway/load-balancer:
+    description: Load balancer events
+    messages:
+      serviceInstanceAdded:
+        $ref: '#/components/messages/ServiceInstanceAdded'
+      serviceInstanceRemoved:
+        $ref: '#/components/messages/ServiceInstanceRemoved'
+      serviceInstanceHealthChanged:
+        $ref: '#/components/messages/ServiceInstanceHealthChanged'
+    
+  gateway/requests:
+    description: Request processing events
+    messages:
+      requestProcessed:
+        $ref: '#/components/messages/RequestProcessed'
+      requestFailed:
+        $ref: '#/components/messages/RequestFailed'
+      requestAggregated:
+        $ref: '#/components/messages/RequestAggregated'
+    
+  gateway/protocol:
+    description: Protocol translation events
+    messages:
+      protocolTranslated:
+        $ref: '#/components/messages/ProtocolTranslated'
+      translationFailed:
+        $ref: '#/components/messages/TranslationFailed'
+
+operations:
+  publishHealthStatus:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1health'
+    summary: Publish gateway health status changes
+    description: Notifies when gateway or service health status changes
+    messages:
+      - $ref: '#/channels/gateway~1health/messages/healthStatusChanged'
+
+  publishCircuitBreakerState:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1circuit-breaker'
+    summary: Publish circuit breaker state changes
+    description: Notifies when circuit breaker state changes (open/closed/half-open)
+    messages:
+      - $ref: '#/channels/gateway~1circuit-breaker/messages/circuitBreakerOpened'
+      - $ref: '#/channels/gateway~1circuit-breaker/messages/circuitBreakerClosed'
+      - $ref: '#/channels/gateway~1circuit-breaker/messages/circuitBreakerHalfOpen'
+
+  publishRateLimitEvents:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1rate-limit'
+    summary: Publish rate limiting events
+    description: Notifies when rate limits are exceeded or reset
+    messages:
+      - $ref: '#/channels/gateway~1rate-limit/messages/rateLimitExceeded'
+      - $ref: '#/channels/gateway~1rate-limit/messages/rateLimitReset'
+
+  publishLoadBalancerEvents:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1load-balancer'
+    summary: Publish load balancer events
+    description: Notifies about service instance lifecycle and health
+    messages:
+      - $ref: '#/channels/gateway~1load-balancer/messages/serviceInstanceAdded'
+      - $ref: '#/channels/gateway~1load-balancer/messages/serviceInstanceRemoved'
+      - $ref: '#/channels/gateway~1load-balancer/messages/serviceInstanceHealthChanged'
+
+  publishRequestEvents:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1requests'
+    summary: Publish request processing events
+    description: Notifies about request processing, failures, and aggregations
+    messages:
+      - $ref: '#/channels/gateway~1requests/messages/requestProcessed'
+      - $ref: '#/channels/gateway~1requests/messages/requestFailed'
+      - $ref: '#/channels/gateway~1requests/messages/requestAggregated'
+
+  publishProtocolEvents:
+    action: send
+    channel:
+      $ref: '#/channels/gateway~1protocol'
+    summary: Publish protocol translation events
+    description: Notifies about protocol translations and failures
+    messages:
+      - $ref: '#/channels/gateway~1protocol/messages/protocolTranslated'
+      - $ref: '#/channels/gateway~1protocol/messages/translationFailed'
+
+components:
+  messages:
+    HealthStatusChanged:
+      name: HealthStatusChanged
+      title: Health Status Changed
+      summary: Gateway or service health status changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HealthStatusEvent'
+
+    CircuitBreakerOpened:
+      name: CircuitBreakerOpened
+      title: Circuit Breaker Opened
+      summary: Circuit breaker opened due to failures
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CircuitBreakerEvent'
+
+    CircuitBreakerClosed:
+      name: CircuitBreakerClosed
+      title: Circuit Breaker Closed
+      summary: Circuit breaker closed - service recovered
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CircuitBreakerEvent'
+
+    CircuitBreakerHalfOpen:
+      name: CircuitBreakerHalfOpen
+      title: Circuit Breaker Half-Open
+      summary: Circuit breaker half-open - testing service
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CircuitBreakerEvent'
+
+    RateLimitExceeded:
+      name: RateLimitExceeded
+      title: Rate Limit Exceeded
+      summary: Rate limit exceeded for client or endpoint
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RateLimitEvent'
+
+    RateLimitReset:
+      name: RateLimitReset
+      title: Rate Limit Reset
+      summary: Rate limit counter reset
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RateLimitResetEvent'
+
+    ServiceInstanceAdded:
+      name: ServiceInstanceAdded
+      title: Service Instance Added
+      summary: New service instance added to load balancer
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceInstanceEvent'
+
+    ServiceInstanceRemoved:
+      name: ServiceInstanceRemoved
+      title: Service Instance Removed
+      summary: Service instance removed from load balancer
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceInstanceEvent'
+
+    ServiceInstanceHealthChanged:
+      name: ServiceInstanceHealthChanged
+      title: Service Instance Health Changed
+      summary: Service instance health status changed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ServiceInstanceHealthEvent'
+
+    RequestProcessed:
+      name: RequestProcessed
+      title: Request Processed
+      summary: Request successfully processed by gateway
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RequestEvent'
+
+    RequestFailed:
+      name: RequestFailed
+      title: Request Failed
+      summary: Request failed during processing
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RequestFailedEvent'
+
+    RequestAggregated:
+      name: RequestAggregated
+      title: Request Aggregated
+      summary: Multiple service requests aggregated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RequestAggregationEvent'
+
+    ProtocolTranslated:
+      name: ProtocolTranslated
+      title: Protocol Translated
+      summary: Request/response protocol translated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProtocolTranslationEvent'
+
+    TranslationFailed:
+      name: TranslationFailed
+      title: Translation Failed
+      summary: Protocol translation failed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProtocolTranslationFailedEvent'
+
+  schemas:
+    HealthStatusEvent:
+      type: object
+      required:
+        - service
+        - status
+        - timestamp
+      properties:
+        service:
+          type: string
+          description: Service name (gateway or microservice)
+          examples:
+            - "api-gateway"
+            - "auth-service"
+            - "availability-service"
+        status:
+          type: string
+          enum: [healthy, unhealthy, degraded]
+          description: Health status
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        details:
+          type: object
+          description: Additional health details
+        previousStatus:
+          type: string
+          enum: [healthy, unhealthy, degraded]
+          description: Previous health status
+
+    CircuitBreakerEvent:
+      type: object
+      required:
+        - service
+        - state
+        - timestamp
+      properties:
+        service:
+          type: string
+          description: Service name
+          examples:
+            - "auth-service"
+            - "availability-service"
+        state:
+          type: string
+          enum: [open, closed, half-open]
+          description: Circuit breaker state
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        failureCount:
+          type: integer
+          description: Current failure count
+        successCount:
+          type: integer
+          description: Current success count
+        failureRate:
+          type: number
+          format: float
+          description: Current failure rate
+        reason:
+          type: string
+          description: Reason for state change
+
+    RateLimitEvent:
+      type: object
+      required:
+        - key
+        - limit
+        - current
+        - timestamp
+      properties:
+        key:
+          type: string
+          description: Rate limit key (IP, user, endpoint)
+          examples:
+            - "ip:192.168.1.100"
+            - "user:user-123"
+            - "endpoint:/auth/login"
+        limit:
+          type: integer
+          description: Rate limit threshold
+        current:
+          type: integer
+          description: Current count
+        ttl:
+          type: integer
+          description: Time to live in seconds
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        endpoint:
+          type: string
+          description: Affected endpoint
+        userAgent:
+          type: string
+          description: Client user agent
+
+    RateLimitResetEvent:
+      type: object
+      required:
+        - key
+        - timestamp
+      properties:
+        key:
+          type: string
+          description: Rate limit key that was reset
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        reason:
+          type: string
+          description: Reason for reset
+          examples:
+            - "manual"
+            - "ttl-expired"
+            - "admin-reset"
+
+    ServiceInstanceEvent:
+      type: object
+      required:
+        - service
+        - instanceId
+        - url
+        - timestamp
+      properties:
+        service:
+          type: string
+          description: Service name
+        instanceId:
+          type: string
+          description: Instance identifier
+        url:
+          type: string
+          format: uri
+          description: Instance URL
+        weight:
+          type: integer
+          description: Load balancer weight
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+
+    ServiceInstanceHealthEvent:
+      type: object
+      required:
+        - service
+        - instanceId
+        - healthy
+        - timestamp
+      properties:
+        service:
+          type: string
+          description: Service name
+        instanceId:
+          type: string
+          description: Instance identifier
+        healthy:
+          type: boolean
+          description: Health status
+        responseTime:
+          type: integer
+          description: Response time in milliseconds
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        error:
+          type: string
+          description: Error message if unhealthy
+
+    RequestEvent:
+      type: object
+      required:
+        - requestId
+        - method
+        - path
+        - statusCode
+        - duration
+        - timestamp
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier
+        method:
+          type: string
+          description: HTTP method
+          examples: ["GET", "POST", "PUT", "DELETE"]
+        path:
+          type: string
+          description: Request path
+        statusCode:
+          type: integer
+          description: HTTP status code
+        duration:
+          type: integer
+          description: Request duration in milliseconds
+        service:
+          type: string
+          description: Target service
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        userAgent:
+          type: string
+          description: Client user agent
+        clientIp:
+          type: string
+          description: Client IP address
+
+    RequestFailedEvent:
+      type: object
+      required:
+        - requestId
+        - method
+        - path
+        - error
+        - timestamp
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier
+        method:
+          type: string
+          description: HTTP method
+        path:
+          type: string
+          description: Request path
+        error:
+          type: string
+          description: Error message
+        statusCode:
+          type: integer
+          description: HTTP status code
+        service:
+          type: string
+          description: Target service
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+        retryCount:
+          type: integer
+          description: Number of retries attempted
+
+    RequestAggregationEvent:
+      type: object
+      required:
+        - requestId
+        - endpoint
+        - services
+        - timestamp
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier
+        endpoint:
+          type: string
+          description: Aggregation endpoint
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              service:
+                type: string
+              path:
+                type: string
+              duration:
+                type: integer
+              statusCode:
+                type: integer
+          description: Services involved in aggregation
+        totalDuration:
+          type: integer
+          description: Total aggregation duration
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+
+    ProtocolTranslationEvent:
+      type: object
+      required:
+        - requestId
+        - fromFormat
+        - toFormat
+        - timestamp
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier
+        fromFormat:
+          type: string
+          description: Source format
+          examples: ["json", "xml", "form-data", "text"]
+        toFormat:
+          type: string
+          description: Target format
+          examples: ["json", "xml", "form-data", "text"]
+        size:
+          type: integer
+          description: Data size in bytes
+        duration:
+          type: integer
+          description: Translation duration in milliseconds
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+
+    ProtocolTranslationFailedEvent:
+      type: object
+      required:
+        - requestId
+        - fromFormat
+        - toFormat
+        - error
+        - timestamp
+      properties:
+        requestId:
+          type: string
+          description: Unique request identifier
+        fromFormat:
+          type: string
+          description: Source format
+        toFormat:
+          type: string
+          description: Target format
+        error:
+          type: string
+          description: Translation error
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+
+  securitySchemes:
+    user-password:
+      type: userPassword
+      description: RabbitMQ user credentials
+
+tags:
+  - name: health
+    description: Health monitoring events
+  - name: circuit-breaker
+    description: Circuit breaker events
+  - name: rate-limit
+    description: Rate limiting events
+  - name: load-balancer
+    description: Load balancer events
+  - name: requests
+    description: Request processing events
+  - name: protocol
+    description: Protocol translation events

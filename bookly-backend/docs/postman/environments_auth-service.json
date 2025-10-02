@@ -1,0 +1,30 @@
+{
+    "key": "Direct Microservice Environment", 
+    "name": "Direct Auth Service",
+    "values": [
+      {
+        "key": "host",
+        "value": "http://localhost:3001",
+        "enabled": true,
+        "type": "default"
+      },
+      {
+        "key": "service_port",
+        "value": "3001",
+        "enabled": true,
+        "type": "default"
+      },
+      {
+        "key": "environment",
+        "value": "direct",
+        "enabled": true,
+        "type": "default"
+      },
+      {
+        "key": "base_path",
+        "value": "/api/v1",
+        "enabled": true,
+        "type": "default"
+      }
+    ]
+  }

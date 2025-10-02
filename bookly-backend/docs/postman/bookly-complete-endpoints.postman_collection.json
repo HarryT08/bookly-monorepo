@@ -1,0 +1,1404 @@
+{
+  "info": {
+    "name": "Bookly - Complete API Endpoints Collection",
+    "description": "Comprehensive collection of all microservice endpoints accessible through API Gateway. Includes REST endpoints, WebSocket events, and administrative functions.",
+    "version": "2.0.0",
+    "_postman_id": "bookly-complete-api-2024",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-refresh token if expired",
+          "const tokenExpiry = pm.environment.get('token_expiry');",
+          "const currentTime = new Date().getTime();",
+          "",
+          "if (tokenExpiry && currentTime >= tokenExpiry) {",
+          "    console.log('Token expired, please login again');",
+          "    pm.environment.set('access_token', '');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script for all requests",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has correct content-type', function () {",
+          "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "});",
+          "",
+          "// Extract and store token from login responses",
+          "if (pm.response.json() && pm.response.json().data && pm.response.json().data.access_token) {",
+          "    pm.environment.set('access_token', pm.response.json().data.access_token);",
+          "    ",
+          "    // Calculate and store token expiry",
+          "    const expiresIn = pm.response.json().data.expires_in || 3600;",
+          "    const expiryTime = new Date().getTime() + (expiresIn * 1000);",
+          "    pm.environment.set('token_expiry', expiryTime);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api_gateway_url",
+      "value": "http://localhost:3000",
+      "description": "API Gateway base URL",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "description": "JWT access token for authentication",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "description": "JWT refresh token",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "description": "Current user ID",
+      "type": "string"
+    },
+    {
+      "key": "test_resource_id",
+      "value": "",
+      "description": "Test resource ID for operations",
+      "type": "string"
+    },
+    {
+      "key": "test_reservation_id",
+      "value": "",
+      "description": "Test reservation ID for operations",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🚪 API Gateway Management",
+      "description": "API Gateway health, routing, and administrative endpoints",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_gateway_url}}/_gateway/health",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["_gateway", "health"]
+            },
+            "description": "Check API Gateway health status"
+          },
+          "response": []
+        },
+        {
+          "name": "Aggregated Services Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_gateway_url}}/_gateway/health/aggregated",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["_gateway", "health", "aggregated"]
+            },
+            "description": "Get health status of all microservices"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_gateway_url}}/_gateway/routes",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["_gateway", "routes"]
+            },
+            "description": "List all configured routes"
+          },
+          "response": []
+        },
+        {
+          "name": "Service Instances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_gateway_url}}/_gateway/services",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["_gateway", "services"]
+            },
+            "description": "Get all service instances and their health"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_gateway_url}}/_gateway/metrics",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["_gateway", "metrics"]
+            },
+            "description": "Get gateway metrics and statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Rate Limits Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_gateway_url}}/_gateway/rate-limits",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["_gateway", "rate-limits"]
+            },
+            "description": "Get rate limiting statistics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔐 Auth Service",
+      "description": "Authentication, authorization, users, roles, and permissions management",
+      "item": [
+        {
+          "name": "Authentication",
+          "item": [
+            {
+              "name": "Login",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Login successful', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "if (pm.response.json().data) {",
+                      "    pm.environment.set('access_token', pm.response.json().data.access_token);",
+                      "    pm.environment.set('refresh_token', pm.response.json().data.refresh_token);",
+                      "    pm.environment.set('user_id', pm.response.json().data.user.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"admin@ufps.edu.co\",\n  \"password\": \"123456\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/login",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "login"]
+                },
+                "description": "User login with email and password"
+              },
+              "response": []
+            },
+            {
+              "name": "Register",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"nuevo@ufps.edu.co\",\n  \"username\": \"nuevousuario\",\n  \"password\": \"123456\",\n  \"firstName\": \"Nuevo\",\n  \"lastName\": \"Usuario\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/register",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "register"]
+                },
+                "description": "Register new user account"
+              },
+              "response": []
+            },
+            {
+              "name": "Get Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/profile",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "profile"]
+                },
+                "description": "Get current user profile"
+              },
+              "response": []
+            },
+            {
+              "name": "Logout",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/logout",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "logout"]
+                },
+                "description": "Logout current user"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "OAuth Integration",
+          "item": [
+            {
+              "name": "Google OAuth Login",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/oauth/google",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "oauth", "google"]
+                },
+                "description": "Initiate Google OAuth login"
+              },
+              "response": []
+            },
+            {
+              "name": "Google OAuth Callback",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/oauth/google/callback",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "oauth", "google", "callback"]
+                },
+                "description": "Google OAuth callback endpoint"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "User Management",
+          "item": [
+            {
+              "name": "Get All Users",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/users?page=1&limit=20&search=",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "users"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "search",
+                      "value": ""
+                    }
+                  ]
+                },
+                "description": "Get paginated list of users"
+              },
+              "response": []
+            },
+            {
+              "name": "Get User by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/users/{{user_id}}",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "users", "{{user_id}}"]
+                },
+                "description": "Get specific user by ID"
+              },
+              "response": []
+            },
+            {
+              "name": "Update User",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Updated First Name\",\n  \"lastName\": \"Updated Last Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/users/{{user_id}}",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "users", "{{user_id}}"]
+                },
+                "description": "Update user information"
+              },
+              "response": []
+            },
+            {
+              "name": "Delete User",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/users/{{user_id}}",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "users", "{{user_id}}"]
+                },
+                "description": "Delete user account"
+              },
+              "response": []
+            },
+            {
+              "name": "Assign Role to User",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/users/{{user_id}}/roles/role_id_here",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "users", "{{user_id}}", "roles", "role_id_here"]
+                },
+                "description": "Assign role to user"
+              },
+              "response": []
+            },
+            {
+              "name": "Remove Role from User",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/users/{{user_id}}/roles/role_id_here",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "users", "{{user_id}}", "roles", "role_id_here"]
+                },
+                "description": "Remove role from user"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Role Management",
+          "item": [
+            {
+              "name": "Get All Roles",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/roles?page=1&limit=20",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "roles"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "Get paginated list of roles"
+              },
+              "response": []
+            },
+            {
+              "name": "Get Active Roles",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/roles/active",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "roles", "active"]
+                },
+                "description": "Get all active roles"
+              },
+              "response": []
+            },
+            {
+              "name": "Get Role by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/roles/role_id_here",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "roles", "role_id_here"]
+                },
+                "description": "Get specific role by ID"
+              },
+              "response": []
+            },
+            {
+              "name": "Create Role",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"New Role\",\n  \"description\": \"Description of new role\",\n  \"categoryCode\": \"ACADEMIC\",\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/roles",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "roles"]
+                },
+                "description": "Create new role"
+              },
+              "response": []
+            },
+            {
+              "name": "Update Role",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Updated Role Name\",\n  \"description\": \"Updated description\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/roles/role_id_here",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "roles", "role_id_here"]
+                },
+                "description": "Update role information"
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Role",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/roles/role_id_here",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "roles", "role_id_here"]
+                },
+                "description": "Delete role"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Categories & Permissions",
+          "item": [
+            {
+              "name": "Get Auth Categories",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/categories",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "categories"]
+                },
+                "description": "Get role categories"
+              },
+              "response": []
+            },
+            {
+              "name": "Get Default Categories",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/categories/defaults",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "categories", "defaults"]
+                },
+                "description": "Get default role categories"
+              },
+              "response": []
+            },
+            {
+              "name": "Get All Permissions",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/permissions",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "permissions"]
+                },
+                "description": "Get all permissions"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Seed Data",
+          "item": [
+            {
+              "name": "Check Seed Status",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/seed/status",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "seed", "status"]
+                },
+                "description": "Check if database needs seeding"
+              },
+              "response": []
+            },
+            {
+              "name": "Run Complete Seed",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{api_gateway_url}}/auth/seed/run",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["auth", "seed", "run"]
+                },
+                "description": "Execute complete seeding process"
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📦 Resources Service",
+      "description": "Resource management, categories, maintenance, and availability",
+      "item": [
+        {
+          "name": "Resource CRUD",
+          "item": [
+            {
+              "name": "Get All Resources",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/resources?page=1&limit=20&category=&program=",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["resources"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "category",
+                      "value": ""
+                    },
+                    {
+                      "key": "program",
+                      "value": ""
+                    }
+                  ]
+                },
+                "description": "Get paginated list of resources"
+              }
+            },
+            {
+              "name": "Get Resource by ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/resources/{{test_resource_id}}",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["resources", "{{test_resource_id}}"]
+                },
+                "description": "Get specific resource by ID"
+              }
+            },
+            {
+              "name": "Create Resource",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.json().data && pm.response.json().data.id) {",
+                      "    pm.environment.set('test_resource_id', pm.response.json().data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Sala de Conferencias A1\",\n  \"code\": \"CONF-A1-001\",\n  \"description\": \"Sala de conferencias equipada con proyector\",\n  \"categoryId\": \"category_id_here\",\n  \"academicProgramId\": \"program_id_here\",\n  \"capacity\": 50,\n  \"location\": \"Edificio A, Piso 1\",\n  \"attributes\": {\n    \"hasProjector\": true,\n    \"hasWhiteboard\": true,\n    \"hasAirConditioning\": true\n  },\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/resources",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["resources"]
+                },
+                "description": "Create new resource"
+              }
+            },
+            {
+              "name": "Update Resource",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Sala de Conferencias A1 - Actualizada\",\n  \"description\": \"Sala de conferencias renovada con nuevo equipamiento\",\n  \"capacity\": 60\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/resources/{{test_resource_id}}",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["resources", "{{test_resource_id}}"]
+                },
+                "description": "Update resource information"
+              }
+            },
+            {
+              "name": "Delete Resource",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/resources/{{test_resource_id}}",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["resources", "{{test_resource_id}}"]
+                },
+                "description": "Delete resource"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resource Categories",
+          "item": [
+            {
+              "name": "Get All Categories",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/resources/categories",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["resources", "categories"]
+                },
+                "description": "Get all resource categories"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📅 Availability Service",
+      "description": "Availability management, reservations, schedules, and calendar integration",
+      "item": [
+        {
+          "name": "Availability Management",
+          "item": [
+            {
+              "name": "Get Resource Availability",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/availability/resources/{{test_resource_id}}?startDate=2024-09-01&endDate=2024-09-30",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["availability", "resources", "{{test_resource_id}}"],
+                  "query": [
+                    {
+                      "key": "startDate",
+                      "value": "2024-09-01"
+                    },
+                    {
+                      "key": "endDate",
+                      "value": "2024-09-30"
+                    }
+                  ]
+                },
+                "description": "Get availability for specific resource"
+              }
+            },
+            {
+              "name": "Check Availability",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/availability/check?resourceId={{test_resource_id}}&startDateTime=2024-09-15T10:00:00Z&endDateTime=2024-09-15T12:00:00Z",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["availability", "check"],
+                  "query": [
+                    {
+                      "key": "resourceId",
+                      "value": "{{test_resource_id}}"
+                    },
+                    {
+                      "key": "startDateTime",
+                      "value": "2024-09-15T10:00:00Z"
+                    },
+                    {
+                      "key": "endDateTime",
+                      "value": "2024-09-15T12:00:00Z"
+                    }
+                  ]
+                },
+                "description": "Check if resource is available for specific time slot"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservations",
+          "item": [
+            {
+              "name": "Create Reservation",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "if (pm.response.json().data && pm.response.json().data.id) {",
+                      "    pm.environment.set('test_reservation_id', pm.response.json().data.id);",
+                      "}"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"resourceId\": \"{{test_resource_id}}\",\n  \"userId\": \"{{user_id}}\",\n  \"startDateTime\": \"2024-09-15T10:00:00Z\",\n  \"endDateTime\": \"2024-09-15T12:00:00Z\",\n  \"purpose\": \"Reunión de equipo\",\n  \"attendees\": 10,\n  \"notes\": \"Reunión quincenal del equipo de desarrollo\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/availability/reservations",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["availability", "reservations"]
+                },
+                "description": "Create new reservation"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "✅ Stockpile Service",
+      "description": "Approval workflows, document generation, and notifications",
+      "item": [
+        {
+          "name": "Approval Requests",
+          "item": [
+            {
+              "name": "Get Approval Requests",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api_gateway_url}}/stockpile/approval-requests?page=1&limit=20&status=pending",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["stockpile", "approval-requests"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20"
+                    },
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    }
+                  ]
+                },
+                "description": "Get paginated approval requests"
+              }
+            },
+            {
+              "name": "Approve Request",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"comments\": \"Solicitud aprobada\",\n  \"conditions\": []\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/stockpile/approval-requests/request_id_here/approve",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["stockpile", "approval-requests", "request_id_here", "approve"]
+                },
+                "description": "Approve a reservation request"
+              }
+            },
+            {
+              "name": "Reject Request",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reason\": \"Conflicto de horarios\",\n  \"comments\": \"El recurso no está disponible en el horario solicitado\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/stockpile/approval-requests/request_id_here/reject",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["stockpile", "approval-requests", "request_id_here", "reject"]
+                },
+                "description": "Reject a reservation request"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📊 Reports Service",
+      "description": "Reports generation, analytics, and data export",
+      "item": [
+        {
+          "name": "Usage Reports",
+          "item": [
+            {
+              "name": "Generate Usage Report",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"startDate\": \"2024-09-01\",\n  \"endDate\": \"2024-09-30\",\n  \"resourceId\": \"{{test_resource_id}}\",\n  \"programId\": \"\",\n  \"reportFormat\": \"PDF\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/reports/usage",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["reports", "usage"]
+                },
+                "description": "Generate usage report for resources"
+              }
+            },
+            {
+              "name": "Generate User Report",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"startDate\": \"2024-09-01\",\n  \"endDate\": \"2024-09-30\",\n  \"userId\": \"{{user_id}}\",\n  \"reportFormat\": \"PDF\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/reports/users",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["reports", "users"]
+                },
+                "description": "Generate report for specific user"
+              }
+            },
+            {
+              "name": "Export CSV",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reportType\": \"usage\",\n  \"startDate\": \"2024-09-01\",\n  \"endDate\": \"2024-09-30\",\n  \"filters\": {}\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/reports/export/csv",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["reports", "export", "csv"]
+                },
+                "description": "Export data as CSV file"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Feedback",
+          "item": [
+            {
+              "name": "Create Feedback",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{access_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"reservationId\": \"{{test_reservation_id}}\",\n  \"rating\": 5,\n  \"comment\": \"Excelente experiencia, todo funcionó perfectamente\",\n  \"category\": \"service\"\n}"
+                },
+                "url": {
+                  "raw": "{{api_gateway_url}}/reports/feedback",
+                  "host": ["{{api_gateway_url}}"],
+                  "path": ["reports", "feedback"]
+                },
+                "description": "Create user feedback"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,707 @@
+{
+  "info": {
+    "name": "Bookly Stockpile Service - Notification Templates",
+    "description": "Postman collection for Notification Template Management endpoints\n\nThis collection covers:\n- Creating and managing notification channels\n- Notification template configuration\n- Multi-channel notification system (Email, SMS, In-App, Push)\n- Batch notification processing\n- Notification configuration management\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the stockpile service\n- {{authToken}} - JWT Bearer token for authentication\n- {{adminToken}} - JWT Bearer token for admin operations\n- {{testChannelId}} - Notification channel ID for testing\n- {{testTemplateId}} - Notification template ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "stockpile-notification-templates",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "if (!pm.environment.get('testProgramId')) {",
+          "  pm.environment.set('testProgramId', 'program-test-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/stockpile",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Notification Channels",
+      "item": [
+        {
+          "name": "Create Notification Channel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Email Notifications\",\n  \"description\": \"Primary email notification channel\",\n  \"type\": \"EMAIL\",\n  \"configuration\": {\n    \"smtpHost\": \"smtp.ufps.edu.co\",\n    \"smtpPort\": 587,\n    \"username\": \"notifications@ufps.edu.co\",\n    \"password\": \"secure-password\",\n    \"fromName\": \"Bookly Reservations\",\n    \"fromEmail\": \"noreply@ufps.edu.co\",\n    \"encryption\": \"TLS\"\n  },\n  \"isActive\": true,\n  \"priority\": 1,\n  \"rateLimits\": {\n    \"maxPerMinute\": 60,\n    \"maxPerHour\": 1000,\n    \"maxPerDay\": 10000\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/channels",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "channels"]
+            },
+            "description": "Creates a new notification channel (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Channel created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('type');",
+                  "  pm.expect(responseJson.type).to.equal('EMAIL');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('testChannelId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Notification Channels",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/channels?type=EMAIL&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "channels"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "EMAIL",
+                  "description": "Filter by channel type"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter active channels"
+                }
+              ]
+            },
+            "description": "Retrieves notification channels with optional filtering"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Channels array returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Notification Channel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Email Notifications\",\n  \"description\": \"Enhanced email notification channel with new configuration\",\n  \"configuration\": {\n    \"smtpHost\": \"smtp.ufps.edu.co\",\n    \"smtpPort\": 587,\n    \"username\": \"notifications@ufps.edu.co\",\n    \"fromName\": \"UFPS Bookly System\",\n    \"fromEmail\": \"bookly@ufps.edu.co\",\n    \"encryption\": \"TLS\",\n    \"enableBounceTracking\": true\n  },\n  \"isActive\": true,\n  \"priority\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/channels/{{testChannelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "channels", "{{testChannelId}}"]
+            },
+            "description": "Updates an existing notification channel (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notification Templates",
+      "item": [
+        {
+          "name": "Create Notification Template",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Reservation Approved Email\",\n  \"description\": \"Email template for reservation approval notifications\",\n  \"channelId\": \"{{testChannelId}}\",\n  \"eventType\": \"RESERVATION_APPROVED\",\n  \"resourceType\": \"CLASSROOM\",\n  \"categoryId\": \"classroom-standard\",\n  \"subject\": \"Reservation Approved - {{resource.name}}\",\n  \"content\": {\n    \"html\": \"<h2>Reservation Approved</h2><p>Dear {{user.firstName}},</p><p>Your reservation for <strong>{{resource.name}}</strong> has been approved.</p><h3>Details:</h3><ul><li>Date: {{reservation.date}}</li><li>Time: {{reservation.startTime}} - {{reservation.endTime}}</li><li>Purpose: {{reservation.purpose}}</li></ul><p>Please arrive on time and follow facility guidelines.</p><p>Best regards,<br>{{approver.name}}</p>\",\n    \"text\": \"Reservation Approved\\n\\nDear {{user.firstName}},\\n\\nYour reservation for {{resource.name}} has been approved.\\n\\nDetails:\\n- Date: {{reservation.date}}\\n- Time: {{reservation.startTime}} - {{reservation.endTime}}\\n- Purpose: {{reservation.purpose}}\\n\\nPlease arrive on time and follow facility guidelines.\\n\\nBest regards,\\n{{approver.name}}\"\n  },\n  \"variables\": {\n    \"user\": [\"firstName\", \"lastName\", \"email\"],\n    \"resource\": [\"name\", \"location\"],\n    \"reservation\": [\"date\", \"startTime\", \"endTime\", \"purpose\"],\n    \"approver\": [\"name\", \"title\"]\n  },\n  \"isDefault\": true,\n  \"isActive\": true,\n  \"priority\": \"NORMAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates"]
+            },
+            "description": "Creates a new notification template"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Template created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('subject');",
+                  "  pm.expect(responseJson).to.have.property('content');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('testTemplateId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Notification Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates?channelId={{testChannelId}}&eventType=RESERVATION_APPROVED&isActive=true&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates"],
+              "query": [
+                {
+                  "key": "channelId",
+                  "value": "{{testChannelId}}",
+                  "description": "Filter by channel"
+                },
+                {
+                  "key": "eventType",
+                  "value": "RESERVATION_APPROVED",
+                  "description": "Filter by event type"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter active templates"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves notification templates with filtering and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification Template by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/{{testTemplateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "{{testTemplateId}}"]
+            },
+            "description": "Retrieves a specific notification template by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Notification Template",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Enhanced Reservation Approved Email\",\n  \"description\": \"Enhanced email template with improved formatting\",\n  \"subject\": \"✅ Reservation Approved - {{resource.name}} on {{reservation.date}}\",\n  \"content\": {\n    \"html\": \"<div style='font-family: Arial, sans-serif; max-width: 600px;'><h2 style='color: #28a745;'>✅ Reservation Approved</h2><p>Dear {{user.firstName}},</p><p>Great news! Your reservation has been <strong style='color: #28a745;'>APPROVED</strong>.</p><div style='background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'><h3 style='margin-top: 0;'>Reservation Details</h3><table style='width: 100%;'><tr><td><strong>Resource:</strong></td><td>{{resource.name}}</td></tr><tr><td><strong>Location:</strong></td><td>{{resource.location}}</td></tr><tr><td><strong>Date:</strong></td><td>{{reservation.date}}</td></tr><tr><td><strong>Time:</strong></td><td>{{reservation.startTime}} - {{reservation.endTime}}</td></tr><tr><td><strong>Purpose:</strong></td><td>{{reservation.purpose}}</td></tr></table></div><div style='background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;'><h4 style='margin-top: 0; color: #856404;'>Important Reminders</h4><ul style='margin-bottom: 0;'><li>Please arrive on time</li><li>Keep the space clean after use</li><li>Report any issues immediately</li></ul></div><p style='margin-top: 20px;'>Approved by: <strong>{{approver.name}}</strong><br>{{approver.title}}</p><p style='color: #6c757d; font-size: 12px;'>This is an automated message from the Bookly Reservation System.</p></div>\",\n    \"text\": \"✅ RESERVATION APPROVED\\n\\nDear {{user.firstName}},\\n\\nGreat news! Your reservation has been APPROVED.\\n\\nReservation Details:\\n- Resource: {{resource.name}}\\n- Location: {{resource.location}}\\n- Date: {{reservation.date}}\\n- Time: {{reservation.startTime}} - {{reservation.endTime}}\\n- Purpose: {{reservation.purpose}}\\n\\nImportant Reminders:\\n- Please arrive on time\\n- Keep the space clean after use\\n- Report any issues immediately\\n\\nApproved by: {{approver.name}}\\n{{approver.title}}\\n\\nThis is an automated message from the Bookly Reservation System.\"\n  },\n  \"priority\": \"HIGH\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/{{testTemplateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "{{testTemplateId}}"]
+            },
+            "description": "Updates an existing notification template"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Default Notification Template",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/default/search?channelId={{testChannelId}}&eventType=RESERVATION_APPROVED&resourceType=CLASSROOM",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "default", "search"],
+              "query": [
+                {
+                  "key": "channelId",
+                  "value": "{{testChannelId}}",
+                  "description": "Channel ID"
+                },
+                {
+                  "key": "eventType",
+                  "value": "RESERVATION_APPROVED",
+                  "description": "Event type"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Resource type"
+                }
+              ]
+            },
+            "description": "Retrieves the default notification template for specific criteria"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notification Processing",
+      "item": [
+        {
+          "name": "Send Notification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"templateId\": \"{{testTemplateId}}\",\n  \"recipientId\": \"user-123\",\n  \"variables\": {\n    \"user\": {\n      \"firstName\": \"Ana\",\n      \"lastName\": \"García\",\n      \"email\": \"ana.garcia@ufps.edu.co\"\n    },\n    \"resource\": {\n      \"name\": \"Classroom B-205\",\n      \"location\": \"Building B, Second Floor\"\n    },\n    \"reservation\": {\n      \"date\": \"2024-01-25\",\n      \"startTime\": \"14:00\",\n      \"endTime\": \"16:00\",\n      \"purpose\": \"Database Systems Workshop\"\n    },\n    \"approver\": {\n      \"name\": \"Dr. Carlos Mendez\",\n      \"title\": \"Academic Coordinator\"\n    }\n  },\n  \"priority\": \"NORMAL\",\n  \"scheduleAt\": \"2024-01-20T10:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "send"]
+            },
+            "description": "Sends a notification using a template"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Notification sent successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('status');",
+                  "  pm.expect(responseJson).to.have.property('sentAt');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('sentNotificationId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Sent Notifications by Recipient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/sent/recipient/user-123?status=SENT&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "sent", "recipient", "user-123"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "SENT",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves sent notifications by recipient with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sent Notifications by Reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/sent/reservation/{{testReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "sent", "reservation", "{{testReservationId}}"]
+            },
+            "description": "Retrieves sent notifications for a specific reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/pending?channelId={{testChannelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "pending"],
+              "query": [
+                {
+                  "key": "channelId",
+                  "value": "{{testChannelId}}",
+                  "description": "Filter by channel"
+                }
+              ]
+            },
+            "description": "Retrieves pending notifications (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/sent/{{sentNotificationId}}/mark-read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "sent", "{{sentNotificationId}}", "mark-read"]
+            },
+            "description": "Marks a notification as read by the current user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notifications for Batch Processing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/batch/{{testChannelId}}?batchInterval=300000",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "batch", "{{testChannelId}}"],
+              "query": [
+                {
+                  "key": "batchInterval",
+                  "value": "300000",
+                  "description": "Batch interval in milliseconds (5 minutes)"
+                }
+              ]
+            },
+            "description": "Retrieves notifications ready for batch processing (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Batch Notifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channelId\": \"{{testChannelId}}\",\n  \"notificationIds\": [\n    \"notification-1\",\n    \"notification-2\",\n    \"notification-3\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/send-batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "send-batch"]
+            },
+            "description": "Sends multiple notifications in batch (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Configuration Management",
+      "item": [
+        {
+          "name": "Create Notification Configuration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"programId\": \"{{testProgramId}}\",\n  \"resourceType\": \"CLASSROOM\",\n  \"categoryId\": \"classroom-standard\",\n  \"channelId\": \"{{testChannelId}}\",\n  \"eventTypes\": [\n    \"RESERVATION_APPROVED\",\n    \"RESERVATION_REJECTED\",\n    \"RESERVATION_CANCELLED\"\n  ],\n  \"settings\": {\n    \"enableDigest\": true,\n    \"digestFrequency\": \"DAILY\",\n    \"digestTime\": \"09:00\",\n    \"enableRealTime\": true,\n    \"quietHours\": {\n      \"start\": \"22:00\",\n      \"end\": \"07:00\"\n    },\n    \"retryPolicy\": {\n      \"maxRetries\": 3,\n      \"retryIntervalMs\": 60000,\n      \"backoffMultiplier\": 2\n    }\n  },\n  \"isEnabled\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/configs",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "configs"]
+            },
+            "description": "Creates a notification configuration for a program/resource scope (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Configuration created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('programId');",
+                  "  pm.expect(responseJson).to.have.property('channelId');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('notificationConfigId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Notification Configurations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/configs?programId={{testProgramId}}&channelId={{testChannelId}}&isEnabled=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "configs"],
+              "query": [
+                {
+                  "key": "programId",
+                  "value": "{{testProgramId}}",
+                  "description": "Filter by program"
+                },
+                {
+                  "key": "channelId",
+                  "value": "{{testChannelId}}",
+                  "description": "Filter by channel"
+                },
+                {
+                  "key": "isEnabled",
+                  "value": "true",
+                  "description": "Filter enabled configs"
+                }
+              ]
+            },
+            "description": "Retrieves notification configurations with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification Configuration by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/configs/{{notificationConfigId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "configs", "{{notificationConfigId}}"]
+            },
+            "description": "Retrieves a specific notification configuration by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Notification Channel",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Email Notifications\",\n  \"description\": \"Enhanced email notification channel with new configuration\",\n  \"configuration\": {\n    \"smtpHost\": \"smtp.ufps.edu.co\",\n    \"smtpPort\": 587,\n    \"username\": \"notifications@ufps.edu.co\",\n    \"fromName\": \"UFPS Bookly System\",\n    \"fromEmail\": \"bookly@ufps.edu.co\",\n    \"encryption\": \"TLS\",\n    \"enableBounceTracking\": true\n  },\n  \"isActive\": true,\n  \"priority\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/channels/{{testChannelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "channels", "{{testChannelId}}"]
+            },
+            "description": "Updates an existing notification channel (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Notification Template",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notification-templates/{{testTemplateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notification-templates", "{{testTemplateId}}"]
+            },
+            "description": "Soft deletes a notification template (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

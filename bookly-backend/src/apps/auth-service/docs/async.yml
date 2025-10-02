@@ -1,0 +1,697 @@
+asyncapi: 3.0.0
+info:
+  title: Bookly Auth Service - Event-Driven Architecture
+  version: 1.0.0
+  description: |
+    **Documentación AsyncAPI para Auth Service - Bookly**
+    
+    Este documento describe todos los eventos publicados y consumidos por el servicio de autenticación,
+    implementando los requerimientos RF-41, RF-42 y RF-43.
+    
+    **Arquitectura Event-Driven:**
+    - Eventos de autenticación y autorización
+    - Eventos de gestión de roles y permisos
+    - Eventos de auditoría y seguridad
+    - Integración con otros microservicios
+    
+    **Tecnologías:**
+    - RabbitMQ como message broker
+    - Redis para cache de eventos
+    - Winston para logging estructurado
+  contact:
+    name: Bookly Development Team
+    email: dev@bookly.ufps.edu.co
+  license:
+    name: MIT
+
+servers:
+  rabbitmq-prod:
+    host: rabbitmq.bookly.ufps.edu.co
+    protocol: amqp
+    description: Production RabbitMQ server
+  rabbitmq-dev:
+    host: localhost:5672
+    protocol: amqp
+    description: Development RabbitMQ server
+
+channels:
+  auth/user-authenticated:
+    description: Canal para eventos de autenticación exitosa
+    messages:
+      UserAuthenticated:
+        $ref: '#/components/messages/UserAuthenticated'
+    
+  auth/user-login-failed:
+    description: Canal para eventos de fallos de autenticación
+    messages:
+      UserLoginFailed:
+        $ref: '#/components/messages/UserLoginFailed'
+        
+  auth/user-registered:
+    description: Canal para eventos de registro de usuario
+    messages:
+      UserRegistered:
+        $ref: '#/components/messages/UserRegistered'
+        
+  auth/user-role-assigned:
+    description: Canal para eventos de asignación de roles
+    messages:
+      UserRoleAssigned:
+        $ref: '#/components/messages/UserRoleAssigned'
+        
+  auth/role-created:
+    description: Canal para eventos de creación de roles
+    messages:
+      RoleCreated:
+        $ref: '#/components/messages/RoleCreated'
+        
+  auth/permission-granted:
+    description: Canal para eventos de concesión de permisos
+    messages:
+      PermissionGranted:
+        $ref: '#/components/messages/PermissionGranted'
+        
+  auth/resource-access-denied:
+    description: Canal para eventos de acceso denegado a recursos (RF-42)
+    messages:
+      ResourceAccessDenied:
+        $ref: '#/components/messages/ResourceAccessDenied'
+        
+  auth/sso-login:
+    description: Canal para eventos de login SSO
+    messages:
+      SSOLogin:
+        $ref: '#/components/messages/SSOLogin'
+
+operations:
+  publishUserAuthenticated:
+    action: send
+    channel:
+      $ref: '#/channels/auth~1user-authenticated'
+    summary: Publicar evento de autenticación exitosa
+    description: |
+      **RF-43: Evento de Autenticación Exitosa**
+      
+      Se publica cuando un usuario se autentica exitosamente en el sistema.
+      
+      **Casos de uso:**
+      - Registro de actividad de usuario
+      - Actualización de última conexión
+      - Notificaciones de seguridad
+      - Métricas de uso del sistema
+      
+  publishUserLoginFailed:
+    action: send
+    channel:
+      $ref: '#/channels/auth~1user-login-failed'
+    summary: Publicar evento de fallo de autenticación
+    description: |
+      **RF-43: Evento de Fallo de Autenticación**
+      
+      Se publica cuando falla un intento de autenticación.
+      
+      **Casos de uso:**
+      - Detección de ataques de fuerza bruta
+      - Bloqueo automático de cuentas
+      - Alertas de seguridad
+      - Análisis de patrones de ataque
+      
+  publishResourceAccessDenied:
+    action: send
+    channel:
+      $ref: '#/channels/auth~1resource-access-denied'
+    summary: Publicar evento de acceso denegado a recursos
+    description: |
+      **RF-42: Evento de Acceso Denegado**
+      
+      Se publica cuando se deniega acceso a modificación de recursos.
+      
+      **Casos de uso:**
+      - Auditoría de seguridad
+      - Detección de intentos de escalación de privilegios
+      - Alertas automáticas a administradores
+      - Análisis de comportamiento de usuarios
+
+  subscribeToUserEvents:
+    action: receive
+    channel:
+      $ref: '#/channels/auth~1user-authenticated'
+    summary: Suscribirse a eventos de usuario
+    description: |
+      **Consumo de eventos de usuario**
+      
+      Otros servicios pueden suscribirse a estos eventos para:
+      - Actualizar caches locales
+      - Sincronizar datos de usuario
+      - Generar notificaciones
+      - Crear métricas y reportes
+
+components:
+  messages:
+    UserAuthenticated:
+      name: UserAuthenticated
+      title: Usuario Autenticado Exitosamente
+      summary: Evento publicado cuando un usuario se autentica correctamente
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserAuthenticatedPayload'
+      examples:
+        - name: Autenticación local exitosa
+          payload:
+            eventId: evt-auth-123456
+            eventType: user.authenticated
+            timestamp: '2024-01-15T10:30:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              userId: user-123
+              email: estudiante@ufps.edu.co
+              authMethod: local
+              ipAddress: 192.168.1.100
+              userAgent: Mozilla/5.0...
+              sessionId: sess-789
+              roles:
+                - Estudiante
+              permissions:
+                - resource: reservations
+                  action: create
+                  scope: own
+                  
+    UserLoginFailed:
+      name: UserLoginFailed
+      title: Fallo de Autenticación de Usuario
+      summary: Evento publicado cuando falla un intento de autenticación
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserLoginFailedPayload'
+      examples:
+        - name: Credenciales inválidas
+          payload:
+            eventId: evt-auth-fail-789
+            eventType: user.login.failed
+            timestamp: '2024-01-15T10:35:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              email: estudiante@ufps.edu.co
+              reason: invalid_credentials
+              ipAddress: 192.168.1.100
+              userAgent: Mozilla/5.0...
+              attemptCount: 3
+              lockoutTriggered: false
+
+    UserRegistered:
+      name: UserRegistered
+      title: Usuario Registrado
+      summary: Evento publicado cuando se registra un nuevo usuario
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserRegisteredPayload'
+      examples:
+        - name: Registro exitoso
+          payload:
+            eventId: evt-user-reg-456
+            eventType: user.registered
+            timestamp: '2024-01-15T10:00:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              userId: user-new-123
+              email: nuevo@ufps.edu.co
+              firstName: Juan
+              lastName: Pérez
+              registrationMethod: local
+              ipAddress: 192.168.1.100
+              requiresVerification: true
+
+    UserRoleAssigned:
+      name: UserRoleAssigned
+      title: Rol Asignado a Usuario
+      summary: Evento publicado cuando se asigna un rol a un usuario
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserRoleAssignedPayload'
+      examples:
+        - name: Asignación de rol
+          payload:
+            eventId: evt-role-assign-789
+            eventType: user.role.assigned
+            timestamp: '2024-01-15T11:00:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              userId: user-123
+              roleId: role-docente
+              roleName: Docente
+              assignedBy: admin@ufps.edu.co
+              assignedByUserId: admin-456
+              permissions:
+                - resource: reservations
+                  action: create
+                  scope: program
+
+    RoleCreated:
+      name: RoleCreated
+      title: Rol Creado
+      summary: Evento publicado cuando se crea un nuevo rol personalizado
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RoleCreatedPayload'
+      examples:
+        - name: Creación de rol personalizado
+          payload:
+            eventId: evt-role-create-123
+            eventType: role.created
+            timestamp: '2024-01-15T12:00:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              roleId: role-custom-456
+              roleName: Coordinador de Laboratorio
+              category: academic
+              isPredefined: false
+              createdBy: admin@ufps.edu.co
+              createdByUserId: admin-789
+              permissions:
+                - resource: laboratories
+                  action: manage
+                  scope: department
+                  conditions:
+                    department_id: sistemas
+
+    PermissionGranted:
+      name: PermissionGranted
+      title: Permiso Concedido
+      summary: Evento publicado cuando se concede un permiso específico
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PermissionGrantedPayload'
+      examples:
+        - name: Permiso concedido
+          payload:
+            eventId: evt-perm-grant-456
+            eventType: permission.granted
+            timestamp: '2024-01-15T13:00:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              userId: user-123
+              permissionId: perm-789
+              resource: equipment
+              action: approve
+              scope: department
+              grantedBy: admin@ufps.edu.co
+              grantedByUserId: admin-456
+              conditions:
+                department_id: sistemas
+                max_value: 5000
+
+    ResourceAccessDenied:
+      name: ResourceAccessDenied
+      title: Acceso a Recurso Denegado
+      summary: Evento publicado cuando se deniega acceso a modificación de recursos (RF-42)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ResourceAccessDeniedPayload'
+      examples:
+        - name: Acceso denegado por permisos insuficientes
+          payload:
+            eventId: evt-access-denied-789
+            eventType: resource.access.denied
+            timestamp: '2024-01-15T14:00:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              userId: user-123
+              email: estudiante@ufps.edu.co
+              resource: rooms
+              resourceId: room-456
+              action: update
+              reason: insufficient_permissions
+              userRoles:
+                - Estudiante
+              requiredRoles:
+                - Administrador General
+                - Administrador de Programa
+              ipAddress: 192.168.1.100
+              userAgent: Mozilla/5.0...
+              url: /resources/rooms/456
+              method: PUT
+
+    SSOLogin:
+      name: SSOLogin
+      title: Login SSO
+      summary: Evento publicado cuando un usuario se autentica vía SSO
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SSOLoginPayload'
+      examples:
+        - name: Login Google SSO exitoso
+          payload:
+            eventId: evt-sso-login-123
+            eventType: user.sso.login
+            timestamp: '2024-01-15T15:00:00Z'
+            version: '1.0'
+            source: auth-service
+            data:
+              userId: user-sso-456
+              email: docente@ufps.edu.co
+              provider: google
+              providerId: google-123456789
+              isNewUser: false
+              rolesAssigned:
+                - Docente
+              ipAddress: 192.168.1.100
+              userAgent: Mozilla/5.0...
+
+  schemas:
+    UserAuthenticatedPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+          description: ID único del evento
+        eventType:
+          type: string
+          enum: [user.authenticated]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: '1.0'
+        source:
+          type: string
+          example: auth-service
+        data:
+          type: object
+          required: [userId, email, authMethod]
+          properties:
+            userId:
+              type: string
+            email:
+              type: string
+            authMethod:
+              type: string
+              enum: [local, sso]
+            ipAddress:
+              type: string
+            userAgent:
+              type: string
+            sessionId:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+            permissions:
+              type: array
+              items:
+                type: object
+                properties:
+                  resource:
+                    type: string
+                  action:
+                    type: string
+                  scope:
+                    type: string
+
+    UserLoginFailedPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [user.login.failed]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        source:
+          type: string
+        data:
+          type: object
+          required: [email, reason]
+          properties:
+            email:
+              type: string
+            reason:
+              type: string
+              enum: [invalid_credentials, account_locked, account_inactive, account_not_verified]
+            ipAddress:
+              type: string
+            userAgent:
+              type: string
+            attemptCount:
+              type: number
+            lockoutTriggered:
+              type: boolean
+
+    UserRegisteredPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [user.registered]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        source:
+          type: string
+        data:
+          type: object
+          required: [userId, email, firstName, lastName]
+          properties:
+            userId:
+              type: string
+            email:
+              type: string
+            firstName:
+              type: string
+            lastName:
+              type: string
+            registrationMethod:
+              type: string
+              enum: [local, sso]
+            ipAddress:
+              type: string
+            requiresVerification:
+              type: boolean
+
+    UserRoleAssignedPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [user.role.assigned]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        source:
+          type: string
+        data:
+          type: object
+          required: [userId, roleId, roleName, assignedBy]
+          properties:
+            userId:
+              type: string
+            roleId:
+              type: string
+            roleName:
+              type: string
+            assignedBy:
+              type: string
+            assignedByUserId:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: object
+                properties:
+                  resource:
+                    type: string
+                  action:
+                    type: string
+                  scope:
+                    type: string
+                  conditions:
+                    type: object
+
+    RoleCreatedPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [role.created]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        source:
+          type: string
+        data:
+          type: object
+          required: [roleId, roleName, category, createdBy]
+          properties:
+            roleId:
+              type: string
+            roleName:
+              type: string
+            category:
+              type: string
+              enum: [academic, administrative, security, custom]
+            isPredefined:
+              type: boolean
+            createdBy:
+              type: string
+            createdByUserId:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: object
+
+    PermissionGrantedPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [permission.granted]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        source:
+          type: string
+        data:
+          type: object
+          required: [userId, permissionId, resource, action, scope, grantedBy]
+          properties:
+            userId:
+              type: string
+            permissionId:
+              type: string
+            resource:
+              type: string
+            action:
+              type: string
+            scope:
+              type: string
+            grantedBy:
+              type: string
+            grantedByUserId:
+              type: string
+            conditions:
+              type: object
+
+    ResourceAccessDeniedPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [resource.access.denied]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        source:
+          type: string
+        data:
+          type: object
+          required: [userId, email, resource, action, reason]
+          properties:
+            userId:
+              type: string
+            email:
+              type: string
+            resource:
+              type: string
+            resourceId:
+              type: string
+            action:
+              type: string
+            reason:
+              type: string
+              enum: [insufficient_permissions, account_inactive, invalid_token]
+            userRoles:
+              type: array
+              items:
+                type: string
+            requiredRoles:
+              type: array
+              items:
+                type: string
+            ipAddress:
+              type: string
+            userAgent:
+              type: string
+            url:
+              type: string
+            method:
+              type: string
+
+    SSOLoginPayload:
+      type: object
+      required: [eventId, eventType, timestamp, version, source, data]
+      properties:
+        eventId:
+          type: string
+        eventType:
+          type: string
+          enum: [user.sso.login]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        source:
+          type: string
+        data:
+          type: object
+          required: [userId, email, provider, providerId]
+          properties:
+            userId:
+              type: string
+            email:
+              type: string
+            provider:
+              type: string
+              enum: [google, microsoft, saml]
+            providerId:
+              type: string
+            isNewUser:
+              type: boolean
+            rolesAssigned:
+              type: array
+              items:
+                type: string
+            ipAddress:
+              type: string
+            userAgent:
+              type: string

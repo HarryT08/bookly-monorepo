@@ -1,0 +1,710 @@
+{
+  "info": {
+    "name": "Bookly Auth Service API",
+    "description": "Complete API collection for Bookly Authentication microservice including traditional auth, OAuth2/SSO, user management, roles, and permissions",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "role_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "permission_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "frontend_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@ufps.edu.co\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Traditional email/password authentication. Returns JWT token and user information."
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"estudiante@ufps.edu.co\",\n  \"username\": \"estudiante123\",\n  \"password\": \"password123\",\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Pérez\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account. Email verification may be required."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Get current authenticated user profile information."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout current user session."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OAuth2 / SSO",
+      "item": [
+        {
+          "name": "Google OAuth - Initiate",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/oauth/google",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "oauth", "google"]
+            },
+            "description": "Initiates Google OAuth2 authentication flow. Redirects to Google consent screen."
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth - Callback",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/oauth/google/callback",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "oauth", "google", "callback"]
+            },
+            "description": "Handles Google OAuth2 callback. Automatically called by Google after user consent."
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth - Logout",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/auth/oauth/google/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "oauth", "google", "logout"]
+            },
+            "description": "Logout from Google OAuth2 session and redirect to frontend."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users?page=1&limit=10&search=juan",
+              "host": ["{{base_url}}"],
+              "path": ["users"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "search", "value": "juan", "disabled": true}
+              ]
+            },
+            "description": "Get all users with optional pagination and search filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Get specific user by their ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Juan Carlos\",\n  \"lastName\": \"Pérez González\",\n  \"phone\": \"+57 300 123 4567\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Update user information."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "Delete a user account."
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Role to User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "roles", "{{role_id}}"]
+            },
+            "description": "Assign a role to a specific user."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Role from User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "roles", "{{role_id}}"]
+            },
+            "description": "Remove a role from a specific user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Role Management",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/roles?page=1&limit=10&search=admin",
+              "host": ["{{base_url}}"],
+              "path": ["roles"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "search", "value": "admin", "disabled": true}
+              ]
+            },
+            "description": "Get all roles with optional pagination and search."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/roles/active",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "active"]
+            },
+            "description": "Get all active roles only."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "Get specific role by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coordinador Académico\",\n  \"description\": \"Coordinador de programa académico con permisos específicos\",\n  \"isActive\": true,\n  \"permissions\": [\"{{permission_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/roles",
+              "host": ["{{base_url}}"],
+              "path": ["roles"]
+            },
+            "description": "Create a new role with permissions."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coordinador Académico Senior\",\n  \"description\": \"Coordinador de programa académico con permisos extendidos\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "Update an existing role."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/roles/{{role_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "Delete a role (soft delete if has users assigned)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Permission Management",
+      "item": [
+        {
+          "name": "Create Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gestionar Reservas Laboratorio\",\n  \"resource\": \"reservations\",\n  \"action\": \"manage\",\n  \"scope\": \"laboratory\",\n  \"conditions\": {\n    \"resourceType\": \"LABORATORIO\",\n    \"maxDuration\": 240\n  },\n  \"description\": \"Permite gestionar reservas específicamente para laboratorios\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["permissions"]
+            },
+            "description": "Create a new granular permission with specific conditions."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions?resource=reservations&action=create&scope=global&isActive=true",
+              "host": ["{{base_url}}"],
+              "path": ["permissions"],
+              "query": [
+                {"key": "resource", "value": "reservations", "disabled": true},
+                {"key": "action", "value": "create", "disabled": true},
+                {"key": "scope", "value": "global", "disabled": true},
+                {"key": "isActive", "value": "true", "disabled": true}
+              ]
+            },
+            "description": "Get all permissions with optional filters by resource, action, scope, and status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/active",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "active"]
+            },
+            "description": "Get all active permissions only."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permissions by Resource",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/resource/reservations?action=create&scope=laboratory",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "resource", "reservations"],
+              "query": [
+                {"key": "action", "value": "create", "disabled": true},
+                {"key": "scope", "value": "laboratory", "disabled": true}
+              ]
+            },
+            "description": "Get permissions for a specific resource with optional action and scope filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permission by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/{{permission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "{{permission_id}}"]
+            },
+            "description": "Get specific permission by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gestionar Reservas Laboratorio Avanzado\",\n  \"description\": \"Permite gestionar reservas para laboratorios con equipos especializados\",\n  \"conditions\": {\n    \"resourceType\": \"LABORATORIO\",\n    \"maxDuration\": 360,\n    \"requiresApproval\": true\n  },\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/permissions/{{permission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "{{permission_id}}"]
+            },
+            "description": "Update an existing permission."
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/{{permission_id}}/activate",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "{{permission_id}}", "activate"]
+            },
+            "description": "Activate a deactivated permission."
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/{{permission_id}}/deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "{{permission_id}}", "deactivate"]
+            },
+            "description": "Deactivate a permission (soft delete)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Permission",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/{{permission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "{{permission_id}}"]
+            },
+            "description": "Permanently delete a permission."
+          },
+          "response": []
+        },
+        {
+          "name": "Seed Default Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/permissions/seed-defaults",
+              "host": ["{{base_url}}"],
+              "path": ["permissions", "seed-defaults"]
+            },
+            "description": "Create all default system permissions. Use this for initial system setup."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-extract JWT token from login response",
+          "if (pm.response && pm.response.json() && pm.response.json().access_token) {",
+          "    pm.collectionVariables.set('jwt_token', pm.response.json().access_token);",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-extract user_id from responses",
+          "if (pm.response && pm.response.json()) {",
+          "    const responseJson = pm.response.json();",
+          "    if (responseJson.user && responseJson.user.id) {",
+          "        pm.collectionVariables.set('user_id', responseJson.user.id);",
+          "    }",
+          "    if (responseJson.id) {",
+          "        pm.collectionVariables.set('user_id', responseJson.id);",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,681 @@
+{
+  "info": {
+    "name": "Bookly Availability Service - Reservations & Waitlist",
+    "description": "Postman collection for Reservations and Waitlist Management endpoints\n\nThis collection covers:\n- Creating and managing reservations\n- Recurring reservation series\n- Waitlist management and notifications\n- Reservation lifecycle (confirm, check-in, check-out, cancel)\n\nReservation Statuses:\n- PENDING, CONFIRMED, CHECKED_IN, CHECKED_OUT, CANCELLED, NO_SHOW, COMPLETED\n\nRecurrence Patterns:\n- DAILY, WEEKLY, MONTHLY, YEARLY\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the availability service\n- {{authToken}} - JWT Bearer token for authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "reservations-waitlist",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "// Generate sample data if not set",
+          "if (!pm.environment.get('testResourceId')) {",
+          "  pm.environment.set('testResourceId', 'resource-test-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/availability",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Reservation Management",
+      "item": [
+        {
+          "name": "Get All Reservations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves all reservations with pagination"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains reservations array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('reservations');",
+                  "  pm.expect(responseJson.reservations).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Single Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"startTime\": \"2024-01-15T09:00:00Z\",\n  \"endTime\": \"2024-01-15T10:00:00Z\",\n  \"purpose\": \"Team Meeting\",\n  \"attendees\": 5,\n  \"notes\": \"Weekly team standup meeting\",\n  \"sendNotifications\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"]
+            },
+            "description": "Creates a new single reservation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Reservation created successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson.status).to.equal('PENDING');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('createdReservationId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Reservation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{createdReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "{{createdReservationId}}"]
+            },
+            "description": "Retrieves a specific reservation by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Reservation",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startTime\": \"2024-01-15T10:00:00Z\",\n  \"endTime\": \"2024-01-15T11:30:00Z\",\n  \"attendees\": 8,\n  \"notes\": \"Extended meeting time and increased attendees\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{createdReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "{{createdReservationId}}"]
+            },
+            "description": "Updates an existing reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{createdReservationId}}/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "{{createdReservationId}}", "confirm"]
+            },
+            "description": "Confirms a pending reservation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Reservation confirmed', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.status).to.equal('CONFIRMED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check-in to Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": {\n    \"latitude\": 7.8939,\n    \"longitude\": -72.5078,\n    \"accuracy\": 10\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{createdReservationId}}/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "{{createdReservationId}}", "check-in"]
+            },
+            "description": "Marks user as checked in to their reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Check-out from Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{createdReservationId}}/check-out",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "{{createdReservationId}}", "check-out"]
+            },
+            "description": "Marks user as checked out from their reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Reservation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Meeting cancelled due to schedule conflict\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{createdReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "{{createdReservationId}}"]
+            },
+            "description": "Cancels an existing reservation"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Recurring Reservations",
+      "item": [
+        {
+          "name": "Create Weekly Recurring Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"startTime\": \"2024-01-15T14:00:00Z\",\n  \"endTime\": \"2024-01-15T15:00:00Z\",\n  \"purpose\": \"Weekly Department Meeting\",\n  \"attendees\": 12,\n  \"pattern\": \"WEEKLY\",\n  \"interval\": 1,\n  \"endDate\": \"2024-06-15\",\n  \"daysOfWeek\": [1],\n  \"excludeDates\": [\"2024-02-19\", \"2024-04-22\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/recurring",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "recurring"]
+            },
+            "description": "Creates a weekly recurring reservation series"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Recurring series created', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('seriesId');",
+                  "  pm.expect(responseJson).to.have.property('reservations');",
+                  "  pm.expect(responseJson.reservations).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('recurringSeriesId', responseJson.seriesId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Monthly Recurring Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"startTime\": \"2024-01-01T10:00:00Z\",\n  \"endTime\": \"2024-01-01T12:00:00Z\",\n  \"purpose\": \"Monthly Board Meeting\",\n  \"attendees\": 8,\n  \"pattern\": \"MONTHLY\",\n  \"interval\": 1,\n  \"endDate\": \"2024-12-31\",\n  \"excludeDates\": [\"2024-07-01\", \"2024-12-01\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/recurring",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "recurring"]
+            },
+            "description": "Creates a monthly recurring reservation series"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Recurring Series",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/recurring/{{recurringSeriesId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "recurring", "{{recurringSeriesId}}"]
+            },
+            "description": "Retrieves all reservations in a recurring series"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Recurring Series",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startTime\": \"2024-01-15T15:00:00Z\",\n  \"endTime\": \"2024-01-15T16:30:00Z\",\n  \"attendees\": 15,\n  \"updateFutureOnly\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/recurring/{{recurringSeriesId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "recurring", "{{recurringSeriesId}}"]
+            },
+            "description": "Updates all future reservations in a recurring series"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Recurring Series",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservations/recurring/{{recurringSeriesId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "recurring", "{{recurringSeriesId}}"]
+            },
+            "description": "Cancels all future reservations in a recurring series"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Waitlist Management",
+      "item": [
+        {
+          "name": "Join Waitlist",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"desiredStartTime\": \"2024-01-16T09:00:00Z\",\n  \"desiredEndTime\": \"2024-01-16T10:00:00Z\",\n  \"maxWaitTime\": 1440,\n  \"autoAccept\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waitlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["waitlist"]
+            },
+            "description": "Adds user to waitlist for a specific resource and time"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Waitlist entry created', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('position');",
+                  "  pm.expect(responseJson).to.have.property('estimatedWaitTime');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('waitlistEntryId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Join Waitlist with Flexible Time",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{testResourceId}}\",\n  \"desiredStartTime\": \"2024-01-17T14:00:00Z\",\n  \"desiredEndTime\": \"2024-01-17T16:00:00Z\",\n  \"maxWaitTime\": 2880,\n  \"autoAccept\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waitlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["waitlist"]
+            },
+            "description": "Joins waitlist with longer wait time and manual acceptance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Waitlist Entries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/waitlist/my-entries",
+              "host": ["{{baseUrl}}"],
+              "path": ["waitlist", "my-entries"]
+            },
+            "description": "Retrieves current user's waitlist entries"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each entry has required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.length > 0) {",
+                  "    responseJson.forEach(entry => {",
+                  "      pm.expect(entry).to.have.property('id');",
+                  "      pm.expect(entry).to.have.property('resourceId');",
+                  "      pm.expect(entry).to.have.property('position');",
+                  "      pm.expect(entry).to.have.property('estimatedWaitTime');",
+                  "    });",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Leave Waitlist",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/waitlist/{{waitlistEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["waitlist", "{{waitlistEntryId}}"]
+            },
+            "description": "Removes user from waitlist"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Advanced Queries",
+      "item": [
+        {
+          "name": "Get Reservations by Resource",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations?resourceId={{testResourceId}}&startDate=2024-01-01&endDate=2024-01-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{testResourceId}}",
+                  "description": "Filter by resource ID"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "description": "Filter reservations starting from this date"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31",
+                  "description": "Filter reservations ending before this date"
+                }
+              ]
+            },
+            "description": "Retrieves reservations for a specific resource within date range"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservations by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations?status=CONFIRMED&page=1&limit=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "CONFIRMED",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "Retrieves all confirmed reservations"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Reservations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservations?userId={{userId}}&status=CONFIRMED&status=CHECKED_IN",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Filter by user ID"
+                },
+                {
+                  "key": "status",
+                  "value": "CONFIRMED"
+                },
+                {
+                  "key": "status",
+                  "value": "CHECKED_IN"
+                }
+              ]
+            },
+            "description": "Retrieves current user's active reservations"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

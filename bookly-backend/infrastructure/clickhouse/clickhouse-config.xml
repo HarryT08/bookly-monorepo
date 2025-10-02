@@ -1,0 +1,160 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <!-- Configuración ClickHouse para SigNoz - Bookly Backend -->
+    
+    <!-- Configuración de logs -->
+    <logger>
+        <level>information</level>
+        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+        <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+        <size>1000M</size>
+        <count>10</count>
+    </logger>
+    
+    <!-- Configuración de red -->
+    <listen_host>::</listen_host>
+    <http_port>8123</http_port>
+    <tcp_port>9000</tcp_port>
+    <mysql_port>9004</mysql_port>
+    <postgresql_port>9005</postgresql_port>
+    <interserver_http_port>9009</interserver_http_port>
+    
+    <!-- Configuración de memoria -->
+    <max_server_memory_usage>0</max_server_memory_usage>
+    <max_memory_usage>10000000000</max_memory_usage>
+    <max_concurrent_queries>100</max_concurrent_queries>
+    <max_connections>1024</max_connections>
+    
+    <!-- Configuración de compresión -->
+    <compression>
+        <case>
+            <method>lz4</method>
+        </case>
+    </compression>
+    
+    <!-- Configuración de directorios -->
+    <path>/var/lib/clickhouse/</path>
+    <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
+    <user_files_path>/var/lib/clickhouse/user_files/</user_files_path>
+    <access_control_path>/var/lib/clickhouse/access/</access_control_path>
+    
+    <!-- Configuración de usuario por defecto -->
+    <users_config>users.xml</users_config>
+    
+    <!-- Configuración de base de datos por defecto -->
+    <default_database>default</default_database>
+    
+    <!-- Configuración de timezone -->
+    <timezone>America/Bogota</timezone>
+    
+    <!-- Configuración de clustering (single node para desarrollo) -->
+    <remote_servers>
+        <bookly_cluster>
+            <shard>
+                <internal_replication>false</internal_replication>
+                <replica>
+                    <host>clickhouse</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </bookly_cluster>
+    </remote_servers>
+    
+    <!-- Configuración de merge tree -->
+    <merge_tree>
+        <max_suspicious_broken_parts>5</max_suspicious_broken_parts>
+        <parts_to_throw_insert>300</parts_to_throw_insert>
+        <parts_to_delay_insert>150</parts_to_delay_insert>
+        <max_delay_to_insert>1</max_delay_to_insert>
+        <max_parts_in_total>100000</max_parts_in_total>
+    </merge_tree>
+    
+    <!-- Configuración de distributed -->
+    <distributed_ddl>
+        <path>/clickhouse/task_queue/ddl</path>
+    </distributed_ddl>
+    
+    <!-- Configuración de seguridad -->
+    <openSSL>
+        <server>
+            <certificateFile>/etc/clickhouse-server/server.crt</certificateFile>
+            <privateKeyFile>/etc/clickhouse-server/server.key</privateKeyFile>
+            <dhParamsFile>/etc/clickhouse-server/dhparam.pem</dhParamsFile>
+            <verificationMode>none</verificationMode>
+            <loadDefaultCAFile>true</loadDefaultCAFile>
+            <cacheSessions>true</cacheSessions>
+            <disableProtocols>sslv2,sslv3</disableProtocols>
+            <preferServerCiphers>true</preferServerCiphers>
+        </server>
+        <client>
+            <loadDefaultCAFile>true</loadDefaultCAFile>
+            <cacheSessions>true</cacheSessions>
+            <disableProtocols>sslv2,sslv3</disableProtocols>
+            <preferServerCiphers>true</preferServerCiphers>
+            <verificationMode>none</verificationMode>
+            <invalidCertificateHandler>
+                <name>RejectCertificateHandler</name>
+            </invalidCertificateHandler>
+        </client>
+    </openSSL>
+    
+    <!-- Configuración de formato -->
+    <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>
+    
+    <!-- Configuración de query log -->
+    <query_log>
+        <database>system</database>
+        <table>query_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </query_log>
+    
+    <!-- Configuración de trace log -->
+    <trace_log>
+        <database>system</database>
+        <table>trace_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </trace_log>
+    
+    <!-- Configuración de text log -->
+    <text_log>
+        <database>system</database>
+        <table>text_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </text_log>
+    
+    <!-- Configuración de metric log -->
+    <metric_log>
+        <database>system</database>
+        <table>metric_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </metric_log>
+    
+    <!-- Configuración de asynchronous metric log -->
+    <asynchronous_metric_log>
+        <database>system</database>
+        <table>asynchronous_metric_log</table>
+        <partition_by>toYYYYMM(event_date)</partition_by>
+        <flush_interval_milliseconds>7000</flush_interval_milliseconds>
+    </asynchronous_metric_log>
+    
+    <!-- Configuración de builtin dictionaries -->
+    <builtin_dictionaries_reload_interval>3600</builtin_dictionaries_reload_interval>
+    
+    <!-- Configuración de mark cache -->
+    <mark_cache_size>5368709120</mark_cache_size>
+    
+    <!-- Configuración de uncompressed cache -->
+    <uncompressed_cache_size>8589934592</uncompressed_cache_size>
+    
+    <!-- Configuración de mmap cache -->
+    <mmap_cache_size>1000</mmap_cache_size>
+    
+    <!-- Configuración de background processing -->
+    <background_pool_size>16</background_pool_size>
+    <background_merges_mutations_concurrency_ratio>2</background_merges_mutations_concurrency_ratio>
+    
+</clickhouse>

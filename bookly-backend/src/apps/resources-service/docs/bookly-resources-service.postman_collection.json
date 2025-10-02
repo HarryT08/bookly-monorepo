@@ -1,0 +1,442 @@
+{
+  "info": {
+    "name": "Bookly Resources Service",
+    "description": "Complete API collection for Bookly Resources Service - Microservice for resource management, categories, programs, maintenance types, imports, and responsibilities",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "apiPrefix",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Get Health Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "health"]
+            },
+            "description": "Check the health status of the resources service including database, redis, and memory checks"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources",
+      "item": [
+        {
+          "name": "Create Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aula 101\",\n  \"type\": \"SALON\",\n  \"description\": \"Aula de clases con capacidad para 40 estudiantes\",\n  \"capacity\": 40,\n  \"location\": \"Edificio A - Piso 1\",\n  \"programId\": \"program-id-here\",\n  \"categoryId\": \"category-id-here\",\n  \"attributes\": {\n    \"equipment\": [\"projector\", \"whiteboard\"],\n    \"accessibility\": [\"wheelchair-accessible\"],\n    \"specialConditions\": []\n  },\n  \"availableSchedules\": [\n    {\n      \"dayOfWeek\": 1,\n      \"startTime\": \"08:00\",\n      \"endTime\": \"18:00\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources"]
+            },
+            "description": "Create a new resource with auto-generated unique code. Implements RF-01 and RF-03."
+          }
+        },
+        {
+          "name": "Get All Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources?type=SALON&status=ACTIVE&isActive=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "SALON",
+                  "description": "Filter by resource type"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "description": "Filter by resource status"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "",
+                  "description": "Filter by category ID",
+                  "disabled": true
+                },
+                {
+                  "key": "location",
+                  "value": "",
+                  "description": "Filter by location (partial match)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieves all resources with optional filtering by type, status, category, etc."
+          }
+        },
+        {
+          "name": "Get Resources Paginated",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/paginated?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", "paginated"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by resource type",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter by resource status",
+                  "disabled": true
+                },
+                {
+                  "key": "categoryId",
+                  "value": "",
+                  "description": "Filter by category ID",
+                  "disabled": true
+                },
+                {
+                  "key": "isActive",
+                  "value": "",
+                  "description": "Filter by active status",
+                  "disabled": true
+                },
+                {
+                  "key": "location",
+                  "value": "",
+                  "description": "Filter by location (partial match)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieves resources with pagination support and optional filtering."
+          }
+        },
+        {
+          "name": "Search Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/search?query=aula",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "aula",
+                  "description": "Search query"
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by resource type",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search resources by name, description, or code."
+          }
+        },
+        {
+          "name": "Get Resource by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id"]
+            },
+            "description": "Retrieves a single resource by its unique identifier."
+          }
+        },
+        {
+          "name": "Get Resource by Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/code/:code",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", "code", ":code"]
+            },
+            "description": "Retrieves a single resource by its unique code."
+          }
+        },
+        {
+          "name": "Check Resource Availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id/availability?date=2024-01-15T09:00:00.000Z&userType=STUDENT&duration=120",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id", "availability"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15T09:00:00.000Z",
+                  "description": "Requested date (ISO string)"
+                },
+                {
+                  "key": "userType",
+                  "value": "STUDENT",
+                  "description": "User type making the request"
+                },
+                {
+                  "key": "duration",
+                  "value": "120",
+                  "description": "Reservation duration in minutes"
+                }
+              ]
+            },
+            "description": "Checks if a resource is available for reservation based on configured rules. Implements RF-05."
+          }
+        },
+        {
+          "name": "Update Resource",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aula 101 - Actualizada\",\n  \"description\": \"Aula de clases renovada con capacidad para 45 estudiantes\",\n  \"capacity\": 45,\n  \"location\": \"Edificio A - Piso 1\",\n  \"attributes\": {\n    \"equipment\": [\"projector\", \"whiteboard\", \"sound-system\"],\n    \"accessibility\": [\"wheelchair-accessible\"],\n    \"specialConditions\": []\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id"]
+            },
+            "description": "Updates an existing resource. Implements RF-01 and RF-03."
+          }
+        },
+        {
+          "name": "Delete Resource",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/resources/:id?force=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "resources", ":id"],
+              "query": [
+                {
+                  "key": "force",
+                  "value": "false",
+                  "description": "Force hard delete even with relations"
+                }
+              ]
+            },
+            "description": "Deletes a resource. Uses soft delete if resource has active relations, hard delete otherwise. Implements RF-01."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sala de Conferencias\",\n  \"code\": \"CONF\",\n  \"description\": \"Categoría para salas de conferencias y reuniones\",\n  \"color\": \"#3B82F6\",\n  \"type\": \"RESOURCE_TYPE\",\n  \"subtype\": \"ROOM\",\n  \"service\": \"resources-service\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories"]
+            },
+            "description": "Creates a new resource category. Only administrators can create categories."
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Retrieves all categories with optional filtering and pagination."
+          }
+        },
+        {
+          "name": "Get Active Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", "active"]
+            },
+            "description": "Retrieves all active categories without pagination."
+          }
+        },
+        {
+          "name": "Get Default Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/defaults",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", "defaults"]
+            },
+            "description": "Retrieves all default system categories."
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id"]
+            },
+            "description": "Retrieves a specific category by its ID."
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sala de Conferencias Ejecutivas\",\n  \"description\": \"Categoría actualizada para salas de conferencias de alto nivel\",\n  \"color\": \"#1E40AF\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id"]
+            },
+            "description": "Updates an existing category. Default categories have restricted updates."
+          }
+        },
+        {
+          "name": "Deactivate Category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id"]
+            },
+            "description": "Deactivates a category. Default categories cannot be deactivated."
+          }
+        },
+        {
+          "name": "Reactivate Category",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/categories/:id/reactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "categories", ":id", "reactivate"]
+            },
+            "description": "Reactivates a deactivated category."
+          }
+        }
+      ]
+    }
+  ]
+}

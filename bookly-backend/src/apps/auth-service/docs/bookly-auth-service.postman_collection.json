@@ -1,0 +1,1377 @@
+{
+  "info": {
+    "name": "Bookly Auth Service API v3.0 - COMPLETE",
+    "description": "Sistema Completo de Autenticación, Autorización y Gestión de Usuarios - Bookly UFPS\n\nServicio de autenticación que implementa:\n- RF-41: Gestión diferenciada de roles y permisos granulares\n- RF-42: Restricción de modificación de recursos solo para administradores\n- RF-43: Autenticación mediante credenciales universitarias y SSO Google Workspace\n- RF-44: Auditoría completa de accesos y modificaciones\n- RF-45: Doble factor de autenticación\n\nCOLECCIÓN COMPLETA CON TODOS LOS ENDPOINTS:\n- 9 Controladores: Auth, OAuth, User, Role, Permission, Category, RoleCategory, UserCategory, Seed\n- 50+ Endpoints con datos de prueba del seed\n- Usuarios de prueba con contraseña 123456\n- Variables automáticas para tokens y IDs\n\nDATOS DE PRUEBA DEL SEED:\n- admin@ufps.edu.co (Administrador General)\n- admin.sistemas@ufps.edu.co (Admin Programa ING-SIS)\n- docente@ufps.edu.co (Docente)\n- estudiante@ufps.edu.co (Estudiante)\n- vigilante@ufps.edu.co (Vigilante)\n- Contraseña para todos: 123456",
+    "version": "3.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "role_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "permission_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@ufps.edu.co\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/login",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "RF-43: Autenticación tradicional con email y contraseña. Usuarios de prueba: admin@ufps.edu.co, admin.sistemas@ufps.edu.co, docente@ufps.edu.co, estudiante@ufps.edu.co, vigilante@ufps.edu.co"
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo@ufps.edu.co\",\n  \"username\": \"nuevo_usuario\",\n  \"password\": \"MiPassword123!\",\n  \"firstName\": \"Juan\",\n  \"lastName\": \"Pérez\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/register",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registro de nuevo usuario en el sistema"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/profile",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "RF-41: Obtener perfil del usuario autenticado con roles y permisos"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/logout",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "RF-43: Cierre de sesión seguro"
+          },
+          "response": []
+        },
+        {
+          "name": "Password Reset Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"docente@ufps.edu.co\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/password/reset/request",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "password", "reset", "request"]
+            },
+            "description": "RF-43: Solicitar restablecimiento de contraseña"
+          },
+          "response": []
+        },
+        {
+          "name": "Password Reset Confirm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset_token_here\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/password/reset/confirm",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "password", "reset", "confirm"]
+            },
+            "description": "RF-43: Confirmar restablecimiento de contraseña"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"123456\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/password/change",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "password", "change"]
+            },
+            "description": "RF-43: Cambiar contraseña del usuario autenticado"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OAuth2 SSO",
+      "item": [
+        {
+          "name": "Google OAuth Initiate",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/oauth/google",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "oauth", "google"]
+            },
+            "description": "RF-43: Iniciar autenticación SSO con Google Workspace"
+          },
+          "response": []
+        },
+        {
+          "name": "Google OAuth Logout",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/oauth/google/logout",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "oauth", "google", "logout"]
+            },
+            "description": "RF-43: Logout de Google OAuth2"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/users?page=1&limit=10&search=",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "RF-41: Obtener todos los usuarios con filtros opcionales (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "RF-41: Obtener usuario específico por ID (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Juan Carlos\",\n  \"lastName\": \"Pérez García\",\n  \"email\": \"juan.perez@ufps.edu.co\",\n  \"isActive\": true,\n  \"isVerified\": true\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "RF-41: Actualizar información de usuario (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}"]
+            },
+            "description": "RF-41 + RF-42: Eliminar usuario del sistema (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Role to User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{role_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}/roles/assign",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}", "roles", "assign"]
+            },
+            "description": "RF-41: Asignar rol específico a usuario (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Role from User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"{{role_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}/roles/remove",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}", "roles", "remove"]
+            },
+            "description": "RF-41: Remover rol específico de usuario (Admin Only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Roles Management",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles?page=1&limit=10&search=",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "RF-41: Obtener todos los roles con filtros opcionales (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles/active",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles", "active"]
+            },
+            "description": "RF-41: Obtener solo roles activos (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles/{{role_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "RF-41: Obtener rol específico por ID (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Custom Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coordinador de Laboratorio\",\n  \"description\": \"Coordinador con permisos específicos para gestión de laboratorios\",\n  \"category\": \"academic\",\n  \"permissions\": [\n    {\n      \"resource\": \"laboratories\",\n      \"action\": \"manage\",\n      \"scope\": \"department\",\n      \"conditions\": {\n        \"department_id\": \"sistemas\",\n        \"max_duration\": \"4_hours\"\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles"]
+            },
+            "description": "RF-41: Crear rol personalizado con permisos granulares (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Custom Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Coordinador de Laboratorio Actualizado\",\n  \"description\": \"Descripción actualizada del rol\",\n  \"permissions\": [\n    {\n      \"resource\": \"laboratories\",\n      \"action\": \"manage\",\n      \"scope\": \"department\",\n      \"conditions\": {\n        \"department_id\": \"sistemas\"\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles/{{role_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "RF-41: Actualizar rol personalizado existente (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Custom Role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirmation\": \"DELETE\",\n  \"reason\": \"Role no longer needed after department restructure\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles/{{role_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles", "{{role_id}}"]
+            },
+            "description": "RF-41 + RF-42: Eliminar rol personalizado con doble confirmación (Admin Only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Permissions Management",
+      "item": [
+        {
+          "name": "Get All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions?resource=&action=&scope=&isActive=",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions"],
+              "query": [
+                {
+                  "key": "resource",
+                  "value": ""
+                },
+                {
+                  "key": "action",
+                  "value": ""
+                },
+                {
+                  "key": "scope",
+                  "value": ""
+                },
+                {
+                  "key": "isActive",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "RF-41: Obtener todos los permisos con filtros opcionales (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Permission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Create Own Reservations\",\n  \"resource\": \"reservations\",\n  \"action\": \"create\",\n  \"scope\": \"own\",\n  \"conditions\": {\n    \"max_duration\": \"4_hours\",\n    \"advance_booking\": \"48_hours\"\n  },\n  \"description\": \"Permite crear reservas propias con límites de tiempo\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions"]
+            },
+            "description": "RF-41: Crear nuevo permiso en el sistema (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/active",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "active"]
+            },
+            "description": "RF-41: Obtener todos los permisos activos (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permission by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/{{permission_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "{{permission_id}}"]
+            },
+            "description": "RF-41: Obtener permiso específico por ID (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Permissions by Resource",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/resource/reservations?action=create&scope=own",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "resource", "reservations"],
+              "query": [
+                {
+                  "key": "action",
+                  "value": "create"
+                },
+                {
+                  "key": "scope",
+                  "value": "own"
+                }
+              ]
+            },
+            "description": "RF-41: Obtener permisos por recurso con filtros opcionales (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Permission Name\",\n  \"description\": \"Updated permission description\",\n  \"conditions\": {\n    \"max_duration\": \"6_hours\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/{{permission_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "{{permission_id}}"]
+            },
+            "description": "RF-41: Actualizar permiso existente (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/{{permission_id}}/activate",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "{{permission_id}}", "activate"]
+            },
+            "description": "RF-41: Activar permiso deshabilitado (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/{{permission_id}}/deactivate",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "{{permission_id}}", "deactivate"]
+            },
+            "description": "RF-41: Desactivar permiso (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Permission",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/{{permission_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "{{permission_id}}"]
+            },
+            "description": "RF-41: Eliminar permiso del sistema (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Seed Default Permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/permissions/seed-defaults",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["permissions", "seed-defaults"]
+            },
+            "description": "RF-41: Crear permisos por defecto del sistema (Admin Only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categories Management",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/role/categories?page=1&limit=10&search=&isActive=true",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["role", "categories"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Obtener todas las categorías de roles con paginación y filtros"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Default Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/role/categories/defaults",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["role", "categories", "defaults"]
+            },
+            "description": "Obtener categorías de roles por defecto del sistema"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/role/categories/active",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["role", "categories", "active"]
+            },
+            "description": "Obtener categorías de roles activas"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/role/categories/{{category_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["role", "categories", "{{category_id}}"]
+            },
+            "description": "Obtener categoría específica por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"AUTH\",\n  \"subtype\": \"ROLE\",\n  \"name\": \"Nueva Categoría\",\n  \"code\": \"NUEVA_CAT\",\n  \"description\": \"Descripción de la nueva categoría\",\n  \"color\": \"#FF5722\",\n  \"service\": \"auth-service\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/role/categories",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["role", "categories"]
+            },
+            "description": "Crear nueva categoría de roles"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Categoría Actualizada\",\n  \"description\": \"Descripción actualizada\",\n  \"color\": \"#4CAF50\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/role/categories/{{category_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["role", "categories", "{{category_id}}"]
+            },
+            "description": "Actualizar categoría existente"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/role/categories/{{category_id}}",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["role", "categories", "{{category_id}}"]
+            },
+            "description": "Eliminar categoría (no se pueden eliminar categorías por defecto)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Role-Category Management",
+      "item": [
+        {
+          "name": "Assign Categories to Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryIds\": [\"{{category_id}}\"],\n  \"metadata\": {\n    \"assignedBy\": \"admin\",\n    \"reason\": \"Role categorization update\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles/{{role_id}}/categories",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles", "{{role_id}}", "categories"]
+            },
+            "description": "RF-41: Asignar categorías a un rol específico (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Categories from Role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryIds\": [\"{{category_id}}\"],\n  \"reason\": \"Category removal from role\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles/{{role_id}}/categories",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles", "{{role_id}}", "categories"]
+            },
+            "description": "RF-41: Remover categorías de un rol específico (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/roles/{{role_id}}/categories",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["roles", "{{role_id}}", "categories"]
+            },
+            "description": "RF-41: Obtener todas las categorías asignadas a un rol"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User-Category Management",
+      "item": [
+        {
+          "name": "Assign Categories to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryIds\": [\"{{category_id}}\"],\n  \"metadata\": {\n    \"assignedBy\": \"admin\",\n    \"reason\": \"User categorization update\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}/categories",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}", "categories"]
+            },
+            "description": "RF-41: Asignar categorías específicas a un usuario (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Categories from User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryIds\": [\"{{category_id}}\"],\n  \"reason\": \"Category removal from user\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}/categories",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}", "categories"]
+            },
+            "description": "RF-41: Remover categorías de un usuario específico (Admin Only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/users/{{user_id}}/categories",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["users", "{{user_id}}", "categories"]
+            },
+            "description": "RF-41: Obtener todas las categorías asignadas a un usuario"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Database Seeding",
+      "item": [
+        {
+          "name": "Check Seeding Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/seed/status",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "seed", "status"]
+            },
+            "description": "Verificar el estado actual del seeding de la base de datos"
+          },
+          "response": []
+        },
+        {
+          "name": "Run Database Seeding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"force\": false,\n  \"modules\": [\"users\", \"roles\", \"permissions\", \"categories\"]\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/seed",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "seed"]
+            },
+            "description": "Ejecutar seeding normal de la base de datos con datos básicos"
+          },
+          "response": []
+        },
+        {
+          "name": "Force Full Database Seeding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"force\": true,\n  \"recreate\": true,\n  \"modules\": [\"all\"]\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/seed/force",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "seed", "force"]
+            },
+            "description": "Forzar seeding completo, recreando todos los datos (CUIDADO: Borra datos existentes)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Testing",
+      "item": [
+        {
+          "name": "Test WebSocket Auth Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"test-auth-connection\",\n  \"data\": {\n    \"token\": \"{{access_token}}\",\n    \"userId\": \"{{user_id}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/websocket/test-connection",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "websocket", "test-connection"]
+            },
+            "description": "Test WebSocket authentication with JWT token"
+          },
+          "response": []
+        },
+        {
+          "name": "Emit User Status Update",
+          "request": {
+            "method": "POST", 
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"user-status-update\",\n  \"data\": {\n    \"userId\": \"{{user_id}}\",\n    \"status\": \"online\",\n    \"lastSeen\": \"{{$timestamp}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/websocket/emit",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "websocket", "emit"]
+            },
+            "description": "Emit user status update event through WebSocket"
+          },
+          "response": []
+        },
+        {
+          "name": "Test Role Assignment Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type", 
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"role-assigned\",\n  \"data\": {\n    \"userId\": \"{{user_id}}\",\n    \"roleId\": \"{{role_id}}\",\n    \"roleName\": \"coordinator\",\n    \"assignedBy\": \"admin\",\n    \"timestamp\": \"{{$timestamp}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{host}}{{base_path}}/auth/websocket/emit",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["auth", "websocket", "emit"]
+            },
+            "description": "Test role assignment WebSocket event emission"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Seed Management",
+      "item": [
+        {
+          "name": "Check Seeding Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{host}}{{base_path}}/seed/status",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["seed", "status"]
+            },
+            "description": "Verificar si la base de datos necesita inicialización"
+          },
+          "response": []
+        },
+        {
+          "name": "Run Database Seeding",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{host}}{{base_path}}/seed/run",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["seed", "run"]
+            },
+            "description": "Inicializar base de datos con datos básicos si está vacía"
+          },
+          "response": []
+        },
+        {
+          "name": "Run Full Seeding (Force)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{host}}{{base_path}}/seed/run-full",
+              "host": ["{{host}}", "{{base_path}}"],
+              "path": ["seed", "run-full"]
+            },
+            "description": "ADVERTENCIA: Limpia todos los datos existentes y reinicializa"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set base URL based on environment",
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:3000');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-extract access token from login response",
+          "if (pm.info.requestName === 'Login' && pm.response.code === 200) {",
+          "    const responseJson = pm.response.json();",
+          "    if (responseJson.access_token) {",
+          "        pm.collectionVariables.set('access_token', responseJson.access_token);",
+          "        console.log('Access token saved:', responseJson.access_token);",
+          "    }",
+          "    if (responseJson.user && responseJson.user.id) {",
+          "        pm.collectionVariables.set('user_id', responseJson.user.id);",
+          "        console.log('User ID saved:', responseJson.user.id);",
+          "    }",
+          "}",
+          "",
+          "// Auto-extract role ID from role creation response",
+          "if (pm.info.requestName === 'Create Custom Role' && pm.response.code === 201) {",
+          "    const responseJson = pm.response.json();",
+          "    if (responseJson.id) {",
+          "        pm.collectionVariables.set('role_id', responseJson.id);",
+          "        console.log('Role ID saved:', responseJson.id);",
+          "    }",
+          "}",
+          "",
+          "// Log response for debugging",
+          "console.log('Response Status:', pm.response.code);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,364 @@
+{
+  "info": {
+    "name": "Bookly API Gateway",
+    "description": "Complete API Gateway collection for Bookly reservation system including WebSocket testing endpoints",
+    "version": "2.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-login if no auth token exists",
+          "if (!pm.environment.get('authToken')) {",
+          "    pm.sendRequest({",
+          "        url: pm.environment.get('gatewayBaseUrl') + '/api/v1/auth/login',",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/json' },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                email: pm.environment.get('testEmail'),",
+          "                password: pm.environment.get('testPassword')",
+          "            })",
+          "        }",
+          "    }, function(err, response) {",
+          "        if (!err && response.code === 200) {",
+          "            const jsonData = response.json();",
+          "            pm.environment.set('authToken', jsonData.access_token);",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Gateway Information",
+      "item": [
+        {
+          "name": "Get API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/info",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "info"]
+            }
+          }
+        },
+        {
+          "name": "Get API Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/status",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get Rate Limit Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/rate-limit",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "rate-limit"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gateway Management",
+      "item": [
+        {
+          "name": "Gateway Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/_gateway/health",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["_gateway", "health"]
+            }
+          }
+        },
+        {
+          "name": "Get All Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/_gateway/routes",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["_gateway", "routes"]
+            }
+          }
+        },
+        {
+          "name": "Get Service Instances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/_gateway/services",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["_gateway", "services"]
+            }
+          }
+        },
+        {
+          "name": "Get Gateway Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/_gateway/metrics",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["_gateway", "metrics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Circuit Breaker Management",
+      "item": [
+        {
+          "name": "Reset Circuit Breaker",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/_gateway/circuit-breaker/{{testService}}/reset",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["_gateway", "circuit-breaker", "{{testService}}", "reset"]
+            }
+          }
+        },
+        {
+          "name": "Force Circuit Breaker Open",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/_gateway/circuit-breaker/{{testService}}/force-open",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["_gateway", "circuit-breaker", "{{testService}}", "force-open"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Microservice Proxy",
+      "item": [
+        {
+          "name": "Auth Service - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/v1/auth/login",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Auth Service - Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/v1/auth/profile",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "v1", "auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Resources Service - Get Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/v1/resources",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "v1", "resources"]
+            }
+          }
+        },
+        {
+          "name": "Availability Service - Get Calendar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/v1/availability/calendar/{{testResourceId}}",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "v1", "availability", "calendar", "{{testResourceId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Reservation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Reservation\",\n  \"description\": \"Created via API Gateway\",\n  \"startDate\": \"{{testStartDate}}\",\n  \"endDate\": \"{{testEndDate}}\",\n  \"resourceId\": \"{{testResourceId}}\",\n  \"userId\": \"{{testUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/v1/availability/reservations",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["api", "v1", "availability", "reservations"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "WebSocket Testing",
+      "item": [
+        {
+          "name": "Emit Test Reservation Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Event emitted successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.eventType).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"reservation-created\",\n  \"aggregateId\": \"reservation_{{$randomUUID}}\",\n  \"userId\": \"{{testUserId}}\",\n  \"data\": {\n    \"reservationId\": \"{{$randomUUID}}\",\n    \"resourceId\": \"{{testResourceId}}\",\n    \"resourceName\": \"Sala de Pruebas\",\n    \"startTime\": \"{{testStartDate}}\",\n    \"endTime\": \"{{testEndDate}}\",\n    \"status\": \"PENDING_APPROVAL\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-reservation-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-reservation-event"]
+            }
+          }
+        },
+        {
+          "name": "Emit Test Resource Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"resource-created\",\n  \"aggregateId\": \"resource_{{$randomUUID}}\",\n  \"data\": {\n    \"resourceId\": \"{{$randomUUID}}\",\n    \"name\": \"Nuevo Recurso de Prueba\",\n    \"type\": \"SALA\",\n    \"capacity\": 20,\n    \"status\": \"AVAILABLE\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-resource-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-resource-event"]
+            }
+          }
+        },
+        {
+          "name": "Emit Test Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"notification\",\n  \"aggregateId\": \"notification_{{$randomUUID}}\",\n  \"userId\": \"{{testUserId}}\",\n  \"data\": {\n    \"type\": \"INFO\",\n    \"title\": \"Notificación de Prueba\",\n    \"message\": \"Esta es una notificación generada desde Postman\",\n    \"userId\": \"{{testUserId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-notification-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-notification-event"]
+            }
+          }
+        },
+        {
+          "name": "Emit System Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"system-alert\",\n  \"aggregateId\": \"system_{{$randomUUID}}\",\n  \"data\": {\n    \"level\": \"INFO\",\n    \"message\": \"Alerta del sistema generada para testing\",\n    \"source\": \"postman-testing\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/websocket-test/emit-system-event",
+              "host": ["{{gatewayBaseUrl}}"],
+              "path": ["websocket-test", "emit-system-event"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

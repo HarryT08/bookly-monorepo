@@ -1,0 +1,342 @@
+{
+  "info": {
+    "name": "Bookly Resources Service - Extended",
+    "description": "Extended endpoints for Programs, Maintenance Types, Resource Import, Resource Responsible, and Category Associations",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "apiPrefix",
+      "value": "/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Programs",
+      "item": [
+        {
+          "name": "Create Program",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ingeniería de Sistemas\",\n  \"code\": \"ING-SIS\",\n  \"description\": \"Programa académico de Ingeniería de Sistemas\",\n  \"faculty\": \"Facultad de Ingeniería\",\n  \"coordinatorId\": \"coordinator-user-id\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs"]
+            },
+            "description": "Creates a new academic program. Only administrators can create programs."
+          }
+        },
+        {
+          "name": "Get All Programs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                }
+              ]
+            },
+            "description": "Retrieves all academic programs with optional search and filtering."
+          }
+        },
+        {
+          "name": "Get Active Programs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs", "active"]
+            },
+            "description": "Retrieves all active academic programs without pagination."
+          }
+        },
+        {
+          "name": "Get Program by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs", ":id"]
+            },
+            "description": "Retrieves a specific academic program by its ID."
+          }
+        },
+        {
+          "name": "Get Program by Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs/code/:code",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs", "code", ":code"]
+            },
+            "description": "Retrieves a specific academic program by its code."
+          }
+        },
+        {
+          "name": "Update Program",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ingeniería de Sistemas y Computación\",\n  \"description\": \"Programa académico de Ingeniería de Sistemas y Computación actualizado\",\n  \"faculty\": \"Facultad de Ingeniería y Arquitectura\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs", ":id"]
+            },
+            "description": "Updates an existing academic program. Only administrators can update programs."
+          }
+        },
+        {
+          "name": "Deactivate Program",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs", ":id"]
+            },
+            "description": "Deactivates an academic program. Only general administrators can deactivate programs."
+          }
+        },
+        {
+          "name": "Reactivate Program",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/programs/:id/reactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "programs", ":id", "reactivate"]
+            },
+            "description": "Reactivates a deactivated academic program. Only general administrators can reactivate programs."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Maintenance Types",
+      "item": [
+        {
+          "name": "Create Maintenance Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mantenimiento Especializado\",\n  \"description\": \"Tipo de mantenimiento especializado para equipos de alta tecnología\",\n  \"priority\": 2,\n  \"estimatedDuration\": 240,\n  \"isDefault\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types"]
+            },
+            "description": "Creates a new custom maintenance type. Only administrators can create maintenance types."
+          }
+        },
+        {
+          "name": "Get Active Maintenance Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", "active"]
+            },
+            "description": "Retrieves all active maintenance types ordered by priority."
+          }
+        },
+        {
+          "name": "Get All Maintenance Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", "all"]
+            },
+            "description": "Retrieves all maintenance types including inactive ones. Only administrators can access this."
+          }
+        },
+        {
+          "name": "Get Default Maintenance Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/defaults",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", "defaults"]
+            },
+            "description": "Retrieves all default system maintenance types."
+          }
+        },
+        {
+          "name": "Get Custom Maintenance Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/custom",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", "custom"]
+            },
+            "description": "Retrieves all custom maintenance types created by administrators."
+          }
+        },
+        {
+          "name": "Get Maintenance Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", ":id"]
+            },
+            "description": "Retrieves a specific maintenance type by its ID."
+          }
+        },
+        {
+          "name": "Get Maintenance Type by Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/name/:name",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", "name", ":name"]
+            },
+            "description": "Retrieves a specific maintenance type by its name."
+          }
+        },
+        {
+          "name": "Update Maintenance Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mantenimiento Especializado Avanzado\",\n  \"description\": \"Tipo de mantenimiento especializado actualizado para equipos de alta tecnología\",\n  \"priority\": 1,\n  \"estimatedDuration\": 300\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", ":id"]
+            },
+            "description": "Updates an existing custom maintenance type. Default types cannot be modified."
+          }
+        },
+        {
+          "name": "Deactivate Maintenance Type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", ":id"]
+            },
+            "description": "Deactivates a custom maintenance type. Default types cannot be deactivated."
+          }
+        },
+        {
+          "name": "Reactivate Maintenance Type",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/:id/reactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", ":id", "reactivate"]
+            },
+            "description": "Reactivates a deactivated custom maintenance type."
+          }
+        },
+        {
+          "name": "Validate Maintenance Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}{{apiPrefix}}/maintenance-types/:id/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{apiPrefix}}", "maintenance-types", ":id", "validate"]
+            },
+            "description": "Checks if a maintenance type exists and is active for use."
+          }
+        }
+      ]
+    }
+  ]
+}

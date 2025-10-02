@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "login": {
+      "success": "Inicio de sesión exitoso",
+      "invalid_credentials": "Credenciales inválidas",
+      "user_not_found": "Usuario no encontrado",
+      "account_disabled": "La cuenta está deshabilitada"
+    },
+    "register": {
+      "success": "Registro exitoso",
+      "user_exists": "El usuario ya existe",
+      "invalid_data": "Datos de registro inválidos"
+    },
+    "jwt": {
+      "invalid_token": "Token inválido",
+      "expired_token": "El token ha expirado",
+      "unauthorized": "Acceso no autorizado"
+    }
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "email": "Por favor ingrese una dirección de correo válida",
+    "min_length": "La longitud mínima es {{min}} caracteres",
+    "max_length": "La longitud máxima es {{max}} caracteres"
+  },
+  "errors": {
+    "internal_server_error": "Error interno del servidor",
+    "not_found": "Recurso no encontrado",
+    "bad_request": "Solicitud incorrecta",
+    "forbidden": "Acceso prohibido"
+  },
+  "health": {
+    "database": {
+      "healthy": "La conexión a la base de datos está saludable",
+      "unhealthy": "La conexión a la base de datos falló"
+    },
+    "redis": {
+      "healthy": "La conexión a Redis está saludable",
+      "unhealthy": "La conexión a Redis falló"
+    },
+    "rabbitmq": {
+      "healthy": "La conexión a RabbitMQ está saludable",
+      "unhealthy": "La conexión a RabbitMQ falló"
+    }
+  }
+}

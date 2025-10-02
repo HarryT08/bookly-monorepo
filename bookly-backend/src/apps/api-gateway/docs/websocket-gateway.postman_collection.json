@@ -1,0 +1,460 @@
+{
+  "info": {
+    "name": "Bookly WebSocket Gateway",
+    "description": "Colección de Postman para testing del WebSocket Gateway de Bookly. Incluye endpoints para emitir eventos de prueba que serán distribuidos via WebSocket a los clientes conectados.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-refresh JWT token if expired",
+          "const token = pm.environment.get('jwt_token');",
+          "if (!token) {",
+          "    console.log('No JWT token found. Please login first.');",
+          "    return;",
+          "}",
+          "",
+          "// Check if token is expired (basic check)",
+          "try {",
+          "    const payload = JSON.parse(atob(token.split('.')[1]));",
+          "    const currentTime = Math.floor(Date.now() / 1000);",
+          "    ",
+          "    if (payload.exp < currentTime) {",
+          "        console.log('JWT token expired. Please refresh token.');",
+          "    }",
+          "} catch (e) {",
+          "    console.log('Invalid JWT token format');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "{{gateway_url}}",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "WebSocket Event Testing",
+      "item": [
+        {
+          "name": "Emit Reservation Created Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has success flag', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.eventId).to.exist;",
+                  "    pm.expect(jsonData.eventType).to.eql('reservation-created');",
+                  "});",
+                  "",
+                  "// Store eventId for potential cleanup",
+                  "const jsonData = pm.response.json();",
+                  "pm.environment.set('last_event_id', jsonData.eventId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"reservation-created\",\n  \"aggregateId\": \"reservation_{{$randomUUID}}\",\n  \"userId\": \"{{user_id}}\",\n  \"data\": {\n    \"reservationId\": \"{{$randomUUID}}\",\n    \"resourceId\": \"sala-101\",\n    \"resourceName\": \"Sala de Conferencias 101\",\n    \"userId\": \"{{user_id}}\",\n    \"userName\": \"{{user_name}}\",\n    \"startTime\": \"{{$isoTimestamp}}\",\n    \"endTime\": \"2025-01-03T11:00:00.000Z\",\n    \"purpose\": \"Reunión de proyecto\",\n    \"status\": \"PENDING_APPROVAL\",\n    \"participants\": 8,\n    \"equipment\": [\"proyector\", \"sistema_audio\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-reservation-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-reservation-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Reservation Approved Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response indicates approval event', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.eventType).to.eql('reservation-approved');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"reservation-approved\",\n  \"aggregateId\": \"reservation_{{$randomUUID}}\",\n  \"userId\": \"{{user_id}}\",\n  \"data\": {\n    \"reservationId\": \"{{$randomUUID}}\",\n    \"resourceId\": \"sala-101\",\n    \"resourceName\": \"Sala de Conferencias 101\",\n    \"approvedBy\": \"admin_001\",\n    \"approvedAt\": \"{{$isoTimestamp}}\",\n    \"approvalNotes\": \"Solicitud aprobada. Recordar llegada puntual.\",\n    \"startTime\": \"2025-01-03T09:00:00.000Z\",\n    \"endTime\": \"2025-01-03T11:00:00.000Z\",\n    \"status\": \"APPROVED\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-reservation-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-reservation-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Reservation Cancelled Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"reservation-cancelled\",\n  \"aggregateId\": \"reservation_{{$randomUUID}}\",\n  \"userId\": \"{{user_id}}\",\n  \"data\": {\n    \"reservationId\": \"{{$randomUUID}}\",\n    \"resourceId\": \"sala-101\",\n    \"resourceName\": \"Sala de Conferencias 101\",\n    \"cancelledBy\": \"{{user_id}}\",\n    \"cancelledAt\": \"{{$isoTimestamp}}\",\n    \"reason\": \"Cambio de horario en la reunión\",\n    \"originalStartTime\": \"2025-01-03T09:00:00.000Z\",\n    \"refundStatus\": \"PENDING\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-reservation-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-reservation-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Resource Created Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"resource-created\",\n  \"aggregateId\": \"resource_{{$randomUUID}}\",\n  \"data\": {\n    \"resourceId\": \"{{$randomUUID}}\",\n    \"name\": \"Laboratorio de Sistemas {{$randomInt}}\",\n    \"type\": \"LABORATORIO\",\n    \"location\": \"Edificio C, Piso 2\",\n    \"capacity\": 30,\n    \"equipment\": [\"computadoras\", \"proyector\", \"aire_acondicionado\"],\n    \"status\": \"AVAILABLE\",\n    \"createdBy\": \"admin_001\",\n    \"createdAt\": \"{{$isoTimestamp}}\",\n    \"programId\": \"ing-sistemas\",\n    \"description\": \"Laboratorio equipado para prácticas de programación\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-resource-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-resource-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Resource Maintenance Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"resource-maintenance-scheduled\",\n  \"aggregateId\": \"resource_sala-101\",\n  \"data\": {\n    \"resourceId\": \"sala-101\",\n    \"resourceName\": \"Sala de Conferencias 101\",\n    \"maintenanceType\": \"PREVENTIVO\",\n    \"scheduledDate\": \"2025-01-10T08:00:00.000Z\",\n    \"estimatedDuration\": \"2 horas\",\n    \"description\": \"Mantenimiento preventivo de equipos audiovisuales\",\n    \"technician\": \"Juan Pérez\",\n    \"impact\": \"Recurso no disponible durante mantenimiento\",\n    \"affectedReservations\": []\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-resource-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-resource-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Personal Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"notification\",\n  \"aggregateId\": \"notification_{{$randomUUID}}\",\n  \"userId\": \"{{user_id}}\",\n  \"data\": {\n    \"type\": \"INFO\",\n    \"title\": \"Reserva Próxima\",\n    \"message\": \"Tu reserva en Sala 101 comienza en 15 minutos\",\n    \"actionUrl\": \"/reservations/{{$randomUUID}}\",\n    \"userId\": \"{{user_id}}\",\n    \"priority\": \"HIGH\",\n    \"expiresAt\": \"2025-01-03T09:15:00.000Z\",\n    \"metadata\": {\n      \"reservationId\": \"{{$randomUUID}}\",\n      \"resourceName\": \"Sala de Conferencias 101\",\n      \"startTime\": \"2025-01-03T09:00:00.000Z\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-notification-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-notification-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Emit System Alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"system-alert\",\n  \"aggregateId\": \"system_{{$randomUUID}}\",\n  \"data\": {\n    \"level\": \"WARNING\",\n    \"message\": \"Alto volumen de reservas detectado - posible congestión del sistema\",\n    \"affectedServices\": [\"availability-service\", \"resources-service\"],\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"source\": \"monitoring-service\",\n    \"actionRequired\": true,\n    \"recommendedAction\": \"Revisar capacidad de servidores\",\n    \"metadata\": {\n      \"currentLoad\": 85,\n      \"threshold\": 80,\n      \"activeConnections\": 1247\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-system-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-system-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Emit Custom Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"custom-test-event\",\n  \"aggregateId\": \"test_{{$randomUUID}}\",\n  \"userId\": \"{{user_id}}\",\n  \"data\": {\n    \"message\": \"Este es un evento personalizado para testing\",\n    \"testId\": \"{{$randomUUID}}\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"payload\": {\n      \"customField1\": \"valor1\",\n      \"customField2\": 42,\n      \"customField3\": true,\n      \"nested\": {\n        \"data\": \"información anidada\"\n      }\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-custom-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-custom-event"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gateway Health & Management",
+      "item": [
+        {
+          "name": "Gateway Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Gateway is healthy', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('ok');",
+                  "    pm.expect(jsonData.websocket).to.exist;",
+                  "    pm.expect(jsonData.websocket.status).to.eql('active');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/_gateway/health",
+              "host": ["{{base_url}}"],
+              "path": ["_gateway", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Metrics include WebSocket data', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.websocket).to.exist;",
+                  "    pm.expect(jsonData.websocket.connections).to.exist;",
+                  "    pm.expect(jsonData.websocket.events).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/_gateway/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["_gateway", "metrics"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Batch Event Testing",
+      "item": [
+        {
+          "name": "Simulate Reservation Workflow",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate consistent IDs for the workflow",
+                  "const reservationId = pm.globals.replaceIn('{{$randomUUID}}');",
+                  "const resourceId = 'sala-202';",
+                  "const userId = pm.environment.get('user_id');",
+                  "",
+                  "pm.environment.set('workflow_reservation_id', reservationId);",
+                  "pm.environment.set('workflow_resource_id', resourceId);",
+                  "pm.environment.set('workflow_user_id', userId);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reservation created successfully', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "// Chain to approval after 2 seconds",
+                  "setTimeout(() => {",
+                  "    const approveReservationRequest = {",
+                  "        url: pm.environment.get('gateway_url') + '/websocket-test/emit-reservation-event',",
+                  "        method: 'POST',",
+                  "        header: {",
+                  "            'Content-Type': 'application/json',",
+                  "            'Authorization': 'Bearer ' + pm.environment.get('jwt_token')",
+                  "        },",
+                  "        body: {",
+                  "            mode: 'raw',",
+                  "            raw: JSON.stringify({",
+                  "                eventType: 'reservation-approved',",
+                  "                aggregateId: 'reservation_' + pm.environment.get('workflow_reservation_id'),",
+                  "                userId: pm.environment.get('workflow_user_id'),",
+                  "                data: {",
+                  "                    reservationId: pm.environment.get('workflow_reservation_id'),",
+                  "                    resourceId: pm.environment.get('workflow_resource_id'),",
+                  "                    resourceName: 'Sala de Juntas 202',",
+                  "                    approvedBy: 'admin_workflow',",
+                  "                    approvedAt: new Date().toISOString(),",
+                  "                    status: 'APPROVED'",
+                  "                }",
+                  "            })",
+                  "        }",
+                  "    };",
+                  "    ",
+                  "    pm.sendRequest(approveReservationRequest, (err, res) => {",
+                  "        console.log('Auto-approved reservation:', res.json());",
+                  "    });",
+                  "}, 2000);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"reservation-created\",\n  \"aggregateId\": \"reservation_{{workflow_reservation_id}}\",\n  \"userId\": \"{{workflow_user_id}}\",\n  \"data\": {\n    \"reservationId\": \"{{workflow_reservation_id}}\",\n    \"resourceId\": \"{{workflow_resource_id}}\",\n    \"resourceName\": \"Sala de Juntas 202\",\n    \"userId\": \"{{workflow_user_id}}\",\n    \"userName\": \"{{user_name}}\",\n    \"startTime\": \"2025-01-03T14:00:00.000Z\",\n    \"endTime\": \"2025-01-03T16:00:00.000Z\",\n    \"purpose\": \"Reunión de planificación estratégica\",\n    \"status\": \"PENDING_APPROVAL\",\n    \"participants\": 12\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-reservation-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-reservation-event"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Simulate System Maintenance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"system-maintenance\",\n  \"aggregateId\": \"system_maintenance_{{$randomUUID}}\",\n  \"data\": {\n    \"scheduledAt\": \"2025-01-05T02:00:00.000Z\",\n    \"estimatedDuration\": \"3 horas\",\n    \"services\": [\"api-gateway\", \"auth-service\", \"availability-service\"],\n    \"impact\": \"Sistema completo no disponible\",\n    \"reason\": \"Actualización de seguridad y optimización de base de datos\",\n    \"notificationSent\": true,\n    \"backupCompleted\": true,\n    \"rollbackPlan\": \"Disponible\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/websocket-test/emit-system-event",
+              "host": ["{{base_url}}"],
+              "path": ["websocket-test", "emit-system-event"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

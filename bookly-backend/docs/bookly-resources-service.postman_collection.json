@@ -1,0 +1,686 @@
+{
+  "info": {
+    "name": "Bookly Resources Service API",
+    "description": "Complete API collection for Bookly Resources microservice including resource management, categories, imports, and responsibilities",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resource_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Resources Management",
+      "item": [
+        {
+          "name": "Create Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sala de Conferencias A1\",\n  \"type\": \"SALON\",\n  \"capacity\": 50,\n  \"location\": \"Edificio A, Piso 1\",\n  \"description\": \"Sala equipada con proyector y sistema de audio\",\n  \"attributes\": {\n    \"hasProjector\": true,\n    \"hasAudio\": true,\n    \"hasWhiteboard\": true\n  },\n  \"availableSchedules\": [\n    {\n      \"dayOfWeek\": \"MONDAY\",\n      \"startTime\": \"08:00\",\n      \"endTime\": \"18:00\"\n    }\n  ],\n  \"categoryId\": \"{{category_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resources",
+              "host": ["{{base_url}}"],
+              "path": ["resources"]
+            }
+          }
+        },
+        {
+          "name": "Get All Resources",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resources?type=SALON&status=ACTIVE&isActive=true",
+              "host": ["{{base_url}}"],
+              "path": ["resources"],
+              "query": [
+                {"key": "type", "value": "SALON"},
+                {"key": "status", "value": "ACTIVE"},
+                {"key": "categoryId", "value": "{{category_id}}", "disabled": true},
+                {"key": "isActive", "value": "true"},
+                {"key": "location", "value": "Edificio A", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Resources with Pagination",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resources/paginated?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "paginated"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "type", "value": "SALON", "disabled": true},
+                {"key": "status", "value": "ACTIVE", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Resources",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resources/search?q=sala",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "search"],
+              "query": [{"key": "q", "value": "sala"}]
+            }
+          }
+        },
+        {
+          "name": "Get Resource by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resources/{{resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "{{resource_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Resource by Code",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resources/code/SALA-A1-001",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "code", "SALA-A1-001"]
+            }
+          }
+        },
+        {
+          "name": "Check Resource Availability",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resources/{{resource_id}}/availability?date=2024-01-15T10:00:00Z&userType=ESTUDIANTE&duration=120",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "{{resource_id}}", "availability"],
+              "query": [
+                {"key": "date", "value": "2024-01-15T10:00:00Z"},
+                {"key": "userType", "value": "ESTUDIANTE"},
+                {"key": "duration", "value": "120"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Resource",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sala de Conferencias A1 - Actualizada\",\n  \"capacity\": 60,\n  \"status\": \"ACTIVE\",\n  \"description\": \"Sala equipada con proyector 4K y sistema de audio mejorado\",\n  \"attributes\": {\n    \"hasProjector\": true,\n    \"hasAudio\": true,\n    \"hasWhiteboard\": true,\n    \"has4KProjector\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resources/{{resource_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "{{resource_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Resource",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/resources/{{resource_id}}?force=false",
+              "host": ["{{base_url}}"],
+              "path": ["resources", "{{resource_id}}"],
+              "query": [{"key": "force", "value": "false"}]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resource Categories",
+      "item": [
+        {
+          "name": "Assign Category to Resource",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "{{resource_id}}", "categories", "{{category_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Assign Multiple Categories to Resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryIds\": [\"{{category_id}}\", \"category-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "{{resource_id}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Replace Resource Categories",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryIds\": [\"{{category_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "{{resource_id}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Resource Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "{{resource_id}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Resources by Category",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-categories/categories/{{category_id}}/resources?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "categories", "{{category_id}}", "resources"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Resource-Category Assignment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories/{{category_id}}/exists",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "{{resource_id}}", "categories", "{{category_id}}", "exists"]
+            }
+          }
+        },
+        {
+          "name": "Remove Category from Resource",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "{{resource_id}}", "categories", "{{category_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Remove All Categories from Resource",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/resource-categories/{{resource_id}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "{{resource_id}}", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Assign Category to Resources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceIds\": [\"{{resource_id}}\", \"resource-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-categories/categories/{{category_id}}/resources",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "categories", "{{category_id}}", "resources"]
+            }
+          }
+        },
+        {
+          "name": "Validate Resource-Category Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"categoryIds\": [\"{{category_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-categories/validate",
+              "host": ["{{base_url}}"],
+              "path": ["resource-categories", "validate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resource Import",
+      "item": [
+        {
+          "name": "Preview CSV Import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-import/preview",
+              "host": ["{{base_url}}"],
+              "path": ["resource-import", "preview"]
+            }
+          }
+        },
+        {
+          "name": "Start Resource Import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-import/start",
+              "host": ["{{base_url}}"],
+              "path": ["resource-import", "start"]
+            }
+          }
+        },
+        {
+          "name": "Get Import by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-import/import-id-123",
+              "host": ["{{base_url}}"],
+              "path": ["resource-import", "import-id-123"]
+            }
+          }
+        },
+        {
+          "name": "Get My Imports",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-import/user/my-imports",
+              "host": ["{{base_url}}"],
+              "path": ["resource-import", "user", "my-imports"]
+            }
+          }
+        },
+        {
+          "name": "Get All Imports",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-import?page=1&limit=10&status=COMPLETED",
+              "host": ["{{base_url}}"],
+              "path": ["resource-import"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "userId", "value": "{{user_id}}", "disabled": true},
+                {"key": "status", "value": "COMPLETED"},
+                {"key": "dateFrom", "value": "2024-01-01", "disabled": true},
+                {"key": "dateTo", "value": "2024-12-31", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Import Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-import/statistics/overview?userId={{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["resource-import", "statistics", "overview"],
+              "query": [{"key": "userId", "value": "{{user_id}}"}]
+            }
+          }
+        },
+        {
+          "name": "Get My Import Statistics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-import/statistics/my-stats",
+              "host": ["{{base_url}}"],
+              "path": ["resource-import", "statistics", "my-stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resource Responsibles",
+      "item": [
+        {
+          "name": "Assign User as Responsible",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/{{resource_id}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "{{resource_id}}", "users", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Assign Multiple Users as Responsible",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\"{{user_id}}\", \"user-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/{{resource_id}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "{{resource_id}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Replace Resource Responsibles",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userIds\": [\"{{user_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/{{resource_id}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "{{resource_id}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get Resource Responsibles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/{{resource_id}}/users?activeOnly=true",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "{{resource_id}}", "users"],
+              "query": [{"key": "activeOnly", "value": "true"}]
+            }
+          }
+        },
+        {
+          "name": "Get User Responsibilities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/users/{{user_id}}/resources?activeOnly=true",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "users", "{{user_id}}", "resources"],
+              "query": [{"key": "activeOnly", "value": "true"}]
+            }
+          }
+        },
+        {
+          "name": "Get My Responsibilities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/users/me/resources?activeOnly=true",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "users", "me", "resources"],
+              "query": [{"key": "activeOnly", "value": "true"}]
+            }
+          }
+        },
+        {
+          "name": "Get Resources by User",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/users/{{user_id}}/resources/paginated?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "users", "{{user_id}}", "resources", "paginated"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check User Responsibility",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/{{resource_id}}/users/{{user_id}}/check",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "{{resource_id}}", "users", "{{user_id}}", "check"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate Responsible",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/{{resource_id}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "{{resource_id}}", "users", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate All Resource Responsibles",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/{{resource_id}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "{{resource_id}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get All Responsibilities",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles?page=1&limit=10&isActive=true",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"},
+                {"key": "resourceId", "value": "{{resource_id}}", "disabled": true},
+                {"key": "userId", "value": "{{user_id}}", "disabled": true},
+                {"key": "isActive", "value": "true"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Assign User to Resources",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceIds\": [\"{{resource_id}}\", \"resource-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/users/{{user_id}}/resources",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "users", "{{user_id}}", "resources"]
+            }
+          }
+        },
+        {
+          "name": "Transfer Responsibilities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromUserId\": \"{{user_id}}\",\n  \"toUserId\": \"new-user-id\",\n  \"resourceIds\": [\"{{resource_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/transfer",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "transfer"]
+            }
+          }
+        },
+        {
+          "name": "Validate Responsibility Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"userIds\": [\"{{user_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resource-responsibles/validate",
+              "host": ["{{base_url}}"],
+              "path": ["resource-responsibles", "validate"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

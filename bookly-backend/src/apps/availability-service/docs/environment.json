@@ -1,0 +1,139 @@
+{
+  "id": "availability-service-environment",
+  "name": "Availability Service Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3002",
+      "description": "Base URL for availability service",
+      "type": "default"
+    },
+    {
+      "key": "authToken",
+      "value": "{{jwt_token_from_login}}",
+      "description": "JWT token for authenticated requests",
+      "type": "default"
+    },
+    {
+      "key": "adminToken",
+      "value": "{{admin_jwt_token}}",
+      "description": "Admin JWT token for privileged operations",
+      "type": "default"
+    },
+    {
+      "key": "coordinatorToken",
+      "value": "{{coordinator_jwt_token}}",
+      "description": "Coordinator JWT token for resource management",
+      "type": "default"
+    },
+    {
+      "key": "testResourceId",
+      "value": "resource-test-123",
+      "description": "Test resource ID for API testing",
+      "type": "default"
+    },
+    {
+      "key": "testUserId",
+      "value": "user-test-456",
+      "description": "Test user ID for reservations",
+      "type": "default"
+    },
+    {
+      "key": "testReservationId",
+      "value": "reservation-test-789",
+      "description": "Test reservation ID for operations",
+      "type": "default"
+    },
+    {
+      "key": "testAvailabilityId",
+      "value": "availability-test-101",
+      "description": "Test availability ID",
+      "type": "default"
+    },
+    {
+      "key": "testScheduleId",
+      "value": "schedule-test-202",
+      "description": "Test schedule ID",
+      "type": "default"
+    },
+    {
+      "key": "testCalendarIntegrationId",
+      "value": "calendar-integration-test-303",
+      "description": "Test calendar integration ID",
+      "type": "default"
+    },
+    {
+      "key": "testStartDate",
+      "value": "2024-01-15T08:00:00.000Z",
+      "description": "Test start date for availability checks",
+      "type": "default"
+    },
+    {
+      "key": "testEndDate",
+      "value": "2024-01-15T18:00:00.000Z",
+      "description": "Test end date for availability checks",
+      "type": "default"
+    },
+    {
+      "key": "testRecurringReservationId",
+      "value": "recurring-reservation-test-404",
+      "description": "Test recurring reservation ID",
+      "type": "default"
+    },
+    {
+      "key": "testWaitingListId",
+      "value": "waiting-list-test-505",
+      "description": "Test waiting list entry ID",
+      "type": "default"
+    },
+    {
+      "key": "testReassignmentId",
+      "value": "reassignment-test-606",
+      "description": "Test reassignment ID",
+      "type": "default"
+    },
+    {
+      "key": "testPenaltyId",
+      "value": "penalty-test-707",
+      "description": "Test penalty ID",
+      "type": "default"
+    },
+    {
+      "key": "testNotificationId",
+      "value": "notification-test-808",
+      "description": "Test notification ID",
+      "type": "default"
+    },
+    {
+      "key": "googleCalendarId",
+      "value": "primary",
+      "description": "Google Calendar ID for integration testing",
+      "type": "default"
+    },
+    {
+      "key": "outlookCalendarId",
+      "value": "calendar-outlook-test",
+      "description": "Outlook Calendar ID for integration testing",
+      "type": "default"
+    },
+    {
+      "key": "icalUrl",
+      "value": "https://example.com/calendar.ics",
+      "description": "iCal URL for integration testing",
+      "type": "default"
+    },
+    {
+      "key": "testEmail",
+      "value": "test@ufps.edu.co",
+      "description": "Test email for notifications",
+      "type": "default"
+    },
+    {
+      "key": "testPhoneNumber",
+      "value": "+573001234567",
+      "description": "Test phone number for SMS notifications",
+      "type": "default"
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
