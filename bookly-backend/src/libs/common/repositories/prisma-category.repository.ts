@@ -5,24 +5,32 @@
 
 import { CategoryEntity } from "@libs/common/entities/category.entity";
 import {
-  BaseCategoryRepository,
   CategoryFilter,
+  CategoryRepository,
 } from "@libs/common/repositories/category.repository";
 import { PrismaService } from "@libs/common/services/prisma.service";
 import { EventBusService } from "@libs/event-bus/services/event-bus.service";
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
-export class PrismaCategoryRepository extends BaseCategoryRepository {
-  createDefaultCategories(): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
+export abstract class PrismaCategoryRepository implements CategoryRepository {
   constructor(
     protected readonly prisma: PrismaService,
     protected readonly eventBus: EventBusService,
-    protected readonly serviceName: string
-  ) {
-    super(serviceName);
+    protected readonly serviceName: string,
+    protected readonly type: string,
+    protected readonly subtype: string
+  ) {}
+  get getType() {
+    return this.type;
+  }
+
+  get getSubtype() {
+    return this.subtype;
+  }
+
+  get getServiceName() {
+    return this.serviceName;
   }
 
   async findById(id: string): Promise<CategoryEntity | null> {
@@ -110,8 +118,6 @@ export class PrismaCategoryRepository extends BaseCategoryRepository {
         sortOrder: props.sortOrder,
         parentId: props.parentId,
         service: props.service,
-        createdAt: props.createdAt,
-        updatedAt: props.updatedAt,
         createdBy: props.createdBy,
         updatedBy: props.updatedBy,
       },
@@ -139,7 +145,6 @@ export class PrismaCategoryRepository extends BaseCategoryRepository {
         isActive: props.isActive,
         sortOrder: props.sortOrder,
         parentId: props.parentId,
-        updatedAt: props.updatedAt,
         updatedBy: props.updatedBy,
       },
     });

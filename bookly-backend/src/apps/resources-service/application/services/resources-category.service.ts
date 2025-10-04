@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { CategoryRepository } from '../../domain/repositories/category.repository';
-import { CreateCategoryDto, UpdateCategoryDto } from '@/libs/dto/categories';
-import { CategoryFiltersDto } from '@/libs/dto/categories/filter-categories.dto';
-import { CategoryEntity } from '@/libs/common/entities/category.entity';
-import { LoggingHelper } from '@/libs/logging/logging.helper';
-import { LoggingService } from '@/libs/logging/logging.service';
-import { DomainEvent, EventBusService } from '@/libs/event-bus/services/event-bus.service';
+import { CreateCategoryDto, UpdateCategoryDto } from '@libs/dto/categories';
+import { CategoryFiltersDto } from '@libs/dto/categories/filter-categories.dto';
+import { CategoryEntity } from '@libs/common/entities/category.entity';
+import { LoggingService } from '@libs/logging/logging.service';
+import { DomainEvent, EventBusService } from '@libs/event-bus/services/event-bus.service';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface CategoryServiceResponse {
@@ -23,7 +22,7 @@ export interface CategoryServiceResponse {
 export class ResourcesCategoryService {
   constructor(
     private readonly loggingService: LoggingService,
-    private readonly categoryRepository: CategoryRepository,
+    @Inject('CategoryRepository') private readonly categoryRepository: CategoryRepository,
     private readonly eventBusService: EventBusService,
   ) {}
 

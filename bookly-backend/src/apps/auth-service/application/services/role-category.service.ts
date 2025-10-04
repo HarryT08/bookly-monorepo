@@ -1,24 +1,24 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { CategoryRepository } from '@libs/common/repositories/category.repository';
-import { CategoryEntity } from '@libs/common/entities/category.entity';
-import { LoggingService } from '@libs/logging/logging.service';
+import { CategoryEntity } from "@libs/common/entities/category.entity";
+import { CategoryRepository } from "@libs/common/repositories/category.repository";
+import { LoggingService } from "@libs/logging/logging.service";
+import { Inject, Injectable } from "@nestjs/common";
 
 /**
  * Category Service for Auth Service
- * 
+ *
  * Provides category management specifically for AUTH service,
  * automatically filtering by type='AUTH' and subtype='ROLE'
  */
 @Injectable()
 export class RoleCategoryService {
-  private readonly AUTH_TYPE = 'AUTH';
-  private readonly ROLE_SUBTYPE = 'ROLE';
-  private readonly SERVICE_NAME = 'auth-service';
+  private readonly AUTH_TYPE = "AUTH";
+  private readonly ROLE_SUBTYPE = "ROLE";
+  private readonly SERVICE_NAME = "auth-service";
 
   constructor(
-    @Inject('CategoryRepository')
+    @Inject("CategoryRepository")
     private readonly categoryRepository: CategoryRepository,
-    private readonly loggingService: LoggingService,
+    private readonly loggingService: LoggingService
   ) {}
 
   /**
@@ -26,20 +26,29 @@ export class RoleCategoryService {
    */
   async findAllRoleCategories(): Promise<CategoryEntity[]> {
     try {
-      const categories = await this.categoryRepository.findByTypeAndSubtype(
-        this.AUTH_TYPE,
-        this.ROLE_SUBTYPE
-      );
+      const categories =
+        await this.categoryRepository.findByTypeAndSubtypeActive(
+          this.AUTH_TYPE,
+          this.ROLE_SUBTYPE
+        );
 
-      this.loggingService.log('Retrieved role categories', {
-        count: categories.length,
-        type: this.AUTH_TYPE,
-        subtype: this.ROLE_SUBTYPE
-      }, 'AuthCategoryService');
+      this.loggingService.log(
+        "Retrieved role categories",
+        {
+          count: categories.length,
+          type: this.AUTH_TYPE,
+          subtype: this.ROLE_SUBTYPE,
+        },
+        "AuthCategoryService"
+      );
 
       return categories;
     } catch (error) {
-      this.loggingService.error('Failed to find role categories', error, 'AuthCategoryService');
+      this.loggingService.error(
+        "Failed to find role categories",
+        error,
+        "AuthCategoryService"
+      );
       throw error;
     }
   }
@@ -49,21 +58,30 @@ export class RoleCategoryService {
    */
   async findActiveRoleCategories(): Promise<CategoryEntity[]> {
     try {
-      const categories = await this.categoryRepository.findByTypeAndSubtype(
-        this.AUTH_TYPE,
-        this.ROLE_SUBTYPE,
-        { isActive: true }
-      );
+      const categories =
+        await this.categoryRepository.findByTypeAndSubtypeActive(
+          this.AUTH_TYPE,
+          this.ROLE_SUBTYPE,
+          { isActive: true }
+        );
 
-      this.loggingService.log('Retrieved active role categories', {
-        count: categories.length,
-        type: this.AUTH_TYPE,
-        subtype: this.ROLE_SUBTYPE
-      }, 'AuthCategoryService');
+      this.loggingService.log(
+        "Retrieved active role categories",
+        {
+          count: categories.length,
+          type: this.AUTH_TYPE,
+          subtype: this.ROLE_SUBTYPE,
+        },
+        "AuthCategoryService"
+      );
 
       return categories;
     } catch (error) {
-      this.loggingService.error('Failed to find active role categories', error, 'AuthCategoryService');
+      this.loggingService.error(
+        "Failed to find active role categories",
+        error,
+        "AuthCategoryService"
+      );
       throw error;
     }
   }
@@ -73,33 +91,46 @@ export class RoleCategoryService {
    */
   async findRoleCategoryByName(name: string): Promise<CategoryEntity | null> {
     try {
-      const categories = await this.categoryRepository.findByTypeAndSubtype(
-        this.AUTH_TYPE,
-        this.ROLE_SUBTYPE,
-        { search: name }
-      );
-      
+      const categories =
+        await this.categoryRepository.findByTypeAndSubtypeActive(
+          this.AUTH_TYPE,
+          this.ROLE_SUBTYPE,
+          { search: name }
+        );
+
       // Find exact match by name
-      const category = categories.find(cat => cat.name === name);
+      const category = categories.find((cat) => cat.name === name);
 
       if (!category) {
-        this.loggingService.warn('Role category not found', {
-          name,
-          type: this.AUTH_TYPE,
-          subtype: this.ROLE_SUBTYPE
-        }, 'AuthCategoryService');
+        this.loggingService.warn(
+          "Role category not found",
+          {
+            name,
+            type: this.AUTH_TYPE,
+            subtype: this.ROLE_SUBTYPE,
+          },
+          "AuthCategoryService"
+        );
         return null;
       }
 
-      this.loggingService.log('Role category found by name', {
-        name,
-        categoryCode: category.code,
-        isActive: category.isActive
-      }, 'AuthCategoryService');
+      this.loggingService.log(
+        "Role category found by name",
+        {
+          name,
+          categoryCode: category.code,
+          isActive: category.isActive,
+        },
+        "AuthCategoryService"
+      );
 
       return category;
     } catch (error) {
-      this.loggingService.error('Failed to find role category by name', error, 'AuthCategoryService');
+      this.loggingService.error(
+        "Failed to find role category by name",
+        error,
+        "AuthCategoryService"
+      );
       throw error;
     }
   }
@@ -112,7 +143,7 @@ export class RoleCategoryService {
       const category = await this.findRoleCategoryByCode(code);
       return category !== null && category.isActive;
     } catch (error) {
-      this.loggingService.error('Failed to validate role category code', error);
+      this.loggingService.error("Failed to validate role category code", error);
       return false;
     }
   }
@@ -125,7 +156,10 @@ export class RoleCategoryService {
       const category = await this.findRoleCategoryByCode(code);
       return category?.name || code;
     } catch (error) {
-      this.loggingService.error('Failed to get role category display name', error);
+      this.loggingService.error(
+        "Failed to get role category display name",
+        error
+      );
       return code;
     }
   }
@@ -136,46 +170,50 @@ export class RoleCategoryService {
   async ensureDefaultRoleCategories(): Promise<void> {
     try {
       const existingCategories = await this.findAllRoleCategories();
-      const existingCodes = existingCategories.map(cat => cat.code);
+      const existingCodes = existingCategories.map((cat) => cat.code);
 
       const defaultCategories = [
         {
           type: this.AUTH_TYPE,
           subtype: this.ROLE_SUBTYPE,
-          name: 'Académico',
-          code: 'ACADEMIC',
-          description: 'Roles académicos (estudiantes, docentes)',
-          metadata: { isDefault: true, color: '#3B82F6' },
+          name: "Académico",
+          code: "ACADEMIC",
+          description: "Roles académicos (estudiantes, docentes)",
+          metadata: { isDefault: true, color: "#3B82F6" },
           isActive: true,
           sortOrder: 1,
-          service: this.SERVICE_NAME
+          service: this.SERVICE_NAME,
         },
         {
           type: this.AUTH_TYPE,
           subtype: this.ROLE_SUBTYPE,
-          name: 'Administrativo',
-          code: 'ADMINISTRATIVE',
-          description: 'Roles administrativos del sistema',
-          metadata: { isDefault: true, color: '#10B981' },
+          name: "Administrativo",
+          code: "ADMINISTRATIVE",
+          description: "Roles administrativos del sistema",
+          metadata: { isDefault: true, color: "#10B981" },
           isActive: true,
           sortOrder: 2,
-          service: this.SERVICE_NAME
+          service: this.SERVICE_NAME,
         },
         {
           type: this.AUTH_TYPE,
           subtype: this.ROLE_SUBTYPE,
-          name: 'Seguridad',
-          code: 'SECURITY',
-          description: 'Roles de seguridad y vigilancia',
-          metadata: { isDefault: true, color: '#F59E0B' },
+          name: "Seguridad",
+          code: "SECURITY",
+          description: "Roles de seguridad y vigilancia",
+          metadata: { isDefault: true, color: "#F59E0B" },
           isActive: true,
           sortOrder: 3,
-          service: this.SERVICE_NAME
-        }
+          service: this.SERVICE_NAME,
+        },
       ];
 
       for (const categoryData of defaultCategories) {
-        const existing = await this.categoryRepository.findByCode(categoryData.code, this.AUTH_TYPE, this.ROLE_SUBTYPE);
+        const existing = await this.categoryRepository.findByCode(
+          categoryData.code,
+          this.AUTH_TYPE,
+          this.ROLE_SUBTYPE
+        );
         if (!existing) {
           const category = new CategoryEntity({
             name: categoryData.name,
@@ -190,17 +228,24 @@ export class RoleCategoryService {
             createdAt: new Date(),
             updatedAt: new Date(),
           });
-          
+
           await this.categoryRepository.save(category);
-          
-          this.loggingService.log('Default role category created', {
-            categoryCode: categoryData.code,
-            categoryName: categoryData.name,
-          }, 'AuthCategoryService');
+
+          this.loggingService.log(
+            "Default role category created",
+            {
+              categoryCode: categoryData.code,
+              categoryName: categoryData.name,
+            },
+            "AuthCategoryService"
+          );
         }
       }
     } catch (error) {
-      this.loggingService.error('Failed to ensure default role categories exist', error);
+      this.loggingService.error(
+        "Failed to ensure default role categories exist",
+        error
+      );
       throw error;
     }
   }
@@ -208,35 +253,45 @@ export class RoleCategoryService {
   /**
    * Find all role categories with pagination
    */
-  async findAll(options: { page?: number; limit?: number; search?: string; isActive?: boolean }) {
+  async findAll(options: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    isActive?: boolean;
+  }) {
     try {
       const { page = 1, limit = 10, search, isActive } = options;
-      
+
       // Use repository filters instead of in-memory filtering
       const filter = {
         search,
-        isActive
+        isActive,
       };
-      
-      const categories = await this.categoryRepository.findByTypeAndSubtype(
-        this.AUTH_TYPE, 
-        this.ROLE_SUBTYPE, 
-        filter
-      );
+
+      const categories =
+        await this.categoryRepository.findByTypeAndSubtypeActive(
+          this.AUTH_TYPE,
+          this.ROLE_SUBTYPE,
+          filter
+        );
 
       // Apply pagination
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
       const paginatedCategories = categories.slice(startIndex, endIndex);
 
-      this.loggingService.log('Retrieved paginated role categories', {
-        page,
-        limit,
-        total: categories.length,
-        returned: paginatedCategories.length,
-        search: search || 'none',
-        isActive: isActive !== undefined ? isActive : 'all'
-      }, 'AuthCategoryService');
+      this.loggingService.log(
+        "Retrieved paginated role categories",
+        {
+          page,
+          limit,
+          total: categories.length,
+          returned: paginatedCategories.length,
+          search: search || "none",
+          isActive: isActive !== undefined ? isActive : "all",
+        },
+        "AuthCategoryService"
+      );
 
       return {
         data: paginatedCategories,
@@ -248,7 +303,11 @@ export class RoleCategoryService {
         },
       };
     } catch (error) {
-      this.loggingService.error('Failed to find role categories', error, 'AuthCategoryService');
+      this.loggingService.error(
+        "Failed to find role categories",
+        error,
+        "AuthCategoryService"
+      );
       throw error;
     }
   }
@@ -259,12 +318,16 @@ export class RoleCategoryService {
   async findRoleCategoryById(id: string): Promise<CategoryEntity> {
     try {
       const category = await this.categoryRepository.findById(id);
-      if (!category || category.type !== 'AUTH' || category.subtype !== 'ROLE') {
+      if (
+        !category ||
+        category.type !== "AUTH" ||
+        category.subtype !== "ROLE"
+      ) {
         throw new Error(`Role category with ID ${id} not found`);
       }
       return category;
     } catch (error) {
-      this.loggingService.error('Failed to find role category by ID', error);
+      this.loggingService.error("Failed to find role category by ID", error);
       throw error;
     }
   }
@@ -276,7 +339,7 @@ export class RoleCategoryService {
     try {
       const category = new CategoryEntity({
         name: data.name,
-        code: data.code || data.name.toUpperCase().replace(/\s+/g, '_'),
+        code: data.code || data.name.toUpperCase().replace(/\s+/g, "_"),
         description: data.description,
         type: this.AUTH_TYPE,
         subtype: this.ROLE_SUBTYPE,
@@ -287,11 +350,11 @@ export class RoleCategoryService {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      
+
       await this.categoryRepository.save(category);
       return category;
     } catch (error) {
-      this.loggingService.error('Failed to create role category', error);
+      this.loggingService.error("Failed to create role category", error);
       throw error;
     }
   }
@@ -302,7 +365,7 @@ export class RoleCategoryService {
   async updateRoleCategory(id: string, data: any): Promise<CategoryEntity> {
     try {
       const existingCategory = await this.findRoleCategoryById(id);
-      
+
       // Create updated category with new data
       const updatedCategory = new CategoryEntity({
         id: existingCategory.id,
@@ -312,18 +375,23 @@ export class RoleCategoryService {
         type: existingCategory.type,
         subtype: existingCategory.subtype,
         service: existingCategory.service,
-        isActive: data.isActive !== undefined ? data.isActive : existingCategory.isActive,
-        metadata: data.metadata ? { ...existingCategory.metadata, ...data.metadata } : existingCategory.metadata,
+        isActive:
+          data.isActive !== undefined
+            ? data.isActive
+            : existingCategory.isActive,
+        metadata: data.metadata
+          ? { ...existingCategory.metadata, ...data.metadata }
+          : existingCategory.metadata,
         sortOrder: data.sortOrder || existingCategory.sortOrder,
         createdAt: existingCategory.createdAt,
         updatedAt: new Date(),
         createdBy: existingCategory.createdBy,
       });
-      
+
       await this.categoryRepository.save(updatedCategory);
       return updatedCategory;
     } catch (error) {
-      this.loggingService.error('Failed to update role category', error);
+      this.loggingService.error("Failed to update role category", error);
       throw error;
     }
   }
@@ -334,15 +402,15 @@ export class RoleCategoryService {
   async deleteRoleCategory(id: string): Promise<void> {
     try {
       const category = await this.findRoleCategoryById(id);
-      
+
       // Check if it's a default category
       if (category.metadata?.isDefault) {
-        throw new Error('Cannot delete default role category');
+        throw new Error("Cannot delete default role category");
       }
-      
+
       await this.categoryRepository.delete(id);
     } catch (error) {
-      this.loggingService.error('Failed to delete role category', error);
+      this.loggingService.error("Failed to delete role category", error);
       throw error;
     }
   }
@@ -352,20 +420,29 @@ export class RoleCategoryService {
    */
   async findRoleCategoryDefaults(): Promise<CategoryEntity[]> {
     try {
-      const categories = await this.categoryRepository.findByTypeAndSubtype(
-        this.AUTH_TYPE, 
-        this.ROLE_SUBTYPE,
-        {metadata: {isDefault: true}}
+      const categories =
+        await this.categoryRepository.findByTypeAndSubtypeActive(
+          this.AUTH_TYPE,
+          this.ROLE_SUBTYPE,
+          { metadata: { isDefault: true } }
+        );
+
+      this.loggingService.log(
+        "Retrieved default role categories",
+        {
+          count: categories.length,
+          codes: categories.map((cat) => cat.code),
+        },
+        "AuthCategoryService"
       );
-      
-      this.loggingService.log('Retrieved default role categories', {
-        count: categories.length,
-        codes: categories.map(cat => cat.code)
-      }, 'AuthCategoryService');
-      
+
       return categories;
     } catch (error) {
-      this.loggingService.error('Failed to find default role categories', error, 'AuthCategoryService');
+      this.loggingService.error(
+        "Failed to find default role categories",
+        error,
+        "AuthCategoryService"
+      );
       throw error;
     }
   }
@@ -375,13 +452,21 @@ export class RoleCategoryService {
    */
   async findRoleCategoryByCode(code: string): Promise<CategoryEntity> {
     try {
-      const category = await this.categoryRepository.findByCode(code, this.AUTH_TYPE, this.ROLE_SUBTYPE);
-      if (!category || category.type !== this.AUTH_TYPE || category.subtype !== this.ROLE_SUBTYPE) {
+      const category = await this.categoryRepository.findByCode(
+        code,
+        this.AUTH_TYPE,
+        this.ROLE_SUBTYPE
+      );
+      if (
+        !category ||
+        category.type !== this.AUTH_TYPE ||
+        category.subtype !== this.ROLE_SUBTYPE
+      ) {
         throw new Error(`Role category with code ${code} not found`);
       }
       return category;
     } catch (error) {
-      this.loggingService.error('Failed to find role category by code', error);
+      this.loggingService.error("Failed to find role category by code", error);
       throw error;
     }
   }
@@ -391,10 +476,18 @@ export class RoleCategoryService {
    */
   async isValidRoleCategoryCode(code: string): Promise<boolean> {
     try {
-      const category = await this.categoryRepository.findByCode(code, this.AUTH_TYPE, this.ROLE_SUBTYPE);
-      return category !== null && category.type === this.AUTH_TYPE && category.subtype === this.ROLE_SUBTYPE;
+      const category = await this.categoryRepository.findByCode(
+        code,
+        this.AUTH_TYPE,
+        this.ROLE_SUBTYPE
+      );
+      return (
+        category !== null &&
+        category.type === this.AUTH_TYPE &&
+        category.subtype === this.ROLE_SUBTYPE
+      );
     } catch (error) {
-      this.loggingService.error('Failed to validate role category code', error);
+      this.loggingService.error("Failed to validate role category code", error);
       return false;
     }
   }

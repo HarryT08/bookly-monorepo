@@ -1,4 +1,4 @@
-import { CategoryFiltersDto } from "@/libs/dto/categories/filter-categories.dto";
+import { CategoryFiltersDto } from "@libs/dto/categories/filter-categories.dto";
 
 /**
  * Get Categories Query

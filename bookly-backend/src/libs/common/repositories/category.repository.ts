@@ -3,7 +3,7 @@
  * Provides automatic type filtering for each microservice
  */
 
-import { CategoryEntity, CategoryProps } from '../entities/category.entity';
+import { CategoryEntity } from "../entities/category.entity";
 
 export interface CategoryFilter {
   type?: string;
@@ -26,11 +26,19 @@ export interface BaseCategoryFilter {
 
 export interface CategoryRepository {
   findById(id: string): Promise<CategoryEntity | null>;
-  findByCode(type: string, subtype: string, code: string): Promise<CategoryEntity | null>;
-  findByTypeAndSubtype(type: string, subtype: string, filter?: CategoryFilter): Promise<CategoryEntity[]>;
+  findByCode(
+    type: string,
+    subtype: string,
+    code: string
+  ): Promise<CategoryEntity | null>;
+  findByTypeAndSubtypeActive(
+    type: string,
+    subtype: string,
+    filter?: CategoryFilter
+  ): Promise<CategoryEntity[]>;
   findAll(filter?: CategoryFilter): Promise<CategoryEntity[]>;
-  save(category: CategoryEntity): Promise<void>;
-  update(category: CategoryEntity): Promise<void>;
+  save(category: CategoryEntity): Promise<CategoryEntity>;
+  update(category: CategoryEntity): Promise<CategoryEntity>;
   delete(id: string): Promise<void>;
   exists(type: string, subtype: string, code: string): Promise<boolean>;
 }
@@ -46,17 +54,29 @@ export abstract class BaseCategoryRepository implements CategoryRepository {
   }
 
   abstract findById(id: string): Promise<CategoryEntity | null>;
-  abstract findByCode(type: string, subtype: string, code: string): Promise<CategoryEntity | null>;
+  abstract findByCode(
+    type: string,
+    subtype: string,
+    code: string
+  ): Promise<CategoryEntity | null>;
   abstract findAll(filter?: CategoryFilter): Promise<CategoryEntity[]>;
-  abstract save(category: CategoryEntity): Promise<void>;
-  abstract update(category: CategoryEntity): Promise<void>;
+  abstract save(category: CategoryEntity): Promise<CategoryEntity>;
+  abstract update(category: CategoryEntity): Promise<CategoryEntity>;
   abstract delete(id: string): Promise<void>;
-  abstract exists(type: string, subtype: string, code: string): Promise<boolean>;
+  abstract exists(
+    type: string,
+    subtype: string,
+    code: string
+  ): Promise<boolean>;
 
   /**
    * Find categories by type and subtype with automatic service filtering
    */
-  async findByTypeAndSubtype(type: string, subtype: string, filter?: CategoryFilter): Promise<CategoryEntity[]> {
+  async findByTypeAndSubtypeActive(
+    type: string,
+    subtype: string,
+    filter?: CategoryFilter
+  ): Promise<CategoryEntity[]> {
     const serviceFilter: BaseCategoryFilter = {
       ...filter,
       type: type.toUpperCase(),
@@ -71,18 +91,24 @@ export abstract class BaseCategoryRepository implements CategoryRepository {
   /**
    * Get active categories by type and subtype
    */
-  async getActiveByTypeAndSubtype(type: string, subtype: string): Promise<CategoryEntity[]> {
-    return this.findByTypeAndSubtype(type, subtype, { isActive: true });
+  async getActiveByTypeAndSubtype(
+    type: string,
+    subtype: string
+  ): Promise<CategoryEntity[]> {
+    return this.findByTypeAndSubtypeActive(type, subtype, { isActive: true });
   }
 
   /**
    * Get categories for dropdown/select options
    */
-  async getOptionsForSelect(type: string, subtype: string): Promise<Array<{ value: string; label: string; code: string }>> {
+  async getOptionsForSelect(
+    type: string,
+    subtype: string
+  ): Promise<Array<{ value: string; label: string; code: string }>> {
     const categories = await this.getActiveByTypeAndSubtype(type, subtype);
     return categories
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map(category => ({
+      .map((category) => ({
         value: category.id,
         label: category.name,
         code: category.code,
@@ -92,15 +118,27 @@ export abstract class BaseCategoryRepository implements CategoryRepository {
   /**
    * Validate if a category code exists and is active
    */
-  async validateCategoryCode(type: string, subtype: string, code: string): Promise<boolean> {
+  async validateCategoryCode(
+    type: string,
+    subtype: string,
+    code: string
+  ): Promise<boolean> {
     const category = await this.findByCode(type, subtype, code);
-    return category !== null && category.isActive && category.service === this.serviceName;
+    return (
+      category !== null &&
+      category.isActive &&
+      category.service === this.serviceName
+    );
   }
 
   /**
    * Get category by code with validation
    */
-  async getCategoryByCode(type: string, subtype: string, code: string): Promise<CategoryEntity | null> {
+  async getCategoryByCode(
+    type: string,
+    subtype: string,
+    code: string
+  ): Promise<CategoryEntity | null> {
     const category = await this.findByCode(type, subtype, code);
     if (category && category.service === this.serviceName) {
       return category;
@@ -133,43 +171,45 @@ export abstract class BaseCategoryRepository implements CategoryRepository {
  */
 export abstract class ResourcesCategoryRepository extends BaseCategoryRepository {
   constructor() {
-    super('resources-service');
+    super("resources-service");
   }
 
   /**
    * Get valid resource types
    */
   async getValidResourceTypes(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('RESOURCE', 'VALID_TYPE');
+    return this.getActiveByTypeAndSubtype("RESOURCE", "VALID_TYPE");
   }
 
   /**
    * Get resource statuses
    */
   async getResourceStatuses(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('RESOURCE', 'STATUS');
+    return this.getActiveByTypeAndSubtype("RESOURCE", "STATUS");
   }
 
   /**
    * Validate resource type
    */
   async validateResourceType(typeCode: string): Promise<boolean> {
-    return this.validateCategoryCode('RESOURCE', 'VALID_TYPE', typeCode);
+    return this.validateCategoryCode("RESOURCE", "VALID_TYPE", typeCode);
   }
 
   /**
    * Get resource type by code
    */
-  async getResourceTypeByCode(typeCode: string): Promise<CategoryEntity | null> {
-    return this.getCategoryByCode('RESOURCE', 'VALID_TYPE', typeCode);
+  async getResourceTypeByCode(
+    typeCode: string
+  ): Promise<CategoryEntity | null> {
+    return this.getCategoryByCode("RESOURCE", "VALID_TYPE", typeCode);
   }
 
   async createDefaultCategories(): Promise<void> {
-    const { CategoryFactory } = await import('../entities/category.entity');
+    const { CategoryFactory } = await import("../entities/category.entity");
     const resourceTypes = CategoryFactory.createResourceTypes();
-    
+
     for (const category of resourceTypes) {
-      const exists = await this.exists('RESOURCE', 'VALID_TYPE', category.code);
+      const exists = await this.exists("RESOURCE", "VALID_TYPE", category.code);
       if (!exists) {
         await this.save(category);
       }
@@ -182,43 +222,43 @@ export abstract class ResourcesCategoryRepository extends BaseCategoryRepository
  */
 export abstract class AuthCategoryRepository extends BaseCategoryRepository {
   constructor() {
-    super('auth-service');
+    super("auth-service");
   }
 
   /**
    * Get user roles
    */
   async getUserRoles(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('USER', 'ROLE');
+    return this.getActiveByTypeAndSubtype("USER", "ROLE");
   }
 
   /**
    * Get permissions
    */
   async getPermissions(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('USER', 'PERMISSION');
+    return this.getActiveByTypeAndSubtype("USER", "PERMISSION");
   }
 
   /**
    * Validate user role
    */
   async validateUserRole(roleCode: string): Promise<boolean> {
-    return this.validateCategoryCode('USER', 'ROLE', roleCode);
+    return this.validateCategoryCode("USER", "ROLE", roleCode);
   }
 
   /**
    * Get role by code
    */
   async getRoleByCode(roleCode: string): Promise<CategoryEntity | null> {
-    return this.getCategoryByCode('USER', 'ROLE', roleCode);
+    return this.getCategoryByCode("USER", "ROLE", roleCode);
   }
 
   async createDefaultCategories(): Promise<void> {
-    const { CategoryFactory } = await import('../entities/category.entity');
+    const { CategoryFactory } = await import("../entities/category.entity");
     const userRoles = CategoryFactory.createUserRoles();
-    
+
     for (const category of userRoles) {
-      const exists = await this.exists('USER', 'ROLE', category.code);
+      const exists = await this.exists("USER", "ROLE", category.code);
       if (!exists) {
         await this.save(category);
       }
@@ -231,43 +271,45 @@ export abstract class AuthCategoryRepository extends BaseCategoryRepository {
  */
 export abstract class AvailabilityCategoryRepository extends BaseCategoryRepository {
   constructor() {
-    super('availability-service');
+    super("availability-service");
   }
 
   /**
    * Get reservation statuses
    */
   async getReservationStatuses(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('RESERVATION', 'STATUS');
+    return this.getActiveByTypeAndSubtype("RESERVATION", "STATUS");
   }
 
   /**
    * Get reservation types
    */
   async getReservationTypes(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('RESERVATION', 'TYPE');
+    return this.getActiveByTypeAndSubtype("RESERVATION", "TYPE");
   }
 
   /**
    * Validate reservation status
    */
   async validateReservationStatus(statusCode: string): Promise<boolean> {
-    return this.validateCategoryCode('RESERVATION', 'STATUS', statusCode);
+    return this.validateCategoryCode("RESERVATION", "STATUS", statusCode);
   }
 
   /**
    * Get reservation status by code
    */
-  async getReservationStatusByCode(statusCode: string): Promise<CategoryEntity | null> {
-    return this.getCategoryByCode('RESERVATION', 'STATUS', statusCode);
+  async getReservationStatusByCode(
+    statusCode: string
+  ): Promise<CategoryEntity | null> {
+    return this.getCategoryByCode("RESERVATION", "STATUS", statusCode);
   }
 
   async createDefaultCategories(): Promise<void> {
-    const { CategoryFactory } = await import('../entities/category.entity');
+    const { CategoryFactory } = await import("../entities/category.entity");
     const reservationStatuses = CategoryFactory.createReservationStatuses();
-    
+
     for (const category of reservationStatuses) {
-      const exists = await this.exists('RESERVATION', 'STATUS', category.code);
+      const exists = await this.exists("RESERVATION", "STATUS", category.code);
       if (!exists) {
         await this.save(category);
       }
@@ -280,28 +322,28 @@ export abstract class AvailabilityCategoryRepository extends BaseCategoryReposit
  */
 export abstract class StockpileCategoryRepository extends BaseCategoryRepository {
   constructor() {
-    super('stockpile-service');
+    super("stockpile-service");
   }
 
   /**
    * Get approval workflow types
    */
   async getApprovalWorkflowTypes(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('APPROVAL', 'WORKFLOW_TYPE');
+    return this.getActiveByTypeAndSubtype("APPROVAL", "WORKFLOW_TYPE");
   }
 
   /**
    * Get approval statuses
    */
   async getApprovalStatuses(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('APPROVAL', 'STATUS');
+    return this.getActiveByTypeAndSubtype("APPROVAL", "STATUS");
   }
 
   /**
    * Validate workflow type
    */
   async validateWorkflowType(workflowCode: string): Promise<boolean> {
-    return this.validateCategoryCode('APPROVAL', 'WORKFLOW_TYPE', workflowCode);
+    return this.validateCategoryCode("APPROVAL", "WORKFLOW_TYPE", workflowCode);
   }
 
   async createDefaultCategories(): Promise<void> {
@@ -314,28 +356,28 @@ export abstract class StockpileCategoryRepository extends BaseCategoryRepository
  */
 export abstract class ReportsCategoryRepository extends BaseCategoryRepository {
   constructor() {
-    super('reports-service');
+    super("reports-service");
   }
 
   /**
    * Get report types
    */
   async getReportTypes(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('REPORT', 'TYPE');
+    return this.getActiveByTypeAndSubtype("REPORT", "TYPE");
   }
 
   /**
    * Get report formats
    */
   async getReportFormats(): Promise<CategoryEntity[]> {
-    return this.getActiveByTypeAndSubtype('REPORT', 'FORMAT');
+    return this.getActiveByTypeAndSubtype("REPORT", "FORMAT");
   }
 
   /**
    * Validate report type
    */
   async validateReportType(typeCode: string): Promise<boolean> {
-    return this.validateCategoryCode('REPORT', 'TYPE', typeCode);
+    return this.validateCategoryCode("REPORT", "TYPE", typeCode);
   }
 
   async createDefaultCategories(): Promise<void> {

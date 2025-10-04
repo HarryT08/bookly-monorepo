@@ -18,6 +18,7 @@ import { TemplatesController } from "@apps/reports-service/infrastructure/contro
 import { LoggingModule } from "@/libs/logging/logging.module";
 import { CommonModule } from "@/libs/common/common.module";
 import { EventBusModule } from "@/libs/event-bus/event-bus.module";
+import { PrismaCategoryRepository } from "@apps/reports-service/infrastructure/repositories/prisma-category.repository";
 import { HealthModule } from "../../health/health.module";
 import { AuthModule } from "@apps/auth-service/auth.module";
 import { ResourcesModule } from "@apps/resources-service/resources.module";
@@ -85,6 +86,10 @@ const repositories = [
   {
     provide: "ReportExportsRepository",
     useClass: PrismaReportExportsRepository,
+  },
+  {
+    provide: "CategoryRepository",
+    useClass: PrismaCategoryRepository,
   },
 ];
 
