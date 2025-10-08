@@ -1,0 +1,9 @@
+{
+  "watch": ["src", "libs"],
+  "ext": "ts,js,json",
+  "ignore": ["dist", "node_modules"],
+  "execMap": {
+    "ts": "node -r ts-node/register -r tsconfig-paths/register"
+  },
+  "env": { "NODE_ENV": "development" }
+}
