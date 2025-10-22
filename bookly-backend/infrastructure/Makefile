@@ -67,6 +67,34 @@ dev-fix-mongo: ## Fix del keyfile de MongoDB y reiniciar
 	@echo "✅ Fix aplicado. Verifica logs con: make logs s=mongodb-primary"
 
 # =============================================================================
+# GESTIÓN DE NGINX
+# =============================================================================
+
+nginx-start: ## Iniciar Nginx (verifica microservicios)
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh start
+
+nginx-stop: ## Detener Nginx
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh stop
+
+nginx-restart: ## Reiniciar Nginx
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh restart
+
+nginx-status: ## Ver estado de Nginx y microservicios
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh status
+
+nginx-logs: ## Ver logs de Nginx en tiempo real
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh logs
+
+nginx-errors: ## Buscar errores en logs de Nginx
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh errors
+
+# =============================================================================
 # GESTIÓN COMPLETA
 # =============================================================================
 
