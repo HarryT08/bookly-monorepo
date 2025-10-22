@@ -8,11 +8,20 @@ services:
     container_name: bookly-mongodb-primary
     hostname: mongodb-primary
     restart: unless-stopped
-    user: mongodb
-    command: [
-      "bash", "-c",
-      "cp /tmp/keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile && chmod 400 /opt/keyfile/mongodb-keyfile && chown mongodb:mongodb /opt/keyfile/mongodb-keyfile && exec mongod --replSet bookly-rs --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile --auth"
-    ]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /opt/keyfile
+        if [ -f /host-keyfile/mongodb-keyfile ]; then
+          cp /host-keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile
+          chmod 400 /opt/keyfile/mongodb-keyfile
+          chown mongodb:mongodb /opt/keyfile/mongodb-keyfile
+        else
+          echo "ERROR: Keyfile no encontrado en /host-keyfile/mongodb-keyfile"
+          exit 1
+        fi
+        exec docker-entrypoint.sh mongod --replSet bookly-rs --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile --auth
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
@@ -22,8 +31,7 @@ services:
     volumes:
       - mongodb_primary_data:/data/db
       - mongodb_primary_config:/data/configdb
-      - mongodb_keyfile:/opt/keyfile
-      - ./mongodb/keyfile/mongodb-keyfile:/tmp/keyfile/mongodb-keyfile:ro
+      - ./mongodb/keyfile:/host-keyfile:ro
       - ./mongodb/init-replica.js:/docker-entrypoint-initdb.d/init-replica.js:ro
     networks:
       - bookly-network
@@ -39,11 +47,20 @@ services:
     container_name: bookly-mongodb-secondary1
     hostname: mongodb-secondary1
     restart: unless-stopped
-    user: mongodb
-    command: [
-      "bash", "-c",
-      "cp /tmp/keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile && chmod 400 /opt/keyfile/mongodb-keyfile && chown mongodb:mongodb /opt/keyfile/mongodb-keyfile && exec mongod --replSet bookly-rs --bind_ip_all --port 27018 --keyFile /opt/keyfile/mongodb-keyfile --auth"
-    ]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /opt/keyfile
+        if [ -f /host-keyfile/mongodb-keyfile ]; then
+          cp /host-keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile
+          chmod 400 /opt/keyfile/mongodb-keyfile
+          chown mongodb:mongodb /opt/keyfile/mongodb-keyfile
+        else
+          echo "ERROR: Keyfile no encontrado en /host-keyfile/mongodb-keyfile"
+          exit 1
+        fi
+        exec docker-entrypoint.sh mongod --replSet bookly-rs --bind_ip_all --port 27018 --keyFile /opt/keyfile/mongodb-keyfile --auth
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
@@ -52,8 +69,7 @@ services:
     volumes:
       - mongodb_secondary1_data:/data/db
       - mongodb_secondary1_config:/data/configdb
-      - mongodb_keyfile_secondary1:/opt/keyfile
-      - ./mongodb/keyfile/mongodb-keyfile:/tmp/keyfile/mongodb-keyfile:ro
+      - ./mongodb/keyfile:/host-keyfile:ro
     networks:
       - bookly-network
     depends_on:
@@ -70,11 +86,20 @@ services:
     container_name: bookly-mongodb-secondary2
     hostname: mongodb-secondary2
     restart: unless-stopped
-    user: mongodb
-    command: [
-      "bash", "-c",
-      "cp /tmp/keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile && chmod 400 /opt/keyfile/mongodb-keyfile && chown mongodb:mongodb /opt/keyfile/mongodb-keyfile && exec mongod --replSet bookly-rs --bind_ip_all --port 27019 --keyFile /opt/keyfile/mongodb-keyfile --auth"
-    ]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /opt/keyfile
+        if [ -f /host-keyfile/mongodb-keyfile ]; then
+          cp /host-keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile
+          chmod 400 /opt/keyfile/mongodb-keyfile
+          chown mongodb:mongodb /opt/keyfile/mongodb-keyfile
+        else
+          echo "ERROR: Keyfile no encontrado en /host-keyfile/mongodb-keyfile"
+          exit 1
+        fi
+        exec docker-entrypoint.sh mongod --replSet bookly-rs --bind_ip_all --port 27019 --keyFile /opt/keyfile/mongodb-keyfile --auth
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
@@ -83,8 +108,7 @@ services:
     volumes:
       - mongodb_secondary2_data:/data/db
       - mongodb_secondary2_config:/data/configdb
-      - mongodb_keyfile_secondary2:/opt/keyfile
-      - ./mongodb/keyfile/mongodb-keyfile:/tmp/keyfile/mongodb-keyfile:ro
+      - ./mongodb/keyfile:/host-keyfile:ro
     networks:
       - bookly-network
     depends_on:
@@ -207,19 +231,13 @@ volumes:
     driver: local
   mongodb_primary_config:
     driver: local
-  mongodb_keyfile:
-    driver: local
   mongodb_secondary1_data:
     driver: local
   mongodb_secondary1_config:
     driver: local
-  mongodb_keyfile_secondary1:
-    driver: local
   mongodb_secondary2_data:
     driver: local
   mongodb_secondary2_config:
-    driver: local
-  mongodb_keyfile_secondary2:
     driver: local
   redis_data:
     driver: local
