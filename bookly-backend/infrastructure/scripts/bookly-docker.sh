@@ -104,7 +104,7 @@ check_prerequisites() {
     fi
     
     # Verificar Docker Compose
-    if ! command -v docker-compose &> /dev/null; then
+    if ! command -v docker compose &> /dev/null; then
         log_error "Docker Compose no está instalado"
         exit 1
     fi
@@ -174,19 +174,19 @@ start_services() {
     case $stack in
         "base")
             log_info "Iniciando servicios base..."
-            docker-compose -f "$BASE_COMPOSE" --env-file "$ENV_FILE" up -d
+            docker compose -f "$BASE_COMPOSE" --env-file "$ENV_FILE" up -d
             ;;
         "observability")
             log_info "Iniciando servicios de observabilidad..."
-            docker-compose -f "$OBSERVABILITY_COMPOSE" --env-file "$ENV_FILE" up -d
+            docker compose -f "$OBSERVABILITY_COMPOSE" --env-file "$ENV_FILE" up -d
             ;;
         "microservices")
             log_info "Iniciando microservicios..."
-            docker-compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" up -d
+            docker compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" up -d
             ;;
         "all"|*)
             log_info "Iniciando todos los servicios..."
-            docker-compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" up -d
+            docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" up -d
             ;;
     esac
     
@@ -200,19 +200,19 @@ stop_services() {
     case $stack in
         "base")
             log_info "Deteniendo servicios base..."
-            docker-compose -f "$BASE_COMPOSE" --env-file "$ENV_FILE" down
+            docker compose -f "$BASE_COMPOSE" --env-file "$ENV_FILE" down
             ;;
         "observability")
             log_info "Deteniendo servicios de observabilidad..."
-            docker-compose -f "$OBSERVABILITY_COMPOSE" --env-file "$ENV_FILE" down
+            docker compose -f "$OBSERVABILITY_COMPOSE" --env-file "$ENV_FILE" down
             ;;
         "microservices")
             log_info "Deteniendo microservicios..."
-            docker-compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down
+            docker compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down
             ;;
         "all"|*)
             log_info "Deteniendo todos los servicios..."
-            docker-compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down
+            docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down
             ;;
     esac
     
@@ -223,7 +223,7 @@ stop_services() {
 show_status() {
     log_info "Estado de los servicios Bookly:"
     echo
-    docker-compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" ps
+    docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" ps
 }
 
 # Función para mostrar logs
@@ -233,10 +233,10 @@ show_logs() {
     
     if [[ -n "$service" ]]; then
         log_info "Mostrando logs para $service..."
-        docker-compose $compose_files --env-file "$ENV_FILE" logs -f --tail=100 "$service"
+        docker compose $compose_files --env-file "$ENV_FILE" logs -f --tail=100 "$service"
     else
         log_info "Mostrando logs de todos los servicios..."
-        docker-compose $compose_files --env-file "$ENV_FILE" logs -f --tail=50
+        docker compose $compose_files --env-file "$ENV_FILE" logs -f --tail=50
     fi
 }
 
@@ -257,7 +257,7 @@ clean_services() {
     log_info "Limpiando servicios..."
     
     # Detener y eliminar contenedores
-    docker-compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down -v --remove-orphans
+    docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down -v --remove-orphans
     
     # Eliminar imágenes de Bookly
     docker images bookly/* -q | xargs -r docker rmi -f
@@ -385,7 +385,7 @@ run_seeds() {
     fi
     
     # Ejecutar semillas
-    docker-compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" exec auth-service npm run prisma:db:seed
+    docker compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" exec auth-service npm run prisma:db:seed
     
     log_success "Semillas ejecutadas correctamente"
 }
@@ -445,7 +445,7 @@ main() {
                 log_error "Especifica el servicio para shell"
                 exit 1
             fi
-            docker-compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" exec "$1" sh
+            docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" exec "$1" sh
             ;;
         "exec")
             if [[ -z "$1" ]]; then
@@ -454,7 +454,7 @@ main() {
             fi
             local service=$1
             shift
-            docker-compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" exec "$service" "$@"
+            docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" exec "$service" "$@"
             ;;
         "help"|"-h"|"--help"|"")
             show_help
