@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Microservicios Bookly Backend
 # Orquestación completa de todos los servicios de aplicación
 
@@ -48,7 +46,6 @@ services:
       - api_gateway_logs:/app/logs
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       - auth-service
       - resources-service
@@ -99,7 +96,6 @@ services:
       - auth_service_logs:/app/logs
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -149,7 +145,6 @@ services:
       - resources_uploads:/app/uploads
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -202,7 +197,6 @@ services:
       - availability_service_logs:/app/logs
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -262,7 +256,6 @@ services:
       - stockpile_documents:/app/documents
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -311,7 +304,6 @@ services:
       - reports_exports:/app/exports
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -352,6 +344,4 @@ volumes:
 # Redes
 networks:
   bookly-network:
-    external: true
-  bookly-observability:
     external: true

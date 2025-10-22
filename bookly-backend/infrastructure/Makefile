@@ -67,6 +67,31 @@ dev-fix-mongo: ## Fix del keyfile de MongoDB y reiniciar
 	@echo "✅ Fix aplicado. Verifica logs con: make logs s=mongodb-primary"
 
 # =============================================================================
+# GESTIÓN DE MICROSERVICIOS
+# =============================================================================
+
+microservices: ## Iniciar microservicios (requiere servicios base)
+	@echo "🚀 Iniciando microservicios..."
+	@docker compose -f docker-compose.microservices.yml up -d
+	@echo "✅ Microservicios iniciados"
+	@echo "📊 Ver estado: make status"
+
+microservices-stop: ## Detener microservicios
+	@echo "⏹️  Deteniendo microservicios..."
+	@docker compose -f docker-compose.microservices.yml down
+	@echo "✅ Microservicios detenidos"
+
+microservices-restart: microservices-stop microservices ## Reiniciar microservicios
+
+microservices-logs: ## Ver logs de microservicios
+	@docker compose -f docker-compose.microservices.yml logs -f
+
+dev-full: dev-start microservices ## Iniciar servicios base + microservicios
+	@echo "✅ Stack completo iniciado (base + microservicios)"
+	@echo "📊 Ver estado: docker ps"
+	@echo "📋 Ver logs: make logs"
+
+# =============================================================================
 # GESTIÓN DE NGINX
 # =============================================================================
 
