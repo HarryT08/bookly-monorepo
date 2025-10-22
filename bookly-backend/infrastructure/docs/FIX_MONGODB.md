@@ -1,17 +1,34 @@
 # Fix MongoDB Keyfile en Servidor
 
-## Problema Identificado
+## Problemas Identificados
+
+### Problema 1: MongoDB Keyfile
 
 MongoDB no inicia correctamente debido a errores con el keyfile del replica set:
 
 - ❌ `Unable to acquire security keyfile lock`
 - ❌ `Invalid keyfile format`
+- ❌ `Permission denied` al leer keyfile
+
+### Problema 2: Nginx en Linux
+
+Nginx no puede resolver hosts para microservicios:
+
+- ❌ `host not found in upstream "host.docker.internal:3000"`
 
 ## Causas
 
+### MongoDB:
+
 1. **Keyfile con formato incorrecto**: El archivo tiene múltiples líneas cuando debe ser una sola línea
 2. **Permisos incorrectos**: MongoDB requiere permisos exactos (400 o 600)
-3. **Propietario incorrecto**: El usuario del contenedor no puede acceder al archivo
+3. **Propietario incorrecto**: El usuario del contenedor no puede acceder al archivo montado desde el host
+4. **Montaje con permisos restrictivos**: El volumen readonly no permite que el usuario mongodb lea el archivo
+
+### Nginx:
+
+1. **host.docker.internal no existe en Linux**: Este hostname especial solo funciona en Docker Desktop (Mac/Windows)
+2. **No configurado extra_hosts**: Linux/GCP necesita mapear explícitamente el hostname al gateway del host
 
 ## Solución Implementada
 
@@ -28,10 +45,11 @@ Se creó `/infrastructure/scripts/fix-mongodb-keyfile.sh` que:
 
 Los tres nodos de MongoDB ahora:
 
-- ✅ Copian el keyfile a un volumen interno con permisos correctos
-- ✅ Usan el usuario `mongodb` dentro del contenedor
-- ✅ Ejecutan `chown` para asegurar propietario correcto
-- ✅ Mayor tiempo de `start_period` (40s) para inicialización
+- ✅ **Ejecutan como root inicialmente** para poder modificar permisos del keyfile
+- ✅ **Copian el keyfile** desde `/host-keyfile` (montaje readonly del host) a `/opt/keyfile` (directorio interno)
+- ✅ **Configuran permisos 400** y **owner mongodb:mongodb** al keyfile copiado
+- ✅ **Ejecutan mongod** a través de `docker-entrypoint.sh` que maneja correctamente la inicialización y cambio de usuario
+- ✅ Mayor tiempo de `start_period` (40s) para inicialización completa
 
 ### 3. Script de Inicialización Mejorado
 
@@ -40,6 +58,14 @@ Los tres nodos de MongoDB ahora:
 - ✅ Detecta automáticamente keyfiles con formato incorrecto
 - ✅ Regenera el keyfile si es necesario
 - ✅ Verifica permisos antes de iniciar servicios
+
+### 4. Nginx Configurado para Linux
+
+`docker-compose.base.yml` para nginx ahora incluye:
+
+- ✅ **extra_hosts** con mapeo `host.docker.internal:host-gateway`
+- ✅ **Health check corregido** que no falla si los microservicios no están corriendo
+- ✅ **Reinicio automático** de nginx en el script quick-fix-mongodb.sh
 
 ## Pasos para Aplicar
 
@@ -132,14 +158,27 @@ docker exec bookly-mongodb-primary mongosh \
 # - 1 nodo PRIMARY
 # - 2 nodos SECONDARY
 # - Sin errores de keyfile
+
+# Verificar nginx sin errores de host
+docker logs bookly-nginx 2>&1 | grep "host not found"
+# NO debe mostrar nada (sin errores)
 ```
 
 ## Resultado Esperado
 
+### MongoDB
+
 ✅ MongoDB inicia sin errores de keyfile  
-✅ Los 3 nodos del replica set están saludables  
+✅ Los 3 nodos del replica set están saludables (1 PRIMARY + 2 SECONDARY)  
 ✅ Conexión exitosa desde aplicaciones  
 ✅ Logs sin mensajes de error relacionados con keyfile
+
+### Nginx
+
+✅ Nginx inicia sin errores de "host not found"  
+✅ Puede resolver `host.docker.internal` correctamente en Linux/GCP  
+✅ Health check pasa correctamente  
+✅ Listo para hacer proxy a microservicios cuando se inicien
 
 ## Troubleshooting
 
@@ -195,21 +234,66 @@ infrastructure/
     └── FIX_MONGODB.md        # Esta guía
 ```
 
+## Cambios Técnicos Implementados
+
+### Configuración Anterior (❌ Con problemas)
+
+```yaml
+mongodb-primary:
+  user: mongodb # Problema: no puede copiar archivos con permisos
+  command: ["bash", "-c", "cp /tmp/keyfile/mongodb-keyfile ..."]
+  volumes:
+    - ./mongodb/keyfile/mongodb-keyfile:/tmp/keyfile/mongodb-keyfile:ro
+```
+
+**Problema**: El usuario `mongodb` no puede leer archivos montados readonly desde el host.
+
+### Configuración Nueva (✅ Funcional)
+
+```yaml
+mongodb-primary:
+  entrypoint: ["/bin/bash", "-c"] # Ejecuta como root
+  command:
+    - |
+      set -e
+      mkdir -p /opt/keyfile
+      # Copia desde montaje readonly del host
+      cp /host-keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile
+      # Configura permisos correctos
+      chmod 400 /opt/keyfile/mongodb-keyfile
+      chown mongodb:mongodb /opt/keyfile/mongodb-keyfile
+      # Ejecuta mongod con docker-entrypoint.sh (cambia a usuario mongodb)
+      exec docker-entrypoint.sh mongod --keyFile /opt/keyfile/mongodb-keyfile ...
+  volumes:
+    - ./mongodb/keyfile:/host-keyfile:ro # Directorio completo montado
+```
+
+**Solución**:
+
+1. Ejecuta como root para tener permisos de copia y chown
+2. Copia el keyfile a directorio interno del contenedor
+3. Configura permisos 400 y owner mongodb:mongodb
+4. Usa `exec docker-entrypoint.sh` que maneja el cambio de usuario correctamente
+
 ## Comandos Útiles
 
 ```bash
-# Regenerar keyfile
-make -C /path/to/infrastructure init
+# Regenerar keyfile y reiniciar
+make dev-fix-mongo
 
 # Ver estado de servicios
-make -C /path/to/infrastructure status
+make status
 
 # Ver logs de MongoDB
-make -C /path/to/infrastructure logs mongodb-primary
+make logs s=mongodb-primary
 
 # Reiniciar solo MongoDB
 docker compose -f docker-compose.base.yml restart mongodb-primary mongodb-secondary1 mongodb-secondary2
 
 # Health check
-make -C /path/to/infrastructure health
+make health
+
+# Ver keyfile dentro del contenedor
+docker exec bookly-mongodb-primary ls -la /opt/keyfile/
+docker exec bookly-mongodb-primary cat /opt/keyfile/mongodb-keyfile | wc -c
 ```

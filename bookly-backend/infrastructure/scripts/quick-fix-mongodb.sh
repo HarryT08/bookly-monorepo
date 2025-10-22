@@ -56,6 +56,12 @@ sleep 40
 echo "🔄 Iniciando configuración de replica set..."
 docker compose -f docker-compose.base.yml up -d mongodb-init
 
+# 8. Reiniciar nginx si está corriendo (fix host.docker.internal)
+if docker ps | grep -q bookly-nginx; then
+    echo "🔄 Reiniciando nginx..."
+    docker compose -f docker-compose.base.yml restart nginx
+fi
+
 # 8. Verificar estado
 echo ""
 echo "✅ Fix aplicado. Verificando estado..."

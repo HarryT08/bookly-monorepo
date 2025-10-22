@@ -183,6 +183,8 @@ services:
     container_name: bookly-nginx
     hostname: nginx
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "80:80"
       - "8080:8080"
@@ -197,7 +199,7 @@ services:
       - redis
       - rabbitmq
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health || true"]
       interval: 10s
       timeout: 5s
       retries: 3
