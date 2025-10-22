@@ -58,6 +58,14 @@ dev-clean: ## Limpiar servicios de desarrollo
 	@echo "🧹 Limpiando servicios de desarrollo..."
 	@$(DOCKER_SCRIPT) clean
 
+dev-fix-mongo: ## Fix del keyfile de MongoDB y reiniciar
+	@echo "🔧 Aplicando fix de MongoDB keyfile..."
+	@chmod +x scripts/fix-mongodb-keyfile.sh
+	@bash scripts/fix-mongodb-keyfile.sh
+	@echo "🔄 Reiniciando MongoDB..."
+	@docker compose -f docker-compose.base.yml restart mongodb-primary mongodb-secondary1 mongodb-secondary2
+	@echo "✅ Fix aplicado. Verifica logs con: make logs s=mongodb-primary"
+
 # =============================================================================
 # GESTIÓN COMPLETA
 # =============================================================================

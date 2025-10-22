@@ -137,10 +137,25 @@ init_config() {
     mkdir -p "$INFRA_DIR/data"/{mongodb,redis,rabbitmq,clickhouse,sentry}
     mkdir -p "$INFRA_DIR/logs"
     mkdir -p "$INFRA_DIR/backups"
+    mkdir -p "$INFRA_DIR/mongodb/keyfile"
     
-    # Configurar permisos para MongoDB keyfile
-    if [[ -f "$INFRA_DIR/mongodb/keyfile/mongodb-keyfile" ]]; then
-        chmod 600 "$INFRA_DIR/mongodb/keyfile/mongodb-keyfile"
+    # Verificar y configurar MongoDB keyfile
+    KEYFILE="$INFRA_DIR/mongodb/keyfile/mongodb-keyfile"
+    if [[ ! -f "$KEYFILE" ]] || [[ $(wc -l < "$KEYFILE" | tr -d ' ') -ne 0 ]]; then
+        log_warning "MongoDB keyfile no existe o tiene formato incorrecto, regenerando..."
+        if [[ -f "$SCRIPT_DIR/fix-mongodb-keyfile.sh" ]]; then
+            bash "$SCRIPT_DIR/fix-mongodb-keyfile.sh"
+        else
+            # Generar keyfile directamente
+            log_info "Generando keyfile..."
+            openssl rand -base64 756 | tr -d '\n' > "$KEYFILE"
+            chmod 400 "$KEYFILE"
+            log_success "Keyfile generado"
+        fi
+    else
+        # Asegurar permisos correctos
+        chmod 400 "$KEYFILE"
+        log_info "Keyfile existente verificado"
     fi
     
     # Crear redes Docker
