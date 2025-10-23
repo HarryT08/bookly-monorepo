@@ -388,3 +388,9 @@ volumes:
     driver: local
   reports_exports:
     driver: local
+
+# Red externa compartida con servicios base
+networks:
+  bookly-network:
+    external: true
+    name: bookly_bookly-network
