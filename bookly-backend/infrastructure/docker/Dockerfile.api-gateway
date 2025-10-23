@@ -14,12 +14,12 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV SERVICE_NAME=api-gateway
 
-# Instalar pnpm
-
-# Copiar archivos de configuración
+# Copiar archivos de dependencias primero (mejor cache de Docker)
+COPY package*.json ./
+COPY prisma ./prisma
 
 # Instalar dependencias
-RUN npm install
+RUN npm ci --only=production --ignore-scripts
 
 # Copiar código fuente
 COPY . .
