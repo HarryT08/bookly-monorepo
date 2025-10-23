@@ -72,6 +72,8 @@ dev-fix-mongo: ## Fix del keyfile de MongoDB y reiniciar
 
 microservices: ## Iniciar microservicios (requiere servicios base)
 	@echo "🚀 Iniciando microservicios..."
+	@docker network inspect bookly-network >/dev/null 2>&1 || \
+		(echo "⚠️  Red bookly-network no existe. Iniciando servicios base primero..." && $(MAKE) dev-start)
 	@docker compose -f docker-compose.microservices.yml up -d
 	@echo "✅ Microservicios iniciados"
 	@echo "📊 Ver estado: make status"
