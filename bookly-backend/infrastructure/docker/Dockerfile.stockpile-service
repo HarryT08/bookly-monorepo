@@ -22,7 +22,7 @@ RUN npx prisma generate
 # No build stage - usando ts-node
 
 FROM node:22-alpine AS production
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init su-exec
 RUN addgroup -g 1001 -S bookly && adduser -S bookly -u 1001
 
 WORKDIR /app
@@ -37,10 +37,13 @@ COPY --from=base --chown=bookly:bookly /app/prisma ./prisma
 COPY --from=base --chown=bookly:bookly /app/tsconfig.json ./
 COPY --from=base --chown=bookly:bookly /app/nest-cli.json ./
 
-USER bookly
+# Copiar entrypoint script
+COPY infrastructure/scripts/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3004
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:3004/health || exit 1
 
-CMD ["dumb-init", "node", "-r", "ts-node/register", "-r", "tsconfig-paths/register", "src/apps/stockpile-service/main.ts"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "-r", "ts-node/register", "-r", "tsconfig-paths/register", "src/apps/stockpile-service/main.ts"]
