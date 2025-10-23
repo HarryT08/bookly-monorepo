@@ -24,6 +24,7 @@ ENV_FILE="$INFRA_DIR/.env.docker"
 BASE_COMPOSE="$INFRA_DIR/docker-compose.base.yml"
 OBSERVABILITY_COMPOSE="$INFRA_DIR/docker-compose.observability.yml"
 MICROSERVICES_COMPOSE="$INFRA_DIR/docker-compose.microservices.yml"
+DEV_COMPOSE="$INFRA_DIR/docker-compose.dev.yml"
 
 # Función para mostrar logs con colores
 log_info() {
@@ -199,6 +200,10 @@ start_services() {
             log_info "Iniciando microservicios..."
             docker compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" up -d
             ;;
+        "dev")
+            log_info "Iniciando microservicios..."
+            docker compose -f "$DEV_COMPOSE" --env-file "$ENV_FILE" up -d
+            ;;
         "all"|*)
             log_info "Iniciando todos los servicios..."
             docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" up -d
@@ -225,9 +230,13 @@ stop_services() {
             log_info "Deteniendo microservicios..."
             docker compose -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down
             ;;
+        "dev")
+            log_info "Deteniendo microservicios..."
+            docker compose -f "$DEV_COMPOSE" --env-file "$ENV_FILE" down
+            ;;
         "all"|*)
             log_info "Deteniendo todos los servicios..."
-            docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down
+            docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" -f "$DEV_COMPOSE" --env-file "$ENV_FILE" down
             ;;
     esac
     
@@ -238,13 +247,13 @@ stop_services() {
 show_status() {
     log_info "Estado de los servicios Bookly:"
     echo
-    docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" ps
+    docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" -f "$DEV_COMPOSE" --env-file "$ENV_FILE" ps
 }
 
 # Función para mostrar logs
 show_logs() {
     local service=$1
-    local compose_files="-f $BASE_COMPOSE -f $OBSERVABILITY_COMPOSE -f $MICROSERVICES_COMPOSE"
+    local compose_files="-f $BASE_COMPOSE -f $OBSERVABILITY_COMPOSE -f $MICROSERVICES_COMPOSE -f $DEV_COMPOSE"
     
     if [[ -n "$service" ]]; then
         log_info "Mostrando logs para $service..."
@@ -272,7 +281,7 @@ clean_services() {
     log_info "Limpiando servicios..."
     
     # Detener y eliminar contenedores
-    docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" --env-file "$ENV_FILE" down -v --remove-orphans
+    docker compose -f "$BASE_COMPOSE" -f "$OBSERVABILITY_COMPOSE" -f "$MICROSERVICES_COMPOSE" -f "$DEV_COMPOSE" --env-file "$ENV_FILE" down -v --remove-orphans
     
     # Eliminar imágenes de Bookly
     docker images bookly/* -q | xargs -r docker rmi -f
