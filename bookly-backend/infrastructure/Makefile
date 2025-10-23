@@ -104,6 +104,122 @@ dev-full-logs: ## Ver logs del stack completo
 dev-full-restart: dev-full-stop dev-full ## Reiniciar stack completo
 
 # =============================================================================
+# GESTIÓN DE SERVICIOS INDIVIDUALES
+# =============================================================================
+
+## Servicios Base
+
+# MongoDB Primary
+mongodb-primary-start: ## Iniciar MongoDB Primary
+	@docker compose -f docker-compose.base.yml up -d mongodb-primary
+
+mongodb-primary-stop: ## Detener MongoDB Primary
+	@docker compose -f docker-compose.base.yml stop mongodb-primary
+
+mongodb-primary-logs: ## Ver logs de MongoDB Primary
+	@docker logs bookly-mongodb-primary -f
+
+mongodb-primary-restart: mongodb-primary-stop mongodb-primary-start ## Reiniciar MongoDB Primary
+
+# Redis
+redis-start: ## Iniciar Redis
+	@docker compose -f docker-compose.base.yml up -d redis
+
+redis-stop: ## Detener Redis
+	@docker compose -f docker-compose.base.yml stop redis
+
+redis-logs: ## Ver logs de Redis
+	@docker logs bookly-redis -f
+
+redis-restart: redis-stop redis-start ## Reiniciar Redis
+
+# RabbitMQ
+rabbitmq-start: ## Iniciar RabbitMQ
+	@docker compose -f docker-compose.base.yml up -d rabbitmq
+
+rabbitmq-stop: ## Detener RabbitMQ
+	@docker compose -f docker-compose.base.yml stop rabbitmq
+
+rabbitmq-logs: ## Ver logs de RabbitMQ
+	@docker logs bookly-rabbitmq -f
+
+rabbitmq-restart: rabbitmq-stop rabbitmq-start ## Reiniciar RabbitMQ
+
+## Microservicios
+
+# API Gateway
+api-gateway-start: ## Iniciar API Gateway
+	@docker compose -f docker-compose.microservices.yml up -d api-gateway
+
+api-gateway-stop: ## Detener API Gateway
+	@docker compose -f docker-compose.microservices.yml stop api-gateway
+
+api-gateway-logs: ## Ver logs de API Gateway
+	@docker logs bookly-api-gateway -f
+
+api-gateway-restart: api-gateway-stop api-gateway-start ## Reiniciar API Gateway
+
+# Auth Service
+auth-start: ## Iniciar Auth Service
+	@docker compose -f docker-compose.microservices.yml up -d auth-service
+
+auth-stop: ## Detener Auth Service
+	@docker compose -f docker-compose.microservices.yml stop auth-service
+
+auth-logs: ## Ver logs de Auth Service
+	@docker logs bookly-auth-service -f
+
+auth-restart: auth-stop auth-start ## Reiniciar Auth Service
+
+# Resources Service
+resources-start: ## Iniciar Resources Service
+	@docker compose -f docker-compose.microservices.yml up -d resources-service
+
+resources-stop: ## Detener Resources Service
+	@docker compose -f docker-compose.microservices.yml stop resources-service
+
+resources-logs: ## Ver logs de Resources Service
+	@docker logs bookly-resources-service -f
+
+resources-restart: resources-stop resources-start ## Reiniciar Resources Service
+
+# Availability Service
+availability-start: ## Iniciar Availability Service
+	@docker compose -f docker-compose.microservices.yml up -d availability-service
+
+availability-stop: ## Detener Availability Service
+	@docker compose -f docker-compose.microservices.yml stop availability-service
+
+availability-logs: ## Ver logs de Availability Service
+	@docker logs bookly-availability-service -f
+
+availability-restart: availability-stop availability-start ## Reiniciar Availability Service
+
+# Stockpile Service
+stockpile-start: ## Iniciar Stockpile Service
+	@docker compose -f docker-compose.microservices.yml up -d stockpile-service
+
+stockpile-stop: ## Detener Stockpile Service
+	@docker compose -f docker-compose.microservices.yml stop stockpile-service
+
+stockpile-logs: ## Ver logs de Stockpile Service
+	@docker logs bookly-stockpile-service -f
+
+stockpile-restart: stockpile-stop stockpile-start ## Reiniciar Stockpile Service
+
+# Reports Service
+reports-start: ## Iniciar Reports Service
+	@docker compose -f docker-compose.microservices.yml up -d reports-service
+
+reports-stop: ## Detener Reports Service
+	@docker compose -f docker-compose.microservices.yml stop reports-service
+
+reports-logs: ## Ver logs de Reports Service
+	@docker logs bookly-reports-service -f
+
+reports-restart: reports-stop reports-start ## Reiniciar Reports Service
+
+# =============================================================================
 # GESTIÓN DE NGINX
 # =============================================================================
 
