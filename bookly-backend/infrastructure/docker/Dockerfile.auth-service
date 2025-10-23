@@ -12,7 +12,7 @@ ENV SERVICE_NAME=auth-service
 
 COPY package*.json ./
 
-RUN npm ci --ignore-scripts
+RUN npm ci
 
 COPY prisma/schema.prisma ./prisma/schema.prisma
 

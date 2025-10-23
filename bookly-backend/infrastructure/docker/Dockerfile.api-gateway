@@ -18,7 +18,7 @@ ENV SERVICE_NAME=api-gateway
 COPY package*.json ./
 
 # Instalar dependencias
-RUN npm ci --ignore-scripts
+RUN npm ci
 
 # Copiar schema de Prisma
 COPY prisma/schema.prisma ./prisma/schema.prisma
