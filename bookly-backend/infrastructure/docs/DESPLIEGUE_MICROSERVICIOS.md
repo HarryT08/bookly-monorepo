@@ -10,6 +10,7 @@
 ### 1. Eliminada Directiva `version` Obsoleta
 
 La directiva `version: '3.8'` es obsoleta en Docker Compose v2. Se eliminó de:
+
 - ✅ `docker-compose.base.yml`
 - ✅ `docker-compose.microservices.yml`
 - ✅ `docker-compose.observability.yml`
@@ -18,6 +19,7 @@ La directiva `version: '3.8'` es obsoleta en Docker Compose v2. Se eliminó de:
 ### 2. Eliminadas Dependencias de Observabilidad
 
 Los microservicios ya NO requieren el stack de observabilidad para funcionar:
+
 - ✅ Eliminada red `bookly-observability` de todos los microservicios
 - ✅ Ahora solo usan la red `bookly-network` (servicios base)
 - ✅ Variables de entorno de observabilidad siguen disponibles pero son opcionales
@@ -27,13 +29,21 @@ Los microservicios ya NO requieren el stack de observabilidad para funcionar:
 ### Opción 1: Servicios Base + Microservicios (Recomendado)
 
 ```bash
-# Iniciar todo junto
+# Iniciar todo junto (usa docker-compose.dev.yml)
 make dev-full
+
+# Ver logs
+make dev-full-logs
+
+# Detener todo
+make dev-full-stop
 
 # O paso por paso
 make dev-start        # 1. Inicia MongoDB, Redis, RabbitMQ
 make microservices    # 2. Inicia los 6 microservicios
 ```
+
+**Nota**: `make dev-full` usa `docker-compose.dev.yml` que incluye automáticamente `base.yml` y `microservices.yml`.
 
 ### Opción 2: Solo Servicios Base (Sin Microservicios)
 
@@ -245,6 +255,7 @@ RABBITMQ_URL=amqp://bookly:bookly123@rabbitmq:5672/bookly
 **Causa**: Falta iniciar los servicios base
 
 **Solución**:
+
 ```bash
 # Iniciar servicios base primero
 make dev-start
@@ -258,6 +269,7 @@ make microservices
 **Causa**: La red externa no existe
 
 **Solución**:
+
 ```bash
 # Crear la red
 docker network create bookly-network
@@ -271,6 +283,7 @@ make dev-restart
 **Causa**: DATABASE_URL con hostnames incorrectos
 
 **Solución**: Verifica que uses hostnames Docker:
+
 ```env
 # ✅ Correcto (en Docker)
 DATABASE_URL=mongodb://bookly:bookly123@mongodb-primary:27017/bookly
@@ -284,6 +297,7 @@ DATABASE_URL=mongodb://bookly:bookly123@localhost:27017/bookly
 **Causa**: Microservicios no están corriendo
 
 **Solución**:
+
 ```bash
 # Detener nginx temporalmente
 make nginx-stop
@@ -298,20 +312,23 @@ make nginx-start
 ## Resumen de Comandos Clave
 
 ```bash
-# Todo en uno
-make dev-full              # Base + Microservicios
+# Stack completo (usa docker-compose.dev.yml)
+make dev-full              # Iniciar base + microservicios
+make dev-full-stop         # Detener todo
+make dev-full-logs         # Ver logs en tiempo real
+make dev-full-restart      # Reiniciar todo
 
 # Por partes
 make dev-start             # Solo base
 make microservices         # Solo microservicios
 make nginx-start           # Solo nginx
 
-# Detener
+# Detener por partes
 make dev-stop              # Detener base
 make microservices-stop    # Detener microservicios
 make nginx-stop            # Detener nginx
 
-# Logs
+# Logs individuales
 make dev-logs              # Logs de base
 make microservices-logs    # Logs de microservicios
 make nginx-logs            # Logs de nginx

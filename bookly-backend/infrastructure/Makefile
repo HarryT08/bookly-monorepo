@@ -86,10 +86,22 @@ microservices-restart: microservices-stop microservices ## Reiniciar microservic
 microservices-logs: ## Ver logs de microservicios
 	@docker compose -f docker-compose.microservices.yml logs -f
 
-dev-full: dev-start microservices ## Iniciar servicios base + microservicios
-	@echo "✅ Stack completo iniciado (base + microservicios)"
+dev-full: ## Iniciar servicios base + microservicios (todo en uno)
+	@echo "🚀 Iniciando stack completo (base + microservicios)..."
+	@docker compose -f docker-compose.dev.yml up -d
+	@echo "✅ Stack completo iniciado"
 	@echo "📊 Ver estado: docker ps"
 	@echo "📋 Ver logs: make logs"
+
+dev-full-stop: ## Detener stack completo
+	@echo "⏹️  Deteniendo stack completo..."
+	@docker compose -f docker-compose.dev.yml down
+	@echo "✅ Stack completo detenido"
+
+dev-full-logs: ## Ver logs del stack completo
+	@docker compose -f docker-compose.dev.yml logs -f
+
+dev-full-restart: dev-full-stop dev-full ## Reiniciar stack completo
 
 # =============================================================================
 # GESTIÓN DE NGINX
