@@ -18,7 +18,7 @@ ENV SERVICE_NAME=api-gateway
 COPY package*.json ./
 
 # Instalar dependencias
-RUN npm ci --only=production --ignore-scripts
+RUN npm ci --ignore-scripts
 
 # Copiar schema de Prisma
 COPY prisma/schema.prisma ./prisma/schema.prisma
@@ -29,10 +29,7 @@ COPY . .
 # Generar cliente Prisma
 RUN npx prisma generate
 
-# Build para producción
-FROM base AS build
-RUN npm run build
-RUN npm prune --production
+# No build stage - usando ts-node
 
 # Imagen final
 FROM node:22-alpine AS production
@@ -45,10 +42,12 @@ ENV PORT=3000
 ENV SERVICE_NAME=api-gateway
 
 # Copiar archivos necesarios
-COPY --from=build --chown=bookly:bookly /app/dist ./dist
-COPY --from=build --chown=bookly:bookly /app/node_modules ./node_modules
-COPY --from=build --chown=bookly:bookly /app/package.json ./
-COPY --from=build --chown=bookly:bookly /app/prisma ./prisma
+COPY --from=base --chown=bookly:bookly /app/src ./src
+COPY --from=base --chown=bookly:bookly /app/node_modules ./node_modules
+COPY --from=base --chown=bookly:bookly /app/package.json ./
+COPY --from=base --chown=bookly:bookly /app/prisma ./prisma
+COPY --from=base --chown=bookly:bookly /app/tsconfig.json ./
+COPY --from=base --chown=bookly:bookly /app/nest-cli.json ./
 
 USER bookly
 EXPOSE 3000
@@ -56,4 +55,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
 
-CMD ["dumb-init", "node", "dist/apps/api-gateway/main.js"]
+CMD ["dumb-init", "node", "-r", "ts-node/register", "-r", "tsconfig-paths/register", "src/apps/api-gateway/main.ts"]
