@@ -49,8 +49,25 @@ COPY --from=base --chown=bookly:bookly /app/prisma ./prisma
 COPY --from=base --chown=bookly:bookly /app/tsconfig.json ./
 COPY --from=base --chown=bookly:bookly /app/nest-cli.json ./
 
-# Copiar entrypoint script desde stage base
-COPY --from=base /app/infrastructure/scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# Crear entrypoint script inline
+RUN cat > /usr/local/bin/docker-entrypoint.sh <<'EOF'
+#!/bin/sh
+set -e
+
+# Crear directorios necesarios si no existen
+mkdir -p /app/logs /app/uploads /app/templates /app/documents /app/exports
+
+# Ajustar permisos para el usuario bookly (UID 1001)
+chown -R bookly:bookly /app/logs 2>/dev/null || true
+chown -R bookly:bookly /app/uploads 2>/dev/null || true
+chown -R bookly:bookly /app/templates 2>/dev/null || true
+chown -R bookly:bookly /app/documents 2>/dev/null || true
+chown -R bookly:bookly /app/exports 2>/dev/null || true
+
+# Usar dumb-init para manejar señales correctamente
+exec dumb-init su-exec bookly "$@"
+EOF
+
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3000
 
