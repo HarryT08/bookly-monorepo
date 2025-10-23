@@ -17,6 +17,11 @@ RUN npm ci
 COPY prisma/schema.prisma ./prisma/schema.prisma
 
 COPY . .
+
+# Copiar entrypoint script
+COPY infrastructure/scripts/docker-entrypoint.sh /tmp/docker-entrypoint.sh
+RUN chmod +x /tmp/docker-entrypoint.sh
+
 RUN npx prisma generate
 
 # No build stage - usando ts-node
@@ -37,8 +42,8 @@ COPY --from=base --chown=bookly:bookly /app/prisma ./prisma
 COPY --from=base --chown=bookly:bookly /app/tsconfig.json ./
 COPY --from=base --chown=bookly:bookly /app/nest-cli.json ./
 
-# Copiar entrypoint script
-COPY infrastructure/scripts/docker-entrypoint.sh /usr/local/bin/
+# Copiar entrypoint script desde stage base
+COPY --from=base /tmp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3004
 
