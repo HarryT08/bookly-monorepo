@@ -24,10 +24,12 @@ ENV PORT=3000
 
 # Copiar archivos de configuración de paquetes
 COPY package*.json ./
-COPY prisma ./prisma
 
 # Instalar dependencias
 RUN npm ci --only=production --ignore-scripts
+
+# Copiar schema de Prisma
+COPY prisma/schema.prisma ./prisma/schema.prisma
 
 # Copiar código fuente
 COPY . .

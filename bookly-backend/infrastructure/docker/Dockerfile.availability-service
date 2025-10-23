@@ -11,9 +11,10 @@ ENV PORT=3003
 ENV SERVICE_NAME=availability-service
 
 COPY package*.json ./
-COPY prisma ./prisma
 
 RUN npm ci --only=production --ignore-scripts
+
+COPY prisma/schema.prisma ./prisma/schema.prisma
 
 COPY . .
 RUN npx prisma generate

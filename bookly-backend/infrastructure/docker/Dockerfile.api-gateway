@@ -16,10 +16,12 @@ ENV SERVICE_NAME=api-gateway
 
 # Copiar archivos de dependencias primero (mejor cache de Docker)
 COPY package*.json ./
-COPY prisma ./prisma
 
 # Instalar dependencias
 RUN npm ci --only=production --ignore-scripts
+
+# Copiar schema de Prisma
+COPY prisma/schema.prisma ./prisma/schema.prisma
 
 # Copiar código fuente
 COPY . .
