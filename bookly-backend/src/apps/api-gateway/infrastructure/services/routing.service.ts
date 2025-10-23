@@ -77,8 +77,9 @@ export class RoutingService {
   }
 
   private initializeV1Routes(): void {
+    const version = "v1";
     // V1 Aggregated health route (handled by gateway)
-    this.addVersionedRoute("GET", "/v1/health", "gateway", "v1", {
+    this.addVersionedRoute("GET", `/${version}/health`, "gateway", version, {
       auth: false,
     });
 
@@ -87,35 +88,35 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("auth", AUTH_URLS.HEALTH),
       "auth",
-      "v1",
+      version,
       { auth: false }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("resources", RESOURCES_URLS.HEALTH),
       "resources",
-      "v1",
+      version,
       { auth: false }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.HEALTH),
       "availability",
-      "v1",
+      version,
       { auth: false }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("stockpile", STOCKPILE_URLS.HEALTH),
       "stockpile",
-      "v1",
+      version,
       { auth: false }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("reports", REPORTS_URLS.HEALTH),
       "reports",
-      "v1",
+      version,
       { auth: false }
     );
 
@@ -124,14 +125,14 @@ export class RoutingService {
       "POST",
       this.buildRouteVersion("auth", AUTH_URLS.AUTH_LOGIN),
       "auth",
-      "v1",
+      version,
       { auth: false, rateLimit: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("auth", AUTH_URLS.AUTH_REGISTER),
       "auth",
-      "v1",
+      version,
       { auth: false, rateLimit: true }
     );
     this.addVersionedRoute("POST", "/v1/auth/refresh", "auth", "v1", {
@@ -142,52 +143,52 @@ export class RoutingService {
       "POST",
       this.buildRouteVersion("auth", AUTH_URLS.AUTH_LOGOUT),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("auth", AUTH_URLS.AUTH_USER_PROFILE),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("auth", AUTH_URLS.AUTH_USER_PROFILE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("auth", AUTH_URLS.PASSWORD_RESET_REQUEST),
       "auth",
-      "v1",
+      version,
       { auth: false, rateLimit: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("auth", AUTH_URLS.PASSWORD_RESET_CONFIRM),
       "auth",
-      "v1",
+      version,
       { auth: false, rateLimit: true }
     ); // Not in AUTH_URLS
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("auth", AUTH_URLS.EMAIL_VERIFY),
       "auth",
-      "v1",
+      version,
       { auth: false }
     );
-    this.addVersionedRoute("GET", "/v1/auth/categories", "auth", "v1", {
+    this.addVersionedRoute("GET", "/v1/auth/categories", "auth", version, {
       auth: false,
     }); // Not in AUTH_URLS
     this.addVersionedRoute(
       "GET",
       "/v1/auth/categories/defaults",
       "auth",
-      "v1",
+      version,
       { auth: false }
     ); // Not in AUTH_URLS
 
@@ -196,28 +197,28 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("auth", AUTH_URLS.OAUTH_GOOGLE),
       "auth",
-      "v1",
+      version,
       { auth: false }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("auth", AUTH_URLS.OAUTH_GOOGLE_CALLBACK),
       "auth",
-      "v1",
+      version,
       { auth: false }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("auth", AUTH_URLS.OAUTH_MICROSOFT),
       "auth",
-      "v1",
+      version,
       { auth: false }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("auth", AUTH_URLS.OAUTH_MICROSOFT_CALLBACK),
       "auth",
-      "v1",
+      version,
       { auth: false }
     );
 
@@ -226,42 +227,42 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("users", "/"),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("users", AUTH_URLS.USER_FIND_BY_ID),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("users", AUTH_URLS.USER_UPDATE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "DELETE",
       this.buildRouteVersion("users", AUTH_URLS.USER_DELETE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("users", AUTH_URLS.USER_ASSIGN_ROLE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("users", AUTH_URLS.USER_REMOVE_ROLE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
 
@@ -270,49 +271,49 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("roles", ""),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("roles", AUTH_URLS.ROLE_CREATE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("roles", AUTH_URLS.ROLE_FIND),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("roles", AUTH_URLS.ROLE_FIND_BY_ID),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("roles", AUTH_URLS.ROLE_UPDATE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "DELETE",
       this.buildRouteVersion("roles", AUTH_URLS.ROLE_DELETE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("roles", AUTH_URLS.ROLE_FIND_BY_ACTIVE),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
 
@@ -321,21 +322,21 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("role/categories", ""),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("role/categories", ""),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("role/categories", AUTH_URLS.CATEGORY_FIND_BY_ID),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -345,28 +346,28 @@ export class RoutingService {
         AUTH_URLS.CATEGORY_FIND_BY_ACTIVE
       ),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("role/categories", AUTH_URLS.CATEGORY_UPDATE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "DELETE",
       this.buildRouteVersion("role/categories", AUTH_URLS.CATEGORY_DELETE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("role/categories", AUTH_URLS.CATEGORY_DEFAULTS),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
 
@@ -375,21 +376,21 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("permissions", ""),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("permissions", ""),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("permissions", AUTH_URLS.PERMISSION_FIND_BY_ID),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -399,7 +400,7 @@ export class RoutingService {
         AUTH_URLS.PERMISSION_FIND_BY_ACTIVE
       ),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -409,42 +410,42 @@ export class RoutingService {
         AUTH_URLS.PERMISSION_FIND_BY_RESOURCE
       ),
       "auth",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("permissions", AUTH_URLS.PERMISSION_UPDATE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "DELETE",
       this.buildRouteVersion("permissions", AUTH_URLS.PERMISSION_DELETE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("permissions", AUTH_URLS.PERMISSION_ACTIVATE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("permissions", AUTH_URLS.PERMISSION_DEACTIVATE),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("permissions", AUTH_URLS.PERMISSION_SEED_DEFAULTS),
       "auth",
-      "v1",
+      version,
       { auth: true }
     );
 
@@ -453,56 +454,56 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("resources", ""),
       "resources",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("resources", ""),
       "resources",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("resources", RESOURCES_URLS.RESOURCE_UPDATE),
       "resources",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("resources", RESOURCES_URLS.RESOURCE_UPDATE),
       "resources",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "DELETE",
       this.buildRouteVersion("resources", RESOURCES_URLS.RESOURCE_DELETE),
       "resources",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("resources", RESOURCES_URLS.SEARCH),
       "resources",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("resources", RESOURCES_URLS.BULK_CREATE),
       "resources",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("resources", RESOURCES_URLS.RESOURCE_CATEGORIES),
       "resources",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -512,7 +513,7 @@ export class RoutingService {
         RESOURCES_URLS.RESOURCE_CATEGORY_CREATE
       ),
       "resources",
-      "v1",
+      version,
       { auth: true }
     );
 
@@ -524,7 +525,7 @@ export class RoutingService {
         AVAILABILITY_URLS.AVAILABILITY_GET
       ),
       "availability",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -534,42 +535,42 @@ export class RoutingService {
         AVAILABILITY_URLS.AVAILABILITY_CHECK
       ),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.CALENDAR_VIEW),
       "availability",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.SCHEDULES),
       "availability",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.SCHEDULE_CREATE),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "PUT",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.SCHEDULE_UPDATE),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "DELETE",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.SCHEDULE_DELETE),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
 
@@ -578,7 +579,7 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.RESERVATIONS),
       "availability",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -588,7 +589,7 @@ export class RoutingService {
         AVAILABILITY_URLS.RESERVATION_CREATE
       ),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -598,7 +599,7 @@ export class RoutingService {
         AVAILABILITY_URLS.RESERVATIONS + "/:id"
       ),
       "availability",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -608,7 +609,7 @@ export class RoutingService {
         AVAILABILITY_URLS.RESERVATION_UPDATE
       ),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -618,7 +619,7 @@ export class RoutingService {
         AVAILABILITY_URLS.RESERVATIONS + "/:id"
       ),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -628,14 +629,14 @@ export class RoutingService {
         AVAILABILITY_URLS.RESERVATION_CANCEL
       ),
       "availability",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("availability", AVAILABILITY_URLS.HISTORY),
       "availability",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
 
@@ -644,14 +645,14 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("stockpile", STOCKPILE_URLS.APPROVAL_REQUESTS),
       "stockpile",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("stockpile", STOCKPILE_URLS.APPROVAL_REQUESTS),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -661,7 +662,7 @@ export class RoutingService {
         STOCKPILE_URLS.APPROVAL_REQUESTS + "/:id"
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -671,7 +672,7 @@ export class RoutingService {
         STOCKPILE_URLS.APPROVAL_REQUESTS + "/:id"
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -681,7 +682,7 @@ export class RoutingService {
         STOCKPILE_URLS.APPROVAL_REQUEST_APPROVE
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -691,21 +692,21 @@ export class RoutingService {
         STOCKPILE_URLS.APPROVAL_REQUEST_REJECT
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("stockpile", STOCKPILE_URLS.APPROVAL_FLOWS),
       "stockpile",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
       "POST",
       this.buildRouteVersion("stockpile", STOCKPILE_URLS.APPROVAL_FLOW_CREATE),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
 
@@ -714,7 +715,7 @@ export class RoutingService {
       "GET",
       this.buildRouteVersion("stockpile", STOCKPILE_URLS.DOCUMENT_TEMPLATES),
       "stockpile",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -724,7 +725,7 @@ export class RoutingService {
         STOCKPILE_URLS.DOCUMENT_TEMPLATE_CREATE
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -734,7 +735,7 @@ export class RoutingService {
         STOCKPILE_URLS.DOCUMENT_TEMPLATES + "/:id"
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true, cache: true }
     );
     this.addVersionedRoute(
@@ -744,7 +745,7 @@ export class RoutingService {
         STOCKPILE_URLS.DOCUMENT_TEMPLATE_UPDATE
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
@@ -754,7 +755,7 @@ export class RoutingService {
         STOCKPILE_URLS.DOCUMENT_TEMPLATE_DELETE
       ),
       "stockpile",
-      "v1",
+      version,
       { auth: true }
     );
     this.addVersionedRoute(
