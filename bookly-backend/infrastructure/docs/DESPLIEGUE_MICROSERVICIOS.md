@@ -76,6 +76,27 @@ make nginx-restart          # Reiniciar nginx
 make nginx-status           # Ver estado
 ```
 
+### Opción 4: Control Individual por Servicio
+
+Ahora puedes gestionar cada servicio individualmente:
+
+```bash
+# Servicios Base
+make mongodb-primary-start/stop/restart/logs
+make redis-start/stop/restart/logs
+make rabbitmq-start/stop/restart/logs
+
+# Microservicios
+make api-gateway-start/stop/restart/logs
+make auth-start/stop/restart/logs
+make resources-start/stop/restart/logs
+make availability-start/stop/restart/logs
+make stockpile-start/stop/restart/logs
+make reports-start/stop/restart/logs
+```
+
+**Ver guía completa**: `docs/COMANDOS_SERVICIOS.md`
+
 ## Workflow Típico de Desarrollo
 
 ### Desarrollo Solo con Base de Datos
