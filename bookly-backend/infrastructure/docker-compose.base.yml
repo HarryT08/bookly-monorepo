@@ -159,7 +159,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-bookly}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-bookly123}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/bookly}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-bookly}
       RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-bookly-cookie-secret}
     ports:
       - "5672:5672"   # AMQP port

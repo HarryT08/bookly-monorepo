@@ -66,6 +66,24 @@ dev-fix-mongo: ## Fix del keyfile de MongoDB y reiniciar
 	@docker compose -f docker-compose.base.yml restart mongodb-primary mongodb-secondary1 mongodb-secondary2
 	@echo "✅ Fix aplicado. Verifica logs con: make logs s=mongodb-primary"
 
+dev-fix-rabbitmq: ## Fix de RabbitMQ - Recarga definiciones y vhost
+	@echo "🐰 Aplicando fix de RabbitMQ..."
+	@echo "⚠️  IMPORTANTE: Esto eliminará el volumen de RabbitMQ"
+	@echo "🛑 Deteniendo RabbitMQ..."
+	@docker compose -f docker-compose.base.yml stop rabbitmq
+	@echo "🗑️  Eliminando volumen de RabbitMQ..."
+	@docker volume rm bookly_rabbitmq_data 2>/dev/null || echo "Volumen no existe"
+	@echo "🚀 Iniciando RabbitMQ con nuevas definiciones..."
+	@docker compose -f docker-compose.base.yml up -d rabbitmq
+	@echo "⏳ Esperando a que RabbitMQ esté listo (60s)..."
+	@sleep 60
+	@echo "✅ RabbitMQ reiniciado con nuevas configuraciones"
+	@echo "🔍 Verificando vhost:"
+	@docker exec bookly-rabbitmq rabbitmqctl list_vhosts
+	@echo "🔍 Verificando permisos:"
+	@docker exec bookly-rabbitmq rabbitmqctl list_permissions -p bookly
+	@echo "✅ Fix completado. Ahora reinicia los microservicios con: make microservices-restart"
+
 # =============================================================================
 # GESTIÓN DE MICROSERVICIOS
 # =============================================================================

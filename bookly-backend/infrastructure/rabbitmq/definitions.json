@@ -13,13 +13,13 @@
   ],
   "vhosts": [
     {
-      "name": "/bookly"
+      "name": "bookly"
     }
   ],
   "permissions": [
     {
       "user": "bookly",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "configure": ".*",
       "write": ".*",
       "read": ".*"
@@ -28,7 +28,7 @@
   "exchanges": [
     {
       "name": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "type": "topic",
       "durable": true,
       "auto_delete": false,
@@ -37,7 +37,7 @@
     },
     {
       "name": "bookly.commands",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "type": "direct",
       "durable": true,
       "auto_delete": false,
@@ -46,7 +46,7 @@
     },
     {
       "name": "bookly.notifications",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "type": "fanout",
       "durable": true,
       "auto_delete": false,
@@ -55,7 +55,7 @@
     },
     {
       "name": "bookly.dlx",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "type": "direct",
       "durable": true,
       "auto_delete": false,
@@ -66,7 +66,7 @@
   "queues": [
     {
       "name": "resource.created",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -76,7 +76,7 @@
     },
     {
       "name": "resource.updated",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -86,7 +86,7 @@
     },
     {
       "name": "resource.deleted",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -96,7 +96,7 @@
     },
     {
       "name": "reservation.created",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -106,7 +106,7 @@
     },
     {
       "name": "reservation.updated",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -116,7 +116,7 @@
     },
     {
       "name": "reservation.cancelled",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -126,7 +126,7 @@
     },
     {
       "name": "approval.requested",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -136,7 +136,7 @@
     },
     {
       "name": "approval.approved",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -146,7 +146,7 @@
     },
     {
       "name": "approval.rejected",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -156,7 +156,7 @@
     },
     {
       "name": "notification.email",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -166,7 +166,7 @@
     },
     {
       "name": "notification.whatsapp",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -176,7 +176,7 @@
     },
     {
       "name": "notification.push",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -186,7 +186,7 @@
     },
     {
       "name": "user.authenticated",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -196,7 +196,7 @@
     },
     {
       "name": "user.profile.updated",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -206,7 +206,7 @@
     },
     {
       "name": "maintenance.scheduled",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -216,7 +216,7 @@
     },
     {
       "name": "maintenance.completed",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -226,7 +226,7 @@
     },
     {
       "name": "report.generated",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -236,7 +236,7 @@
     },
     {
       "name": "audit.log",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {
@@ -246,7 +246,7 @@
     },
     {
       "name": "dead.letter.queue",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "durable": true,
       "auto_delete": false,
       "arguments": {}
@@ -255,7 +255,7 @@
   "bindings": [
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "resource.created",
       "destination_type": "queue",
       "routing_key": "resource.created",
@@ -263,7 +263,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "resource.updated",
       "destination_type": "queue",
       "routing_key": "resource.updated",
@@ -271,7 +271,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "resource.deleted",
       "destination_type": "queue",
       "routing_key": "resource.deleted",
@@ -279,7 +279,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "reservation.created",
       "destination_type": "queue",
       "routing_key": "reservation.created",
@@ -287,7 +287,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "reservation.updated",
       "destination_type": "queue",
       "routing_key": "reservation.updated",
@@ -295,7 +295,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "reservation.cancelled",
       "destination_type": "queue",
       "routing_key": "reservation.cancelled",
@@ -303,7 +303,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "approval.requested",
       "destination_type": "queue",
       "routing_key": "approval.requested",
@@ -311,7 +311,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "approval.approved",
       "destination_type": "queue",
       "routing_key": "approval.approved",
@@ -319,7 +319,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "approval.rejected",
       "destination_type": "queue",
       "routing_key": "approval.rejected",
@@ -327,7 +327,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "user.authenticated",
       "destination_type": "queue",
       "routing_key": "user.authenticated",
@@ -335,7 +335,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "user.profile.updated",
       "destination_type": "queue",
       "routing_key": "user.profile.updated",
@@ -343,7 +343,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "maintenance.scheduled",
       "destination_type": "queue",
       "routing_key": "maintenance.scheduled",
@@ -351,7 +351,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "maintenance.completed",
       "destination_type": "queue",
       "routing_key": "maintenance.completed",
@@ -359,7 +359,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "report.generated",
       "destination_type": "queue",
       "routing_key": "report.generated",
@@ -367,7 +367,7 @@
     },
     {
       "source": "bookly.events",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "audit.log",
       "destination_type": "queue",
       "routing_key": "audit.*",
@@ -375,7 +375,7 @@
     },
     {
       "source": "bookly.notifications",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "notification.email",
       "destination_type": "queue",
       "routing_key": "",
@@ -383,7 +383,7 @@
     },
     {
       "source": "bookly.notifications",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "notification.whatsapp",
       "destination_type": "queue",
       "routing_key": "",
@@ -391,7 +391,7 @@
     },
     {
       "source": "bookly.notifications",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "notification.push",
       "destination_type": "queue",
       "routing_key": "",
@@ -399,7 +399,7 @@
     },
     {
       "source": "bookly.dlx",
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "destination": "dead.letter.queue",
       "destination_type": "queue",
       "routing_key": "",
@@ -408,7 +408,7 @@
   ],
   "policies": [
     {
-      "vhost": "/bookly",
+      "vhost": "bookly",
       "name": "queue-ttl-policy",
       "pattern": ".*",
       "apply-to": "queues",
