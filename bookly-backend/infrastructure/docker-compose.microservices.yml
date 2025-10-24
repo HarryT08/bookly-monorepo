@@ -17,6 +17,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       SERVICE_NAME: api-gateway
+      SERVICE_HOST: 0.0.0.0
       # Database
       DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       # Redis
@@ -87,6 +88,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       SERVICE_NAME: auth-service
+      SERVICE_HOST: 0.0.0.0
       DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
@@ -146,6 +148,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3002
       SERVICE_NAME: resources-service
+      SERVICE_HOST: 0.0.0.0
       DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
@@ -203,6 +206,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3003
       SERVICE_NAME: availability-service
+      SERVICE_HOST: 0.0.0.0
       DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
@@ -263,6 +267,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3004
       SERVICE_NAME: stockpile-service
+      SERVICE_HOST: 0.0.0.0
       DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
@@ -330,6 +335,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3005
       SERVICE_NAME: reports-service
+      SERVICE_HOST: 0.0.0.0
       DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}

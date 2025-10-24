@@ -18,7 +18,8 @@ async function bootstrap() {
     // Get configuration service
     const configService = app.get(ConfigService);
     const port = configService.get<number>("reports.service.port", 3005);
-    const host = configService.get<string>("reports.service.host", "localhost");
+    // En Docker usar 0.0.0.0, en desarrollo local puede usar localhost
+    const host = configService.get<string>("SERVICE_HOST", process.env.SERVICE_HOST || "0.0.0.0");
     const environment = configService.get<string>("NODE_ENV", "development");
 
     // Global prefix
