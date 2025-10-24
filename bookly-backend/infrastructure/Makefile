@@ -525,8 +525,8 @@ dev-fix-redis-stability: ## Aplicar fix de estabilidad Redis (desconexiones frec
 	@chmod +x scripts/apply-redis-stability-fix.sh
 	@./scripts/apply-redis-stability-fix.sh
 
-dev-fix-rabbitmq: ## Aplicar fix de inicialización RabbitMQ (boot steps lentos)
-	@echo "🐰 Aplicando fix de RabbitMQ..."
+dev-fix-rabbitmq-boot: ## Aplicar fix de inicialización RabbitMQ (boot steps lentos)
+	@echo "🐰 Aplicando fix de RabbitMQ (boot steps)..."
 	@echo "📋 Paso 1: Rebuilding microservicios..."
 	@docker compose -f docker-compose.microservices.yml build
 	@echo "📋 Paso 2: Recreando RabbitMQ..."
@@ -547,5 +547,5 @@ dev-diagnose: ## Diagnóstico completo de microservicios
 	@chmod +x scripts/check-microservices-logs.sh
 	@./scripts/check-microservices-logs.sh
 
-dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fix-rabbitmq ## Aplicar todos los fixes
+dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fix-rabbitmq-boot ## Aplicar todos los fixes
 	@echo "✅ Todos los fixes aplicados"

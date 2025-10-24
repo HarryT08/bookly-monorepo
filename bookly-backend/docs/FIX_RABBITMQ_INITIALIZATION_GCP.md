@@ -287,6 +287,17 @@ rabbitmq:
 
 ## 🚀 Aplicar en GCP AHORA
 
+### **Opción 1: Comando Make (Recomendado)**
+
+```bash
+cd /path/to/bookly-monorepo/bookly-backend
+
+# Pull + rebuild + recrear RabbitMQ + reinicio automático
+git pull origin main
+cd infrastructure
+make dev-fix-rabbitmq-boot
+```
+
 ### Paso 1: Pull de Cambios
 
 ```bash
