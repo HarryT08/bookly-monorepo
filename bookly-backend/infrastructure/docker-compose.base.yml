@@ -183,10 +183,10 @@ services:
         "CMD-SHELL",
         "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms"
       ]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+      interval: 15s
+      timeout: 15s
+      retries: 15
+      start_period: 120s  # RabbitMQ needs more time for all boot steps
 
   # Nginx como reverse proxy y API Gateway
   nginx:

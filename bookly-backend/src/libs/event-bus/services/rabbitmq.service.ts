@@ -14,19 +14,62 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     private readonly loggingService?: LoggingService,
   ) {}
 
+  /**
+   * Check if RabbitMQ connection is healthy and ready
+   * @returns true if connection and channel are established
+   */
+  isHealthy(): boolean {
+    try {
+      return (
+        this.connection !== null &&
+        this.connection !== undefined &&
+        this.channel !== null &&
+        this.channel !== undefined
+      );
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Get current connection state
+   * @returns 'connected', 'connecting', or 'disconnected'
+   */
+  getConnectionState(): string {
+    if (this.connection && this.channel) return 'connected';
+    if (this.connection && !this.channel) return 'connecting';
+    return 'disconnected';
+  }
+
+  /**
+   * Get the channel for direct operations
+   * @returns Channel or null if not connected
+   */
+  getChannel(): Channel | null {
+    return this.channel || null;
+  }
+
   async onModuleInit() {
     try {
-      this.connection = await connect(this.configService.get('RABBITMQ_URL'));
+      const rabbitmqUrl = this.configService.get('RABBITMQ_URL');
+      this.loggingService?.log(`Connecting to RabbitMQ at ${rabbitmqUrl}...`, 'RabbitMQService');
+      
+      this.connection = await connect(rabbitmqUrl);
+      this.loggingService?.log('✅ RabbitMQ connection established', 'RabbitMQService');
+      
       this.channel = await this.connection.createChannel();
+      this.loggingService?.log('✅ RabbitMQ channel created', 'RabbitMQService');
 
       // Declare exchanges for different event types
       await this.channel.assertExchange('bookly.events', 'topic', { durable: true });
       await this.channel.assertExchange('bookly.commands', 'direct', { durable: true });
 
+      this.loggingService?.log('✅ RabbitMQ exchanges declared successfully', 'RabbitMQService');
       this.loggingService?.log('✅ RabbitMQ connected successfully', 'RabbitMQService');
     } catch (error) {
       this.loggingService?.error('❌ Failed to connect to RabbitMQ', error, 'RabbitMQService');
-      throw error;
+      // Don't throw - allow service to start even if RabbitMQ is temporarily unavailable
+      // Health checks will report the issue
     }
   }
 
