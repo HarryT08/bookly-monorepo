@@ -77,13 +77,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       socket: {
         host: this.configService.get('REDIS_HOST'),
         port: this.configService.get('REDIS_PORT'),
+        // Keep connection alive to prevent disconnections
+        keepAlive: 30000, // 30 seconds
+        // Increase timeouts for GCP environment
+        connectTimeout: 10000, // 10 seconds
+        // More aggressive reconnection strategy
         reconnectStrategy: (retries) => {
-          if (retries > 10) {
-            this.loggingService.error('Redis reconnection failed after 10 attempts', new Error('Max retries reached'), 'RedisService');
+          if (retries > 20) {
+            this.loggingService.error('Redis reconnection failed after 20 attempts', new Error('Max retries reached'), 'RedisService');
             return new Error('Max reconnection attempts reached');
           }
-          const delay = Math.min(retries * 100, 3000);
-          this.loggingService.log(`Attempting to reconnect to Redis (attempt ${retries}, delay: ${delay}ms)`, 'RedisService');
+          // Exponential backoff with jitter
+          const baseDelay = Math.min(retries * 200, 5000);
+          const jitter = Math.random() * 1000;
+          const delay = baseDelay + jitter;
+          this.loggingService.log(`Attempting to reconnect to Redis (attempt ${retries}, delay: ${Math.round(delay)}ms)`, 'RedisService');
           return delay;
         },
       },

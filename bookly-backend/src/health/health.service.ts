@@ -30,57 +30,85 @@ export class HealthService extends HealthIndicator {
       // Check if client is healthy (ready or open)
       if (!this.redis.isHealthy()) {
         const state = this.redis.getConnectionState();
-        return this.getStatus(key, false, { 
-          message: 'Redis client not ready',
-          details: `Client state: ${state}`,
-          state
-        });
+        
+        // Be more lenient during reconnection
+        if (state === 'disconnected') {
+          return this.getStatus(key, false, { 
+            message: 'Redis client disconnected',
+            details: 'Client is reconnecting',
+            state
+          });
+        }
       }
 
-      // Perform health check with timeout (3 seconds)
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Health check timeout')), 3000);
-      });
+      // Retry logic for health check (up to 2 retries)
+      let lastError: any;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          // Perform health check with longer timeout (5 seconds)
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Health check timeout')), 5000);
+          });
 
-      const healthCheckPromise = (async () => {
-        // Use unique key to avoid collisions in concurrent health checks
-        const testKey = `health-check:${Date.now()}`;
-        // Use direct Redis client for health check (no JSON serialization)
-        const client = (this.redis as any).client;
-        await client.set(testKey, 'ok', 'EX', 5);
-        const result = await client.get(testKey);
-        await client.del(testKey);
-        return result;
-      })();
+          const healthCheckPromise = (async () => {
+            // Use unique key to avoid collisions in concurrent health checks
+            const testKey = `health-check:${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Use direct Redis client for health check (no JSON serialization)
+            const client = (this.redis as any).client;
+            
+            // Verify client is ready before operation
+            if (!client.isReady && !client.isOpen) {
+              throw new Error('Client not ready for operations');
+            }
+            
+            await client.set(testKey, 'ok', 'EX', 10);
+            const result = await client.get(testKey);
+            // Clean up (don't fail if this fails)
+            try {
+              await client.del(testKey);
+            } catch (cleanupError) {
+              // Ignore cleanup errors
+            }
+            return result;
+          })();
 
-      const result = await Promise.race([healthCheckPromise, timeoutPromise]);
+          const result = await Promise.race([healthCheckPromise, timeoutPromise]);
+          
+          if (result === 'ok') {
+            return this.getStatus(key, true, { 
+              message: 'Redis connection is healthy',
+              state: this.redis.getConnectionState(),
+              attempt: attempt > 1 ? attempt : undefined
+            });
+          } else {
+            lastError = new Error(`Unexpected result: ${result}`);
+            if (attempt < 2) {
+              // Wait 500ms before retry
+              await new Promise(resolve => setTimeout(resolve, 500));
+              continue;
+            }
+          }
+        } catch (error) {
+          lastError = error;
+          if (attempt < 2) {
+            // Wait 500ms before retry
+            await new Promise(resolve => setTimeout(resolve, 500));
+            continue;
+          }
+        }
+      }
       
-      if (result === 'ok') {
-        return this.getStatus(key, true, { 
-          message: 'Redis connection is healthy',
-          state: this.redis.getConnectionState()
-        });
-      } else {
-        return this.getStatus(key, false, { 
-          message: 'Redis health check failed',
-          details: 'Unexpected result from health check operation',
-          result
-        });
-      }
-    } catch (error) {
-      // Differentiate error types for better debugging
-      if (error.message === 'Health check timeout') {
-        return this.getStatus(key, false, { 
-          message: 'Redis health check timeout',
-          details: 'Operation took longer than 3 seconds',
-          errorType: 'TimeoutError',
-          state: this.redis.getConnectionState()
-        });
-      }
-      
-      // Real connection error
+      // All retries failed
       return this.getStatus(key, false, { 
-        message: 'Redis health check failed', 
+        message: 'Redis health check failed after retries',
+        details: 'Unable to complete health check operation',
+        error: lastError?.message,
+        state: this.redis.getConnectionState()
+      });
+    } catch (error) {
+      // Unexpected error outside retry logic
+      return this.getStatus(key, false, { 
+        message: 'Redis health check error', 
         error: error.message,
         errorType: error.constructor?.name || 'Error',
         state: this.redis.getConnectionState()

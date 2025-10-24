@@ -132,7 +132,15 @@ services:
       "--appendonly", "yes",
       "--appendfsync", "everysec",
       "--maxmemory", "512mb",
-      "--maxmemory-policy", "allkeys-lru"
+      "--maxmemory-policy", "allkeys-lru",
+      # TCP keepalive for stable connections
+      "--tcp-keepalive", "60",
+      # Timeout for idle clients (0 = never timeout)
+      "--timeout", "0",
+      # Max number of clients
+      "--maxclients", "10000",
+      # TCP backlog
+      "--tcp-backlog", "511"
     ]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}

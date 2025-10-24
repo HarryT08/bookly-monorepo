@@ -520,10 +520,15 @@ dev-fix-redis-health: ## Aplicar fix de Redis health check (result: null)
 	@chmod +x scripts/apply-redis-health-fix.sh
 	@./scripts/apply-redis-health-fix.sh
 
+dev-fix-redis-stability: ## Aplicar fix de estabilidad Redis (desconexiones frecuentes)
+	@echo "🔧 Aplicando fix de estabilidad Redis..."
+	@chmod +x scripts/apply-redis-stability-fix.sh
+	@./scripts/apply-redis-stability-fix.sh
+
 dev-diagnose: ## Diagnóstico completo de microservicios
 	@echo "🔍 Ejecutando diagnóstico..."
 	@chmod +x scripts/check-microservices-logs.sh
 	@./scripts/check-microservices-logs.sh
 
-dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-health ## Aplicar todos los fixes
+dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability ## Aplicar todos los fixes
 	@echo "✅ Todos los fixes aplicados"
