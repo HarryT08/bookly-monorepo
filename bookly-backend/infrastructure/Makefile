@@ -542,10 +542,15 @@ dev-fix-rabbitmq-boot: ## Aplicar fix de inicialización RabbitMQ (boot steps le
 	@echo "✅ Fix de RabbitMQ aplicado"
 	@echo "🔍 Verificar con: curl -s http://localhost:3001/api/v1/health | jq .info.rabbitmq"
 
+dev-fix-service-ports: ## Aplicar fix de puertos incorrectos (resources:3002, availability:3003)
+	@echo "🔧 Aplicando fix de puertos de microservicios..."
+	@chmod +x scripts/fix-service-ports.sh
+	@./scripts/fix-service-ports.sh
+
 dev-diagnose: ## Diagnóstico completo de microservicios
 	@echo "🔍 Ejecutando diagnóstico..."
 	@chmod +x scripts/check-microservices-logs.sh
 	@./scripts/check-microservices-logs.sh
 
-dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fix-rabbitmq-boot ## Aplicar todos los fixes
+dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fix-rabbitmq-boot dev-fix-service-ports ## Aplicar todos los fixes
 	@echo "✅ Todos los fixes aplicados"
