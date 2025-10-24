@@ -214,7 +214,7 @@ export class GatewayManagementController {
     for (const service of services) {
       try {
         const serviceUrl = await this.loadBalancerService.getServiceUrl(service);
-        const healthUrl = `${serviceUrl}/api/v1/health`;
+        const healthUrl = `${serviceUrl}/health`;
         
         // Simple health check using fetch with timeout
         const controller = new AbortController();

@@ -22,8 +22,10 @@ async function bootstrap() {
     const host = configService.get<string>('stockpile.service.host', 'localhost');
     const environment = configService.get<string>('NODE_ENV', 'development');
 
-    // Global prefix
-    app.setGlobalPrefix('api/v1');
+    // Global prefix (exclude health endpoints for load balancer checks)
+    app.setGlobalPrefix('api/v1', {
+      exclude: ['health', 'health/ready', 'health/live'],
+    });
 
     // Security middleware
     if (environment === 'production') {
