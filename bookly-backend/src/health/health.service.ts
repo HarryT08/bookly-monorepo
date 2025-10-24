@@ -45,9 +45,11 @@ export class HealthService extends HealthIndicator {
       const healthCheckPromise = (async () => {
         // Use unique key to avoid collisions in concurrent health checks
         const testKey = `health-check:${Date.now()}`;
-        await this.redis.set(testKey, 'ok', 5);
-        const result = await this.redis.get(testKey);
-        await this.redis.del(testKey);
+        // Use direct Redis client for health check (no JSON serialization)
+        const client = (this.redis as any).client;
+        await client.set(testKey, 'ok', 'EX', 5);
+        const result = await client.get(testKey);
+        await client.del(testKey);
         return result;
       })();
 
