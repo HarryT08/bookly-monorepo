@@ -47,11 +47,18 @@ services:
     networks:
       - bookly-network
     depends_on:
-      - auth-service
-      - resources-service
-      - availability-service
-      - stockpile-service
-      - reports-service
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      resources-service:
+        condition: service_started
+      availability-service:
+        condition: service_started
+      stockpile-service:
+        condition: service_started
+      reports-service:
+        condition: service_started
     healthcheck:
       test:
         [

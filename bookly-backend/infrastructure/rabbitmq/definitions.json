@@ -6,8 +6,9 @@
   "users": [
     {
       "name": "bookly",
-      "password": "bookly123",
-      "tags": "administrator"
+      "password_hash": "msP0jMdLL/RQnJsU2XeV6Z+yU4/3BCfNC1WiNYAugXwpHRPT",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
     }
   ],
   "vhosts": [

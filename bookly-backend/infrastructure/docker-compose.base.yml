@@ -171,11 +171,14 @@ services:
     networks:
       - bookly-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: [
+        "CMD-SHELL",
+        "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms"
+      ]
       interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
   # Nginx como reverse proxy y API Gateway
   nginx:
