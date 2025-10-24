@@ -505,3 +505,20 @@ urls: ## Mostrar todas las URLs importantes
 # s = servicio (para shell y exec)
 # c = comando (para exec)
 # force = forzar operación (para clean y reset)
+
+# =============================================================================
+# FIXES Y DIAGNÓSTICO
+# =============================================================================
+
+dev-fix-host-binding: ## Aplicar fix de host binding (localhost → 0.0.0.0)
+	@echo "🔧 Aplicando fix de host binding..."
+	@chmod +x scripts/apply-host-binding-fix.sh
+	@./scripts/apply-host-binding-fix.sh
+
+dev-diagnose: ## Diagnóstico completo de microservicios
+	@echo "🔍 Ejecutando diagnóstico..."
+	@chmod +x scripts/check-microservices-logs.sh
+	@./scripts/check-microservices-logs.sh
+
+dev-fix-all: dev-fix-mongodb dev-fix-host-binding ## Aplicar todos los fixes (MongoDB + Host Binding)
+	@echo "✅ Todos los fixes aplicados"
