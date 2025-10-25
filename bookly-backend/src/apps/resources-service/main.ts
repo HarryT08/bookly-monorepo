@@ -17,7 +17,7 @@ async function bootstrap() {
 
     // Get configuration service
     const configService = app.get(ConfigService);
-    const port = configService.get<number>("PORT", 3002);
+    const port = configService.get<number>("resources.service.port", 3002);
     // En Docker usar 0.0.0.0, en desarrollo local puede usar localhost
     const host = configService.get<string>(
       "SERVICE_HOST",
