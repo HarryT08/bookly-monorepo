@@ -188,7 +188,7 @@ services:
       retries: 15
       start_period: 120s  # RabbitMQ needs more time for all boot steps
 
-  # Nginx como reverse proxy y API Gateway
+  # Nginx como reverse proxy y API Gateway con SSL
   nginx:
     image: nginx:1.25-alpine
     container_name: bookly-nginx
@@ -197,11 +197,13 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "80:80"
-      - "8080:8080"
+      - "80:80"       # HTTP
+      - "443:443"     # HTTPS para bookly.com
+      - "8080:8080"   # Management port
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
       - nginx_logs:/var/log/nginx
     networks:
       - bookly-network

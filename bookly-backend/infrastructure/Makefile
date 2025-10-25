@@ -568,39 +568,23 @@ dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fi
 	@echo "✅ Todos los fixes aplicados"
 
 # =============================================================================
-# PRODUCCIÓN - GCP DEPLOYMENT
+# SSL PARA QA - bookly.com
 # =============================================================================
 
-prod-deploy: ## Deploy completo en GCP con Nginx reverse proxy
-	@echo "🚀 Desplegando en GCP..."
-	@chmod +x scripts/deploy-gcp-production.sh
-	@./scripts/deploy-gcp-production.sh
+dev-ssl-generate: ## Generar certificados SSL autofirmados para QA
+	@echo "🔐 Generando certificados SSL para QA..."
+	@chmod +x scripts/generate-ssl-certificates-qa.sh
+	@./scripts/generate-ssl-certificates-qa.sh
 
-prod-setup-ssl: ## Configurar certificados SSL con Let's Encrypt
-	@echo "🔐 Configurando certificados SSL..."
-	@chmod +x scripts/setup-ssl-certificates.sh
-	@./scripts/setup-ssl-certificates.sh
-
-prod-nginx-start: ## Iniciar solo Nginx reverse proxy
-	@echo "🌐 Iniciando Nginx..."
-	@docker compose -p bookly -f docker-compose.nginx.yml up -d nginx
-
-prod-nginx-stop: ## Detener Nginx reverse proxy
-	@echo "🛑 Deteniendo Nginx..."
-	@docker compose -p bookly -f docker-compose.nginx.yml down
-
-prod-nginx-logs: ## Ver logs de Nginx
-	@docker logs bookly-nginx -f
-
-prod-status: ## Ver estado de todos los servicios en producción
-	@echo "📊 Estado de servicios:"
-	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep bookly || echo "No hay servicios funcionando"
-
-prod-health: ## Verificar health de todos los servicios
-	@echo "🏥 Verificando salud de servicios..."
+dev-ssl-verify: ## Verificar certificados SSL
+	@echo "🔍 Verificando certificados SSL..."
+	@openssl x509 -in nginx/ssl/bookly.com.crt -noout -text | grep -A 2 "Subject:"
+	@openssl x509 -in nginx/ssl/bookly.com.crt -noout -dates
 	@echo ""
-	@echo "API Gateway:"
-	@curl -s http://localhost:3000/health | jq '.' || echo "❌ No accesible"
+	@echo "✅ Certificados verificados"
+
+dev-ssl-test: ## Probar conexión HTTPS
+	@echo "🌐 Probando conexión HTTPS a bookly.com..."
+	@curl -k -I https://bookly.com || echo "❌ No se pudo conectar a bookly.com"
 	@echo ""
-	@echo "Nginx:"
-	@curl -s http://localhost/nginx-health || echo "❌ No accesible"
+	@curl -k -s https://bookly.com/nginx-health || echo "❌ Nginx health check falló"
