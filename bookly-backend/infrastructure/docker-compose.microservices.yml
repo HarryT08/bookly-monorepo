@@ -224,8 +224,8 @@ services:
       # Observability
       SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
-      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-1536}
-      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-1536}
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-3536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-3536}
     ports:
       - "3003:3003"
     volumes:
@@ -401,6 +401,5 @@ volumes:
     driver: local
   reports_exports:
     driver: local
-
 # La red bookly-network es definida en docker-compose.base.yml
 # y automáticamente está disponible para estos servicios
