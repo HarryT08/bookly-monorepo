@@ -7,7 +7,7 @@ info:
     This service handles the complete workflow from reservation requests to final approval/rejection with automated document generation and notifications.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -20,7 +20,7 @@ servers:
     protocol: amqp
     description: Local RabbitMQ development server
   production:
-    host: rabbitmq.bookly.com:5672
+    host: rabbitmq.booklyapp.com:5672
     protocol: amqp
     description: Production RabbitMQ server
 
@@ -29,77 +29,77 @@ channels:
     description: Channel for approval flow events
     messages:
       reservationApproved:
-        $ref: '#/components/messages/ReservationApproved'
+        $ref: "#/components/messages/ReservationApproved"
       reservationRejected:
-        $ref: '#/components/messages/ReservationRejected'
+        $ref: "#/components/messages/ReservationRejected"
       approvalRequestCreated:
-        $ref: '#/components/messages/ApprovalRequestCreated'
+        $ref: "#/components/messages/ApprovalRequestCreated"
       approvalLevelCompleted:
-        $ref: '#/components/messages/ApprovalLevelCompleted'
+        $ref: "#/components/messages/ApprovalLevelCompleted"
       approvalFlowCompleted:
-        $ref: '#/components/messages/ApprovalFlowCompleted'
+        $ref: "#/components/messages/ApprovalFlowCompleted"
 
   document-generation:
     description: Channel for document generation events
     messages:
       documentGenerated:
-        $ref: '#/components/messages/DocumentGenerated'
+        $ref: "#/components/messages/DocumentGenerated"
       documentTemplateCreated:
-        $ref: '#/components/messages/DocumentTemplateCreated'
+        $ref: "#/components/messages/DocumentTemplateCreated"
       documentTemplateUpdated:
-        $ref: '#/components/messages/DocumentTemplateUpdated'
+        $ref: "#/components/messages/DocumentTemplateUpdated"
 
   notifications:
     description: Channel for notification events
     messages:
       notificationSent:
-        $ref: '#/components/messages/NotificationSent'
+        $ref: "#/components/messages/NotificationSent"
       notificationTemplateCreated:
-        $ref: '#/components/messages/NotificationTemplateCreated'
+        $ref: "#/components/messages/NotificationTemplateCreated"
       notificationTemplateUpdated:
-        $ref: '#/components/messages/NotificationTemplateUpdated'
+        $ref: "#/components/messages/NotificationTemplateUpdated"
       notificationConfigUpdated:
-        $ref: '#/components/messages/NotificationConfigUpdated'
+        $ref: "#/components/messages/NotificationConfigUpdated"
 
 operations:
   publishReservationApproved:
     action: send
     channel:
-      $ref: '#/channels/approval-flow'
+      $ref: "#/channels/approval-flow"
     messages:
-      - $ref: '#/channels/approval-flow/messages/reservationApproved'
+      - $ref: "#/channels/approval-flow/messages/reservationApproved"
     description: Published when a reservation is approved through the approval flow
 
   publishReservationRejected:
     action: send
     channel:
-      $ref: '#/channels/approval-flow'
+      $ref: "#/channels/approval-flow"
     messages:
-      - $ref: '#/channels/approval-flow/messages/reservationRejected'
+      - $ref: "#/channels/approval-flow/messages/reservationRejected"
     description: Published when a reservation is rejected through the approval flow
 
   publishApprovalRequestCreated:
     action: send
     channel:
-      $ref: '#/channels/approval-flow'
+      $ref: "#/channels/approval-flow"
     messages:
-      - $ref: '#/channels/approval-flow/messages/approvalRequestCreated'
+      - $ref: "#/channels/approval-flow/messages/approvalRequestCreated"
     description: Published when a new approval request is created
 
   publishDocumentGenerated:
     action: send
     channel:
-      $ref: '#/channels/document-generation'
+      $ref: "#/channels/document-generation"
     messages:
-      - $ref: '#/channels/document-generation/messages/documentGenerated'
+      - $ref: "#/channels/document-generation/messages/documentGenerated"
     description: Published when a document is generated from a template
 
   publishNotificationSent:
     action: send
     channel:
-      $ref: '#/channels/notifications'
+      $ref: "#/channels/notifications"
     messages:
-      - $ref: '#/channels/notifications/messages/notificationSent'
+      - $ref: "#/channels/notifications/messages/notificationSent"
     description: Published when a notification is sent to a user
 
 components:
@@ -110,7 +110,7 @@ components:
       summary: Event published when a reservation is approved
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationApprovedPayload'
+        $ref: "#/components/schemas/ReservationApprovedPayload"
 
     ReservationRejected:
       name: ReservationRejected
@@ -118,7 +118,7 @@ components:
       summary: Event published when a reservation is rejected
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationRejectedPayload'
+        $ref: "#/components/schemas/ReservationRejectedPayload"
 
     ApprovalRequestCreated:
       name: ApprovalRequestCreated
@@ -126,7 +126,7 @@ components:
       summary: Event published when a new approval request is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ApprovalRequestCreatedPayload'
+        $ref: "#/components/schemas/ApprovalRequestCreatedPayload"
 
     ApprovalLevelCompleted:
       name: ApprovalLevelCompleted
@@ -134,7 +134,7 @@ components:
       summary: Event published when an approval level is completed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ApprovalLevelCompletedPayload'
+        $ref: "#/components/schemas/ApprovalLevelCompletedPayload"
 
     ApprovalFlowCompleted:
       name: ApprovalFlowCompleted
@@ -142,7 +142,7 @@ components:
       summary: Event published when an entire approval flow is completed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ApprovalFlowCompletedPayload'
+        $ref: "#/components/schemas/ApprovalFlowCompletedPayload"
 
     DocumentGenerated:
       name: DocumentGenerated
@@ -150,7 +150,7 @@ components:
       summary: Event published when a document is generated from a template
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/DocumentGeneratedPayload'
+        $ref: "#/components/schemas/DocumentGeneratedPayload"
 
     DocumentTemplateCreated:
       name: DocumentTemplateCreated
@@ -158,7 +158,7 @@ components:
       summary: Event published when a new document template is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/DocumentTemplateCreatedPayload'
+        $ref: "#/components/schemas/DocumentTemplateCreatedPayload"
 
     DocumentTemplateUpdated:
       name: DocumentTemplateUpdated
@@ -166,7 +166,7 @@ components:
       summary: Event published when a document template is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/DocumentTemplateUpdatedPayload'
+        $ref: "#/components/schemas/DocumentTemplateUpdatedPayload"
 
     NotificationSent:
       name: NotificationSent
@@ -174,7 +174,7 @@ components:
       summary: Event published when a notification is sent to a user
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/NotificationSentPayload'
+        $ref: "#/components/schemas/NotificationSentPayload"
 
     NotificationTemplateCreated:
       name: NotificationTemplateCreated
@@ -182,7 +182,7 @@ components:
       summary: Event published when a new notification template is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/NotificationTemplateCreatedPayload'
+        $ref: "#/components/schemas/NotificationTemplateCreatedPayload"
 
     NotificationTemplateUpdated:
       name: NotificationTemplateUpdated
@@ -190,7 +190,7 @@ components:
       summary: Event published when a notification template is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/NotificationTemplateUpdatedPayload'
+        $ref: "#/components/schemas/NotificationTemplateUpdatedPayload"
 
     NotificationConfigUpdated:
       name: NotificationConfigUpdated
@@ -198,7 +198,7 @@ components:
       summary: Event published when notification configuration is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/NotificationConfigUpdatedPayload'
+        $ref: "#/components/schemas/NotificationConfigUpdatedPayload"
 
   schemas:
     DomainEvent:
@@ -238,7 +238,7 @@ components:
 
     ReservationApprovedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -271,7 +271,7 @@ components:
 
     ReservationRejectedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -305,7 +305,7 @@ components:
 
     ApprovalRequestCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -338,7 +338,7 @@ components:
 
     ApprovalLevelCompletedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -370,7 +370,7 @@ components:
 
     ApprovalFlowCompletedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -398,7 +398,7 @@ components:
 
     DocumentGeneratedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -430,7 +430,7 @@ components:
 
     DocumentTemplateCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -452,7 +452,7 @@ components:
 
     DocumentTemplateUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -470,7 +470,7 @@ components:
 
     NotificationSentPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -502,7 +502,7 @@ components:
 
     NotificationTemplateCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -528,7 +528,7 @@ components:
 
     NotificationTemplateUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -546,7 +546,7 @@ components:
 
     NotificationConfigUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:

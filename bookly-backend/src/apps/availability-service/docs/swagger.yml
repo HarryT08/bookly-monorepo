@@ -7,7 +7,7 @@ info:
     This service handles reservation scheduling, availability management, calendar integration, and conflict resolution.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -15,7 +15,7 @@ info:
 servers:
   - url: http://localhost:3000/availability
     description: Development server
-  - url: https://api.bookly.com/availability
+  - url: https://api.booklyapp.com/availability
     description: Production server
 
 security:
@@ -46,7 +46,7 @@ paths:
           in: query
           description: Filter by status
           schema:
-            $ref: '#/components/schemas/ReservationStatus'
+            $ref: "#/components/schemas/ReservationStatus"
         - name: startDate
           in: query
           description: Filter reservations starting from this date
@@ -73,7 +73,7 @@ paths:
             default: 10
             maximum: 100
       responses:
-        '200':
+        "200":
           description: Reservations retrieved successfully
           content:
             application/json:
@@ -83,17 +83,17 @@ paths:
                   reservations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReservationDto'
+                      $ref: "#/components/schemas/ReservationDto"
                   total:
                     type: integer
                   page:
                     type: integer
                   limit:
                     type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
     post:
       tags:
@@ -107,18 +107,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReservationDto'
+              $ref: "#/components/schemas/CreateReservationDto"
       responses:
-        '201':
+        "201":
           description: Reservation created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/ReservationDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /reservations/{id}:
     get:
@@ -136,14 +136,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Reservation retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags:
@@ -164,18 +164,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateReservationDto'
+              $ref: "#/components/schemas/UpdateReservationDto"
       responses:
-        '200':
+        "200":
           description: Reservation updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     delete:
       tags:
@@ -201,14 +201,14 @@ paths:
                   type: string
                   description: Reason for cancellation
       responses:
-        '200':
+        "200":
           description: Reservation cancelled successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /reservations/{id}/confirm:
     post:
@@ -226,12 +226,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Reservation confirmed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
+                $ref: "#/components/schemas/ReservationDto"
 
   /reservations/{id}/check-in:
     post:
@@ -258,12 +258,12 @@ paths:
                   type: object
                   description: Location data if available
       responses:
-        '200':
+        "200":
           description: Check-in successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
+                $ref: "#/components/schemas/ReservationDto"
 
   /reservations/{id}/check-out:
     post:
@@ -281,12 +281,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Check-out successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
+                $ref: "#/components/schemas/ReservationDto"
 
   # Availability Management
   /availability:
@@ -328,7 +328,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Availability information retrieved successfully
           content:
             application/json:
@@ -338,11 +338,11 @@ paths:
                   available:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AvailabilitySlotDto'
+                      $ref: "#/components/schemas/AvailabilitySlotDto"
                   unavailable:
                     type: array
                     items:
-                      $ref: '#/components/schemas/UnavailabilityDto'
+                      $ref: "#/components/schemas/UnavailabilityDto"
 
   /availability/search:
     post:
@@ -357,9 +357,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AvailabilitySearchDto'
+              $ref: "#/components/schemas/AvailabilitySearchDto"
       responses:
-        '200':
+        "200":
           description: Search results retrieved successfully
           content:
             application/json:
@@ -369,11 +369,11 @@ paths:
                   results:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AvailabilityResultDto'
+                      $ref: "#/components/schemas/AvailabilityResultDto"
                   alternatives:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AlternativeSlotDto'
+                      $ref: "#/components/schemas/AlternativeSlotDto"
 
   /availability/calendar:
     get:
@@ -411,12 +411,12 @@ paths:
             enum: [day, week, month]
             default: week
       responses:
-        '200':
+        "200":
           description: Calendar data retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalendarViewDto'
+                $ref: "#/components/schemas/CalendarViewDto"
 
   # Recurring Reservations
   /reservations/recurring:
@@ -432,9 +432,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRecurringReservationDto'
+              $ref: "#/components/schemas/CreateRecurringReservationDto"
       responses:
-        '201':
+        "201":
           description: Recurring reservations created successfully
           content:
             application/json:
@@ -447,11 +447,11 @@ paths:
                   reservations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReservationDto'
+                      $ref: "#/components/schemas/ReservationDto"
                   conflicts:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ConflictDto'
+                      $ref: "#/components/schemas/ConflictDto"
 
   /reservations/recurring/{seriesId}:
     get:
@@ -469,7 +469,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Recurring series retrieved successfully
           content:
             application/json:
@@ -481,7 +481,7 @@ paths:
                   reservations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReservationDto'
+                      $ref: "#/components/schemas/ReservationDto"
 
     put:
       tags:
@@ -502,9 +502,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateRecurringReservationDto'
+              $ref: "#/components/schemas/UpdateRecurringReservationDto"
       responses:
-        '200':
+        "200":
           description: Recurring series updated successfully
 
     delete:
@@ -522,7 +522,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Recurring series cancelled successfully
 
   # Basic Availability Management (RF-07)
@@ -539,14 +539,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAvailabilityDto'
+              $ref: "#/components/schemas/CreateAvailabilityDto"
       responses:
-        '201':
+        "201":
           description: Availability created successfully
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     get:
       tags:
@@ -569,14 +569,14 @@ paths:
             minimum: 0
             maximum: 6
       responses:
-        '200':
+        "200":
           description: Availability retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/AvailabilityDto'
+                  $ref: "#/components/schemas/AvailabilityDto"
 
   # Schedule Management (RF-07)
   /availability/schedule:
@@ -592,14 +592,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateScheduleDto'
+              $ref: "#/components/schemas/CreateScheduleDto"
       responses:
-        '201':
+        "201":
           description: Schedule created successfully
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   # Calendar Integration (RF-08)
   /availability/calendar-integrations:
@@ -615,14 +615,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCalendarIntegrationDto'
+              $ref: "#/components/schemas/CreateCalendarIntegrationDto"
       responses:
-        '201':
+        "201":
           description: Calendar integration created successfully
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     get:
       tags:
@@ -649,14 +649,14 @@ paths:
           schema:
             type: boolean
       responses:
-        '200':
+        "200":
           description: Calendar integrations retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CalendarIntegrationDto'
+                  $ref: "#/components/schemas/CalendarIntegrationDto"
 
   /availability/calendar-integrations/{integrationId}/sync:
     post:
@@ -674,10 +674,10 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Calendar synchronization completed successfully
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /availability/availability-with-conflicts:
     get:
@@ -715,12 +715,12 @@ paths:
             type: boolean
             default: true
       responses:
-        '200':
+        "200":
           description: Availability with conflicts retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AvailabilityWithConflictsDto'
+                $ref: "#/components/schemas/AvailabilityWithConflictsDto"
 
   # Calendar Views (RF-10)
   /availability/calendar/{resourceId}:
@@ -765,12 +765,12 @@ paths:
             type: boolean
             default: true
       responses:
-        '200':
+        "200":
           description: Calendar availability retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalendarAvailabilityDto'
+                $ref: "#/components/schemas/CalendarAvailabilityDto"
 
   /availability/calendar-view:
     get:
@@ -814,7 +814,14 @@ paths:
             type: array
             items:
               type: string
-              enum: [RESERVATION, AVAILABILITY, SCHEDULE, EXTERNAL_EVENT, MAINTENANCE]
+              enum:
+                [
+                  RESERVATION,
+                  AVAILABILITY,
+                  SCHEDULE,
+                  EXTERNAL_EVENT,
+                  MAINTENANCE,
+                ]
         - name: includeAvailability
           in: query
           description: Include availability slots
@@ -833,12 +840,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Calendar view retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalendarViewDto'
+                $ref: "#/components/schemas/CalendarViewDto"
 
   /availability/check:
     post:
@@ -853,16 +860,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AvailabilityQueryDto'
+              $ref: "#/components/schemas/AvailabilityQueryDto"
       responses:
-        '200':
+        "200":
           description: Availability checked successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AvailabilityCheckResultDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/AvailabilityCheckResultDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   # Reservation History (RF-11)
   /availability/history:
@@ -919,12 +926,12 @@ paths:
             type: integer
             default: 20
       responses:
-        '200':
+        "200":
           description: Reservation history retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationHistoryResponseDto'
+                $ref: "#/components/schemas/ReservationHistoryResponseDto"
 
   /availability/reservation-history:
     post:
@@ -939,9 +946,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReservationHistoryDto'
+              $ref: "#/components/schemas/CreateReservationHistoryDto"
       responses:
-        '201':
+        "201":
           description: History entry created successfully
 
   /availability/reservation-history/detailed:
@@ -975,7 +982,16 @@ paths:
             type: array
             items:
               type: string
-              enum: [CREATED, UPDATED, CANCELLED, CONFIRMED, CHECKED_IN, CHECKED_OUT, RESCHEDULED]
+              enum:
+                [
+                  CREATED,
+                  UPDATED,
+                  CANCELLED,
+                  CONFIRMED,
+                  CHECKED_IN,
+                  CHECKED_OUT,
+                  RESCHEDULED,
+                ]
         - name: sources
           in: query
           description: Filter by sources
@@ -1034,12 +1050,12 @@ paths:
             type: boolean
             default: false
       responses:
-        '200':
+        "200":
           description: Detailed history retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationHistoryResponseDto'
+                $ref: "#/components/schemas/ReservationHistoryResponseDto"
 
   /availability/reservation-history/export:
     get:
@@ -1078,7 +1094,7 @@ paths:
             type: string
             format: date-time
       responses:
-        '200':
+        "200":
           description: CSV export generated successfully
           content:
             text/csv:
@@ -1099,14 +1115,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JoinWaitlistDto'
+              $ref: "#/components/schemas/JoinWaitlistDto"
       responses:
-        '201':
+        "201":
           description: Added to waitlist successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WaitlistEntryDto'
+                $ref: "#/components/schemas/WaitlistEntryDto"
 
   /waitlist/{id}:
     delete:
@@ -1124,7 +1140,7 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: Removed from waitlist successfully
 
   /waitlist/my-entries:
@@ -1136,14 +1152,14 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Waitlist entries retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/WaitlistEntryDto'
+                  $ref: "#/components/schemas/WaitlistEntryDto"
 
   # Recurring Reservations Management (RF-12)
   /recurring-reservations:
@@ -1159,18 +1175,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRecurringReservationDto'
+              $ref: "#/components/schemas/CreateRecurringReservationDto"
       responses:
-        '201':
+        "201":
           description: Recurring reservation created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecurringReservationResponseDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/RecurringReservationResponseDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     get:
       tags:
@@ -1215,7 +1231,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Recurring reservations retrieved successfully
           content:
             application/json:
@@ -1225,7 +1241,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/RecurringReservationResponseDto'
+                      $ref: "#/components/schemas/RecurringReservationResponseDto"
                   total:
                     type: integer
                   page:
@@ -1250,14 +1266,14 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Recurring reservation found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecurringReservationResponseDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/RecurringReservationResponseDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags:
@@ -1279,18 +1295,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateRecurringReservationDto'
+              $ref: "#/components/schemas/UpdateRecurringReservationDto"
       responses:
-        '200':
+        "200":
           description: Recurring reservation updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecurringReservationResponseDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: "#/components/schemas/RecurringReservationResponseDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
     delete:
       tags:
@@ -1308,12 +1324,12 @@ paths:
             type: string
             format: uuid
       responses:
-        '204':
+        "204":
           description: Recurring reservation cancelled successfully
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /recurring-reservations/{id}/instances:
     get:
@@ -1350,14 +1366,14 @@ paths:
             type: string
             format: date-time
       responses:
-        '200':
+        "200":
           description: Instances retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RecurringReservationInstanceDto'
+                  $ref: "#/components/schemas/RecurringReservationInstanceDto"
 
   /recurring-reservations/{id}/instances/{instanceId}:
     delete:
@@ -1383,10 +1399,10 @@ paths:
             type: string
             format: uuid
       responses:
-        '204':
+        "204":
           description: Instance cancelled successfully
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /recurring-reservations/{id}/generate-instances:
     post:
@@ -1418,7 +1434,7 @@ paths:
               required:
                 - generateUntil
       responses:
-        '201':
+        "201":
           description: Instances generated successfully
           content:
             application/json:
@@ -1447,12 +1463,12 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Statistics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecurringReservationStatsDto'
+                $ref: "#/components/schemas/RecurringReservationStatsDto"
 
   /recurring-reservations/validate:
     post:
@@ -1467,9 +1483,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRecurringReservationDto'
+              $ref: "#/components/schemas/CreateRecurringReservationDto"
       responses:
-        '200':
+        "200":
           description: Validation completed
           content:
             application/json:
@@ -1510,7 +1526,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: User recurring reservations retrieved successfully
           content:
             application/json:
@@ -1520,7 +1536,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/RecurringReservationResponseDto'
+                      $ref: "#/components/schemas/RecurringReservationResponseDto"
                   total:
                     type: integer
                   page:
@@ -1545,7 +1561,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Resource recurring reservations retrieved successfully
           content:
             application/json:
@@ -1555,7 +1571,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/RecurringReservationResponseDto'
+                      $ref: "#/components/schemas/RecurringReservationResponseDto"
                   total:
                     type: integer
                   page:
@@ -1591,7 +1607,7 @@ paths:
                 - reservationIds
                 - reason
       responses:
-        '200':
+        "200":
           description: Bulk cancellation completed
           content:
             application/json:
@@ -1623,19 +1639,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JoinWaitingListDto'
+              $ref: "#/components/schemas/JoinWaitingListDto"
       responses:
-        '201':
+        "201":
           description: Successfully joined waiting list
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WaitingListEntryResponseDto'
-        '400':
+                $ref: "#/components/schemas/WaitingListEntryResponseDto"
+        "400":
           description: Invalid request or user already in waiting list
-        '401':
+        "401":
           description: Unauthorized
-        '409':
+        "409":
           description: User has reached maximum waiting list entries
 
   # Waiting List - My Entries
@@ -1656,15 +1672,15 @@ paths:
             type: string
             enum: [WAITING, NOTIFIED, CONFIRMED, EXPIRED, CANCELLED]
       responses:
-        '200':
+        "200":
           description: User waiting list entries retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/WaitingListEntryResponseDto'
-        '401':
+                  $ref: "#/components/schemas/WaitingListEntryResponseDto"
+        "401":
           description: Unauthorized
 
   # Waiting List - Get Entry by ID
@@ -1685,15 +1701,15 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Waiting list entry found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WaitingListEntryResponseDto'
-        '401':
+                $ref: "#/components/schemas/WaitingListEntryResponseDto"
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Waiting list entry not found
 
   # Waiting List - Confirm Entry
@@ -1714,17 +1730,17 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Waiting list entry confirmed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WaitingListEntryResponseDto'
-        '400':
+                $ref: "#/components/schemas/WaitingListEntryResponseDto"
+        "400":
           description: Entry is not in notified status or has expired
-        '401':
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Waiting list entry not found
 
   # Waiting List - Leave Entry
@@ -1745,13 +1761,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '204':
+        "204":
           description: Successfully left waiting list
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: User not authorized to remove this entry
-        '404':
+        "404":
           description: Waiting list entry not found
 
   # Waiting List - Get Resource Waiting List
@@ -1812,7 +1828,7 @@ paths:
             enum: [asc, desc]
             default: asc
       responses:
-        '200':
+        "200":
           description: Resource waiting list retrieved successfully
           content:
             application/json:
@@ -1822,16 +1838,16 @@ paths:
                   entries:
                     type: array
                     items:
-                      $ref: '#/components/schemas/WaitingListEntryResponseDto'
+                      $ref: "#/components/schemas/WaitingListEntryResponseDto"
                   total:
                     type: number
                   queueDepth:
                     type: number
                   averageWaitTime:
                     type: number
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Waiting List - Escalate Priority
@@ -1856,19 +1872,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EscalatePriorityDto'
+              $ref: "#/components/schemas/EscalatePriorityDto"
       responses:
-        '200':
+        "200":
           description: Priority escalated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WaitingListEntryResponseDto'
-        '401':
+                $ref: "#/components/schemas/WaitingListEntryResponseDto"
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
-        '404':
+        "404":
           description: Waiting list entry not found
 
   # Waiting List - Process Available Slots
@@ -1907,7 +1923,7 @@ paths:
                     endTime:
                       type: string
       responses:
-        '200':
+        "200":
           description: Available slots processed successfully
           content:
             application/json:
@@ -1924,9 +1940,9 @@ paths:
                     type: array
                     items:
                       type: object
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Waiting List - Get Statistics
@@ -1955,15 +1971,15 @@ paths:
             enum: [7d, 30d, 90d]
             default: 30d
       responses:
-        '200':
+        "200":
           description: Statistics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WaitingListStatsDto'
-        '401':
+                $ref: "#/components/schemas/WaitingListStatsDto"
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Waiting List - Validate Join
@@ -1980,9 +1996,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JoinWaitingListDto'
+              $ref: "#/components/schemas/JoinWaitingListDto"
       responses:
-        '200':
+        "200":
           description: Validation completed
           content:
             application/json:
@@ -2003,7 +2019,7 @@ paths:
                     type: number
                   estimatedWaitTime:
                     type: number
-        '401':
+        "401":
           description: Unauthorized
 
   # Waiting List - Get Position
@@ -2024,7 +2040,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Position information retrieved successfully
           content:
             application/json:
@@ -2040,7 +2056,7 @@ paths:
                   lastUpdated:
                     type: string
                     format: date-time
-        '401':
+        "401":
           description: Unauthorized
 
   # Waiting List - Bulk Notify
@@ -2071,7 +2087,7 @@ paths:
                   type: string
                   description: Custom notification message
       responses:
-        '200':
+        "200":
           description: Bulk notification completed
           content:
             application/json:
@@ -2088,9 +2104,9 @@ paths:
                       type: object
                   totalProcessed:
                     type: number
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Waiting List - Process Expired
@@ -2103,7 +2119,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Expired notifications processed successfully
           content:
             application/json:
@@ -2116,9 +2132,9 @@ paths:
                     type: number
                   totalProcessed:
                     type: number
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Waiting List - Performance Analytics
@@ -2146,15 +2162,15 @@ paths:
             enum: [7d, 30d, 90d]
             default: 30d
       responses:
-        '200':
+        "200":
           description: Performance analytics retrieved successfully
           content:
             application/json:
               schema:
                 type: object
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
 components:
@@ -2372,7 +2388,7 @@ components:
         conflicts:
           type: array
           items:
-            $ref: '#/components/schemas/ConflictDto'
+            $ref: "#/components/schemas/ConflictDto"
           description: List of conflicts if any
         restrictions:
           type: array
@@ -2382,7 +2398,7 @@ components:
         alternativeSlots:
           type: array
           items:
-            $ref: '#/components/schemas/AlternativeSlotDto'
+            $ref: "#/components/schemas/AlternativeSlotDto"
           description: Alternative available slots
 
     AvailabilityWithConflictsDto:
@@ -2399,11 +2415,11 @@ components:
         availableSlots:
           type: array
           items:
-            $ref: '#/components/schemas/AvailabilitySlotDto'
+            $ref: "#/components/schemas/AvailabilitySlotDto"
         conflicts:
           type: array
           items:
-            $ref: '#/components/schemas/ConflictDto'
+            $ref: "#/components/schemas/ConflictDto"
         externalEvents:
           type: array
           items:
@@ -2436,11 +2452,11 @@ components:
         availabilitySlots:
           type: array
           items:
-            $ref: '#/components/schemas/AvailabilitySlotDto'
+            $ref: "#/components/schemas/AvailabilitySlotDto"
         reservations:
           type: array
           items:
-            $ref: '#/components/schemas/ReservationDto'
+            $ref: "#/components/schemas/ReservationDto"
         restrictions:
           type: array
           items:
@@ -2473,7 +2489,16 @@ components:
           description: ID of the user who performed the action
         action:
           type: string
-          enum: [CREATED, UPDATED, CANCELLED, CONFIRMED, CHECKED_IN, CHECKED_OUT, RESCHEDULED]
+          enum:
+            [
+              CREATED,
+              UPDATED,
+              CANCELLED,
+              CONFIRMED,
+              CHECKED_IN,
+              CHECKED_OUT,
+              RESCHEDULED,
+            ]
           description: Action performed
         source:
           type: string
@@ -2557,7 +2582,7 @@ components:
           type: string
           format: date-time
         status:
-          $ref: '#/components/schemas/ReservationStatus'
+          $ref: "#/components/schemas/ReservationStatus"
         purpose:
           type: string
         attendees:
@@ -2635,7 +2660,7 @@ components:
         availableSlots:
           type: array
           items:
-            $ref: '#/components/schemas/AvailabilitySlotDto'
+            $ref: "#/components/schemas/AvailabilitySlotDto"
         score:
           type: number
           description: Relevance score for the search
@@ -2719,7 +2744,7 @@ components:
         id:
           type: string
         type:
-          $ref: '#/components/schemas/ConflictType'
+          $ref: "#/components/schemas/ConflictType"
         description:
           type: string
         reservationId:
@@ -2798,7 +2823,7 @@ components:
         attendees:
           type: integer
         pattern:
-          $ref: '#/components/schemas/RecurrencePattern'
+          $ref: "#/components/schemas/RecurrencePattern"
         interval:
           type: integer
           description: Interval for recurrence (e.g., every 2 weeks)
@@ -2932,7 +2957,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0400"
             message: "Invalid request parameters"
@@ -2946,7 +2971,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0401"
             message: "Authentication required"
@@ -2960,7 +2985,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0403"
             message: "Insufficient permissions"
@@ -2974,7 +2999,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0404"
             message: "Resource not found"
@@ -2988,7 +3013,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0409"
             message: "Reservation conflict detected"
@@ -3002,7 +3027,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0500"
             message: "Internal server error"
@@ -3207,19 +3232,19 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReassignmentRequestDto'
+              $ref: "#/components/schemas/CreateReassignmentRequestDto"
       responses:
-        '201':
+        "201":
           description: Reassignment request created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReassignmentRequestResponseDto'
-        '400':
+                $ref: "#/components/schemas/ReassignmentRequestResponseDto"
+        "400":
           description: Invalid request data or business rule violation
-        '401':
+        "401":
           description: Unauthorized
-        '409':
+        "409":
           description: Existing pending reassignment request for this reservation
 
   # Reassignment - Get Requests
@@ -3271,7 +3296,7 @@ components:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Reassignment requests retrieved successfully
           content:
             application/json:
@@ -3281,14 +3306,14 @@ components:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReassignmentRequestResponseDto'
+                      $ref: "#/components/schemas/ReassignmentRequestResponseDto"
                   total:
                     type: number
                   page:
                     type: number
                   limit:
                     type: number
-        '401':
+        "401":
           description: Unauthorized
 
   # Reassignment - Get Request by ID
@@ -3309,15 +3334,15 @@ components:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Reassignment request found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReassignmentRequestResponseDto'
-        '401':
+                $ref: "#/components/schemas/ReassignmentRequestResponseDto"
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Reassignment request not found
     delete:
       tags:
@@ -3335,13 +3360,13 @@ components:
             type: string
             format: uuid
       responses:
-        '204':
+        "204":
           description: Reassignment request cancelled successfully
-        '400':
+        "400":
           description: Request cannot be cancelled in current status
-        '401':
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Reassignment request not found
 
   # Reassignment - Respond to Request
@@ -3382,17 +3407,17 @@ components:
                   type: string
                   description: Reason for rejection (required if rejecting)
       responses:
-        '200':
+        "200":
           description: Response processed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessReassignmentResponseDto'
-        '400':
+                $ref: "#/components/schemas/ProcessReassignmentResponseDto"
+        "400":
           description: Invalid response or request not in pending status
-        '401':
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Reassignment request not found
 
   # Reassignment - Auto Process Request
@@ -3425,7 +3450,7 @@ components:
                   type: number
                   description: Hours until the event (affects auto-approval logic)
       responses:
-        '200':
+        "200":
           description: Auto-processing completed
           content:
             application/json:
@@ -3440,9 +3465,9 @@ components:
                     type: string
                   notificationsSent:
                     type: boolean
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Reassignment - Find Equivalent Resources
@@ -3499,7 +3524,7 @@ components:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Equivalent resources found
           content:
             application/json:
@@ -3509,22 +3534,22 @@ components:
                   exactMatches:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ResourceEquivalenceResponseDto'
+                      $ref: "#/components/schemas/ResourceEquivalenceResponseDto"
                   goodMatches:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ResourceEquivalenceResponseDto'
+                      $ref: "#/components/schemas/ResourceEquivalenceResponseDto"
                   acceptableMatches:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ResourceEquivalenceResponseDto'
+                      $ref: "#/components/schemas/ResourceEquivalenceResponseDto"
                   recommendations:
                     type: array
                     items:
                       type: object
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Reassignment - Validate Request
@@ -3541,9 +3566,9 @@ components:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReassignmentRequestDto'
+              $ref: "#/components/schemas/CreateReassignmentRequestDto"
       responses:
-        '200':
+        "200":
           description: Validation completed
           content:
             application/json:
@@ -3566,9 +3591,9 @@ components:
                       type: object
                   suggestedResources:
                     type: number
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Reassignment - Get Analytics
@@ -3596,15 +3621,15 @@ components:
             enum: [7d, 30d, 90d]
             default: 30d
       responses:
-        '200':
+        "200":
           description: Analytics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReassignmentAnalyticsDto'
-        '401':
+                $ref: "#/components/schemas/ReassignmentAnalyticsDto"
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Reassignment - Bulk Process
@@ -3645,7 +3670,7 @@ components:
                         type: string
                         enum: [LOW, MEDIUM, HIGH]
       responses:
-        '200':
+        "200":
           description: Bulk processing completed
           content:
             application/json:
@@ -3662,9 +3687,9 @@ components:
                       type: object
                   summary:
                     type: object
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Reassignment - Success Prediction
@@ -3685,7 +3710,7 @@ components:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Success prediction completed
           content:
             application/json:
@@ -3704,9 +3729,9 @@ components:
                     type: array
                     items:
                       type: string
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Reassignment - User History
@@ -3734,17 +3759,17 @@ components:
             type: number
             default: 50
       responses:
-        '200':
+        "200":
           description: User reassignment history retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ReassignmentRequestResponseDto'
-        '401':
+                  $ref: "#/components/schemas/ReassignmentRequestResponseDto"
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
   # Reassignment - Optimize Configuration
@@ -3770,7 +3795,7 @@ components:
                   format: uuid
                   description: Program ID to optimize configuration for
       responses:
-        '200':
+        "200":
           description: Configuration optimization completed
           content:
             application/json:
@@ -3785,9 +3810,9 @@ components:
                       type: object
                   testResults:
                     type: object
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
 
     # Reassignment DTOs
@@ -3868,7 +3893,7 @@ components:
         suggestedResources:
           type: array
           items:
-            $ref: '#/components/schemas/ResourceEquivalenceResponseDto'
+            $ref: "#/components/schemas/ResourceEquivalenceResponseDto"
         userResponse:
           type: string
           enum: [ACCEPT, REJECT]

@@ -1,8 +1,8 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { connect, Channel, ChannelModel } from 'amqplib';
-import { LoggingService } from '@logging/logging.service';
-import { DomainEvent } from './event-bus.service';
+import { LoggingService } from "@logging/logging.service";
+import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Channel, ChannelModel, connect } from "amqplib";
+import { DomainEvent } from "./event-bus.service";
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
@@ -11,7 +11,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly loggingService?: LoggingService,
+    private readonly loggingService?: LoggingService
   ) {}
 
   /**
@@ -36,9 +36,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
    * @returns 'connected', 'connecting', or 'disconnected'
    */
   getConnectionState(): string {
-    if (this.connection && this.channel) return 'connected';
-    if (this.connection && !this.channel) return 'connecting';
-    return 'disconnected';
+    if (this.connection && this.channel) return "connected";
+    if (this.connection && !this.channel) return "connecting";
+    return "disconnected";
   }
 
   /**
@@ -51,23 +51,46 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     try {
-      const rabbitmqUrl = this.configService.get('RABBITMQ_URL');
-      this.loggingService?.log(`Connecting to RabbitMQ at ${rabbitmqUrl}...`, 'RabbitMQService');
-      
+      const rabbitmqUrl = this.configService.get("RABBITMQ_URL");
+      this.loggingService?.log(
+        `Connecting to RabbitMQ at ${rabbitmqUrl}...`,
+        "RabbitMQService"
+      );
+
       this.connection = await connect(rabbitmqUrl);
-      this.loggingService?.log('✅ RabbitMQ connection established', 'RabbitMQService');
-      
+      this.loggingService?.log(
+        "✅ RabbitMQ connection established",
+        "RabbitMQService"
+      );
+
       this.channel = await this.connection.createChannel();
-      this.loggingService?.log('✅ RabbitMQ channel created', 'RabbitMQService');
+      this.loggingService?.log(
+        "✅ RabbitMQ channel created",
+        "RabbitMQService"
+      );
 
       // Declare exchanges for different event types
-      await this.channel.assertExchange('bookly.events', 'topic', { durable: true });
-      await this.channel.assertExchange('bookly.commands', 'direct', { durable: true });
+      await this.channel.assertExchange("bookly.events", "topic", {
+        durable: true,
+      });
+      await this.channel.assertExchange("booklyapp.commands", "direct", {
+        durable: true,
+      });
 
-      this.loggingService?.log('✅ RabbitMQ exchanges declared successfully', 'RabbitMQService');
-      this.loggingService?.log('✅ RabbitMQ connected successfully', 'RabbitMQService');
+      this.loggingService?.log(
+        "✅ RabbitMQ exchanges declared successfully",
+        "RabbitMQService"
+      );
+      this.loggingService?.log(
+        "✅ RabbitMQ connected successfully",
+        "RabbitMQService"
+      );
     } catch (error) {
-      this.loggingService?.error('❌ Failed to connect to RabbitMQ', error, 'RabbitMQService');
+      this.loggingService?.error(
+        "❌ Failed to connect to RabbitMQ",
+        error,
+        "RabbitMQService"
+      );
       // Don't throw - allow service to start even if RabbitMQ is temporarily unavailable
       // Health checks will report the issue
     }
@@ -77,9 +100,13 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.channel?.close();
       await this.connection?.close();
-      this.loggingService?.log('📴 RabbitMQ disconnected', 'RabbitMQService');
+      this.loggingService?.log("📴 RabbitMQ disconnected", "RabbitMQService");
     } catch (error) {
-      this.loggingService?.error('Error closing RabbitMQ connection', error, 'RabbitMQService');
+      this.loggingService?.error(
+        "Error closing RabbitMQ connection",
+        error,
+        "RabbitMQService"
+      );
     }
   }
 
@@ -88,7 +115,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       const routingKey = `${event.aggregateType}.${eventType}`;
       const message = Buffer.from(JSON.stringify(event));
 
-      await this.channel.publish('bookly.events', routingKey, message, {
+      await this.channel.publish("bookly.events", routingKey, message, {
         persistent: true,
         timestamp: Date.now(),
         messageId: event.eventId,
@@ -97,22 +124,25 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.loggingService?.log(
         `Event published to RabbitMQ: ${eventType}`,
         { routingKey, eventId: event.eventId },
-        'RabbitMQService',
+        "RabbitMQService"
       );
     } catch (error) {
       this.loggingService?.error(
         `Failed to publish event to RabbitMQ: ${eventType}`,
         error,
-        'RabbitMQService',
+        "RabbitMQService"
       );
       throw error;
     }
   }
 
-  async subscribe(queueName: string, handler: (event: DomainEvent) => Promise<void>): Promise<void> {
+  async subscribe(
+    queueName: string,
+    handler: (event: DomainEvent) => Promise<void>
+  ): Promise<void> {
     try {
       await this.channel.assertQueue(queueName, { durable: true });
-      await this.channel.bindQueue(queueName, 'bookly.events', '#');
+      await this.channel.bindQueue(queueName, "bookly.events", "#");
 
       await this.channel.consume(queueName, async (msg) => {
         if (msg) {
@@ -124,7 +154,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
             this.loggingService?.error(
               `Error processing message from queue: ${queueName}`,
               error,
-              'RabbitMQService',
+              "RabbitMQService"
             );
             this.channel.nack(msg, false, false); // Dead letter the message
           }
@@ -134,13 +164,13 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.loggingService?.log(
         `Subscribed to queue: ${queueName}`,
         {},
-        'RabbitMQService',
+        "RabbitMQService"
       );
     } catch (error) {
       this.loggingService?.error(
         `Failed to subscribe to queue: ${queueName}`,
         error,
-        'RabbitMQService',
+        "RabbitMQService"
       );
       throw error;
     }

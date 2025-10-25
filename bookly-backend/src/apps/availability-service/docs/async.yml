@@ -7,7 +7,7 @@ info:
     This service handles reservation scheduling, availability management, and calendar integration.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -20,7 +20,7 @@ servers:
     protocol: amqp
     description: Local RabbitMQ development server
   production:
-    host: rabbitmq.bookly.com:5672
+    host: rabbitmq.booklyapp.com:5672
     protocol: amqp
     description: Production RabbitMQ server
 
@@ -29,151 +29,151 @@ channels:
     description: Channel for reservation management events
     messages:
       reservationCreated:
-        $ref: '#/components/messages/ReservationCreated'
+        $ref: "#/components/messages/ReservationCreated"
       reservationUpdated:
-        $ref: '#/components/messages/ReservationUpdated'
+        $ref: "#/components/messages/ReservationUpdated"
       reservationCancelled:
-        $ref: '#/components/messages/ReservationCancelled'
+        $ref: "#/components/messages/ReservationCancelled"
       reservationConfirmed:
-        $ref: '#/components/messages/ReservationConfirmed'
+        $ref: "#/components/messages/ReservationConfirmed"
       reservationCheckIn:
-        $ref: '#/components/messages/ReservationCheckIn'
+        $ref: "#/components/messages/ReservationCheckIn"
       reservationCheckOut:
-        $ref: '#/components/messages/ReservationCheckOut'
+        $ref: "#/components/messages/ReservationCheckOut"
 
   availability-management:
     description: Channel for availability management events
     messages:
       availabilityUpdated:
-        $ref: '#/components/messages/AvailabilityUpdated'
+        $ref: "#/components/messages/AvailabilityUpdated"
       availabilityBlocked:
-        $ref: '#/components/messages/AvailabilityBlocked'
+        $ref: "#/components/messages/AvailabilityBlocked"
       availabilityUnblocked:
-        $ref: '#/components/messages/AvailabilityUnblocked'
+        $ref: "#/components/messages/AvailabilityUnblocked"
       recurringAvailabilityCreated:
-        $ref: '#/components/messages/RecurringAvailabilityCreated'
+        $ref: "#/components/messages/RecurringAvailabilityCreated"
 
   conflict-management:
     description: Channel for conflict and validation events
     messages:
       reservationConflictDetected:
-        $ref: '#/components/messages/ReservationConflictDetected'
+        $ref: "#/components/messages/ReservationConflictDetected"
       reservationConflictResolved:
-        $ref: '#/components/messages/ReservationConflictResolved'
+        $ref: "#/components/messages/ReservationConflictResolved"
       waitlistPositionChanged:
-        $ref: '#/components/messages/WaitlistPositionChanged'
+        $ref: "#/components/messages/WaitlistPositionChanged"
 
   recurring-reservation-management:
     description: Channel for recurring reservation lifecycle events (RF-12)
     messages:
       recurringReservationCreated:
-        $ref: '#/components/messages/RecurringReservationCreated'
+        $ref: "#/components/messages/RecurringReservationCreated"
       recurringReservationUpdated:
-        $ref: '#/components/messages/RecurringReservationUpdated'
+        $ref: "#/components/messages/RecurringReservationUpdated"
       recurringReservationCancelled:
-        $ref: '#/components/messages/RecurringReservationCancelled'
+        $ref: "#/components/messages/RecurringReservationCancelled"
       recurringReservationInstancesGenerated:
-        $ref: '#/components/messages/RecurringReservationInstancesGenerated'
+        $ref: "#/components/messages/RecurringReservationInstancesGenerated"
       recurringReservationInstanceConfirmed:
-        $ref: '#/components/messages/RecurringReservationInstanceConfirmed'
+        $ref: "#/components/messages/RecurringReservationInstanceConfirmed"
       recurringReservationInstanceCancelled:
-        $ref: '#/components/messages/RecurringReservationInstanceCancelled'
+        $ref: "#/components/messages/RecurringReservationInstanceCancelled"
       recurringReservationConflictDetected:
-        $ref: '#/components/messages/RecurringReservationConflictDetected'
+        $ref: "#/components/messages/RecurringReservationConflictDetected"
       recurringReservationCompleted:
-        $ref: '#/components/messages/RecurringReservationCompleted'
+        $ref: "#/components/messages/RecurringReservationCompleted"
       recurringReservationValidationFailed:
-        $ref: '#/components/messages/RecurringReservationValidationFailed'
+        $ref: "#/components/messages/RecurringReservationValidationFailed"
 
   waiting-list-management:
     description: Channel for waiting list lifecycle events (RF-14)
     messages:
       userJoinedWaitingList:
-        $ref: '#/components/messages/UserJoinedWaitingList'
+        $ref: "#/components/messages/UserJoinedWaitingList"
       userLeftWaitingList:
-        $ref: '#/components/messages/UserLeftWaitingList'
+        $ref: "#/components/messages/UserLeftWaitingList"
       waitingListSlotAvailable:
-        $ref: '#/components/messages/WaitingListSlotAvailable'
+        $ref: "#/components/messages/WaitingListSlotAvailable"
       userConfirmedWaitingListSlot:
-        $ref: '#/components/messages/UserConfirmedWaitingListSlot'
+        $ref: "#/components/messages/UserConfirmedWaitingListSlot"
       waitingListSlotExpired:
-        $ref: '#/components/messages/WaitingListSlotExpired'
+        $ref: "#/components/messages/WaitingListSlotExpired"
       waitingListPositionsReordered:
-        $ref: '#/components/messages/WaitingListPositionsReordered'
+        $ref: "#/components/messages/WaitingListPositionsReordered"
       waitingListPriorityEscalated:
-        $ref: '#/components/messages/WaitingListPriorityEscalated'
+        $ref: "#/components/messages/WaitingListPriorityEscalated"
       waitingListOptimized:
-        $ref: '#/components/messages/WaitingListOptimized'
+        $ref: "#/components/messages/WaitingListOptimized"
       waitingListBulkNotificationSent:
-        $ref: '#/components/messages/WaitingListBulkNotificationSent'
+        $ref: "#/components/messages/WaitingListBulkNotificationSent"
       waitingListPreferencesUpdated:
-        $ref: '#/components/messages/WaitingListPreferencesUpdated'
+        $ref: "#/components/messages/WaitingListPreferencesUpdated"
 
   reassignment-management:
     description: Channel for reservation reassignment events (RF-15)
     messages:
       reassignmentRequestCreated:
-        $ref: '#/components/messages/ReassignmentRequestCreated'
+        $ref: "#/components/messages/ReassignmentRequestCreated"
       reassignmentRequestResponded:
-        $ref: '#/components/messages/ReassignmentRequestResponded'
+        $ref: "#/components/messages/ReassignmentRequestResponded"
       equivalentResourcesFound:
-        $ref: '#/components/messages/EquivalentResourcesFound'
+        $ref: "#/components/messages/EquivalentResourcesFound"
       reassignmentRequestProcessed:
-        $ref: '#/components/messages/ReassignmentRequestProcessed'
+        $ref: "#/components/messages/ReassignmentRequestProcessed"
       reassignmentApplied:
-        $ref: '#/components/messages/ReassignmentApplied'
+        $ref: "#/components/messages/ReassignmentApplied"
       reassignmentRequestCancelled:
-        $ref: '#/components/messages/ReassignmentRequestCancelled'
+        $ref: "#/components/messages/ReassignmentRequestCancelled"
       reassignmentRequestEscalated:
-        $ref: '#/components/messages/ReassignmentRequestEscalated'
+        $ref: "#/components/messages/ReassignmentRequestEscalated"
       reassignmentSuggestionRejected:
-        $ref: '#/components/messages/ReassignmentSuggestionRejected'
+        $ref: "#/components/messages/ReassignmentSuggestionRejected"
       reassignmentQueueOptimized:
-        $ref: '#/components/messages/ReassignmentQueueOptimized'
+        $ref: "#/components/messages/ReassignmentQueueOptimized"
       bulkReassignmentRequestsProcessed:
-        $ref: '#/components/messages/BulkReassignmentRequestsProcessed'
+        $ref: "#/components/messages/BulkReassignmentRequestsProcessed"
       reassignmentRequestExpired:
-        $ref: '#/components/messages/ReassignmentRequestExpired'
+        $ref: "#/components/messages/ReassignmentRequestExpired"
 
 operations:
   publishReservationCreated:
     action: send
     channel:
-      $ref: '#/channels/reservation-management'
+      $ref: "#/channels/reservation-management"
     messages:
-      - $ref: '#/channels/reservation-management/messages/reservationCreated'
+      - $ref: "#/channels/reservation-management/messages/reservationCreated"
     description: Published when a new reservation is created
 
   publishReservationUpdated:
     action: send
     channel:
-      $ref: '#/channels/reservation-management'
+      $ref: "#/channels/reservation-management"
     messages:
-      - $ref: '#/channels/reservation-management/messages/reservationUpdated'
+      - $ref: "#/channels/reservation-management/messages/reservationUpdated"
     description: Published when a reservation is updated
 
   publishReservationCancelled:
     action: send
     channel:
-      $ref: '#/channels/reservation-management'
+      $ref: "#/channels/reservation-management"
     messages:
-      - $ref: '#/channels/reservation-management/messages/reservationCancelled'
+      - $ref: "#/channels/reservation-management/messages/reservationCancelled"
     description: Published when a reservation is cancelled
 
   publishAvailabilityUpdated:
     action: send
     channel:
-      $ref: '#/channels/availability-management'
+      $ref: "#/channels/availability-management"
     messages:
-      - $ref: '#/channels/availability-management/messages/availabilityUpdated'
+      - $ref: "#/channels/availability-management/messages/availabilityUpdated"
     description: Published when resource availability is updated
 
   publishReservationConflictDetected:
     action: send
     channel:
-      $ref: '#/channels/conflict-management'
+      $ref: "#/channels/conflict-management"
     messages:
-      - $ref: '#/channels/conflict-management/messages/reservationConflictDetected'
+      - $ref: "#/channels/conflict-management/messages/reservationConflictDetected"
     description: Published when a reservation conflict is detected
 
 components:
@@ -184,7 +184,7 @@ components:
       summary: Event published when a new reservation is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCreatedPayload'
+        $ref: "#/components/schemas/ReservationCreatedPayload"
 
     ReservationUpdated:
       name: ReservationUpdated
@@ -192,7 +192,7 @@ components:
       summary: Event published when a reservation is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationUpdatedPayload'
+        $ref: "#/components/schemas/ReservationUpdatedPayload"
 
     ReservationCancelled:
       name: ReservationCancelled
@@ -200,7 +200,7 @@ components:
       summary: Event published when a reservation is cancelled
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCancelledPayload'
+        $ref: "#/components/schemas/ReservationCancelledPayload"
 
     ReservationConfirmed:
       name: ReservationConfirmed
@@ -208,7 +208,7 @@ components:
       summary: Event published when a reservation is confirmed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationConfirmedPayload'
+        $ref: "#/components/schemas/ReservationConfirmedPayload"
 
     ReservationCheckIn:
       name: ReservationCheckIn
@@ -216,7 +216,7 @@ components:
       summary: Event published when a user checks in to their reservation
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCheckInPayload'
+        $ref: "#/components/schemas/ReservationCheckInPayload"
 
     ReservationCheckOut:
       name: ReservationCheckOut
@@ -224,7 +224,7 @@ components:
       summary: Event published when a user checks out from their reservation
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCheckOutPayload'
+        $ref: "#/components/schemas/ReservationCheckOutPayload"
 
     AvailabilityUpdated:
       name: AvailabilityUpdated
@@ -232,7 +232,7 @@ components:
       summary: Event published when resource availability is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AvailabilityUpdatedPayload'
+        $ref: "#/components/schemas/AvailabilityUpdatedPayload"
 
     AvailabilityBlocked:
       name: AvailabilityBlocked
@@ -240,7 +240,7 @@ components:
       summary: Event published when resource availability is blocked
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AvailabilityBlockedPayload'
+        $ref: "#/components/schemas/AvailabilityBlockedPayload"
 
     AvailabilityUnblocked:
       name: AvailabilityUnblocked
@@ -248,7 +248,7 @@ components:
       summary: Event published when resource availability is unblocked
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AvailabilityUnblockedPayload'
+        $ref: "#/components/schemas/AvailabilityUnblockedPayload"
 
     RecurringAvailabilityCreated:
       name: RecurringAvailabilityCreated
@@ -256,7 +256,7 @@ components:
       summary: Event published when recurring availability is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringAvailabilityCreatedPayload'
+        $ref: "#/components/schemas/RecurringAvailabilityCreatedPayload"
 
     ReservationConflictDetected:
       name: ReservationConflictDetected
@@ -264,7 +264,7 @@ components:
       summary: Event published when a reservation conflict is detected
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationConflictDetectedPayload'
+        $ref: "#/components/schemas/ReservationConflictDetectedPayload"
 
     ReservationConflictResolved:
       name: ReservationConflictResolved
@@ -272,7 +272,7 @@ components:
       summary: Event published when a reservation conflict is resolved
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationConflictResolvedPayload'
+        $ref: "#/components/schemas/ReservationConflictResolvedPayload"
 
     WaitlistPositionChanged:
       name: WaitlistPositionChanged
@@ -280,7 +280,7 @@ components:
       summary: Event published when a user's waitlist position changes
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitlistPositionChangedPayload'
+        $ref: "#/components/schemas/WaitlistPositionChangedPayload"
 
     # Recurring Reservation Events (RF-12)
     RecurringReservationCreated:
@@ -289,7 +289,7 @@ components:
       summary: Event published when a recurring reservation is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationCreatedPayload'
+        $ref: "#/components/schemas/RecurringReservationCreatedPayload"
 
     RecurringReservationUpdated:
       name: RecurringReservationUpdated
@@ -297,7 +297,7 @@ components:
       summary: Event published when a recurring reservation is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationUpdatedPayload'
+        $ref: "#/components/schemas/RecurringReservationUpdatedPayload"
 
     RecurringReservationCancelled:
       name: RecurringReservationCancelled
@@ -305,7 +305,7 @@ components:
       summary: Event published when a recurring reservation is cancelled
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationCancelledPayload'
+        $ref: "#/components/schemas/RecurringReservationCancelledPayload"
 
     RecurringReservationInstancesGenerated:
       name: RecurringReservationInstancesGenerated
@@ -313,7 +313,7 @@ components:
       summary: Event published when instances are generated for a recurring reservation
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationInstancesGeneratedPayload'
+        $ref: "#/components/schemas/RecurringReservationInstancesGeneratedPayload"
 
     RecurringReservationInstanceConfirmed:
       name: RecurringReservationInstanceConfirmed
@@ -321,7 +321,7 @@ components:
       summary: Event published when a recurring reservation instance is confirmed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationInstanceConfirmedPayload'
+        $ref: "#/components/schemas/RecurringReservationInstanceConfirmedPayload"
 
     RecurringReservationInstanceCancelled:
       name: RecurringReservationInstanceCancelled
@@ -329,7 +329,7 @@ components:
       summary: Event published when a recurring reservation instance is cancelled
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationInstanceCancelledPayload'
+        $ref: "#/components/schemas/RecurringReservationInstanceCancelledPayload"
 
     RecurringReservationConflictDetected:
       name: RecurringReservationConflictDetected
@@ -337,7 +337,7 @@ components:
       summary: Event published when a conflict is detected in recurring reservations
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationConflictDetectedPayload'
+        $ref: "#/components/schemas/RecurringReservationConflictDetectedPayload"
 
     RecurringReservationCompleted:
       name: RecurringReservationCompleted
@@ -345,7 +345,7 @@ components:
       summary: Event published when a recurring reservation series is completed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationCompletedPayload'
+        $ref: "#/components/schemas/RecurringReservationCompletedPayload"
 
     RecurringReservationValidationFailed:
       name: RecurringReservationValidationFailed
@@ -353,7 +353,7 @@ components:
       summary: Event published when recurring reservation validation fails
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringReservationValidationFailedPayload'
+        $ref: "#/components/schemas/RecurringReservationValidationFailedPayload"
 
     # Waiting List Events (RF-14)
     UserJoinedWaitingList:
@@ -362,7 +362,7 @@ components:
       summary: Event published when a user joins a waiting list
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/UserJoinedWaitingListPayload'
+        $ref: "#/components/schemas/UserJoinedWaitingListPayload"
 
     UserLeftWaitingList:
       name: UserLeftWaitingList
@@ -370,7 +370,7 @@ components:
       summary: Event published when a user leaves a waiting list
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/UserLeftWaitingListPayload'
+        $ref: "#/components/schemas/UserLeftWaitingListPayload"
 
     WaitingListSlotAvailable:
       name: WaitingListSlotAvailable
@@ -378,7 +378,7 @@ components:
       summary: Event published when a slot becomes available for waiting list users
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitingListSlotAvailablePayload'
+        $ref: "#/components/schemas/WaitingListSlotAvailablePayload"
 
     UserConfirmedWaitingListSlot:
       name: UserConfirmedWaitingListSlot
@@ -386,7 +386,7 @@ components:
       summary: Event published when a user confirms their waiting list slot
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/UserConfirmedWaitingListSlotPayload'
+        $ref: "#/components/schemas/UserConfirmedWaitingListSlotPayload"
 
     WaitingListSlotExpired:
       name: WaitingListSlotExpired
@@ -394,7 +394,7 @@ components:
       summary: Event published when a waiting list slot expires
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitingListSlotExpiredPayload'
+        $ref: "#/components/schemas/WaitingListSlotExpiredPayload"
 
     WaitingListPositionsReordered:
       name: WaitingListPositionsReordered
@@ -402,7 +402,7 @@ components:
       summary: Event published when waiting list positions are reordered
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitingListPositionsReorderedPayload'
+        $ref: "#/components/schemas/WaitingListPositionsReorderedPayload"
 
     WaitingListPriorityEscalated:
       name: WaitingListPriorityEscalated
@@ -410,7 +410,7 @@ components:
       summary: Event published when a waiting list entry priority is escalated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitingListPriorityEscalatedPayload'
+        $ref: "#/components/schemas/WaitingListPriorityEscalatedPayload"
 
     WaitingListOptimized:
       name: WaitingListOptimized
@@ -418,7 +418,7 @@ components:
       summary: Event published when waiting list is optimized
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitingListOptimizedPayload'
+        $ref: "#/components/schemas/WaitingListOptimizedPayload"
 
     WaitingListBulkNotificationSent:
       name: WaitingListBulkNotificationSent
@@ -426,7 +426,7 @@ components:
       summary: Event published when bulk notifications are sent to waiting list users
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitingListBulkNotificationSentPayload'
+        $ref: "#/components/schemas/WaitingListBulkNotificationSentPayload"
 
     WaitingListPreferencesUpdated:
       name: WaitingListPreferencesUpdated
@@ -434,7 +434,7 @@ components:
       summary: Event published when waiting list preferences are updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitingListPreferencesUpdatedPayload'
+        $ref: "#/components/schemas/WaitingListPreferencesUpdatedPayload"
 
     # Reassignment Events (RF-15)
     ReassignmentRequestCreated:
@@ -443,7 +443,7 @@ components:
       summary: Event published when a reassignment request is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentRequestCreatedPayload'
+        $ref: "#/components/schemas/ReassignmentRequestCreatedPayload"
 
     ReassignmentRequestResponded:
       name: ReassignmentRequestResponded
@@ -451,7 +451,7 @@ components:
       summary: Event published when a user responds to a reassignment request
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentRequestRespondedPayload'
+        $ref: "#/components/schemas/ReassignmentRequestRespondedPayload"
 
     EquivalentResourcesFound:
       name: EquivalentResourcesFound
@@ -459,7 +459,7 @@ components:
       summary: Event published when equivalent resources are found for reassignment
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/EquivalentResourcesFoundPayload'
+        $ref: "#/components/schemas/EquivalentResourcesFoundPayload"
 
     ReassignmentRequestProcessed:
       name: ReassignmentRequestProcessed
@@ -467,7 +467,7 @@ components:
       summary: Event published when a reassignment request is processed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentRequestProcessedPayload'
+        $ref: "#/components/schemas/ReassignmentRequestProcessedPayload"
 
     ReassignmentApplied:
       name: ReassignmentApplied
@@ -475,7 +475,7 @@ components:
       summary: Event published when a reassignment is successfully applied
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentAppliedPayload'
+        $ref: "#/components/schemas/ReassignmentAppliedPayload"
 
     ReassignmentRequestCancelled:
       name: ReassignmentRequestCancelled
@@ -483,7 +483,7 @@ components:
       summary: Event published when a reassignment request is cancelled
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentRequestCancelledPayload'
+        $ref: "#/components/schemas/ReassignmentRequestCancelledPayload"
 
     ReassignmentRequestEscalated:
       name: ReassignmentRequestEscalated
@@ -491,7 +491,7 @@ components:
       summary: Event published when a reassignment request is escalated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentRequestEscalatedPayload'
+        $ref: "#/components/schemas/ReassignmentRequestEscalatedPayload"
 
     ReassignmentSuggestionRejected:
       name: ReassignmentSuggestionRejected
@@ -499,7 +499,7 @@ components:
       summary: Event published when a reassignment suggestion is rejected
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentSuggestionRejectedPayload'
+        $ref: "#/components/schemas/ReassignmentSuggestionRejectedPayload"
 
     ReassignmentQueueOptimized:
       name: ReassignmentQueueOptimized
@@ -507,7 +507,7 @@ components:
       summary: Event published when the reassignment queue is optimized
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentQueueOptimizedPayload'
+        $ref: "#/components/schemas/ReassignmentQueueOptimizedPayload"
 
     BulkReassignmentRequestsProcessed:
       name: BulkReassignmentRequestsProcessed
@@ -515,7 +515,7 @@ components:
       summary: Event published when bulk reassignment requests are processed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/BulkReassignmentRequestsProcessedPayload'
+        $ref: "#/components/schemas/BulkReassignmentRequestsProcessedPayload"
 
     ReassignmentRequestExpired:
       name: ReassignmentRequestExpired
@@ -523,7 +523,7 @@ components:
       summary: Event published when a reassignment request expires
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReassignmentRequestExpiredPayload'
+        $ref: "#/components/schemas/ReassignmentRequestExpiredPayload"
 
   schemas:
     DomainEvent:
@@ -563,7 +563,7 @@ components:
 
     ReservationCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -605,7 +605,7 @@ components:
 
     ReservationUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -630,7 +630,7 @@ components:
 
     ReservationCancelledPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -660,7 +660,7 @@ components:
 
     ReservationConfirmedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -683,7 +683,7 @@ components:
 
     ReservationCheckInPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -709,7 +709,7 @@ components:
 
     ReservationCheckOutPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -735,7 +735,7 @@ components:
 
     AvailabilityUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -761,7 +761,7 @@ components:
 
     AvailabilityBlockedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -796,7 +796,7 @@ components:
 
     AvailabilityUnblockedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -818,7 +818,7 @@ components:
 
     RecurringAvailabilityCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -850,7 +850,7 @@ components:
 
     ReservationConflictDetectedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -883,7 +883,7 @@ components:
 
     ReservationConflictResolvedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -910,7 +910,7 @@ components:
 
     WaitlistPositionChangedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -944,7 +944,7 @@ components:
     # Recurring Reservation Event Payloads
     RecurringReservationCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -981,7 +981,7 @@ components:
 
     RecurringReservationUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1006,7 +1006,7 @@ components:
 
     RecurringReservationCancelledPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1030,7 +1030,7 @@ components:
 
     RecurringReservationInstanceGeneratedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1054,7 +1054,7 @@ components:
 
     RecurringReservationConflictDetectedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1077,7 +1077,7 @@ components:
     # Waiting List Event Payloads
     WaitingListUserJoinedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1106,7 +1106,7 @@ components:
 
     WaitingListUserLeftPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1131,7 +1131,7 @@ components:
 
     WaitingListSlotAvailablePayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1164,7 +1164,7 @@ components:
 
     WaitingListPriorityEscalatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1194,7 +1194,7 @@ components:
     # Reassignment Event Payloads
     ReassignmentRequestCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1226,7 +1226,7 @@ components:
 
     ReassignmentRequestRespondedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1256,7 +1256,7 @@ components:
 
     ReassignmentAppliedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1286,7 +1286,7 @@ components:
 
     ReassignmentCancelledPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -1308,7 +1308,7 @@ components:
 
     ReassignmentEscalatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
