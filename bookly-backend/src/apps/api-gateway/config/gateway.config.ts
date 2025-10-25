@@ -44,7 +44,7 @@ export default registerAs('gateway', () => ({
       }
     },
     availability: {
-      url: process.env.AVAILABILITY_SERVICE_URL || 'http://localhost:3002',
+      url: process.env.AVAILABILITY_SERVICE_URL || 'http://localhost:3003',
       docsPath: 'api/docs-json',
       timeout: parseInt(process.env.AVAILABILITY_SERVICE_TIMEOUT, 10) || 3000,
       retries: parseInt(process.env.AVAILABILITY_SERVICE_RETRIES, 10) || 3,
@@ -55,7 +55,7 @@ export default registerAs('gateway', () => ({
       },
     },
     resources: {
-      url: process.env.RESOURCES_SERVICE_URL || 'http://localhost:3003',
+      url: process.env.RESOURCES_SERVICE_URL || 'http://localhost:3002',
       docsPath: 'api/docs-json',
       timeout: parseInt(process.env.RESOURCES_SERVICE_TIMEOUT, 10) || 3000,
       retries: parseInt(process.env.RESOURCES_SERVICE_RETRIES, 10) || 3,

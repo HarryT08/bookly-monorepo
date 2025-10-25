@@ -8,14 +8,15 @@ set -e
 echo "🔧 Fixing microservice ports..."
 echo ""
 echo "❌ PROBLEMA IDENTIFICADO:"
-echo "   - resources-service estaba en puerto 3003 (debería ser 3002)"
-echo "   - availability-service estaba en puerto 3002 (debería ser 3003)"
+echo "   - resources-service main.ts: puerto 3003 → debería ser 3002"
+echo "   - availability-service main.ts: puerto 3002 → debería ser 3003"
+echo "   - API Gateway gateway.config.ts: puertos intercambiados"
 echo ""
 
 cd "$(dirname "$0")/.."
 
 echo "📋 Paso 1: Rebuild microservicios con puertos corregidos..."
-docker compose -f docker-compose.microservices.yml build resources-service availability-service
+docker compose -f docker-compose.microservices.yml build api-gateway resources-service availability-service
 
 echo ""
 echo "📋 Paso 2: Detener microservicios afectados..."

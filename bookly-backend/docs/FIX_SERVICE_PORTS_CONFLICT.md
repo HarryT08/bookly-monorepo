@@ -35,6 +35,14 @@ const port = configService.get<number>("resources.service.port", 3003);
 // ❌ availability-service/main.ts (línea 20)
 const port = configService.get<number>("availability.service.port", 3002);
 // Debería ser 3003
+
+// ❌ api-gateway/config/gateway.config.ts (líneas 47 y 58)
+availability: {
+  url: process.env.AVAILABILITY_SERVICE_URL || 'http://localhost:3002', // ❌ Debería ser 3003
+}
+resources: {
+  url: process.env.RESOURCES_SERVICE_URL || 'http://localhost:3003', // ❌ Debería ser 3002
+}
 ```
 
 **Resultado**:
@@ -51,11 +59,10 @@ const port = configService.get<number>("availability.service.port", 3002);
 
 ```typescript
 // ✅ DESPUÉS (Correcto)
-const port = configService.get<number>("PORT", 3002);
+const port = configService.get<number>("resources.service.port", 3002);
 ```
 
 **Beneficios**:
-- Usa variable de entorno `PORT` (consistente con otros servicios)
 - Puerto por defecto correcto: **3002**
 - Coincide con docker-compose configuration
 
@@ -65,15 +72,33 @@ const port = configService.get<number>("PORT", 3002);
 
 ```typescript
 // ✅ DESPUÉS (Correcto)
-const port = configService.get<number>("PORT", 3003);
+const port = configService.get<number>("availability.service.port", 3003);
 ```
 
 **Beneficios**:
-- Usa variable de entorno `PORT` (consistente con otros servicios)
 - Puerto por defecto correcto: **3003**
 - Coincide con docker-compose configuration
 
-### 3. Tabla de Puertos Correctos
+### 3. Corregir Puertos en API Gateway Config
+
+**Archivo**: `src/apps/api-gateway/config/gateway.config.ts`
+
+```typescript
+// ✅ DESPUÉS (Correcto)
+availability: {
+  url: process.env.AVAILABILITY_SERVICE_URL || 'http://localhost:3003', // ✅ Correcto
+}
+resources: {
+  url: process.env.RESOURCES_SERVICE_URL || 'http://localhost:3002', // ✅ Correcto
+}
+```
+
+**Beneficios**:
+- Load balancer usa puertos correctos
+- Health checks funcionan correctamente
+- Fallback a puertos correctos si no hay ENV vars
+
+### 4. Tabla de Puertos Correctos
 
 | Servicio | Puerto | Variable ENV | Hostname Docker |
 |----------|--------|--------------|-----------------|
