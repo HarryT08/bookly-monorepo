@@ -552,5 +552,17 @@ dev-diagnose: ## Diagnóstico completo de microservicios
 	@chmod +x scripts/check-microservices-logs.sh
 	@./scripts/check-microservices-logs.sh
 
+dev-security-check: ## Ver intentos de ataque (path traversal, etc)
+	@echo "🛡️ Revisando intentos de ataque..."
+	@echo ""
+	@echo "📊 Path Traversal attempts (últimos 50):"
+	@docker logs bookly-api-gateway 2>&1 | grep "Path Traversal" | tail -50 || echo "No attacks detected"
+	@echo ""
+	@echo "📊 IPs más activas en ataques:"
+	@docker logs bookly-api-gateway 2>&1 | grep "Path Traversal" | grep -oP 'ip":\s*"\K[^"]+' | sort | uniq -c | sort -rn | head -10 || echo "No attacks detected"
+	@echo ""
+	@echo "📊 Patrones de ataque más comunes:"
+	@docker logs bookly-api-gateway 2>&1 | grep "Path Traversal" | grep -oP 'url":\s*"\K[^"]+' | sort | uniq -c | sort -rn | head -10 || echo "No attacks detected"
+
 dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fix-rabbitmq-boot dev-fix-service-ports ## Aplicar todos los fixes
 	@echo "✅ Todos los fixes aplicados"

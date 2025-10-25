@@ -32,6 +32,7 @@ import { ProtocolTranslationService } from './infrastructure/services/protocol-t
 
 // Middleware
 import { GatewayMiddleware } from './infrastructure/middleware/gateway.middleware';
+import { PathTraversalGuardMiddleware } from './infrastructure/middleware/path-traversal-guard.middleware';
 
 // Controllers
 import { GatewayController, GatewayManagementController } from './infrastructure/controllers/gateway.controller';
@@ -123,6 +124,7 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
     ProtocolTranslationService,
 
     // Middleware
+    PathTraversalGuardMiddleware,
     GatewayMiddleware,
 
     // WebSocket Gateway
@@ -153,6 +155,11 @@ import { ApiGatewayService } from './application/services/api-gateway.service';
 })
 export class ApiGatewayModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Apply path traversal guard FIRST to block malicious requests early
+    consumer
+      .apply(PathTraversalGuardMiddleware)
+      .forRoutes('*');
+
     // Apply gateway middleware to all routes except management endpoints
     consumer
       .apply(GatewayMiddleware)
