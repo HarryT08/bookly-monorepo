@@ -584,7 +584,28 @@ dev-ssl-verify: ## Verificar certificados SSL
 	@echo "✅ Certificados verificados"
 
 dev-ssl-test: ## Probar conexión HTTPS
-	@echo "🌐 Probando conexión HTTPS a booklyapp.com..."
-	@curl -k -I https://booklyapp.com || echo "❌ No se pudo conectar a booklyapp.com"
+	@echo "🌐 Probando conexión HTTPS a bookly.com..."
+	@curl -k -I https://bookly.com || echo "❌ No se pudo conectar a bookly.com"
 	@echo ""
-	@curl -k -s https://booklyapp.com/nginx-health || echo "❌ Nginx health check falló"
+	@curl -k -s https://bookly.com/nginx-health || echo "❌ Nginx health check falló"
+
+# =============================================================================
+# GCP LOAD BALANCER
+# =============================================================================
+
+dev-setup-lb: ## Configurar Nginx para GCP Load Balancer
+	@echo "🔧 Configurando Nginx para Load Balancer..."
+	@chmod +x scripts/setup-loadbalancer-nginx.sh
+	@./scripts/setup-loadbalancer-nginx.sh
+
+dev-test-lb: ## Probar configuración con Load Balancer
+	@echo "🧪 Probando configuración con Load Balancer..."
+	@echo ""
+	@echo "📋 Health check local:"
+	@curl -s http://localhost/health || echo "❌ Health check falló"
+	@echo ""
+	@echo "📋 Nginx funcionando:"
+	@docker ps | grep nginx
+	@echo ""
+	@echo "⚠️  Para probar con Load Balancer:"
+	@echo "   curl -I https://booklyapp.com"
