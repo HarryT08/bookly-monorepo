@@ -1,10 +1,11 @@
 # HITO 3 - STOCKPILE SERVICE
+
 ## Aprobaciones y Validaciones Core
 
 **Versión:** 1.0.0  
 **Fecha:** 2025-09-01  
 **Puerto:** 3004  
-**Documentación API:** http://localhost:3004/api/docs  
+**Documentación API:** http://localhost:3004/api/docs
 
 ---
 
@@ -15,6 +16,7 @@ El Stockpile Service implementa el sistema completo de aprobaciones y validacion
 ## 🏗️ Arquitectura
 
 ### Estructura de Directorio
+
 ```
 src/apps/stockpile-service/
 ├── domain/
@@ -77,11 +79,13 @@ src/apps/stockpile-service/
 ### Patrones Arquitectónicos
 
 #### Clean Architecture + CQRS
+
 - **Domain Layer**: Lógica de workflows, aprobaciones y documentos
 - **Application Layer**: Casos de uso CQRS para aprobaciones y notificaciones
 - **Infrastructure Layer**: Generación PDF, integración WhatsApp/Email
 
 #### Event-Driven Architecture
+
 - **Approval Events**: `RequestSubmitted`, `RequestApproved`, `RequestRejected`
 - **Document Events**: `DocumentGenerated`, `DocumentSent`
 - **Notification Events**: `NotificationSent`, `DeliveryConfirmed`
@@ -89,6 +93,7 @@ src/apps/stockpile-service/
 ## 🚀 Funcionalidades Implementadas
 
 ### RF-20: Validar solicitudes de reserva
+
 - ✅ **Flujos Configurables**: Workflows personalizables por tipo de recurso
 - ✅ **Validación Automática**: Reglas de negocio automatizadas
 - ✅ **Escalamiento**: Aprobación automática a niveles superiores
@@ -129,6 +134,7 @@ src/apps/stockpile-service/
 ```
 
 ### RF-21: Generación automática de documentos
+
 - ✅ **Plantillas Configurables**: Templates personalizables por tipo
 - ✅ **Generación PDF**: Documentos oficiales con firma digital
 - ✅ **Variables Dinámicas**: Inserción automática de datos
@@ -146,23 +152,23 @@ src/apps/stockpile-service/
       <body>
         <h1>UNIVERSIDAD FRANCISCO DE PAULA SANTANDER</h1>
         <h2>CARTA DE APROBACIÓN DE RESERVA</h2>
-        
+
         <p>Fecha: {{currentDate}}</p>
         <p>Señor(a): {{user.fullName}}</p>
         <p>Programa: {{user.academicProgram}}</p>
-        
+
         <p>Por medio de la presente se APRUEBA la reserva del recurso:</p>
-        
+
         <ul>
           <li><strong>Recurso:</strong> {{resource.name}}</li>
           <li><strong>Fecha:</strong> {{reservation.startDate | date}}</li>
           <li><strong>Hora:</strong> {{reservation.startTime}} - {{reservation.endTime}}</li>
           <li><strong>Propósito:</strong> {{reservation.purpose}}</li>
         </ul>
-        
+
         <p>Aprobado por: {{approver.fullName}}</p>
         <p>Cargo: {{approver.role}}</p>
-        
+
         <div class="qr-code">{{qrCode}}</div>
       </body>
     </html>
@@ -174,12 +180,14 @@ src/apps/stockpile-service/
 ```
 
 ### RF-22: Notificación automática al solicitante
+
 - ✅ **Email**: Notificaciones por correo electrónico
 - ✅ **WhatsApp**: Integración con WhatsApp Business API
 - ✅ **SMS**: Mensajes de texto para notificaciones urgentes
 - ✅ **Push**: Notificaciones in-app en tiempo real
 
 ### RF-23: Pantalla de control para vigilancia
+
 - ✅ **Dashboard en Tiempo Real**: Estado actual de reservas
 - ✅ **Check-in/Check-out**: Validación de acceso con QR
 - ✅ **Lista de Accesos**: Reservas activas del día
@@ -223,30 +231,35 @@ src/apps/stockpile-service/
 ```
 
 ### RF-24: Configuración de flujos diferenciados
+
 - ✅ **Por Tipo de Recurso**: Workflows específicos por categoría
 - ✅ **Por Rol de Usuario**: Diferentes niveles de aprobación
 - ✅ **Por Horario**: Flujos especiales para horarios no académicos
 - ✅ **Por Capacidad**: Validaciones según aforo del evento
 
 ### RF-25: Registro y trazabilidad
+
 - ✅ **Auditoría Completa**: Historial detallado de cada decisión
 - ✅ **Timestamps**: Registro preciso de fechas y horas
 - ✅ **Usuarios**: Identificación de responsables
 - ✅ **Justificaciones**: Motivos de aprobación/rechazo
 
 ### RF-26: Check-in/check-out digital
+
 - ✅ **Códigos QR**: Generación automática por reserva
 - ✅ **Validación Móvil**: App para personal de vigilancia
 - ✅ **Geolocalización**: Verificación de ubicación
 - ✅ **Tolerancia**: Configuración de márgenes de tiempo
 
 ### RF-27: Integración con mensajería
+
 - ✅ **WhatsApp Business API**: Mensajes oficiales automatizados
 - ✅ **SMTP Seguro**: Envío de emails con autenticación
 - ✅ **Plantillas Multicanal**: Misma plantilla para múltiples canales
 - ✅ **Confirmación de Entrega**: Tracking de notificaciones
 
 ### RF-28: Notificaciones automáticas de cambios
+
 - ✅ **Cambios en Tiempo Real**: Notificación inmediata
 - ✅ **Escalamiento**: Notificación a supervisores
 - ✅ **Recordatorios**: Avisos preventivos
@@ -255,22 +268,23 @@ src/apps/stockpile-service/
 ## 📊 Modelo de Datos
 
 ### Entidad ApprovalFlow
+
 ```typescript
 export class ApprovalFlowEntity {
   id: string;
   name: string;
   description?: string;
-  resourceTypes: string[];        // Tipos de recurso aplicables
+  resourceTypes: string[]; // Tipos de recurso aplicables
   isActive: boolean;
-  
+
   // Configuración del flujo
   steps: ApprovalStep[];
-  defaultTimeout: number;         // horas
+  defaultTimeout: number; // horas
   escalationEnabled: boolean;
-  
+
   // Condiciones de activación
   conditions: FlowCondition[];
-  
+
   // Metadatos
   version: number;
   createdAt: Date;
@@ -281,95 +295,98 @@ export class ApprovalFlowEntity {
 interface ApprovalStep {
   stepNumber: number;
   name: string;
-  type: StepType;                // AUTOMATIC, MANUAL, CONDITIONAL
-  rules?: ValidationRule[];       // Para steps automáticos
-  approverRoles?: string[];      // Para steps manuales
-  requiredApprovals?: number;    // Número mínimo de aprobaciones
-  timeout?: number;              // horas
-  escalationTo?: string[];       // roles de escalamiento
+  type: StepType; // AUTOMATIC, MANUAL, CONDITIONAL
+  rules?: ValidationRule[]; // Para steps automáticos
+  approverRoles?: string[]; // Para steps manuales
+  requiredApprovals?: number; // Número mínimo de aprobaciones
+  timeout?: number; // horas
+  escalationTo?: string[]; // roles de escalamiento
   notificationTemplates?: string[];
 }
 ```
 
 ### Entidad DocumentTemplate
+
 ```typescript
 export class DocumentTemplateEntity {
   id: string;
   name: string;
   description?: string;
-  type: DocumentType;            // APPROVAL_LETTER, REJECTION_LETTER, QR_PASS
-  format: DocumentFormat;        // PDF, HTML, DOC
-  
+  type: DocumentType; // APPROVAL_LETTER, REJECTION_LETTER, QR_PASS
+  format: DocumentFormat; // PDF, HTML, DOC
+
   // Plantilla
-  template: string;              // HTML/Markdown template
-  variables: string[];           // Variables disponibles
-  styles?: string;               // CSS personalizado
-  
+  template: string; // HTML/Markdown template
+  variables: string[]; // Variables disponibles
+  styles?: string; // CSS personalizado
+
   // Configuración
-  resourceTypes?: string[];      // Tipos de recurso aplicables
-  approvalSteps?: number[];      // Pasos donde se usa
-  
+  resourceTypes?: string[]; // Tipos de recurso aplicables
+  approvalSteps?: number[]; // Pasos donde se usa
+
   // Firma digital
   requiresSignature: boolean;
   signatureTemplate?: string;
-  
+
   isActive: boolean;
   version: number;
 }
 ```
 
 ### Entidad NotificationTemplate
+
 ```typescript
 export class NotificationTemplateEntity {
   id: string;
   name: string;
   description?: string;
-  
+
   // Configuración de canales
   channels: NotificationChannel[];
-  
+
   // Plantillas por canal
   emailTemplate?: EmailTemplate;
   whatsappTemplate?: WhatsAppTemplate;
   smsTemplate?: SmsTemplate;
   pushTemplate?: PushTemplate;
-  
+
   // Triggers
   triggers: NotificationTrigger[];
-  
+
   // Configuración de envío
   priority: NotificationPriority;
   retryPolicy: RetryPolicy;
-  
+
   isActive: boolean;
 }
 ```
 
 ### Entidad ApprovalRequest
+
 ```typescript
 export class ApprovalRequestEntity {
   id: string;
   reservationId: string;
   flowId: string;
-  
+
   // Estado actual
-  status: ApprovalStatus;        // PENDING, APPROVED, REJECTED, ESCALATED
+  status: ApprovalStatus; // PENDING, APPROVED, REJECTED, ESCALATED
   currentStep: number;
-  
+
   // Historial de pasos
   stepHistory: ApprovalStepHistory[];
-  
+
   // Información de la solicitud
   requestData: ReservationRequest;
   submittedAt: Date;
   submittedBy: string;
-  
+
   // Documentos generados
   generatedDocuments: GeneratedDocument[];
-  
+
   // Notificaciones enviadas
   notificationLog: NotificationLog[];
-  
+
   // SLA
   slaDeadline?: Date;
   escalatedAt?: Date;
@@ -382,12 +399,15 @@ export class ApprovalRequestEntity {
 ### Flujos de Aprobación - `/approval-flows`
 
 #### GET /approval-flows
+
 Listar flujos de aprobación configurados
 
 #### POST /approval-flows
+
 Crear nuevo flujo de aprobación
 
 **Request Body:**
+
 ```json
 {
   "name": "Aprobación Laboratorios",
@@ -429,14 +449,17 @@ Crear nuevo flujo de aprobación
 ```
 
 #### PUT /approval-flows/:id
+
 Actualizar flujo existente
 
 ### Solicitudes de Aprobación - `/approval-requests`
 
 #### POST /approval-requests
+
 Enviar nueva solicitud de aprobación
 
 **Request Body:**
+
 ```json
 {
   "reservationId": "uuid-reserva",
@@ -452,12 +475,15 @@ Enviar nueva solicitud de aprobación
 ```
 
 #### GET /approval-requests/pending
+
 Obtener solicitudes pendientes de aprobación
 
 #### POST /approval-requests/:id/approve
+
 Aprobar solicitud
 
 **Request Body:**
+
 ```json
 {
   "comments": "Aprobado para uso académico",
@@ -471,23 +497,29 @@ Aprobar solicitud
 ```
 
 #### POST /approval-requests/:id/reject
+
 Rechazar solicitud
 
 #### GET /approval-requests/:id/history
+
 Obtener historial de una solicitud
 
 ### Plantillas de Documento - `/document-templates`
 
 #### GET /document-templates
+
 Listar plantillas disponibles
 
 #### POST /document-templates
+
 Crear nueva plantilla
 
 #### POST /document-templates/:id/generate
+
 Generar documento desde plantilla
 
 **Request Body:**
+
 ```json
 {
   "approvalRequestId": "uuid-solicitud",
@@ -503,9 +535,11 @@ Generar documento desde plantilla
 ### Dashboard de Vigilancia - `/security`
 
 #### GET /security/dashboard
+
 Obtener vista del dashboard de vigilancia
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -539,9 +573,11 @@ Obtener vista del dashboard de vigilancia
 ```
 
 #### POST /security/checkin
+
 Realizar check-in de reserva
 
 **Request Body:**
+
 ```json
 {
   "qrCode": "encoded-qr-data",
@@ -554,17 +590,21 @@ Realizar check-in de reserva
 ```
 
 #### POST /security/checkout
+
 Realizar check-out de reserva
 
 ### Notificaciones - `/notifications`
 
 #### GET /notifications/templates
+
 Listar plantillas de notificación
 
 #### POST /notifications/send
+
 Enviar notificación manual
 
 **Request Body:**
+
 ```json
 {
   "recipientId": "uuid-usuario",
@@ -583,6 +623,7 @@ Enviar notificación manual
 ## 🔄 Eventos de Dominio
 
 ### RequestSubmitted
+
 ```json
 {
   "eventType": "RequestSubmitted",
@@ -603,6 +644,7 @@ Enviar notificación manual
 ```
 
 ### RequestApproved
+
 ```json
 {
   "eventType": "RequestApproved",
@@ -619,6 +661,7 @@ Enviar notificación manual
 ```
 
 ### DocumentGenerated
+
 ```json
 {
   "eventType": "DocumentGenerated",
@@ -628,13 +671,14 @@ Enviar notificación manual
     "approvalRequestId": "uuid-solicitud",
     "templateId": "uuid-plantilla",
     "format": "PDF",
-    "fileUrl": "https://storage.bookly.com/docs/uuid-documento.pdf",
+    "fileUrl": "https://storage.booklyapp.com/docs/uuid-documento.pdf",
     "qrCode": "embedded-qr-data"
   }
 }
 ```
 
 ### NotificationSent
+
 ```json
 {
   "eventType": "NotificationSent",
@@ -654,12 +698,14 @@ Enviar notificación manual
 ## 🔒 Seguridad y Permisos
 
 ### Roles y Permisos de Aprobación
+
 - **Administrador General**: Aprobar cualquier solicitud, configurar flujos
 - **Administrador de Programa**: Aprobar solicitudes de su programa
 - **Coordinador**: Aprobar solicitudes de recursos básicos
 - **Personal de Vigilancia**: Check-in/check-out, dashboard de seguridad
 
 ### Validaciones de Seguridad
+
 - **Firma Digital**: Documentos oficiales con firma criptográfica
 - **QR Temporal**: Códigos con expiración automática
 - **Geolocalización**: Validación de ubicación para check-in
@@ -668,13 +714,14 @@ Enviar notificación manual
 ## 📊 Integración con Servicios Externos
 
 ### WhatsApp Business API
+
 ```typescript
 {
   "provider": "WhatsApp Business",
   "apiVersion": "v17.0",
   "features": [
     "Mensajes de texto",
-    "Documentos adjuntos", 
+    "Documentos adjuntos",
     "Confirmación de lectura",
     "Plantillas preaprobadas"
   ],
@@ -686,6 +733,7 @@ Enviar notificación manual
 ```
 
 ### Generación de PDF
+
 ```typescript
 {
   "engine": "Puppeteer + HTML/CSS",
@@ -700,6 +748,7 @@ Enviar notificación manual
 ```
 
 ### Email SMTP
+
 ```typescript
 {
   "provider": "SMTP Seguro",
@@ -716,6 +765,7 @@ Enviar notificación manual
 ## 🧪 Testing
 
 ### Pruebas de Flujos de Aprobación
+
 ```bash
 npm run test:approval:flows
 npm run test:approval:escalation
@@ -723,6 +773,7 @@ npm run test:approval:timeout
 ```
 
 ### Pruebas de Generación de Documentos
+
 ```bash
 npm run test:documents:pdf
 npm run test:documents:templates
@@ -730,6 +781,7 @@ npm run test:documents:qr
 ```
 
 ### Pruebas de Notificaciones
+
 ```bash
 npm run test:notifications:email
 npm run test:notifications:whatsapp
@@ -739,17 +791,20 @@ npm run test:notifications:delivery
 ## 📊 Métricas y KPIs
 
 ### Métricas de Aprobación
+
 - **Tiempo Promedio de Aprobación**: < 4 horas laborales
 - **Tasa de Aprobación**: 85%
 - **Escalamientos**: < 10% de solicitudes
 - **SLA Cumplimiento**: > 95%
 
 ### Métricas de Documentos
+
 - **Tiempo de Generación**: < 5 segundos
 - **Tasa de Error**: < 1%
 - **Formatos Soportados**: PDF, HTML, DOC
 
 ### Métricas de Notificaciones
+
 - **Tasa de Entrega**: > 98%
 - **Tiempo de Envío**: < 30 segundos
 - **Canales Activos**: Email, WhatsApp, SMS, Push

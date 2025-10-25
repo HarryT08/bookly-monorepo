@@ -112,7 +112,7 @@ curl http://localhost:3001/health
 # Test login
 curl -X POST http://localhost:3001/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@bookly.com","password":"admin123"}'
+  -d '{"email":"admin@booklyapp.com","password":"admin123"}'
 ```
 
 **Puerto**: 3001  

@@ -10,22 +10,27 @@ ACCESS_REFUSED - Login was refused using authentication mechanism PLAIN
 ## 🔍 Causas Identificadas
 
 ### 1. **Vhost Mismatch** ✅ CORREGIDO
+
 **Problema**: El vhost en definitions.json era `/bookly` pero la URL de conexión usa `bookly` (sin slash).
 
 **Error en logs**:
+
 ```
 [error] vhost bookly not found
 ```
 
 **Solución Aplicada**:
+
 - `definitions.json`: Cambiado de `"name": "/bookly"` → `"name": "bookly"`
 - `rabbitmq.conf`: Cambiado `default_vhost = /bookly` → `default_vhost = bookly`
 - `docker-compose.base.yml`: Cambiado `RABBITMQ_DEFAULT_VHOST: /bookly` → `bookly`
 
 ### 2. **Password Hash Incorrecto** ✅ CORREGIDO
+
 **Problema**: El archivo `definitions.json` tenía la contraseña en texto plano en lugar de hasheada.
 
 **Solución Aplicada**:
+
 ```json
 // ❌ Antes (incorrecto)
 {
@@ -44,27 +49,32 @@ ACCESS_REFUSED - Login was refused using authentication mechanism PLAIN
 ```
 
 ### 2. **Healthcheck Mejorado** ✅ APLICADO
+
 El healthcheck anterior solo verificaba que RabbitMQ respondiera, pero no que estuviera completamente funcional.
 
 **Nuevo healthcheck**:
+
 ```yaml
 healthcheck:
-  test: [
-    "CMD-SHELL",
-    "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms"
-  ]
+  test:
+    [
+      "CMD-SHELL",
+      "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms",
+    ]
   interval: 10s
   timeout: 10s
   retries: 10
-  start_period: 60s  # Da 60s para que RabbitMQ inicie y cargue definiciones
+  start_period: 60s # Da 60s para que RabbitMQ inicie y cargue definiciones
 ```
 
 ### 3. **Depends_on con Healthcheck** ✅ YA CONFIGURADO
+
 Todos los microservicios ya tienen:
+
 ```yaml
 depends_on:
   rabbitmq:
-    condition: service_healthy  # Esperan a que RabbitMQ esté healthy
+    condition: service_healthy # Esperan a que RabbitMQ esté healthy
 ```
 
 ## 🚀 Pasos para Aplicar en GCP
@@ -115,6 +125,7 @@ git pull origin main
 **⚠️ IMPORTANTE**: Necesitas eliminar el volumen de RabbitMQ para que cargue las nuevas definiciones.
 
 **Opción A - Comando Automatizado (Recomendado)**:
+
 ```bash
 # Ejecuta el fix completo automáticamente
 make dev-fix-rabbitmq
@@ -124,6 +135,7 @@ make microservices-restart
 ```
 
 **Opción B - Paso a Paso Manual**:
+
 ```bash
 # Detener RabbitMQ
 docker compose -f docker-compose.base.yml stop rabbitmq
@@ -193,7 +205,7 @@ docker exec bookly-rabbitmq rabbitmqctl list_exchanges -p /bookly
 
 # Debería mostrar exchanges como:
 # - bookly.events
-# - bookly.commands
+# - booklyapp.commands
 # - bookly.notifications
 # - bookly.dlx
 
@@ -319,6 +331,7 @@ EOF
 ### RabbitMQ Management UI
 
 Connections: **6+** (uno por cada microservicio)
+
 ```
 Connection name          User    Virtual host    State
 [email protected]/172.20.0.10    bookly  /bookly         running
@@ -357,10 +370,10 @@ bookly-reports-service      Up 5 minutes (healthy)
 
 ## 🎯 Resumen de Cambios
 
-| Archivo | Cambio | Razón |
-|---------|--------|-------|
-| `rabbitmq/definitions.json` | Password hash SHA256 | RabbitMQ requiere hash, no texto plano |
-| `docker-compose.base.yml` | Healthcheck mejorado | Verificar que RabbitMQ está completamente funcional |
+| Archivo                            | Cambio                          | Razón                                               |
+| ---------------------------------- | ------------------------------- | --------------------------------------------------- |
+| `rabbitmq/definitions.json`        | Password hash SHA256            | RabbitMQ requiere hash, no texto plano              |
+| `docker-compose.base.yml`          | Healthcheck mejorado            | Verificar que RabbitMQ está completamente funcional |
 | `docker-compose.microservices.yml` | api-gateway depends_on rabbitmq | Asegurar que RabbitMQ esté healthy antes de iniciar |
 
 ## 📝 Comandos de Verificación Rápida
@@ -377,6 +390,7 @@ docker exec bookly-rabbitmq rabbitmqctl list_connections --formatter json | jq '
 **Plan B**: Usar credenciales más simples sin hash
 
 1. Modificar `docker-compose.base.yml`:
+
 ```yaml
 environment:
   RABBITMQ_DEFAULT_USER: bookly
@@ -385,6 +399,7 @@ environment:
 ```
 
 2. Eliminar o comentar montaje de `definitions.json` temporalmente:
+
 ```yaml
 volumes:
   - rabbitmq_data:/var/lib/rabbitmq
@@ -393,6 +408,7 @@ volumes:
 ```
 
 3. Reiniciar y crear vhost/permisos manualmente:
+
 ```bash
 docker compose -f docker-compose.base.yml up -d rabbitmq
 

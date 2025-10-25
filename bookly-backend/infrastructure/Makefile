@@ -568,7 +568,7 @@ dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fi
 	@echo "✅ Todos los fixes aplicados"
 
 # =============================================================================
-# SSL PARA QA - bookly.com
+# SSL PARA QA - booklyapp.com
 # =============================================================================
 
 dev-ssl-generate: ## Generar certificados SSL autofirmados para QA
@@ -578,13 +578,13 @@ dev-ssl-generate: ## Generar certificados SSL autofirmados para QA
 
 dev-ssl-verify: ## Verificar certificados SSL
 	@echo "🔍 Verificando certificados SSL..."
-	@openssl x509 -in nginx/ssl/bookly.com.crt -noout -text | grep -A 2 "Subject:"
-	@openssl x509 -in nginx/ssl/bookly.com.crt -noout -dates
+	@openssl x509 -in nginx/ssl/booklyapp.com.crt -noout -text | grep -A 2 "Subject:"
+	@openssl x509 -in nginx/ssl/booklyapp.com.crt -noout -dates
 	@echo ""
 	@echo "✅ Certificados verificados"
 
 dev-ssl-test: ## Probar conexión HTTPS
-	@echo "🌐 Probando conexión HTTPS a bookly.com..."
-	@curl -k -I https://bookly.com || echo "❌ No se pudo conectar a bookly.com"
+	@echo "🌐 Probando conexión HTTPS a booklyapp.com..."
+	@curl -k -I https://booklyapp.com || echo "❌ No se pudo conectar a booklyapp.com"
 	@echo ""
-	@curl -k -s https://bookly.com/nginx-health || echo "❌ Nginx health check falló"
+	@curl -k -s https://booklyapp.com/nginx-health || echo "❌ Nginx health check falló"

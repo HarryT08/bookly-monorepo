@@ -75,7 +75,17 @@ services:
     depends_on:
       - mongodb-primary
     healthcheck:
-      test: ["CMD", "mongosh", "--host", "localhost", "--port", "27018", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--host",
+          "localhost",
+          "--port",
+          "27018",
+          "--eval",
+          "db.adminCommand('ping')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -114,7 +124,17 @@ services:
     depends_on:
       - mongodb-primary
     healthcheck:
-      test: ["CMD", "mongosh", "--host", "localhost", "--port", "27019", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--host",
+          "localhost",
+          "--port",
+          "27019",
+          "--eval",
+          "db.adminCommand('ping')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -127,21 +147,30 @@ services:
     hostname: redis
     restart: unless-stopped
     command: [
-      "redis-server",
-      "--requirepass", "${REDIS_PASSWORD:-bookly123}",
-      "--appendonly", "yes",
-      "--appendfsync", "everysec",
-      "--maxmemory", "512mb",
-      "--maxmemory-policy", "allkeys-lru",
-      # TCP keepalive for stable connections
-      "--tcp-keepalive", "60",
-      # Timeout for idle clients (0 = never timeout)
-      "--timeout", "0",
-      # Max number of clients
-      "--maxclients", "10000",
-      # TCP backlog
-      "--tcp-backlog", "511"
-    ]
+        "redis-server",
+        "--requirepass",
+        "${REDIS_PASSWORD:-bookly123}",
+        "--appendonly",
+        "yes",
+        "--appendfsync",
+        "everysec",
+        "--maxmemory",
+        "512mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+        # TCP keepalive for stable connections
+        "--tcp-keepalive",
+        "60",
+        # Timeout for idle clients (0 = never timeout)
+        "--timeout",
+        "0",
+        # Max number of clients
+        "--maxclients",
+        "10000",
+        # TCP backlog
+        "--tcp-backlog",
+        "511",
+      ]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
     ports:
@@ -170,7 +199,7 @@ services:
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-bookly}
       RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-bookly-cookie-secret}
     ports:
-      - "5672:5672"   # AMQP port
+      - "5672:5672" # AMQP port
       - "15672:15672" # Management UI
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
@@ -179,14 +208,15 @@ services:
     networks:
       - bookly-network
     healthcheck:
-      test: [
-        "CMD-SHELL",
-        "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms"
-      ]
+      test:
+        [
+          "CMD-SHELL",
+          "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms",
+        ]
       interval: 15s
       timeout: 15s
       retries: 15
-      start_period: 120s  # RabbitMQ needs more time for all boot steps
+      start_period: 120s # RabbitMQ needs more time for all boot steps
 
   # Nginx como reverse proxy y API Gateway con SSL
   nginx:
@@ -197,9 +227,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "80:80"       # HTTP
-      - "443:443"     # HTTPS para bookly.com
-      - "8080:8080"   # Management port
+      - "80:80" # HTTP
+      - "443:443" # HTTPS para booklyapp.com
+      - "8080:8080" # Management port
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
@@ -212,7 +242,15 @@ services:
       - redis
       - rabbitmq
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health || true"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/health || true",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -223,7 +261,7 @@ services:
     image: mongo:7.0
     container_name: bookly-mongodb-init
     hostname: mongodb-init
-    restart: "no"  # Solo ejecutar una vez
+    restart: "no" # Solo ejecutar una vez
     command: ["/bin/bash", "/scripts/init-replica-auto.sh"]
     volumes:
       - ./mongodb/init-replica-auto.sh:/scripts/init-replica-auto.sh:ro

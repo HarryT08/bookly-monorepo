@@ -7,7 +7,7 @@ info:
     This service manages physical resources (rooms, equipment, etc.), categories, and academic programs.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -15,7 +15,7 @@ info:
 servers:
   - url: http://localhost:3000/resources
     description: Development server
-  - url: https://api.bookly.com/resources
+  - url: https://api.booklyapp.com/resources
     description: Production server
 
 security:
@@ -56,7 +56,7 @@ paths:
           in: query
           description: Filter by status
           schema:
-            $ref: '#/components/schemas/ResourceStatus'
+            $ref: "#/components/schemas/ResourceStatus"
         - name: isActive
           in: query
           description: Filter by active status
@@ -76,7 +76,7 @@ paths:
             default: 10
             maximum: 100
       responses:
-        '200':
+        "200":
           description: Resources retrieved successfully
           content:
             application/json:
@@ -86,17 +86,17 @@ paths:
                   resources:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ResourceDto'
+                      $ref: "#/components/schemas/ResourceDto"
                   total:
                     type: integer
                   page:
                     type: integer
                   limit:
                     type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
     post:
       tags:
@@ -110,20 +110,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateResourceDto'
+              $ref: "#/components/schemas/CreateResourceDto"
       responses:
-        '201':
+        "201":
           description: Resource created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: "#/components/schemas/ResourceDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /resources/{id}:
     get:
@@ -141,14 +141,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Resource retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ResourceDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags:
@@ -169,16 +169,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateResourceDto'
+              $ref: "#/components/schemas/UpdateResourceDto"
       responses:
-        '200':
+        "200":
           description: Resource updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ResourceDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       tags:
@@ -195,10 +195,10 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: Resource deleted successfully
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /resources/bulk-import:
     post:
@@ -220,7 +220,7 @@ paths:
                   format: binary
                   description: CSV file with resource data
       responses:
-        '200':
+        "200":
           description: Resources imported successfully
           content:
             application/json:
@@ -268,7 +268,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Categories retrieved successfully
           content:
             application/json:
@@ -278,7 +278,7 @@ paths:
                   categories:
                     type: array
                     items:
-                      $ref: '#/components/schemas/CategoryDto'
+                      $ref: "#/components/schemas/CategoryDto"
                   total:
                     type: integer
 
@@ -294,14 +294,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCategoryDto'
+              $ref: "#/components/schemas/CreateCategoryDto"
       responses:
-        '201':
+        "201":
           description: Category created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryDto'
+                $ref: "#/components/schemas/CategoryDto"
 
   /categories/{id}:
     get:
@@ -319,12 +319,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Category retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryDto'
+                $ref: "#/components/schemas/CategoryDto"
 
     put:
       tags:
@@ -345,14 +345,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCategoryDto'
+              $ref: "#/components/schemas/UpdateCategoryDto"
       responses:
-        '200':
+        "200":
           description: Category updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryDto'
+                $ref: "#/components/schemas/CategoryDto"
 
     delete:
       tags:
@@ -369,7 +369,7 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: Category deleted successfully
 
   # Program Management
@@ -405,7 +405,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Programs retrieved successfully
           content:
             application/json:
@@ -415,7 +415,7 @@ paths:
                   programs:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ProgramDto'
+                      $ref: "#/components/schemas/ProgramDto"
                   total:
                     type: integer
 
@@ -431,14 +431,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateProgramDto'
+              $ref: "#/components/schemas/CreateProgramDto"
       responses:
-        '201':
+        "201":
           description: Program created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProgramDto'
+                $ref: "#/components/schemas/ProgramDto"
 
   /programs/{id}:
     get:
@@ -456,12 +456,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Program retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProgramDto'
+                $ref: "#/components/schemas/ProgramDto"
 
     put:
       tags:
@@ -482,14 +482,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateProgramDto'
+              $ref: "#/components/schemas/UpdateProgramDto"
       responses:
-        '200':
+        "200":
           description: Program updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProgramDto'
+                $ref: "#/components/schemas/ProgramDto"
 
     delete:
       tags:
@@ -506,7 +506,7 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: Program deleted successfully
 
 components:
@@ -549,7 +549,7 @@ components:
         description:
           type: string
         type:
-          $ref: '#/components/schemas/ResourceType'
+          $ref: "#/components/schemas/ResourceType"
         categoryId:
           type: string
         programId:
@@ -559,7 +559,7 @@ components:
         capacity:
           type: integer
         status:
-          $ref: '#/components/schemas/ResourceStatus'
+          $ref: "#/components/schemas/ResourceStatus"
         attributes:
           type: object
           description: Key-value pairs for resource-specific attributes
@@ -577,9 +577,9 @@ components:
           type: string
           format: date-time
         category:
-          $ref: '#/components/schemas/CategoryDto'
+          $ref: "#/components/schemas/CategoryDto"
         program:
-          $ref: '#/components/schemas/ProgramDto'
+          $ref: "#/components/schemas/ProgramDto"
 
     CategoryDto:
       type: object
@@ -646,7 +646,7 @@ components:
         description:
           type: string
         type:
-          $ref: '#/components/schemas/ResourceType'
+          $ref: "#/components/schemas/ResourceType"
         categoryId:
           type: string
         programId:
@@ -677,7 +677,7 @@ components:
           type: integer
           minimum: 1
         status:
-          $ref: '#/components/schemas/ResourceStatus'
+          $ref: "#/components/schemas/ResourceStatus"
         attributes:
           type: object
         availabilityRules:
@@ -781,7 +781,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "RSRC-0400"
             message: "Invalid request parameters"
@@ -795,7 +795,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "RSRC-0401"
             message: "Authentication required"
@@ -809,7 +809,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "RSRC-0403"
             message: "Insufficient permissions"
@@ -823,7 +823,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "RSRC-0404"
             message: "Resource not found"
@@ -837,7 +837,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "RSRC-0409"
             message: "Resource conflict"
@@ -851,7 +851,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "RSRC-0500"
             message: "Internal server error"

@@ -1,14 +1,14 @@
-# 🔐 SSL para QA - bookly.com
+# 🔐 SSL para QA - booklyapp.com
 
-Configuración de SSL para el ambiente de QA en bookly.com (IP: 35.209.124.62)
+Configuración de SSL para el ambiente de QA en booklyapp.com (IP: 35.209.124.62)
 
 ## 🎯 Objetivo
 
-Permitir acceso HTTPS a bookly.com en el servidor QA con certificados SSL autofirmados.
+Permitir acceso HTTPS a booklyapp.com en el servidor QA con certificados SSL autofirmados.
 
 ## 📋 Pre-requisitos
 
-✅ DNS configurado: `bookly.com` → `35.209.124.62`  
+✅ DNS configurado: `booklyapp.com` → `35.209.124.62`  
 ✅ Firewall GCP: puertos 80 y 443 abiertos  
 ✅ Microservicios funcionando: `make dev-full`  
 ✅ API Gateway accesible en red interna
@@ -23,8 +23,9 @@ make dev-ssl-generate
 ```
 
 Esto genera:
-- `nginx/ssl/bookly.com.key` - Clave privada
-- `nginx/ssl/bookly.com.crt` - Certificado autofirmado (válido 365 días)
+
+- `nginx/ssl/booklyapp.com.key` - Clave privada
+- `nginx/ssl/booklyapp.com.crt` - Certificado autofirmado (válido 365 días)
 
 ### **Paso 2: Iniciar Stack Completo**
 
@@ -33,6 +34,7 @@ make dev-full
 ```
 
 Este comando inicia:
+
 - ✅ Servicios base (MongoDB, Redis, RabbitMQ)
 - ✅ Microservicios (Auth, Resources, Availability, Stockpile, Reports)
 - ✅ API Gateway
@@ -48,23 +50,26 @@ make dev-ssl-verify
 make dev-ssl-test
 
 # O manualmente:
-curl -k https://bookly.com/nginx-health
-curl -k https://bookly.com/api/v1/health
+curl -k https://booklyapp.com/nginx-health
+curl -k https://booklyapp.com/api/v1/health
 ```
 
 ## 🌐 URLs de Acceso
 
 ### HTTPS (Recomendado)
-- **API**: `https://bookly.com/api/v1/`
-- **Health**: `https://bookly.com/health`
-- **Docs**: `https://bookly.com/api/docs`
+
+- **API**: `https://booklyapp.com/api/v1/`
+- **Health**: `https://booklyapp.com/health`
+- **Docs**: `https://booklyapp.com/api/docs`
 
 ### HTTP (Redirige a HTTPS)
-- `http://bookly.com` → `https://bookly.com`
+
+- `http://booklyapp.com` → `https://booklyapp.com`
 
 ### Management (Solo interno)
-- `http://bookly.com:8080/management/auth`
-- `http://bookly.com:8080/management/resources`
+
+- `http://booklyapp.com:8080/management/auth`
+- `http://booklyapp.com:8080/management/resources`
 
 ## ⚠️ Advertencia de Certificado
 
@@ -80,17 +85,21 @@ NET::ERR_CERT_AUTHORITY_INVALID
 ### Cómo Aceptar el Certificado
 
 #### Chrome/Edge
+
 1. Clic en "Avanzado"
-2. Clic en "Ir a bookly.com (no seguro)"
+2. Clic en "Ir a booklyapp.com (no seguro)"
 
 #### Firefox
+
 1. Clic en "Avanzado"
 2. Clic en "Aceptar el riesgo y continuar"
 
 #### curl (comandos)
+
 Usar flag `-k` o `--insecure`:
+
 ```bash
-curl -k https://bookly.com/api/v1/health
+curl -k https://booklyapp.com/api/v1/health
 ```
 
 ## 🔍 Verificación de Funcionamiento
@@ -106,7 +115,7 @@ docker ps | grep bookly-nginx
 
 ```bash
 docker exec bookly-nginx ls -la /etc/nginx/ssl/
-# Debe mostrar: bookly.com.crt, bookly.com.key
+# Debe mostrar: booklyapp.com.crt, booklyapp.com.key
 ```
 
 ### 3. Nginx puede conectar a API Gateway
@@ -119,14 +128,14 @@ docker exec bookly-nginx wget -q -O- http://api-gateway:3000/health
 ### 4. HTTPS funciona externamente
 
 ```bash
-curl -k -I https://bookly.com
+curl -k -I https://booklyapp.com
 # Debe retornar: HTTP/2 301 (redirect a HTTPS) o HTTP/2 200
 ```
 
 ### 5. API Gateway responde
 
 ```bash
-curl -k -s https://bookly.com/api/v1/health | jq '.status'
+curl -k -s https://booklyapp.com/api/v1/health | jq '.status'
 # Debe retornar: "ok"
 ```
 
@@ -135,6 +144,7 @@ curl -k -s https://bookly.com/api/v1/health | jq '.status'
 ### Problema: "Connection refused" en puerto 443
 
 **Solución**:
+
 ```bash
 # Verificar que Nginx esté corriendo
 docker ps | grep nginx
@@ -149,6 +159,7 @@ docker restart bookly-nginx
 ### Problema: "SSL certificate problem"
 
 **Solución**:
+
 ```bash
 # Regenerar certificados
 make dev-ssl-generate
@@ -162,6 +173,7 @@ docker restart bookly-nginx
 **Causa**: Nginx usa `api-gateway:3000` en red Docker interna
 
 **Solución**:
+
 ```bash
 # Verificar que API Gateway esté en la misma red
 docker network inspect infrastructure_bookly-network | grep api-gateway
@@ -174,6 +186,7 @@ docker network inspect infrastructure_bookly-network | grep api-gateway
 **Causa**: API Gateway no está funcionando
 
 **Solución**:
+
 ```bash
 # Verificar health de API Gateway
 docker exec bookly-api-gateway wget -q -O- http://localhost:3000/health
@@ -190,7 +203,7 @@ docker restart bookly-api-gateway
 ```
 Internet
     ↓
-DNS: bookly.com → 35.209.124.62
+DNS: booklyapp.com → 35.209.124.62
     ↓
 GCP Firewall (puertos 80, 443)
     ↓
@@ -209,21 +222,24 @@ Microservicios (red interna)
 ## 🔐 Seguridad
 
 ### Certificados Autofirmados (QA)
+
 - ✅ Válidos por 365 días
-- ✅ Incluyen SANs: `bookly.com`, `www.bookly.com`, `*.bookly.com`
-- ⚠️  NO validados por CA (Certificate Authority)
-- ⚠️  Navegadores muestran advertencia
+- ✅ Incluyen SANs: `booklyapp.com`, `www.booklyapp.com`, `*.booklyapp.com`
+- ⚠️ NO validados por CA (Certificate Authority)
+- ⚠️ Navegadores muestran advertencia
 
 ### Para Producción
+
 Usar **Let's Encrypt** con certbot para certificados válidos:
+
 ```bash
 # Instalar certbot
 docker run -it --rm \
   -v ./nginx/ssl:/etc/letsencrypt \
   certbot/certbot certonly \
   --standalone \
-  -d bookly.com \
-  -d www.bookly.com
+  -d booklyapp.com \
+  -d www.booklyapp.com
 ```
 
 ## 📋 Comandos Útiles
@@ -253,20 +269,20 @@ docker exec bookly-nginx wget -q -O- http://api-gateway:3000/health
 
 ## ✅ Checklist de Configuración
 
-- [ ] DNS apunta a 35.209.124.62: `dig bookly.com`
+- [ ] DNS apunta a 35.209.124.62: `dig booklyapp.com`
 - [ ] Firewall permite 80 y 443
 - [ ] Certificados generados: `ls nginx/ssl/`
 - [ ] Stack iniciado: `make dev-full`
 - [ ] Nginx funcionando: `docker ps | grep nginx`
 - [ ] Puerto 443 expuesto: `netstat -tulpn | grep 443`
-- [ ] HTTPS responde: `curl -k https://bookly.com/nginx-health`
-- [ ] API Gateway accesible: `curl -k https://bookly.com/api/v1/health`
+- [ ] HTTPS responde: `curl -k https://booklyapp.com/nginx-health`
+- [ ] API Gateway accesible: `curl -k https://booklyapp.com/api/v1/health`
 
 ## 📚 Archivos de Configuración
 
 - `docker-compose.base.yml` - Nginx con puerto 443 y volumen SSL
 - `nginx/nginx.conf` - Configuración principal, upstream a `api-gateway:3000`
-- `nginx/conf.d/bookly-qa.conf` - Configuración SSL para bookly.com
+- `nginx/conf.d/bookly-qa.conf` - Configuración SSL para booklyapp.com
 - `scripts/generate-ssl-certificates-qa.sh` - Script para generar certificados
 - `Makefile` - Comandos `dev-ssl-*`
 
@@ -274,5 +290,5 @@ docker exec bookly-nginx wget -q -O- http://api-gateway:3000/health
 
 **Última actualización**: 2025-10-24  
 **Ambiente**: QA  
-**Dominio**: bookly.com  
+**Dominio**: booklyapp.com  
 **IP**: 35.209.124.62

@@ -7,7 +7,7 @@ info:
     This service handles reservation scheduling, availability management, calendar integration, and conflict resolution.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -15,7 +15,7 @@ info:
 servers:
   - url: http://localhost:3000/availability
     description: Development server
-  - url: https://api.bookly.com/availability
+  - url: https://api.booklyapp.com/availability
     description: Production server
 
 security:
@@ -46,7 +46,7 @@ paths:
           in: query
           description: Filter by status
           schema:
-            $ref: '#/components/schemas/ReservationStatus'
+            $ref: "#/components/schemas/ReservationStatus"
         - name: startDate
           in: query
           description: Filter reservations starting from this date
@@ -73,7 +73,7 @@ paths:
             default: 10
             maximum: 100
       responses:
-        '200':
+        "200":
           description: Reservations retrieved successfully
           content:
             application/json:
@@ -83,17 +83,17 @@ paths:
                   reservations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReservationDto'
+                      $ref: "#/components/schemas/ReservationDto"
                   total:
                     type: integer
                   page:
                     type: integer
                   limit:
                     type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
     post:
       tags:
@@ -107,18 +107,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReservationDto'
+              $ref: "#/components/schemas/CreateReservationDto"
       responses:
-        '201':
+        "201":
           description: Reservation created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/ReservationDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /reservations/{id}:
     get:
@@ -136,14 +136,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Reservation retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags:
@@ -164,18 +164,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateReservationDto'
+              $ref: "#/components/schemas/UpdateReservationDto"
       responses:
-        '200':
+        "200":
           description: Reservation updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
     delete:
       tags:
@@ -201,14 +201,14 @@ paths:
                   type: string
                   description: Reason for cancellation
       responses:
-        '200':
+        "200":
           description: Reservation cancelled successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /reservations/{id}/confirm:
     post:
@@ -226,12 +226,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Reservation confirmed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
+                $ref: "#/components/schemas/ReservationDto"
 
   /reservations/{id}/check-in:
     post:
@@ -258,12 +258,12 @@ paths:
                   type: object
                   description: Location data if available
       responses:
-        '200':
+        "200":
           description: Check-in successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
+                $ref: "#/components/schemas/ReservationDto"
 
   /reservations/{id}/check-out:
     post:
@@ -281,12 +281,12 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Check-out successful
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDto'
+                $ref: "#/components/schemas/ReservationDto"
 
   # Availability Management
   /availability:
@@ -328,7 +328,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Availability information retrieved successfully
           content:
             application/json:
@@ -338,11 +338,11 @@ paths:
                   available:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AvailabilitySlotDto'
+                      $ref: "#/components/schemas/AvailabilitySlotDto"
                   unavailable:
                     type: array
                     items:
-                      $ref: '#/components/schemas/UnavailabilityDto'
+                      $ref: "#/components/schemas/UnavailabilityDto"
 
   /availability/search:
     post:
@@ -357,9 +357,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AvailabilitySearchDto'
+              $ref: "#/components/schemas/AvailabilitySearchDto"
       responses:
-        '200':
+        "200":
           description: Search results retrieved successfully
           content:
             application/json:
@@ -369,11 +369,11 @@ paths:
                   results:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AvailabilityResultDto'
+                      $ref: "#/components/schemas/AvailabilityResultDto"
                   alternatives:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AlternativeSlotDto'
+                      $ref: "#/components/schemas/AlternativeSlotDto"
 
   /availability/calendar:
     get:
@@ -411,12 +411,12 @@ paths:
             enum: [day, week, month]
             default: week
       responses:
-        '200':
+        "200":
           description: Calendar data retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CalendarViewDto'
+                $ref: "#/components/schemas/CalendarViewDto"
 
   # Recurring Reservations
   /reservations/recurring:
@@ -432,9 +432,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRecurringReservationDto'
+              $ref: "#/components/schemas/CreateRecurringReservationDto"
       responses:
-        '201':
+        "201":
           description: Recurring reservations created successfully
           content:
             application/json:
@@ -447,11 +447,11 @@ paths:
                   reservations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReservationDto'
+                      $ref: "#/components/schemas/ReservationDto"
                   conflicts:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ConflictDto'
+                      $ref: "#/components/schemas/ConflictDto"
 
   /reservations/recurring/{seriesId}:
     get:
@@ -469,7 +469,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Recurring series retrieved successfully
           content:
             application/json:
@@ -481,7 +481,7 @@ paths:
                   reservations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReservationDto'
+                      $ref: "#/components/schemas/ReservationDto"
 
     put:
       tags:
@@ -502,9 +502,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateRecurringReservationDto'
+              $ref: "#/components/schemas/UpdateRecurringReservationDto"
       responses:
-        '200':
+        "200":
           description: Recurring series updated successfully
 
     delete:
@@ -522,7 +522,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Recurring series cancelled successfully
 
   # Waitlist Management
@@ -539,14 +539,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JoinWaitlistDto'
+              $ref: "#/components/schemas/JoinWaitlistDto"
       responses:
-        '201':
+        "201":
           description: Added to waitlist successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WaitlistEntryDto'
+                $ref: "#/components/schemas/WaitlistEntryDto"
 
   /waitlist/{id}:
     delete:
@@ -564,7 +564,7 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: Removed from waitlist successfully
 
   /waitlist/my-entries:
@@ -576,14 +576,14 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Waitlist entries retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/WaitlistEntryDto'
+                  $ref: "#/components/schemas/WaitlistEntryDto"
 
 components:
   securitySchemes:
@@ -638,7 +638,7 @@ components:
           type: string
           format: date-time
         status:
-          $ref: '#/components/schemas/ReservationStatus'
+          $ref: "#/components/schemas/ReservationStatus"
         purpose:
           type: string
         attendees:
@@ -716,7 +716,7 @@ components:
         availableSlots:
           type: array
           items:
-            $ref: '#/components/schemas/AvailabilitySlotDto'
+            $ref: "#/components/schemas/AvailabilitySlotDto"
         score:
           type: number
           description: Relevance score for the search
@@ -800,7 +800,7 @@ components:
         id:
           type: string
         type:
-          $ref: '#/components/schemas/ConflictType'
+          $ref: "#/components/schemas/ConflictType"
         description:
           type: string
         reservationId:
@@ -879,7 +879,7 @@ components:
         attendees:
           type: integer
         pattern:
-          $ref: '#/components/schemas/RecurrencePattern'
+          $ref: "#/components/schemas/RecurrencePattern"
         interval:
           type: integer
           description: Interval for recurrence (e.g., every 2 weeks)
@@ -1013,7 +1013,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0400"
             message: "Invalid request parameters"
@@ -1027,7 +1027,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0401"
             message: "Authentication required"
@@ -1041,7 +1041,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0403"
             message: "Insufficient permissions"
@@ -1055,7 +1055,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0404"
             message: "Resource not found"
@@ -1069,7 +1069,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0409"
             message: "Reservation conflict detected"
@@ -1083,7 +1083,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "AVAIL-0500"
             message: "Internal server error"

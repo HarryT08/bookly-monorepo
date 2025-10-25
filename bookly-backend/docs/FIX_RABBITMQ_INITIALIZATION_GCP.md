@@ -41,7 +41,7 @@ const isHealthy = this.rabbitmq !== null;
 ```yaml
 # ❌ ANTES: Solo 60 segundos de gracia
 healthcheck:
-  start_period: 60s  # Insuficiente para RabbitMQ
+  start_period: 60s # Insuficiente para RabbitMQ
   timeout: 10s
   retries: 10
 ```
@@ -49,6 +49,7 @@ healthcheck:
 ### Problema 3: Sin Métodos de Health Check en RabbitMQService
 
 El servicio no tenía métodos para verificar estado de conexión:
+
 - No había `isHealthy()`
 - No había `getConnectionState()`
 - No había `getChannel()`
@@ -110,6 +111,7 @@ getChannel(): Channel | null {
 ```
 
 **Beneficios**:
+
 - ✅ Verificación precisa del estado de conexión
 - ✅ Diferenciación entre estados: connected, connecting, disconnected
 - ✅ Acceso seguro al channel para operaciones
@@ -121,16 +123,16 @@ async onModuleInit() {
   try {
     const rabbitmqUrl = this.configService.get('RABBITMQ_URL');
     this.loggingService?.log(`Connecting to RabbitMQ at ${rabbitmqUrl}...`, 'RabbitMQService');
-    
+
     this.connection = await connect(rabbitmqUrl);
     this.loggingService?.log('✅ RabbitMQ connection established', 'RabbitMQService');
-    
+
     this.channel = await this.connection.createChannel();
     this.loggingService?.log('✅ RabbitMQ channel created', 'RabbitMQService');
 
     // Declare exchanges
     await this.channel.assertExchange('bookly.events', 'topic', { durable: true });
-    await this.channel.assertExchange('bookly.commands', 'direct', { durable: true });
+    await this.channel.assertExchange('booklyapp.commands', 'direct', { durable: true });
 
     this.loggingService?.log('✅ RabbitMQ connected successfully', 'RabbitMQService');
   } catch (error) {
@@ -142,6 +144,7 @@ async onModuleInit() {
 ```
 
 **Mejoras**:
+
 - ✅ No detiene el servicio si RabbitMQ no está listo
 - ✅ Logging detallado de cada paso de inicialización
 - ✅ Permite que health checks reporten el estado real
@@ -155,7 +158,7 @@ async checkRabbitMQ(key: string): Promise<HealthIndicatorResult> {
   try {
     // Verificar que el servicio existe
     if (!this.rabbitmq) {
-      return this.getStatus(key, false, { 
+      return this.getStatus(key, false, {
         message: 'RabbitMQ service not initialized'
       });
     }
@@ -163,16 +166,16 @@ async checkRabbitMQ(key: string): Promise<HealthIndicatorResult> {
     // Verificar estado de conexión
     if (!this.rabbitmq.isHealthy()) {
       const state = this.rabbitmq.getConnectionState();
-      
+
       // Más tolerante durante fase de conexión
       if (state === 'connecting') {
-        return this.getStatus(key, false, { 
+        return this.getStatus(key, false, {
           message: 'RabbitMQ is connecting',
           state
         });
       }
-      
-      return this.getStatus(key, false, { 
+
+      return this.getStatus(key, false, {
         message: 'RabbitMQ connection not healthy',
         state
       });
@@ -189,39 +192,39 @@ async checkRabbitMQ(key: string): Promise<HealthIndicatorResult> {
 
         const healthCheckPromise = (async () => {
           const channel = this.rabbitmq.getChannel();
-          
+
           if (!channel) {
             throw new Error('Channel not available');
           }
-          
+
           // ✅ Crear queue temporal para verificar funcionalidad
           const testQueue = `health-check-${Date.now()}-${Math.random()}`;
-          await channel.assertQueue(testQueue, { 
-            durable: false, 
+          await channel.assertQueue(testQueue, {
+            durable: false,
             autoDelete: true,
             expires: 10000  // Auto-eliminar después de 10 segundos
           });
-          
+
           // Cleanup (no fallar si esto falla)
           try {
             await channel.deleteQueue(testQueue);
           } catch (cleanupError) {
             // Ignorar errores de cleanup
           }
-          
+
           return true;
         })();
 
         const result = await Promise.race([healthCheckPromise, timeoutPromise]);
-        
+
         if (result) {
-          return this.getStatus(key, true, { 
+          return this.getStatus(key, true, {
             message: 'RabbitMQ connection is healthy',
             state: this.rabbitmq.getConnectionState(),
             attempt: attempt > 1 ? attempt : undefined
           });
         }
-        
+
         // ✅ Retry con espera
         if (attempt < 2) {
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -236,17 +239,17 @@ async checkRabbitMQ(key: string): Promise<HealthIndicatorResult> {
         }
       }
     }
-    
+
     // Falló después de 2 intentos
-    return this.getStatus(key, false, { 
+    return this.getStatus(key, false, {
       message: 'RabbitMQ health check failed after retries',
       error: lastError?.message,
       state: this.rabbitmq.getConnectionState()
     });
   } catch (error) {
     // Error inesperado
-    return this.getStatus(key, false, { 
-      message: 'RabbitMQ health check error', 
+    return this.getStatus(key, false, {
+      message: 'RabbitMQ health check error',
       error: error.message,
       state: this.rabbitmq?.getConnectionState() || 'unknown'
     });
@@ -255,6 +258,7 @@ async checkRabbitMQ(key: string): Promise<HealthIndicatorResult> {
 ```
 
 **Características**:
+
 - ✅ Hasta 2 reintentos automáticos
 - ✅ Timeout de 5 segundos
 - ✅ Espera de 500ms entre reintentos
@@ -269,17 +273,19 @@ async checkRabbitMQ(key: string): Promise<HealthIndicatorResult> {
 ```yaml
 rabbitmq:
   healthcheck:
-    test: [
-      "CMD-SHELL",
-      "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms"
-    ]
-    interval: 15s       # ✅ Aumentado de 10s a 15s
-    timeout: 15s        # ✅ Aumentado de 10s a 15s
-    retries: 15         # ✅ Aumentado de 10 a 15 reintentos
-    start_period: 120s  # ✅ CRÍTICO: Aumentado de 60s a 120s
+    test:
+      [
+        "CMD-SHELL",
+        "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms",
+      ]
+    interval: 15s # ✅ Aumentado de 10s a 15s
+    timeout: 15s # ✅ Aumentado de 10s a 15s
+    retries: 15 # ✅ Aumentado de 10 a 15 reintentos
+    start_period: 120s # ✅ CRÍTICO: Aumentado de 60s a 120s
 ```
 
 **Beneficios**:
+
 - ✅ 120 segundos de gracia para completar boot steps
 - ✅ Más tiempo entre checks (15s)
 - ✅ Más reintentos antes de marcar como unhealthy
@@ -374,6 +380,7 @@ docker inspect bookly-rabbitmq --format='{{.State.Health.Status}}'
 ### ANTES (❌ Falla Frecuentemente)
 
 **Configuración**:
+
 ```
 start_period: 60s (insuficiente)
 timeout: 10s
@@ -381,12 +388,14 @@ interval: 10s
 ```
 
 **Health Check**:
+
 ```typescript
 // Solo verifica si servicio existe
 const isHealthy = this.rabbitmq !== null;
 ```
 
 **Timeline**:
+
 ```
 0:00 - 🔄 RabbitMQ iniciando
 0:30 - 🔄 Ejecutando boot steps (50/100)
@@ -399,6 +408,7 @@ const isHealthy = this.rabbitmq !== null;
 ### DESPUÉS (✅ Estable)
 
 **Configuración**:
+
 ```
 start_period: 120s (suficiente para boot steps)
 timeout: 15s (más tolerante)
@@ -406,6 +416,7 @@ interval: 15s
 ```
 
 **Health Check**:
+
 ```typescript
 // Verificación real con retry logic
 - isHealthy() verifica connection y channel
@@ -414,6 +425,7 @@ interval: 15s
 ```
 
 **Timeline**:
+
 ```
 0:00 - 🔄 RabbitMQ iniciando
 0:30 - 🔄 Ejecutando boot steps (50/100)
@@ -478,13 +490,14 @@ docker stats bookly-rabbitmq --no-stream
 ```
 
 Editar `docker-compose.base.yml`:
+
 ```yaml
 rabbitmq:
   deploy:
     resources:
       limits:
-        memory: 2048M  # Aumentar de 1GB
-        cpus: '2.0'     # Más CPU
+        memory: 2048M # Aumentar de 1GB
+        cpus: "2.0" # Más CPU
 ```
 
 2. **Aumentar aún más el start_period**:
@@ -492,7 +505,7 @@ rabbitmq:
 ```yaml
 rabbitmq:
   healthcheck:
-    start_period: 180s  # 3 minutos
+    start_period: 180s # 3 minutos
 ```
 
 ### Si Health Checks Siguen Fallando
@@ -539,15 +552,15 @@ docker exec bookly-rabbitmq rabbitmqctl list_user_permissions bookly
 
 ## 🎯 Resumen del Fix
 
-| Aspecto | Antes | Después |
-|---------|-------|---------|
-| **Health Check** | `!== null` | `isHealthy()` + retry + queue test |
-| **Timeout** | 10s | 15s |
-| **Start Period** | 60s | 120s |
-| **Reintentos** | 10 | 15 |
-| **Fallo en Init** | Detiene servicio | Permite iniciar |
-| **Estado** | Sin detalles | connected/connecting/disconnected |
-| **Verificación** | Ninguna | assertQueue real |
+| Aspecto           | Antes            | Después                            |
+| ----------------- | ---------------- | ---------------------------------- |
+| **Health Check**  | `!== null`       | `isHealthy()` + retry + queue test |
+| **Timeout**       | 10s              | 15s                                |
+| **Start Period**  | 60s              | 120s                               |
+| **Reintentos**    | 10               | 15                                 |
+| **Fallo en Init** | Detiene servicio | Permite iniciar                    |
+| **Estado**        | Sin detalles     | connected/connecting/disconnected  |
+| **Verificación**  | Ninguna          | assertQueue real                   |
 
 ---
 

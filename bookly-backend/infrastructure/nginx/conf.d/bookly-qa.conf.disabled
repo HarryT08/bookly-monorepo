@@ -1,11 +1,11 @@
-# Configuración SSL para bookly.com en QA
+# Configuración SSL para booklyapp.com en QA
 # Reverse proxy a API Gateway en red Docker interna
 
 # Redirección HTTP → HTTPS
 server {
     listen 80;
     listen [::]:80;
-    server_name bookly.com www.bookly.com *.bookly.com;
+    server_name booklyapp.com www.booklyapp.com *.booklyapp.com;
 
     # Health check (sin redirección)
     location /nginx-health {
@@ -20,15 +20,15 @@ server {
     }
 }
 
-# Servidor HTTPS principal para bookly.com
+# Servidor HTTPS principal para booklyapp.com
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name bookly.com www.bookly.com *.bookly.com;
+    server_name booklyapp.com www.booklyapp.com *.booklyapp.com;
 
     # Certificados SSL
-    ssl_certificate /etc/nginx/ssl/bookly.com.crt;
-    ssl_certificate_key /etc/nginx/ssl/bookly.com.key;
+    ssl_certificate /etc/nginx/ssl/booklyapp.com.crt;
+    ssl_certificate_key /etc/nginx/ssl/booklyapp.com.key;
 
     # Configuración SSL moderna
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -57,8 +57,8 @@ server {
     }
 
     # Configuración de logs
-    access_log /var/log/nginx/bookly.com.access.log json;
-    error_log /var/log/nginx/bookly.com.error.log warn;
+    access_log /var/log/nginx/booklyapp.com.access.log json;
+    error_log /var/log/nginx/booklyapp.com.error.log warn;
 
     # Health check endpoint
     location /nginx-health {

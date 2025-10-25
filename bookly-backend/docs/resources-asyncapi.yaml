@@ -7,7 +7,7 @@ info:
     This service handles the management of physical resources (rooms, equipment, etc.), categories, and programs.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -20,7 +20,7 @@ servers:
     protocol: amqp
     description: Local RabbitMQ development server
   production:
-    host: rabbitmq.bookly.com:5672
+    host: rabbitmq.booklyapp.com:5672
     protocol: amqp
     description: Production RabbitMQ server
 
@@ -29,75 +29,75 @@ channels:
     description: Channel for resource management events
     messages:
       resourceCreated:
-        $ref: '#/components/messages/ResourceCreated'
+        $ref: "#/components/messages/ResourceCreated"
       resourceUpdated:
-        $ref: '#/components/messages/ResourceUpdated'
+        $ref: "#/components/messages/ResourceUpdated"
       resourceDeleted:
-        $ref: '#/components/messages/ResourceDeleted'
+        $ref: "#/components/messages/ResourceDeleted"
       resourceStatusChanged:
-        $ref: '#/components/messages/ResourceStatusChanged'
+        $ref: "#/components/messages/ResourceStatusChanged"
       resourceMaintenanceScheduled:
-        $ref: '#/components/messages/ResourceMaintenanceScheduled'
+        $ref: "#/components/messages/ResourceMaintenanceScheduled"
 
   category-management:
     description: Channel for category management events
     messages:
       categoryCreated:
-        $ref: '#/components/messages/CategoryCreated'
+        $ref: "#/components/messages/CategoryCreated"
       categoryUpdated:
-        $ref: '#/components/messages/CategoryUpdated'
+        $ref: "#/components/messages/CategoryUpdated"
       categoryDeleted:
-        $ref: '#/components/messages/CategoryDeleted'
+        $ref: "#/components/messages/CategoryDeleted"
 
   program-management:
     description: Channel for program management events
     messages:
       programCreated:
-        $ref: '#/components/messages/ProgramCreated'
+        $ref: "#/components/messages/ProgramCreated"
       programUpdated:
-        $ref: '#/components/messages/ProgramUpdated'
+        $ref: "#/components/messages/ProgramUpdated"
       programDeleted:
-        $ref: '#/components/messages/ProgramDeleted'
+        $ref: "#/components/messages/ProgramDeleted"
 
 operations:
   publishResourceCreated:
     action: send
     channel:
-      $ref: '#/channels/resource-management'
+      $ref: "#/channels/resource-management"
     messages:
-      - $ref: '#/channels/resource-management/messages/resourceCreated'
+      - $ref: "#/channels/resource-management/messages/resourceCreated"
     description: Published when a new resource is created
 
   publishResourceUpdated:
     action: send
     channel:
-      $ref: '#/channels/resource-management'
+      $ref: "#/channels/resource-management"
     messages:
-      - $ref: '#/channels/resource-management/messages/resourceUpdated'
+      - $ref: "#/channels/resource-management/messages/resourceUpdated"
     description: Published when a resource is updated
 
   publishResourceDeleted:
     action: send
     channel:
-      $ref: '#/channels/resource-management'
+      $ref: "#/channels/resource-management"
     messages:
-      - $ref: '#/channels/resource-management/messages/resourceDeleted'
+      - $ref: "#/channels/resource-management/messages/resourceDeleted"
     description: Published when a resource is deleted
 
   publishCategoryCreated:
     action: send
     channel:
-      $ref: '#/channels/category-management'
+      $ref: "#/channels/category-management"
     messages:
-      - $ref: '#/channels/category-management/messages/categoryCreated'
+      - $ref: "#/channels/category-management/messages/categoryCreated"
     description: Published when a new category is created
 
   publishProgramCreated:
     action: send
     channel:
-      $ref: '#/channels/program-management'
+      $ref: "#/channels/program-management"
     messages:
-      - $ref: '#/channels/program-management/messages/programCreated'
+      - $ref: "#/channels/program-management/messages/programCreated"
     description: Published when a new program is created
 
 components:
@@ -108,7 +108,7 @@ components:
       summary: Event published when a new resource is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ResourceCreatedPayload'
+        $ref: "#/components/schemas/ResourceCreatedPayload"
 
     ResourceUpdated:
       name: ResourceUpdated
@@ -116,7 +116,7 @@ components:
       summary: Event published when a resource is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ResourceUpdatedPayload'
+        $ref: "#/components/schemas/ResourceUpdatedPayload"
 
     ResourceDeleted:
       name: ResourceDeleted
@@ -124,7 +124,7 @@ components:
       summary: Event published when a resource is deleted
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ResourceDeletedPayload'
+        $ref: "#/components/schemas/ResourceDeletedPayload"
 
     ResourceStatusChanged:
       name: ResourceStatusChanged
@@ -132,7 +132,7 @@ components:
       summary: Event published when a resource status changes
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ResourceStatusChangedPayload'
+        $ref: "#/components/schemas/ResourceStatusChangedPayload"
 
     ResourceMaintenanceScheduled:
       name: ResourceMaintenanceScheduled
@@ -140,7 +140,7 @@ components:
       summary: Event published when maintenance is scheduled for a resource
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ResourceMaintenanceScheduledPayload'
+        $ref: "#/components/schemas/ResourceMaintenanceScheduledPayload"
 
     CategoryCreated:
       name: CategoryCreated
@@ -148,7 +148,7 @@ components:
       summary: Event published when a new category is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/CategoryCreatedPayload'
+        $ref: "#/components/schemas/CategoryCreatedPayload"
 
     CategoryUpdated:
       name: CategoryUpdated
@@ -156,7 +156,7 @@ components:
       summary: Event published when a category is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/CategoryUpdatedPayload'
+        $ref: "#/components/schemas/CategoryUpdatedPayload"
 
     CategoryDeleted:
       name: CategoryDeleted
@@ -164,7 +164,7 @@ components:
       summary: Event published when a category is deleted
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/CategoryDeletedPayload'
+        $ref: "#/components/schemas/CategoryDeletedPayload"
 
     ProgramCreated:
       name: ProgramCreated
@@ -172,7 +172,7 @@ components:
       summary: Event published when a new program is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ProgramCreatedPayload'
+        $ref: "#/components/schemas/ProgramCreatedPayload"
 
     ProgramUpdated:
       name: ProgramUpdated
@@ -180,7 +180,7 @@ components:
       summary: Event published when a program is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ProgramUpdatedPayload'
+        $ref: "#/components/schemas/ProgramUpdatedPayload"
 
     ProgramDeleted:
       name: ProgramDeleted
@@ -188,7 +188,7 @@ components:
       summary: Event published when a program is deleted
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ProgramDeletedPayload'
+        $ref: "#/components/schemas/ProgramDeletedPayload"
 
   schemas:
     DomainEvent:
@@ -228,7 +228,7 @@ components:
 
     ResourceCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -268,7 +268,7 @@ components:
 
     ResourceUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -293,7 +293,7 @@ components:
 
     ResourceDeletedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -318,7 +318,7 @@ components:
 
     ResourceStatusChangedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -347,7 +347,7 @@ components:
 
     ResourceMaintenanceScheduledPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -382,7 +382,7 @@ components:
 
     CategoryCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -407,7 +407,7 @@ components:
 
     CategoryUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -428,7 +428,7 @@ components:
 
     CategoryDeletedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -446,7 +446,7 @@ components:
 
     ProgramCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -474,7 +474,7 @@ components:
 
     ProgramUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -495,7 +495,7 @@ components:
 
     ProgramDeletedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:

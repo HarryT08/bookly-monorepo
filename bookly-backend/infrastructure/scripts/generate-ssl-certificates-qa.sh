@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Generar certificados SSL autofirmados para QA - bookly.com
+# Generar certificados SSL autofirmados para QA - booklyapp.com
 # Para producción se deben usar certificados de Let's Encrypt
 
 set -e
 
-DOMAIN="bookly.com"
+DOMAIN="booklyapp.com"
 SSL_DIR="nginx/ssl"
 DAYS=365
 

@@ -36,7 +36,7 @@
       "arguments": {}
     },
     {
-      "name": "bookly.commands",
+      "name": "booklyapp.commands",
       "vhost": "bookly",
       "type": "direct",
       "durable": true,
