@@ -1,0 +1,309 @@
+# Servicios de observabilidad para Bookly Backend: SigNoz, Sentry
+# Stack completo de monitoreo, logging, tracing y alertas
+
+services:
+  # ClickHouse para SigNoz (base de datos para métricas y trazas)
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.11.1.2711-alpine
+    container_name: bookly-clickhouse
+    hostname: clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: signoz_metrics
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-signoz}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-signoz123}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "9000:9000"   # ClickHouse native TCP port
+      - "8123:8123"   # ClickHouse HTTP port
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.xml:ro
+      - ./clickhouse/clickhouse-users.xml:/etc/clickhouse-server/users.xml:ro
+    networks:
+      - bookly-observability
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # SigNoz Query Service (backend de SigNoz)
+  signoz-query-service:
+    image: signoz/query-service:0.37.0
+    container_name: bookly-signoz-query
+    hostname: signoz-query-service
+    restart: unless-stopped
+    environment:
+      ClickHouseUrl: tcp://clickhouse:9000
+      STORAGE: clickhouse
+      GODEBUG: netdns=go
+      TELEMETRY_ENABLED: true
+      DEPLOYMENT_TYPE: docker-standalone-amd
+      JWT_SECRET_KEY: ${SIGNOZ_JWT_SECRET:-bookly-signoz-jwt-secret}
+      SIGNOZ_LOCAL_DB_PATH: /var/lib/signoz/signoz.db
+    ports:
+      - "8080:8080"
+    volumes:
+      - query_service_data:/var/lib/signoz
+    networks:
+      - bookly-observability
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # SigNoz Frontend (UI de observabilidad)
+  signoz-frontend:
+    image: signoz/frontend:0.37.0
+    container_name: bookly-signoz-frontend
+    hostname: signoz-frontend
+    restart: unless-stopped
+    environment:
+      FRONTEND_API_ENDPOINT: http://signoz-query-service:8080
+    ports:
+      - "3301:3301"
+    networks:
+      - bookly-observability
+      - bookly-network
+    depends_on:
+      signoz-query-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3301"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # OpenTelemetry Collector (colector de telemetría)
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.88.7-v0.37.0
+    container_name: bookly-otel-collector
+    hostname: otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/otel-collector-config.yaml"]
+    environment:
+      OTEL_RESOURCE_ATTRIBUTES: service.name=bookly-otel-collector,service.version=1.0.0
+    ports:
+      - "1777:1777"   # pprof extension
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "14250:14250" # Jaeger gRPC receiver
+      - "14268:14268" # Jaeger HTTP thrift receiver
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otelcol-contrib/otel-collector-config.yaml:ro
+    networks:
+      - bookly-observability
+      - bookly-network
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Alertmanager para alertas de SigNoz
+  alertmanager:
+    image: signoz/alertmanager:0.23.5
+    container_name: bookly-alertmanager
+    hostname: alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - alertmanager_data:/data
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - bookly-observability
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/data
+      - --web.external-url=http://localhost:9093
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # PostgreSQL para Sentry
+  sentry-postgres:
+    image: postgres:15-alpine
+    container_name: bookly-sentry-postgres
+    hostname: sentry-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${SENTRY_DB_USER:-sentry}
+      POSTGRES_PASSWORD: ${SENTRY_DB_PASSWORD:-sentry123}
+      POSTGRES_DB: ${SENTRY_DB_NAME:-sentry}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - sentry_postgres_data:/var/lib/postgresql/data
+    networks:
+      - bookly-observability
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SENTRY_DB_USER:-sentry} -d ${SENTRY_DB_NAME:-sentry}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Sentry Redis (para cache de Sentry)
+  sentry-redis:
+    image: redis:7.2-alpine
+    container_name: bookly-sentry-redis
+    hostname: sentry-redis
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - sentry_redis_data:/data
+    networks:
+      - bookly-observability
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Sentry Web (aplicación principal)
+  sentry-web:
+    image: getsentry/sentry:23.11.2
+    container_name: bookly-sentry-web
+    hostname: sentry-web
+    restart: unless-stopped
+    environment:
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY:-bookly-sentry-secret-key-very-long}
+      SENTRY_POSTGRES_HOST: sentry-postgres
+      SENTRY_POSTGRES_PORT: 5432
+      SENTRY_DB_NAME: ${SENTRY_DB_NAME:-sentry}
+      SENTRY_DB_USER: ${SENTRY_DB_USER:-sentry}
+      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD:-sentry123}
+      SENTRY_REDIS_HOST: sentry-redis
+      SENTRY_REDIS_PORT: 6379
+      SENTRY_REDIS_DB: 0
+      SENTRY_USE_LEGACY_TSDB: 1
+      SENTRY_TSDB: sentry.tsdb.dummy
+      SENTRY_MAIL_HOST: ${SENTRY_MAIL_HOST:-localhost}
+      SENTRY_SERVER_EMAIL: ${SENTRY_SERVER_EMAIL:-sentry@bookly.local}
+      SENTRY_EMAIL_HOST: ${SENTRY_EMAIL_HOST:-localhost}
+      SENTRY_EMAIL_PORT: ${SENTRY_EMAIL_PORT:-25}
+      SENTRY_EMAIL_USE_TLS: ${SENTRY_EMAIL_USE_TLS:-false}
+    ports:
+      - "9001:9000"
+    volumes:
+      - sentry_data:/var/lib/sentry/files
+    networks:
+      - bookly-observability
+      - bookly-network
+    depends_on:
+      sentry-postgres:
+        condition: service_healthy
+      sentry-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/_health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Sentry Worker (procesamiento de tareas en background)
+  sentry-worker:
+    image: getsentry/sentry:23.11.2
+    container_name: bookly-sentry-worker
+    hostname: sentry-worker
+    restart: unless-stopped
+    command: ["sentry", "run", "worker"]
+    environment:
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY:-bookly-sentry-secret-key-very-long}
+      SENTRY_POSTGRES_HOST: sentry-postgres
+      SENTRY_POSTGRES_PORT: 5432
+      SENTRY_DB_NAME: ${SENTRY_DB_NAME:-sentry}
+      SENTRY_DB_USER: ${SENTRY_DB_USER:-sentry}
+      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD:-sentry123}
+      SENTRY_REDIS_HOST: sentry-redis
+      SENTRY_REDIS_PORT: 6379
+      SENTRY_REDIS_DB: 0
+      SENTRY_USE_LEGACY_TSDB: 1
+      SENTRY_TSDB: sentry.tsdb.dummy
+    volumes:
+      - sentry_data:/var/lib/sentry/files
+    networks:
+      - bookly-observability
+    depends_on:
+      sentry-web:
+        condition: service_healthy
+
+  # Sentry Cron (tareas programadas)
+  sentry-cron:
+    image: getsentry/sentry:23.11.2
+    container_name: bookly-sentry-cron
+    hostname: sentry-cron
+    restart: unless-stopped
+    command: ["sentry", "run", "cron"]
+    environment:
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY:-bookly-sentry-secret-key-very-long}
+      SENTRY_POSTGRES_HOST: sentry-postgres
+      SENTRY_POSTGRES_PORT: 5432
+      SENTRY_DB_NAME: ${SENTRY_DB_NAME:-sentry}
+      SENTRY_DB_USER: ${SENTRY_DB_USER:-sentry}
+      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD:-sentry123}
+      SENTRY_REDIS_HOST: sentry-redis
+      SENTRY_REDIS_PORT: 6379
+      SENTRY_REDIS_DB: 0
+      SENTRY_USE_LEGACY_TSDB: 1
+      SENTRY_TSDB: sentry.tsdb.dummy
+    volumes:
+      - sentry_data:/var/lib/sentry/files
+    networks:
+      - bookly-observability
+    depends_on:
+      sentry-web:
+        condition: service_healthy
+
+# Volúmenes persistentes
+volumes:
+  clickhouse_data:
+    driver: local
+  query_service_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  sentry_postgres_data:
+    driver: local
+  sentry_redis_data:
+    driver: local
+  sentry_data:
+    driver: local
+
+# Redes
+networks:
+  bookly-observability:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+  bookly-network:
+    external: true

@@ -1,0 +1,119 @@
+{
+  "info": {
+    "name": "Bookly Stockpile Service - Core Operations",
+    "description": "Postman collection for Stockpile Core Operations\n\nThis collection covers:\n- Approval request management\n- Check-in/Check-out operations\n- Document generation\n- Notification sending\n- Status tracking\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the stockpile service\n- {{authToken}} - JWT Bearer token for authentication\n- {{testReservationId}} - Reservation ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "stockpile-core-operations",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/stockpile",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Approval Management",
+      "item": [
+        {
+          "name": "Get All Approvals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stockpile/approvals",
+              "host": ["{{baseUrl}}"],
+              "path": ["stockpile", "approvals"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Approvals array returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Approval by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stockpile/approvals/{{approvalId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["stockpile", "approvals", "{{approvalId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Check-in/Check-out",
+      "item": [
+        {
+          "name": "Check-in Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stockpile/check-in/{{testReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["stockpile", "check-in", "{{testReservationId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check-out Reservation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stockpile/check-out/{{testReservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["stockpile", "check-out", "{{testReservationId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

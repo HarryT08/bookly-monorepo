@@ -1,0 +1,39 @@
+{
+  "success": "Operación exitosa",
+  "error": "Error en la operación",
+  "notFound": "Recurso no encontrado",
+  "unauthorized": "No autorizado",
+  "forbidden": "Acceso denegado",
+  "validation": {
+    "failed": "Error de validación",
+    "required": "Campo requerido",
+    "invalid": "Valor inválido",
+    "tooShort": "Valor muy corto",
+    "tooLong": "Valor muy largo",
+    "invalidEmail": "Email inválido",
+    "invalidDate": "Fecha inválida"
+  },
+  "auth": {
+    "loginSuccess": "Inicio de sesión exitoso",
+    "loginFailed": "Credenciales inválidas",
+    "logoutSuccess": "Sesión cerrada exitosamente",
+    "tokenExpired": "Token expirado",
+    "accessDenied": "Acceso denegado"
+  },
+  "resources": {
+    "created": "Recurso creado exitosamente",
+    "updated": "Recurso actualizado exitosamente",
+    "deleted": "Recurso eliminado exitosamente",
+    "notFound": "Recurso no encontrado",
+    "alreadyExists": "El recurso ya existe"
+  },
+  "reservations": {
+    "created": "Reserva creada exitosamente",
+    "updated": "Reserva actualizada exitosamente",
+    "cancelled": "Reserva cancelada exitosamente",
+    "approved": "Reserva aprobada",
+    "rejected": "Reserva rechazada",
+    "conflictDetected": "Conflicto de horario detectado",
+    "notAvailable": "Recurso no disponible en el horario solicitado"
+  }
+}

@@ -1,0 +1,21 @@
+Endpoint,Método,Tipo,Descripción,RF,Acceso,Guards,Params,Query,Body,Ejemplo
+/auth/login,POST,Command,Autentica usuario con email y contraseña,RF-43,Público,Ninguno,No,No,"email, password","POST /auth/login {""email"":""admin@ufps.edu.co"",""password"":""123456""}"
+/auth/register,POST,Command,Registra nuevo usuario en el sistema,RF-43,Público,Ninguno,No,No,"email, username, password, firstName, lastName","POST /auth/register {""email"":""nuevo@ufps.edu.co""}"
+/auth/profile,POST,Query,Obtiene perfil del usuario autenticado,RF-43,Privado,JwtAuthGuard,No,No,No,POST /auth/profile Authorization: Bearer <token>
+/auth/logout,POST,Command,Cierra sesión del usuario,RF-43,Privado,JwtAuthGuard,No,No,No,POST /auth/logout Authorization: Bearer <token>
+/roles,GET,Query,Obtiene lista de roles con paginación,RF-41,Privado,JwtAuthGuard,No,"page, limit, search",No,GET /roles?page=1&limit=10 Authorization: Bearer <token>
+/roles/active,GET,Query,Obtiene solo los roles activos,RF-41,Privado,JwtAuthGuard,No,No,No,GET /roles/active Authorization: Bearer <token>
+/roles/:id,GET,Query,Obtiene un rol específico por ID,RF-41,Privado,JwtAuthGuard,id,No,No,GET /roles/clp2k3l4m0001xyz123 Authorization: Bearer <token>
+/roles,POST,Command,Crea un nuevo rol,RF-41,Privado,JwtAuthGuard,No,No,"name, description, categoryCode","POST /roles {""name"":""Nuevo Rol""} Authorization: Bearer <token>"
+/roles/:id,PUT,Command,Actualiza un rol existente,RF-41,Privado,JwtAuthGuard,id,No,"name, description","PUT /roles/clp2k3l4m0001xyz123 {""name"":""Rol Actualizado""}"
+/roles/:id,DELETE,Command,Elimina un rol del sistema,RF-41,Privado,JwtAuthGuard,id,No,No,DELETE /roles/clp2k3l4m0001xyz123 Authorization: Bearer <token>
+/permissions,POST,Command,Crea un nuevo permiso,RF-41,Privado,"JwtAuthGuard, RolesGuard",No,No,"name, resource, action, scope","POST /permissions {""name"":""crear_recurso""}"
+/permissions,GET,Query,Obtiene lista de permisos con filtros,RF-41,Privado,"JwtAuthGuard, RolesGuard",No,"resource, action, scope, isActive",No,GET /permissions?resource=resources Authorization: Bearer <token>
+/permissions/active,GET,Query,Obtiene solo los permisos activos,RF-41,Privado,"JwtAuthGuard, RolesGuard",No,No,No,GET /permissions/active Authorization: Bearer <token>
+/permissions/resource/:resource,GET,Query,Obtiene permisos por recurso específico,RF-41,Privado,"JwtAuthGuard, RolesGuard",resource,"action, scope",No,GET /permissions/resource/resources?action=create
+/permissions/:id,GET,Query,Obtiene un permiso específico por ID,RF-41,Privado,"JwtAuthGuard, RolesGuard",id,No,No,GET /permissions/clp2k3l4m0001xyz123 Authorization: Bearer <token>
+/permissions/:id,PUT,Command,Actualiza un permiso existente,RF-41,Privado,"JwtAuthGuard, RolesGuard",id,No,"name, description","PUT /permissions/clp2k3l4m0001xyz123 {""name"":""permiso_actualizado""}"
+/permissions/:id/activate,PUT,Command,Activa un permiso desactivado,RF-41,Privado,"JwtAuthGuard, RolesGuard",id,No,No,PUT /permissions/clp2k3l4m0001xyz123/activate Authorization: Bearer <token>
+/permissions/:id/deactivate,PUT,Command,Desactiva un permiso activo,RF-41,Privado,"JwtAuthGuard, RolesGuard",id,No,No,PUT /permissions/clp2k3l4m0001xyz123/deactivate Authorization: Bearer <token>
+/permissions/:id,DELETE,Command,Elimina un permiso del sistema,RF-41,Privado,"JwtAuthGuard, RolesGuard",id,No,No,DELETE /permissions/clp2k3l4m0001xyz123 Authorization: Bearer <token>
+/permissions/seed/defaults,POST,Command,Crea permisos predeterminados del sistema,RF-41,Privado (Interno),"JwtAuthGuard, RolesGuard",No,No,No,POST /permissions/seed/defaults Authorization: Bearer <token>

@@ -1,0 +1,491 @@
+{
+  "info": {
+    "name": "Bookly Resources Management",
+    "description": "Postman collection for Bookly Resources Service - Resource Management endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resource_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Resource",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Aula Magna 101\",\n  \"type\": \"CLASSROOM\",\n  \"capacity\": 150,\n  \"location\": \"Edificio A, Piso 1\",\n  \"description\": \"Aula magna con capacidad para 150 estudiantes\",\n  \"attributes\": {\n    \"projector\": true,\n    \"airConditioning\": true,\n    \"whiteboard\": true\n  },\n  \"availableSchedules\": [\n    {\n      \"dayOfWeek\": \"MONDAY\",\n      \"startTime\": \"06:00\",\n      \"endTime\": \"22:00\"\n    }\n  ],\n  \"categoryId\": \"64f1a2b3c4d5e6f7g8h9i0j1\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/resources",
+          "host": ["{{base_url}}"],
+          "path": ["resources"]
+        },
+        "description": "Creates a new resource with auto-generated unique code"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response has resource data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('name');",
+              "    pm.expect(jsonData).to.have.property('code');",
+              "    pm.expect(jsonData.name).to.eql('Aula Magna 101');",
+              "});",
+              "",
+              "// Store resource ID for other requests",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.collectionVariables.set('resource_id', jsonData.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Resources",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources",
+          "host": ["{{base_url}}"],
+          "path": ["resources"]
+        },
+        "description": "Retrieves all resources with optional filtering"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is an array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Resources with Filters",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources?type=CLASSROOM&isActive=true&location=Edificio A",
+          "host": ["{{base_url}}"],
+          "path": ["resources"],
+          "query": [
+            {
+              "key": "type",
+              "value": "CLASSROOM"
+            },
+            {
+              "key": "isActive",
+              "value": "true"
+            },
+            {
+              "key": "location",
+              "value": "Edificio A"
+            }
+          ]
+        },
+        "description": "Get resources with filtering by type, status, and location"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Filtered results match criteria\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        jsonData.forEach(function(resource) {",
+              "            pm.expect(resource.type).to.eql('CLASSROOM');",
+              "            pm.expect(resource.isActive).to.be.true;",
+              "        });",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Resources Paginated",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources/paginated?page=1&limit=10&type=CLASSROOM",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "paginated"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "type",
+              "value": "CLASSROOM"
+            }
+          ]
+        },
+        "description": "Get resources with pagination support"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has pagination data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('resources');",
+              "    pm.expect(jsonData).to.have.property('total');",
+              "    pm.expect(jsonData).to.have.property('page');",
+              "    pm.expect(jsonData).to.have.property('limit');",
+              "    pm.expect(jsonData).to.have.property('totalPages');",
+              "    pm.expect(jsonData.resources).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search Resources",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources/search?q=Aula",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "search"],
+          "query": [
+            {
+              "key": "q",
+              "value": "Aula"
+            }
+          ]
+        },
+        "description": "Search resources by name, description, or code"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Search results contain query term\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        var hasMatch = jsonData.some(function(resource) {",
+              "            return resource.name.toLowerCase().includes('aula') ||",
+              "                   (resource.description && resource.description.toLowerCase().includes('aula')) ||",
+              "                   resource.code.toLowerCase().includes('aula');",
+              "        });",
+              "        pm.expect(hasMatch).to.be.true;",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Resource by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources/{{resource_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "{{resource_id}}"]
+        },
+        "description": "Get a specific resource by its ID"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has resource data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('name');",
+              "    pm.expect(jsonData).to.have.property('code');",
+              "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('resource_id'));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Resource by Code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources/code/AM-101",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "code", "AM-101"]
+        },
+        "description": "Get a resource by its unique code"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 or 404\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+              "});",
+              "",
+              "if (pm.response.code === 200) {",
+              "    pm.test(\"Response has resource data\", function () {",
+              "        var jsonData = pm.response.json();",
+              "        pm.expect(jsonData).to.have.property('code');",
+              "        pm.expect(jsonData.code).to.eql('AM-101');",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Check Resource Availability",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources/{{resource_id}}/availability?date=2024-01-15T10:00:00Z&userType=STUDENT&duration=120",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "{{resource_id}}", "availability"],
+          "query": [
+            {
+              "key": "date",
+              "value": "2024-01-15T10:00:00Z"
+            },
+            {
+              "key": "userType",
+              "value": "STUDENT"
+            },
+            {
+              "key": "duration",
+              "value": "120"
+            }
+          ]
+        },
+        "description": "Check if a resource is available for reservation"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has availability data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('available');",
+              "    pm.expect(jsonData).to.have.property('reason');",
+              "    pm.expect(jsonData.available).to.be.a('boolean');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Resource",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Aula Magna 101 - Actualizada\",\n  \"capacity\": 180,\n  \"description\": \"Aula magna actualizada con mayor capacidad\",\n  \"attributes\": {\n    \"projector\": true,\n    \"airConditioning\": true,\n    \"whiteboard\": true,\n    \"smartBoard\": true\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/resources/{{resource_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "{{resource_id}}"]
+        },
+        "description": "Update an existing resource"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Resource was updated\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.name).to.eql('Aula Magna 101 - Actualizada');",
+              "    pm.expect(jsonData.capacity).to.eql(180);",
+              "    pm.expect(jsonData.attributes.smartBoard).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Resource (Soft Delete)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources/{{resource_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "{{resource_id}}"]
+        },
+        "description": "Delete a resource (soft delete by default)"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Resource (Force Hard Delete)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/resources/{{resource_id}}?force=true",
+          "host": ["{{base_url}}"],
+          "path": ["resources", "{{resource_id}}"],
+          "query": [
+            {
+              "key": "force",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "Force hard delete of a resource even with relations"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204 or 400\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([204, 400]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}

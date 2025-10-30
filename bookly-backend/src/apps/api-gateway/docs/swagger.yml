@@ -1,0 +1,443 @@
+openapi: 3.0.3
+info:
+  title: Bookly API Gateway
+  description: |
+    API Gateway for Bookly institutional reservation system.
+    
+    This gateway provides:
+    - Unified entry point for all microservices
+    - Load balancing and circuit breaking
+    - Rate limiting and caching
+    - Request/response aggregation
+    - Protocol translation
+    - Authentication proxy
+    - Health monitoring
+    
+    All microservice endpoints are accessible through this gateway with the prefix `/api/v1`.
+    
+  version: 1.0.0
+  contact:
+    name: Bookly Development Team
+    url: https://github.com/bookly-monorepo
+    email: dev@ufps.edu.co
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.bookly.ufps.edu.co
+    description: Production server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Gateway Information Endpoints
+  /api/info:
+    get:
+      tags:
+        - Gateway Information
+      summary: Get API information
+      description: Returns general information about the API Gateway
+      operationId: getApiInfo
+      responses:
+        '200':
+          description: API information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfoResponse'
+
+  /api/status:
+    get:
+      tags:
+        - Gateway Information
+      summary: Get API status
+      description: Returns current health status of the gateway and services
+      operationId: getHealthStatus
+      responses:
+        '200':
+          description: API status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatusResponse'
+
+  /api/rate-limit:
+    get:
+      tags:
+        - Gateway Information
+      summary: Get rate limit information
+      description: Returns current rate limiting configuration and status
+      operationId: getRateLimitInfo
+      responses:
+        '200':
+          description: Rate limit information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitInfoResponse'
+
+  # Gateway Management Endpoints
+  /_gateway/health:
+    get:
+      tags:
+        - Gateway Management
+      summary: Gateway health check
+      description: Detailed health status of gateway components
+      operationId: getGatewayHealth
+      responses:
+        '200':
+          description: Gateway is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayHealthResponse'
+
+  /_gateway/routes:
+    get:
+      tags:
+        - Gateway Management
+      summary: Get all configured routes
+      description: Returns list of all configured routes with their settings
+      operationId: getRoutes
+      responses:
+        '200':
+          description: List of all routes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutesResponse'
+
+  /_gateway/services:
+    get:
+      tags:
+        - Gateway Management
+      summary: Get all service instances and their health
+      description: Returns status of all service instances managed by the load balancer
+      operationId: getServices
+      responses:
+        '200':
+          description: Service instances status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicesResponse'
+
+  /_gateway/metrics:
+    get:
+      tags:
+        - Gateway Management
+      summary: Get gateway metrics and statistics
+      description: Returns comprehensive metrics about gateway performance
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Gateway metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  /_gateway/circuit-breaker/{service}/reset:
+    post:
+      tags:
+        - Circuit Breaker Management
+      summary: Reset circuit breaker for a service
+      description: Manually reset circuit breaker state for a specific service
+      operationId: resetCircuitBreaker
+      parameters:
+        - name: service
+          in: path
+          required: true
+          description: Service name
+          schema:
+            type: string
+            enum: [auth-service, availability-service, resources-service, stockpile-service, reports-service]
+      responses:
+        '200':
+          description: Circuit breaker reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        '404':
+          description: Service not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /_gateway/rate-limits/{key}:
+    delete:
+      tags:
+        - Rate Limit Management
+      summary: Reset rate limit for a specific key
+      description: Manually reset rate limit counter for a specific key (IP, user, etc.)
+      operationId: resetRateLimit
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: Rate limit key
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rate limit reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+
+  # Proxy Endpoints - catch-all for microservice requests
+  /api/v1/{proxy+}:
+    get:
+      tags:
+        - Proxy
+      summary: Proxy GET requests to microservices
+      description: Universal proxy endpoint for GET requests to any microservice
+      operationId: proxyGetRequest
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: The path to proxy to the microservice
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request successfully proxied
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          $ref: '#/components/responses/BadGatewayError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableError'
+
+    post:
+      tags:
+        - Proxy
+      summary: Proxy POST requests to microservices
+      description: Universal proxy endpoint for POST requests to any microservice
+      operationId: proxyPostRequest
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          description: The path to proxy to the microservice
+          schema:
+            type: string
+      requestBody:
+        description: Request body to forward to the microservice
+        content:
+          application/json:
+            schema:
+              type: object
+          application/xml:
+            schema:
+              type: string
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Request successfully proxied
+        '201':
+          description: Resource created successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from auth service
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for service-to-service communication
+
+  schemas:
+    ApiInfoResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        services:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    HealthStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        gateway:
+          type: object
+        services:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    RateLimitInfoResponse:
+      type: object
+      properties:
+        global:
+          type: object
+        perUser:
+          type: object
+        endpoints:
+          type: object
+
+    GatewayHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        services:
+          type: object
+
+    RoutesResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        routes:
+          type: array
+          items:
+            type: object
+
+    ServicesResponse:
+      type: object
+      additionalProperties:
+        type: object
+
+    MetricsResponse:
+      type: object
+      properties:
+        requests:
+          type: object
+        services:
+          type: object
+        rateLimit:
+          type: object
+
+    OperationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ForbiddenError:
+      description: Authorization failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: Route not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    BadGatewayError:
+      description: Bad gateway - service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ServiceUnavailableError:
+      description: Service unavailable - circuit breaker open
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: Gateway Information
+    description: General gateway information endpoints
+  - name: Gateway Management
+    description: Gateway administration and monitoring
+  - name: Circuit Breaker Management
+    description: Circuit breaker control operations
+  - name: Rate Limit Management
+    description: Rate limiting administration
+  - name: Proxy
+    description: Universal proxy endpoints for microservices

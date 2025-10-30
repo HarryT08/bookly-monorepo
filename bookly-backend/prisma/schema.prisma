@@ -1,0 +1,1746 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// AUTH SERVICE MODELS
+// ========================================
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  username  String   @unique
+  password  String?
+  firstName String
+  lastName  String
+  isActive  Boolean  @default(true)
+  isEmailVerified Boolean @default(false)
+  emailVerificationToken String?
+  passwordResetToken String?
+  passwordResetExpires DateTime?
+  lastLoginAt DateTime?
+  loginAttempts Int @default(0)
+  lockedUntil DateTime?
+  ssoProvider String? // google, microsoft, etc.
+  ssoId String? // External SSO identifier
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userRoles          UserRole[]
+  userCategories     UserCategory[] // Multiple categories per user
+  reservations       Reservation[]
+  feedbacks          Feedback[]
+  reservationHistory ReservationHistory[]
+  approvalRequests   ApprovalRequest[] // As approver
+  approvalActions    ApprovalAction[]  // Actions taken
+  sentNotifications  SentNotification[] // As recipient
+  auditLogs          AuditLog[] // Actions performed by this user
+  accessLogs         AccessLog[] // Login/logout logs
+  
+  // Reports relations (Hito 5)
+  generatedReports   GeneratedReport[]
+  reportExports      ReportExport[]
+  reportAccessLogs   ReportAccessLog[]
+  scheduledReports   ScheduledReport[]
+  
+  // HITO 6: Resource management relations
+  assignedResourceCategories ResourceCategory[] @relation("AssignedResourceCategory")
+  assignedRoleCategories    RoleCategory[] @relation("AssignedRoleCategory")
+  assignedUserCategories    UserCategory[] @relation("AssignedUserCategory")
+  assignedProgramCategories ProgramCategory[] @relation("AssignedProgramCategory")
+  assignedIncidentReportCategories IncidentReportCategory[] @relation("AssignedIncidentReportCategory")
+  resourceImports           ResourceImport[]    @relation("ResourceImports")
+  responsibleForResources   ResourceResponsible[] @relation("ResponsibleForResources")
+  assignedResponsibles      ResourceResponsible[] @relation("AssignedResponsible")
+  reportedMaintenances      MaintenanceRecord[] @relation("MaintenanceReportedBy")
+  assignedMaintenances      MaintenanceRecord[] @relation("MaintenanceAssignedTo")
+  reportedIncidents         IncidentReport[]    @relation("IncidentReportedBy")
+  assignedIncidents         IncidentReport[]    @relation("IncidentAssignedTo")
+  resolvedIncidents         IncidentReport[]    @relation("IncidentResolvedBy")
+  scheduledMaintenancesAssigned ScheduledMaintenance[] @relation("ScheduledMaintenanceAssignedTo")
+  scheduledMaintenancesCreated  ScheduledMaintenance[] @relation("ScheduledMaintenanceCreatedBy")
+  
+  // HITO 7: Advanced availability relations
+  recurringReservations     RecurringReservation[]
+  waitingLists             WaitingList[] // For existing WaitingList model
+  waitingListEntries        WaitingListEntry[]
+  userPenalties            UserPenalty[]
+  appliedPenalties         UserPenalty[] @relation("AppliedPenalties")
+  reassignmentRequests     ReassignmentRequest[]
+  createdResourceEquivalences ResourceEquivalence[]
+
+  @@map("users")
+  Maintenance Maintenance[] @relation("ReportedMaintenance")
+}
+
+model Role {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  isPredefined Boolean @default(false) // Cannot be edited/deleted if true
+  category    String? // DEPRECATED: Use RoleCategory table instead
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId // User who created this role
+
+  // Relations
+  userRoles   UserRole[]
+  rolePermissions RolePermission[]
+  roleCategories  RoleCategory[] // Multiple categories per role
+
+  @@map("roles")
+}
+
+model UserRole {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  roleId String @db.ObjectId
+  programId String? @db.ObjectId // Academic program scope
+  assignedAt DateTime @default(now())
+  assignedBy String? @db.ObjectId // User who assigned this role
+  isActive Boolean @default(true)
+
+  user    User     @relation(fields: [userId], references: [id])
+  role    Role     @relation(fields: [roleId], references: [id])
+  program Program? @relation(fields: [programId], references: [id]) // HITO 6
+
+  @@unique([userId, roleId, programId])
+  @@map("user_roles")
+}
+
+// Granular permissions system
+model Permission {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique // e.g., "resources:create", "users:update:own"
+  resource    String   // e.g., "resources", "users", "reservations"
+  action      String   // e.g., "create", "read", "update", "delete"
+  scope       String   @default("global") // "global", "program", "own"
+  conditions  Json?    // Additional conditions for the permission
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action, scope])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  roleId       String @db.ObjectId
+  permissionId String @db.ObjectId
+  grantedAt    DateTime @default(now())
+  grantedBy    String? @db.ObjectId
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+
+
+// Access logging for authentication events
+model AccessLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?  @db.ObjectId // Null for failed login attempts
+  email       String?  // Email used in login attempt
+  action      String   // "LOGIN", "LOGOUT", "LOGIN_FAILED", "PASSWORD_RESET"
+  success     Boolean
+  ipAddress   String?
+  userAgent   String?
+  ssoProvider String?  // "google", "microsoft", null for local auth
+  failureReason String? // Reason for failure
+  timestamp   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("access_logs")
+}
+
+// ========================================
+// RESOURCES SERVICE MODELS
+// ========================================
+
+// HITO 6: Academic Program model for resource classification
+model Program {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  code        String   @unique // Unique program code (e.g., "ING-SIS", "MED-GEN")
+  description String?
+  facultyName String   // Faculty name this program belongs to
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  resources     Resource[]    // Resources assigned to this program
+  userRoles     UserRole[]    // User roles in this program
+  approvalFlows ApprovalFlow[] // Program-specific approval flows
+  programCategories ProgramCategory[] // Multiple categories per program
+  
+  // HITO 7: Advanced availability relations
+  penaltyEvents PenaltyEvent[]
+  penalties     Penalty[]
+  userPenalties UserPenalty[]
+  resourceEquivalences ResourceEquivalence[]
+  reassignmentConfigurations ReassignmentConfiguration[]
+
+  @@map("programs")
+}
+
+model Resource {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  code        String   @unique // Auto-generated unique code
+  description String?
+  type        String   // ROOM, EQUIPMENT, AUDITORIUM, LABORATORY, COMPUTER, etc.
+  capacity    Int?
+  location    String?
+  status      String   @default("AVAILABLE") // AVAILABLE, MAINTENANCE, OUT_OF_SERVICE, RESERVED
+  attributes  Json?    // Flexible attributes for different resource types
+  
+  // Available schedules and rules (RF-05)
+  availableSchedules Json? // Contains: operating hours, restrictions, priorities, min/max reservation time, minimum advance notice
+  
+  // HITO 6: New fields for enhanced resource management
+  programId         String?  @db.ObjectId // Academic program assignment (RF-02)
+  defaultSchedule   Json?    // Default schedule (6am-10pm, mon-sat)
+  defaultMaintenance Json?   // Default maintenance (cleaning every 2 days)
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  categoryId   String?       @db.ObjectId
+  program      Program?      @relation(fields: [programId], references: [id]) // HITO 6
+  reservations Reservation[]
+  maintenance  Maintenance[]
+  availability Availability[]
+  schedules    Schedule[]
+  calendarIntegrations CalendarIntegration[]
+  resourceCategories ResourceCategory[] // HITO 6: Multiple categories
+  responsibles ResourceResponsible[]     // HITO 6: Resource responsibles
+  
+  // HITO 6: Maintenance relations
+  maintenanceRecords   MaintenanceRecord[]
+  incidentReports      IncidentReport[]
+  scheduledMaintenances ScheduledMaintenance[]
+  
+  // HITO 7: Advanced availability relations
+  recurringReservations RecurringReservation[]
+  reassignmentRequests  ReassignmentRequest[] @relation("SuggestedResource")
+  primaryEquivalences   ResourceEquivalence[] @relation("PrimaryResourceEquivalences")
+  equivalentEquivalences ResourceEquivalence[] @relation("EquivalentResourceEquivalences")
+  waitingLists         WaitingList[]
+
+  @@map("resources")
+}
+
+model Category {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  type        String   // RESOURCE, USER, RESERVATION, APPROVAL, REPORT
+  subtype     String   // VALID_TYPE, ROLE, STATUS, WORKFLOW_TYPE, etc.
+  name        String
+  code        String   // Unique code within type-subtype combination
+  description String?
+  color       String? // For UI purposes
+  metadata    Json?    // Flexible metadata for service-specific data
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false) // Default categories cannot be deleted
+  sortOrder   Int      @default(0) // Display order (renamed from priority)
+  parentId    String?  @db.ObjectId // For hierarchical categories
+  service     String   // Which microservice owns this category
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId
+  updatedBy   String?  @db.ObjectId
+
+  // Self-referential relation for hierarchical categories
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children Category[] @relation("CategoryHierarchy")
+
+  // Relations
+  resources           Resource[]
+  resourceCategories  ResourceCategory[] // HITO 6: Multiple categories per resource
+  roleCategories      RoleCategory[] // Multiple categories per role
+  userCategories      UserCategory[] // Multiple categories per user
+  programCategories   ProgramCategory[] // Multiple categories per program
+  incidentReportCategories IncidentReportCategory[] // Multiple categories per incident report
+  approvalFlows       ApprovalFlow[] // Approval flows for this category
+  documentTemplates   DocumentTemplate[] // Document templates for this category
+  notificationTemplates NotificationTemplate[] // Notification templates for this category
+  notificationConfigs NotificationConfig[] // Notification configs for this category
+
+  // Indexes for efficient querying
+  @@index([type, subtype, service])
+  @@index([code, type, subtype])
+  @@index([service, isActive])
+  @@index([parentId])
+  @@unique([type, subtype, code, service])
+  @@map("categories")
+}
+
+// HITO 6: Junction table for multiple categories per resource
+model ResourceCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  user     User     @relation("AssignedResourceCategory", fields: [assignedBy], references: [id])
+
+  @@unique([resourceId, categoryId])
+  @@map("resource_categories")
+}
+
+// Junction tables for multiple categories per entity
+model RoleCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  roleId     String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  role     Role     @relation(fields: [roleId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  user     User     @relation("AssignedRoleCategory", fields: [assignedBy], references: [id])
+
+  @@unique([roleId, categoryId])
+  @@map("role_categories")
+}
+
+model UserCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id])
+  category     Category @relation(fields: [categoryId], references: [id])
+  assignedByUser User   @relation("AssignedUserCategory", fields: [assignedBy], references: [id])
+
+  @@unique([userId, categoryId])
+  @@map("user_categories")
+}
+
+model ProgramCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId  String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  assignedBy String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  program  Program  @relation(fields: [programId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  user     User     @relation("AssignedProgramCategory", fields: [assignedBy], references: [id])
+
+  @@unique([programId, categoryId])
+  @@map("program_categories")
+}
+
+model IncidentReportCategory {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  incidentReportId String   @db.ObjectId
+  categoryId       String   @db.ObjectId
+  assignedAt       DateTime @default(now())
+  assignedBy       String   @db.ObjectId // User who assigned the category
+
+  // Relations
+  incidentReport IncidentReport @relation(fields: [incidentReportId], references: [id])
+  category       Category       @relation(fields: [categoryId], references: [id])
+  user           User           @relation("AssignedIncidentReportCategory", fields: [assignedBy], references: [id])
+
+  @@unique([incidentReportId, categoryId])
+  @@map("incident_report_categories")
+}
+
+// HITO 6: Dynamic maintenance types
+model MaintenanceType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique // PREVENTIVO, CORRECTIVO, EMERGENCIA, etc.
+  description String?
+  color       String? // For UI purposes
+  priority    Int      @default(0) // Priority level
+  isDefault   Boolean  @default(false) // Default types cannot be deleted
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  maintenances Maintenance[]
+
+  @@map("maintenance_types")
+}
+
+// HITO 6: Resource import tracking
+model ResourceImport {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  filename         String
+  originalFilename String
+  totalRows        Int
+  successfulRows   Int
+  failedRows       Int
+  status           String // PROCESSING, COMPLETED, FAILED, CANCELLED
+  errors           Json? // Error details per row
+  summary          Json? // Import summary
+  
+  // Metadata
+  importedBy String   @db.ObjectId
+  importedAt DateTime @default(now())
+  completedAt DateTime?
+  
+  // Relations
+  user User @relation("ResourceImports", fields: [importedBy], references: [id])
+
+  @@map("resource_imports")
+}
+
+// HITO 6: Resource responsibility assignment
+model ResourceResponsible {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId String   @db.ObjectId
+  userId     String   @db.ObjectId
+  assignedBy String   @db.ObjectId // Administrator who assigned
+  assignedAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+  
+  // Relations
+  resource       Resource @relation(fields: [resourceId], references: [id])
+  user           User     @relation("ResponsibleForResources", fields: [userId], references: [id])
+  assignedByUser User     @relation("AssignedResponsible", fields: [assignedBy], references: [id])
+  
+  @@unique([resourceId, userId])
+  @@map("resource_responsibles")
+}
+
+model Maintenance {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId  String   @db.ObjectId
+  title       String
+  description String?
+  status      String // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  startDate   DateTime
+  endDate     DateTime?
+  
+  // HITO 6: Enhanced maintenance management
+  maintenanceTypeId String?  @db.ObjectId // Dynamic maintenance types
+  reportedBy        String?  @db.ObjectId // User who reported (students/staff can report)
+  severity          String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  evidence          Json?    // Photos, documents, etc.
+  estimatedDuration Int?     // Estimated duration in minutes
+  actualDuration    Int?     // Actual duration in minutes
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  resource        Resource         @relation(fields: [resourceId], references: [id])
+  maintenanceType MaintenanceType? @relation(fields: [maintenanceTypeId], references: [id]) // HITO 6
+  reporter        User?            @relation("ReportedMaintenance", fields: [reportedBy], references: [id]) // HITO 6
+
+  @@map("maintenance")
+}
+
+// ========================================
+// AVAILABILITY SERVICE MODELS
+// ========================================
+
+model Reservation {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String?
+  startDate     DateTime
+  endDate       DateTime
+  status        String // INICIAL, PENDIENTE, SOLICITADO, REVISANDO, APROBADA, RECHAZADA, CANCELADA
+  isRecurring   Boolean  @default(false)
+  recurrence    Json? // Recurrence pattern if applicable
+  
+  // Approval flow configuration
+  approvalFlowId String? @db.ObjectId
+  currentLevel   Int     @default(0) // Current approval level
+  requiresApproval Boolean @default(true)
+  
+  // Additional participants (for multi-user reservations)
+  participants Json? // Array of user IDs for multi-user reservations
+  
+  // Metadata
+  numberOfParticipants Int?
+  purpose             String? // Brief description of use
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId        String   @db.ObjectId
+  resourceId    String   @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+  resource      Resource @relation(fields: [resourceId], references: [id])
+  approvalFlow  ApprovalFlow? @relation(fields: [approvalFlowId], references: [id])
+  approvals     Approval[]
+  history       ReservationHistory[]
+  approvalRequests ApprovalRequest[]
+  generatedDocuments GeneratedDocument[]
+  sentNotifications SentNotification[]
+  
+  // HITO 7: Advanced availability relations
+  recurringInstances RecurringReservationInstance[]
+  reassignmentRequests ReassignmentRequest[]
+
+  @@map("reservations")
+}
+
+model Availability {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId String   @db.ObjectId
+  dayOfWeek  Int // 0-6 (Sunday to Saturday)
+  startTime  String // HH:mm format
+  endTime    String // HH:mm format
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id])
+
+  @@map("availability")
+}
+
+// RF-07: Schedule model for complex scheduling rules
+model Schedule {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId    String   @db.ObjectId
+  name          String   // Schedule name (e.g., "Semester 1", "Maintenance Period")
+  type          String   // REGULAR, EXCEPTION, MAINTENANCE, ACADEMIC_EVENT
+  startDate     DateTime
+  endDate       DateTime?
+  recurrenceRule Json?   // Recurrence pattern (RRULE format)
+  restrictions  Json?    // User type restrictions, priority rules
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id])
+
+  @@map("schedules")
+}
+
+// RF-08: Calendar integration configuration
+model CalendarIntegration {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceId    String?  @db.ObjectId // null for global integration
+  provider      String   // GOOGLE, OUTLOOK, ICAL, INTERNAL
+  name          String   // Integration name
+  credentials   Json     // Encrypted credentials (API keys, tokens)
+  calendarId    String?  // External calendar ID
+  syncInterval  Int      @default(30) // Minutes
+  lastSync      DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  resource Resource? @relation(fields: [resourceId], references: [id])
+  events   CalendarEvent[]
+
+  @@map("calendar_integrations")
+}
+
+// RF-08: External calendar events
+model CalendarEvent {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  integrationId String   @db.ObjectId
+  externalId    String   // External event ID
+  title         String
+  description   String?
+  startDate     DateTime
+  endDate       DateTime
+  isAllDay      Boolean  @default(false)
+  status        String   // CONFIRMED, TENTATIVE, CANCELLED
+  lastSync      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  integration CalendarIntegration @relation(fields: [integrationId], references: [id])
+
+  @@unique([integrationId, externalId])
+  @@map("calendar_events")
+}
+
+// RF-11: Reservation history for audit trail
+model ReservationHistory {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reservationId String   @db.ObjectId
+  userId        String   @db.ObjectId
+  action        String   // CREATED, MODIFIED, CANCELLED, APPROVED, REJECTED, COMPLETED
+  previousData  Json?    // Previous state
+  newData       Json?    // New state
+  reason        String?  // Reason for change
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@map("reservation_history")
+}
+
+model WaitingList {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  resourceId    String   @db.ObjectId
+  requestedDate DateTime
+  priority      Int      @default(0)
+  status        String   @default("WAITING") // WAITING, NOTIFIED, EXPIRED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  resource      Resource @relation(fields: [resourceId], references: [id])
+  user          User @relation(fields: [userId], references: [id])
+
+  @@map("waiting_list")
+}
+
+// ========================================
+// STOCKPILE SERVICE MODELS
+// ========================================
+
+model Approval {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reservationId String   @db.ObjectId
+  approverId    String? // User who approved/rejected
+  status        String // PENDING, APPROVED, REJECTED
+  comments      String?
+  approvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+
+  @@map("approvals")
+}
+
+// ========================================
+// HITO 3: APPROVAL FLOW CONFIGURATION MODELS
+// ========================================
+
+// RF-20: Configurable approval flows by program coordinator
+model ApprovalFlow {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String   // Flow name (e.g., "Standard Classroom Approval")
+  description   String?
+  
+  // Configuration scope
+  programId     String?  @db.ObjectId // Specific to a program
+  resourceType  String?  // ROOM, EQUIPMENT, etc.
+  categoryId    String?  @db.ObjectId // Specific category
+  
+  // Flow settings
+  isDefault     Boolean  @default(false) // Default flow for scope
+  requiresAllApprovals Boolean @default(true) // All levels required vs any level
+  autoApprovalEnabled Boolean @default(false)
+  
+  // Timing configuration
+  reviewTimeHours Int?    // Hours before reservation date to auto-cancel if not reviewed
+  reminderHours   Int?    // Hours before to send reminders
+  
+  isActive      Boolean  @default(true)
+  createdBy     String   @db.ObjectId // Coordinator who created
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  levels        ApprovalLevel[]
+  reservations  Reservation[]
+  category      Category? @relation(fields: [categoryId], references: [id])
+  program       Program?  @relation(fields: [programId], references: [id]) // HITO 6
+
+  @@map("approval_flows")
+}
+
+// Levels within an approval flow
+model ApprovalLevel {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  flowId        String   @db.ObjectId
+  level         Int      // Order of approval (1, 2, 3...)
+  name          String   // Level name (e.g., "Department Head", "Resource Manager")
+  description   String?
+  
+  // Approver configuration
+  approverRoles String[] // Roles that can approve at this level
+  approverUsers String[] // Specific users that can approve
+  requiresAll   Boolean  @default(false) // All approvers required vs any one
+  
+  // Timing
+  timeoutHours  Int?     // Hours to timeout this level
+  
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  flow          ApprovalFlow @relation(fields: [flowId], references: [id])
+  requests      ApprovalRequest[]
+
+  @@map("approval_levels")
+}
+
+// Individual approval requests for each level
+model ApprovalRequest {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reservationId String   @db.ObjectId
+  levelId       String   @db.ObjectId
+  
+  status        String   // PENDING, APPROVED, REJECTED, TIMEOUT
+  approverId    String?  @db.ObjectId // Who approved/rejected
+  comments      String?
+  
+  // Timing
+  requestedAt   DateTime @default(now())
+  respondedAt   DateTime?
+  timeoutAt     DateTime? // When this request times out
+  
+  // Notifications sent
+  notificationsSent Json? // Track which notifications were sent
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  level         ApprovalLevel @relation(fields: [levelId], references: [id])
+  approver      User? @relation(fields: [approverId], references: [id])
+  actions       ApprovalAction[]
+
+  @@map("approval_requests")
+}
+
+// Actions taken on approval requests
+model ApprovalAction {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  requestId     String   @db.ObjectId
+  userId        String   @db.ObjectId
+  action        String   // APPROVED, REJECTED, COMMENTED, DELEGATED
+  comments      String?
+  
+  // Metadata
+  ipAddress     String?
+  userAgent     String?
+  
+  createdAt     DateTime @default(now())
+
+  // Relations
+  request       ApprovalRequest @relation(fields: [requestId], references: [id])
+  user          User @relation(fields: [userId], references: [id])
+
+  @@map("approval_actions")
+}
+
+// ========================================
+// RF-21: DOCUMENT TEMPLATES CONFIGURATION
+// ========================================
+
+// Customizable document templates
+model DocumentTemplate {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String   // Template name
+  description   String?
+  
+  // Template scope
+  resourceType  String?  // ROOM, EQUIPMENT, etc.
+  categoryId    String?  @db.ObjectId
+  eventType     String   // APPROVAL, REJECTION, REMINDER, etc.
+  
+  // Template content
+  format        String   // PDF, DOCX, HTML
+  templatePath  String?  // Path to uploaded template file
+  content       String?  // Template content with variables
+  variables     Json     // Available variables for this template
+  
+  // Configuration
+  isDefault     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  
+  // Document sending configuration
+  canSendAsAttachment Boolean @default(true)
+  canSendAsLink       Boolean @default(true)
+  
+  createdBy     String   @db.ObjectId
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  category      Category? @relation(fields: [categoryId], references: [id])
+  documents     GeneratedDocument[]
+
+  @@map("document_templates")
+}
+
+// Generated documents from templates
+model GeneratedDocument {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  templateId    String   @db.ObjectId
+  reservationId String   @db.ObjectId
+  
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  mimeType      String
+  
+  // Generation context
+  variables     Json     // Variables used for generation
+  generatedBy   String   @db.ObjectId
+  
+  createdAt     DateTime @default(now())
+
+  // Relations
+  template      DocumentTemplate @relation(fields: [templateId], references: [id])
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+
+  @@map("generated_documents")
+}
+
+// ========================================
+// RF-22: NOTIFICATION SYSTEM CONFIGURATION
+// ========================================
+
+// Notification channel configuration
+model NotificationChannel {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String   // EMAIL, IN_APP, SMS, WHATSAPP
+  displayName   String   // User-friendly name
+  
+  // Channel capabilities
+  supportsAttachments Boolean @default(false)
+  supportsLinks       Boolean @default(true)
+  maxMessageLength    Int?    // Character limit
+  
+  // Configuration
+  isActive      Boolean  @default(true)
+  settings      Json?    // Channel-specific settings
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  templates     NotificationTemplate[]
+  configs       NotificationConfig[]
+
+  @@map("notification_channels")
+}
+
+// Customizable notification templates
+model NotificationTemplate {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String   // Template name
+  channelId     String   @db.ObjectId
+  
+  // Template scope
+  eventType     String   // RESERVATION_SUBMITTED, APPROVED, REJECTED, REMINDER, etc.
+  resourceType  String?
+  categoryId    String?  @db.ObjectId
+  
+  // Template content
+  subject       String?  // For email/SMS
+  content       String   // Message content with variables
+  variables     Json     // Available variables
+  
+  // Configuration
+  isDefault     Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  
+  // Document attachment settings
+  attachDocument Boolean @default(false)
+  documentAsLink Boolean @default(false)
+  
+  createdBy     String   @db.ObjectId
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  channel       NotificationChannel @relation(fields: [channelId], references: [id])
+  category      Category? @relation(fields: [categoryId], references: [id])
+  notifications SentNotification[]
+
+  @@map("notification_templates")
+}
+
+// Notification configuration by coordinator
+model NotificationConfig {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Scope
+  programId     String?  @db.ObjectId
+  resourceType  String?
+  categoryId    String?  @db.ObjectId
+  
+  // Channel settings
+  channelId     String   @db.ObjectId
+  isEnabled     Boolean  @default(true)
+  
+  // Timing settings
+  isImmediate   Boolean  @default(true) // Send immediately vs batch
+  batchInterval Int?     // Minutes for batch sending
+  
+  // Document settings
+  sendDocuments Boolean  @default(false)
+  documentMethod String? // ATTACHMENT, LINK
+  
+  createdBy     String   @db.ObjectId
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  channel       NotificationChannel @relation(fields: [channelId], references: [id])
+  category      Category? @relation(fields: [categoryId], references: [id])
+
+  @@map("notification_configs")
+}
+
+// Sent notifications log
+model SentNotification {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  templateId    String   @db.ObjectId
+  reservationId String   @db.ObjectId
+  recipientId   String   @db.ObjectId
+  
+  // Delivery details
+  channel       String   // EMAIL, IN_APP, etc.
+  status        String   // PENDING, SENT, DELIVERED, FAILED
+  subject       String?
+  content       String
+  
+  // Attachments
+  hasAttachment Boolean  @default(false)
+  attachmentPath String?
+  
+  // Delivery tracking
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  readAt        DateTime?
+  errorMessage  String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  template      NotificationTemplate @relation(fields: [templateId], references: [id])
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  recipient     User @relation(fields: [recipientId], references: [id])
+
+  @@map("sent_notifications")
+}
+
+model CheckInOut {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  reservationId String    @db.ObjectId
+  checkInTime   DateTime?
+  checkOutTime  DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("check_in_out")
+}
+
+// ========================================
+// REPORTS SERVICE MODELS
+// ========================================
+
+model Feedback {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  resourceId    String?  @db.ObjectId
+  reservationId String?  @db.ObjectId
+  rating        Int // 1-5 scale
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("feedbacks")
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  action    String // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entity    String // USER, RESOURCE, RESERVATION, etc.
+  entityId  String?
+  oldValues Json?
+  newValues Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// ========================================
+// HITO 5: REPORTS PERSISTENT STORAGE MODELS
+// ========================================
+
+// RF-31, RF-32, RF-33: Persistent report storage for caching and history
+model GeneratedReport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Report identification
+  reportType    String   // USAGE, USER_RESERVATIONS, RESOURCE_UTILIZATION
+  title         String
+  description   String?
+  
+  // Generation details
+  generatedBy   String   @db.ObjectId
+  generatedAt   DateTime @default(now())
+  
+  // Filters and parameters used
+  filters       Json     // Original filters applied
+  parameters    Json?    // Additional parameters
+  
+  // Data and metadata
+  data          Json     // Report data (for caching)
+  metadata      Json     // Report metadata (execution time, record count, etc.)
+  summary       Json?    // Summary statistics
+  
+  // Cache and lifecycle
+  cacheKey      String   @unique // Redis cache key
+  isValid       Boolean  @default(true) // Cache validity
+  expiresAt     DateTime? // Cache expiration
+  
+  // File exports
+  hasExports    Boolean  @default(false)
+  exportPaths   Json?    // Paths to exported files (CSV, Excel, etc.)
+  
+  // Access control
+  isPublic      Boolean  @default(false)
+  allowedUsers  String[] @db.ObjectId // Users who can access this report
+  allowedRoles  String[] // Roles that can access this report
+  
+  // Status and tracking
+  status        String   @default("COMPLETED") // GENERATING, COMPLETED, FAILED, EXPIRED
+  errorMessage  String?
+  accessCount   Int      @default(0) // How many times accessed
+  lastAccessed  DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [generatedBy], references: [id])
+  exports       ReportExport[]
+  accessLogs    ReportAccessLog[]
+
+  @@index([reportType, generatedAt])
+  @@index([generatedBy, createdAt])
+  @@index([expiresAt])
+  @@map("generated_reports")
+}
+
+// RF-33: Export tracking for CSV and other formats
+model ReportExport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportId      String   @db.ObjectId
+  
+  // Export details
+  format        String   // CSV, EXCEL, JSON, PDF
+  filename      String
+  filePath      String
+  fileSize      Int      // Size in bytes
+  
+  // Export configuration
+  columns       String[] // Columns included
+  customHeaders String[] // Custom column headers
+  includeMetadata Boolean @default(true)
+  delimiter     String   @default(",") // For CSV
+  
+  // Generation details
+  exportedBy    String   @db.ObjectId
+  exportedAt    DateTime @default(now())
+  
+  // Access and lifecycle
+  downloadCount Int      @default(0)
+  lastDownload  DateTime?
+  expiresAt     DateTime? // File expiration
+  isAvailable   Boolean  @default(true)
+  
+  // Email delivery (if applicable)
+  sentByEmail   Boolean  @default(false)
+  emailAddress  String?
+  emailSentAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  report        GeneratedReport @relation(fields: [reportId], references: [id])
+  user          User @relation(fields: [exportedBy], references: [id])
+
+  @@index([reportId, format])
+  @@index([exportedBy, createdAt])
+  @@index([expiresAt])
+  @@map("report_exports")
+}
+
+// Access logging for reports (security and analytics)
+model ReportAccessLog {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportId      String   @db.ObjectId
+  
+  // Access details
+  accessedBy    String   @db.ObjectId
+  accessedAt    DateTime @default(now())
+  accessType    String   // VIEW, DOWNLOAD, EXPORT, SHARE
+  
+  // Request details
+  ipAddress     String?
+  userAgent     String?
+  sessionId     String?
+  
+  // Context
+  filters       Json?    // Filters applied during access
+  duration      Int?     // Time spent viewing (in seconds)
+  
+  createdAt     DateTime @default(now())
+
+  // Relations
+  report        GeneratedReport @relation(fields: [reportId], references: [id])
+  user          User @relation(fields: [accessedBy], references: [id])
+
+  @@index([reportId, accessedAt])
+  @@index([accessedBy, createdAt])
+  @@map("report_access_logs")
+}
+
+// Scheduled reports configuration
+model ScheduledReport {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Schedule identification
+  name          String
+  description   String?
+  
+  // Report configuration
+  reportType    String   // USAGE, USER_RESERVATIONS, etc.
+  filters       Json     // Default filters
+  parameters    Json?    // Additional parameters
+  
+  // Schedule configuration
+  cronExpression String  // Cron expression for scheduling
+  timezone      String   @default("America/Bogota")
+  isActive      Boolean  @default(true)
+  
+  // Recipients
+  recipientEmails String[]
+  recipientRoles  String[]
+  
+  // Export settings
+  autoExport    Boolean  @default(false)
+  exportFormats String[] // CSV, EXCEL, etc.
+  
+  // Lifecycle
+  createdBy     String   @db.ObjectId
+  lastRun       DateTime?
+  nextRun       DateTime?
+  runCount      Int      @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [createdBy], references: [id])
+
+  @@index([nextRun, isActive])
+  @@index([createdBy])
+  @@map("scheduled_reports")
+}
+
+// ========================================
+// HITO 7: ADVANCED AVAILABILITY MODELS
+// ========================================
+
+// RF-12: Recurring Reservations (Reservas Periódicas)
+model RecurringReservation {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  resourceId  String   @db.ObjectId
+  userId      String   @db.ObjectId
+  
+  // Date range for recurrence
+  startDate   DateTime
+  endDate     DateTime
+  
+  // Time for each instance
+  startTime   String   // HH:mm format
+  endTime     String   // HH:mm format
+  
+  // Recurrence configuration
+  frequency   String   // DAILY, WEEKLY, MONTHLY
+  interval    Int      @default(1) // Every N days/weeks/months
+  daysOfWeek  Int[]    // For weekly: [1,2,3,4,5] = Mon-Fri
+  dayOfMonth  Int?     // For monthly: day of month (1-31)
+  
+  // Status and lifecycle
+  status      String   @default("ACTIVE") // ACTIVE, CANCELLED, COMPLETED
+  totalInstances Int   @default(0) // Total instances generated
+  confirmedInstances Int @default(0) // Confirmed instances
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  instances   RecurringReservationInstance[]
+  
+  @@index([resourceId, startDate, endDate])
+  @@index([userId, status])
+  @@map("recurring_reservations")
+}
+
+model RecurringReservationInstance {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  recurringReservationId String   @db.ObjectId
+  reservationId         String?  @db.ObjectId // When confirmed, links to actual Reservation
+  
+  // Scheduled details
+  scheduledDate         DateTime
+  startTime             String   // HH:mm format
+  endTime               String   // HH:mm format
+  
+  // Status tracking
+  status                String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, SKIPPED
+  
+  // Timestamps
+  generatedAt           DateTime @default(now())
+  confirmedAt           DateTime?
+  cancelledAt           DateTime?
+  
+  // Relations
+  recurringReservation  RecurringReservation @relation(fields: [recurringReservationId], references: [id])
+  reservation           Reservation? @relation(fields: [reservationId], references: [id])
+  
+  @@index([recurringReservationId, scheduledDate])
+  @@index([scheduledDate, status])
+  @@map("recurring_reservation_instances")
+}
+
+// Configuration limits for reservations
+model ReservationLimit {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  
+  // Scope configuration
+  scope       String   // GLOBAL, PROGRAM, USER, RESOURCE
+  scopeId     String?  @db.ObjectId // programId, userId, resourceId based on scope
+  
+  // Limit configuration
+  limitType   String   // MAX_ACTIVE_RESERVATIONS, MAX_RESERVED_RESOURCES, MAX_RECURRING_INSTANCES, MAX_FUTURE_DAYS
+  limitValue  Int      // Numeric value of the limit
+  
+  // Status
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([scope, scopeId, limitType])
+  @@map("reservation_limits")
+}
+
+// RF-14: Enhanced Waiting List Entry (extends existing WaitingList)
+model WaitingListEntry {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  waitingListId         String   @db.ObjectId // References existing WaitingList
+  userId                String   @db.ObjectId
+  
+  // Position and priority
+  position              Int      // Position in the waiting list
+  priority              String   // ADMIN_GENERAL, DIRECTOR_PROGRAMA, DOCENTE, ESTUDIANTE, PARTICULAR
+  
+  // Notification configuration
+  confirmationTimeLimit Int      @default(10) // Minutes to confirm when notified
+  
+  // Status tracking
+  status                String   @default("WAITING") // WAITING, NOTIFIED, CONFIRMED, EXPIRED, CANCELLED
+  
+  // Timestamps
+  requestedAt           DateTime @default(now())
+  notifiedAt            DateTime?
+  confirmedAt           DateTime?
+  expiredAt             DateTime?
+  
+  // Relations
+  user                  User @relation(fields: [userId], references: [id])
+  
+  @@unique([waitingListId, userId])
+  @@index([waitingListId, position])
+  @@index([userId, status])
+  @@map("waiting_list_entries")
+}
+
+// Penalty system for user sanctions
+model PenaltyEvent {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId         String   @db.ObjectId
+  name              String
+  description       String?
+  
+  // Event configuration
+  eventType         String   // LATE_CANCELLATION, WAITLIST_REJECTION, NEGATIVE_FEEDBACK, MISSING_CHECKIN
+  isActive          Boolean  @default(true)
+  canBeCustomized   Boolean  @default(true)
+  
+  // Event parameters (JSON configuration)
+  configuration     Json     // e.g., {"daysInAdvance": 7, "feedbackThreshold": 3}
+  
+  // Lifecycle dates
+  activationDate    DateTime @default(now())
+  deactivationDate  DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  program           Program @relation(fields: [programId], references: [id])
+  penalties         PenaltyEventPenalty[] // Many-to-many with penalties
+  
+  @@index([programId, isActive])
+  @@index([eventType, isActive])
+  @@map("penalty_events")
+}
+
+model Penalty {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId     String   @db.ObjectId
+  name          String
+  description   String?
+  
+  // Penalty configuration
+  penaltyType   String   // NO_RESERVATIONS, NO_RECURRING, NO_PRIORITY_UPGRADE, FORCE_PARTICULAR_PRIORITY
+  isPartial     Boolean  @default(false) // Partial or total limitation
+  duration      Int?     // Duration in days, null for permanent
+  maxQuantity   Int?     // Maximum quantity if partial
+  
+  // Lifecycle
+  canBeDeleted  Boolean  @default(true) // Hard delete allowed
+  isDeleted     Boolean  @default(false) // Soft delete flag
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  program       Program @relation(fields: [programId], references: [id])
+  userPenalties UserPenalty[]
+  penaltyEvents PenaltyEventPenalty[] // Many-to-many with events
+  
+  @@index([programId, penaltyType])
+  @@map("penalties")
+}
+
+// Junction table for PenaltyEvent and Penalty many-to-many relationship
+model PenaltyEventPenalty {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  penaltyEventId String @db.ObjectId
+  penaltyId     String @db.ObjectId
+  
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  penaltyEvent  PenaltyEvent @relation(fields: [penaltyEventId], references: [id])
+  penalty       Penalty @relation(fields: [penaltyId], references: [id])
+  
+  @@unique([penaltyEventId, penaltyId])
+  @@map("penalty_event_penalties")
+}
+
+model UserPenalty {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  penaltyId   String   @db.ObjectId
+  programId   String   @db.ObjectId
+  
+  // Application details
+  appliedBy   String   @db.ObjectId // Director who applied the penalty
+  appliedAt   DateTime @default(now())
+  expiresAt   DateTime?
+  
+  // Status and metadata
+  isActive    Boolean  @default(true)
+  isManual    Boolean  @default(false) // Manually applied vs automatic
+  reason      String?
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User @relation(fields: [userId], references: [id])
+  penalty     Penalty @relation(fields: [penaltyId], references: [id])
+  program     Program @relation(fields: [programId], references: [id])
+  appliedByUser User @relation("AppliedPenalties", fields: [appliedBy], references: [id])
+  
+  @@index([userId, programId, isActive])
+  @@index([penaltyId, isActive])
+  @@map("user_penalties")
+}
+
+// RF-15: Reassignment system
+model ReassignmentRequest {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  originalReservationId String   @db.ObjectId
+  requestedBy           String   @db.ObjectId // User who requested reassignment
+  
+  // Reassignment details
+  reason                String   // MAINTENANCE, EMERGENCY, RESOURCE_UNAVAILABLE
+  suggestedResourceId   String?  @db.ObjectId
+  suggestedStartTime    String?  // HH:mm format
+  suggestedEndTime      String?  // HH:mm format
+  
+  // Status tracking
+  status                String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, CANCELLED
+  userResponse          String   @default("PENDING") // ACCEPTED, REJECTED, PENDING
+  rejectionCount        Int      @default(0) // How many times user rejected
+  
+  // Priority and timing
+  priority              String   // Inherited from original reservation
+  responseDeadline      DateTime?
+  respondedAt           DateTime?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  originalReservation   Reservation @relation(fields: [originalReservationId], references: [id])
+  requestedByUser       User @relation(fields: [requestedBy], references: [id])
+  suggestedResource     Resource? @relation("SuggestedResource", fields: [suggestedResourceId], references: [id])
+  
+  @@index([originalReservationId, status])
+  @@index([requestedBy, createdAt])
+  @@map("reassignment_requests")
+}
+
+model ResourceEquivalence {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  primaryResourceId   String   @db.ObjectId
+  equivalentResourceId String   @db.ObjectId
+  programId           String   @db.ObjectId
+  
+  // Configuration
+  priority            Int      @default(1) // Order in suggestion list
+  isActive            Boolean  @default(true)
+  
+  // Metadata
+  createdBy           String   @db.ObjectId
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Relations
+  primaryResource     Resource @relation("PrimaryResourceEquivalences", fields: [primaryResourceId], references: [id])
+  equivalentResource  Resource @relation("EquivalentResourceEquivalences", fields: [equivalentResourceId], references: [id])
+  program             Program @relation(fields: [programId], references: [id])
+  createdByUser       User @relation(fields: [createdBy], references: [id])
+  
+  @@unique([primaryResourceId, equivalentResourceId, programId])
+  @@index([primaryResourceId, programId])
+  @@map("resource_equivalences")
+}
+
+model ReassignmentConfiguration {
+  id                          String   @id @default(auto()) @map("_id") @db.ObjectId
+  programId                   String   @unique @db.ObjectId
+  
+  // Configuration parameters
+  capacityTolerancePercentage Int      @default(5) // ±5% capacity tolerance
+  prioritizeSameType          Boolean  @default(true)
+  
+  // Status
+  isActive                    Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  
+  // Relations
+  program                     Program @relation(fields: [programId], references: [id])
+  
+  @@map("reassignment_configurations")
+}
+
+// ========================================
+// MAINTENANCE MODELS (HITO 6 - RF-06)
+// ========================================
+
+// Model for maintenance records (executed maintenances)
+model MaintenanceRecord {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Basic information
+  title       String
+  description String?
+  type        String   // PREVENTIVO, CORRECTIVO, EMERGENCIA, LIMPIEZA
+  status      String   // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  priority    String   // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // Resource relation
+  resourceId  String   @db.ObjectId
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  
+  // Maintenance details
+  startDate   DateTime
+  endDate     DateTime?
+  duration    Int?     // Duration in minutes
+  cost        Float?   // Maintenance cost
+  
+  // Personnel
+  technician  String?  // Technician name or ID
+  supervisor  String?  // Supervisor name or ID
+  
+  // User relations
+  reportedBy  String?  @db.ObjectId
+  assignedTo  String?  @db.ObjectId
+  reportedByUser User? @relation("MaintenanceReportedBy", fields: [reportedBy], references: [id])
+  assignedToUser User? @relation("MaintenanceAssignedTo", fields: [assignedTo], references: [id])
+  
+  // Technical details
+  workPerformed    String?  // Description of work done
+  partsUsed        String[] // List of parts/materials used
+  tools            String[] // Tools used
+  observations     String?  // Technician observations
+  recommendations  String?  // Recommendations for future
+  
+  // Files and evidence
+  attachments      String[] // File URLs or paths
+  beforePhotos     String[] // Photos before maintenance
+  afterPhotos      String[] // Photos after maintenance
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  incidentIds        String[] @db.ObjectId // Array of incident IDs
+  scheduledMaintenance ScheduledMaintenance? @relation(fields: [scheduledMaintenanceId], references: [id])
+  scheduledMaintenanceId String? @db.ObjectId
+  
+  @@map("maintenance_records")
+}
+
+// Model for incident reports (damage reports by users)
+model IncidentReport {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Basic information
+  title       String
+  description String
+  type        String   // DAMAGE, MALFUNCTION, SAFETY, SECURITY, OTHER
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  status      String   // REPORTED, UNDER_REVIEW, ASSIGNED, IN_PROGRESS, RESOLVED, CLOSED
+  priority    String   // LOW, MEDIUM, HIGH, URGENT
+  
+  // Resource relation
+  resourceId  String   @db.ObjectId
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  
+  // Reporter information
+  reportedBy  String   @db.ObjectId
+  reportedByUser User  @relation("IncidentReportedBy", fields: [reportedBy], references: [id])
+  reportedAt  DateTime @default(now())
+  
+  // Assignment
+  assignedTo  String?  @db.ObjectId
+  assignedToUser User? @relation("IncidentAssignedTo", fields: [assignedTo], references: [id])
+  assignedAt  DateTime?
+  
+  // Location and context
+  location    String?  // Specific location within resource
+  context     String?  // What was happening when incident occurred
+  witnesses   String[] // Names of witnesses
+  
+  // Evidence
+  photos      String[] // Photo URLs or paths
+  documents   String[] // Document URLs or paths
+  
+  // Impact assessment
+  impactLevel       String?  // NONE, LOW, MEDIUM, HIGH, CRITICAL
+  affectedCapacity  Int?     // How much capacity is affected
+  estimatedCost     Float?   // Estimated repair cost
+  
+  // Resolution
+  resolutionNotes   String?  // How the incident was resolved
+  resolvedAt        DateTime?
+  resolvedBy        String?  @db.ObjectId
+  resolvedByUser    User?    @relation("IncidentResolvedBy", fields: [resolvedBy], references: [id])
+  
+  // Follow-up
+  preventiveMeasures String? // Measures to prevent similar incidents
+  followUpRequired   Boolean @default(false)
+  followUpDate       DateTime?
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  maintenanceRecordIds String[] @db.ObjectId // Array of maintenance record IDs
+  incidentReportCategories IncidentReportCategory[] // Multiple categories per incident report
+  
+  @@map("incident_reports")
+}
+
+// Model for scheduled maintenances (preventive maintenances)
+model ScheduledMaintenance {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Basic information
+  title       String
+  description String?
+  type        String   // PREVENTIVO, CORRECTIVO, EMERGENCIA, LIMPIEZA
+  status      String   // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, POSTPONED
+  priority    String   // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // Resource relation
+  resourceId  String   @db.ObjectId
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  
+  // Scheduling
+  scheduledDate    DateTime
+  estimatedDuration Int     // Duration in minutes
+  actualStartDate  DateTime?
+  actualEndDate    DateTime?
+  
+  // Recurrence
+  isRecurring      Boolean  @default(false)
+  recurrenceType   String?  // DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
+  recurrenceInterval Int?   // Every X intervals
+  recurrenceEnd    DateTime? // When recurrence ends
+  parentScheduleId String?  @db.ObjectId // For recurring maintenance instances
+  
+  // Personnel
+  assignedTo       String?  @db.ObjectId
+  assignedToUser   User?    @relation("ScheduledMaintenanceAssignedTo", fields: [assignedTo], references: [id])
+  createdBy        String   @db.ObjectId
+  createdByUser    User     @relation("ScheduledMaintenanceCreatedBy", fields: [createdBy], references: [id])
+  
+  // Maintenance details
+  checklist        String[] // List of tasks to perform
+  requiredTools    String[] // Tools needed
+  requiredParts    String[] // Parts/materials needed
+  estimatedCost    Float?   // Estimated cost
+  
+  // Instructions
+  instructions     String?  // Detailed instructions
+  safetyNotes      String?  // Safety considerations
+  specialRequirements String? // Special requirements
+  
+  // Notifications
+  notifyBefore     Int?     // Minutes before to send notification
+  notificationSent Boolean  @default(false)
+  
+  // Completion details
+  completionNotes  String?  // Notes after completion
+  actualCost       Float?   // Actual cost
+  
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  maintenanceRecords MaintenanceRecord[]
+  
+  @@map("scheduled_maintenances")
+}
+
+// ========================================
+// AUDIT AND LOGGING MODELS
+// ========================================
+
+// Comprehensive audit entry for all system operations
+model AuditEntry {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Event identification
+  eventType   String   // AuditEventType enum value
+  category    String   // AuditCategory enum value
+  action      String   // create, update, delete, etc.
+  resource    String   // recurring_reservation, waiting_list, etc.
+  resourceId  String?  // ID of the affected resource
+  
+  // Status and severity
+  status      String   // SUCCESS, FAILURE, PENDING, CANCELLED
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // User context
+  userId      String?  @db.ObjectId
+  userRole    String?
+  userProgram String?
+  sessionId   String?
+  ipAddress   String?
+  userAgent   String?
+  correlationId String?
+  requestId   String?
+  
+  // System metadata
+  timestamp   DateTime @default(now())
+  service     String   // availability-service, auth-service, etc.
+  version     String   // Service version
+  environment String   // development, staging, production
+  traceId     String?  // Distributed tracing ID
+  spanId      String?  // Span ID for tracing
+  
+  // Operation data
+  payload     String?  // JSON string of operation input
+  result      String?  // JSON string of operation result
+  error       String?  // JSON string of error details
+  duration    Int?     // Operation duration in milliseconds
+  tags        String[] // Tags for categorization and filtering
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Indexes for efficient querying
+  @@index([eventType, timestamp])
+  @@index([category, timestamp])
+  @@index([resource, resourceId])
+  @@index([userId, timestamp])
+  @@index([status, severity])
+  @@index([correlationId])
+  @@index([service, environment])
+  @@index([timestamp])
+  @@map("audit_entries")
+}
+
+

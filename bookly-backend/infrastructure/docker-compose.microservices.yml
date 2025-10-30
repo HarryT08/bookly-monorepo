@@ -1,0 +1,405 @@
+# Microservicios Bookly Backend
+# Orquestación completa de todos los servicios de aplicación
+
+services:
+  # API Gateway - Puerta de entrada principal
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.api-gateway
+      target: production
+      args:
+        - NODE_ENV=production
+    container_name: bookly-api-gateway
+    hostname: api-gateway
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      SERVICE_NAME: api-gateway
+      SERVICE_HOST: 0.0.0.0
+      # Database
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
+      # Redis
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
+      # RabbitMQ
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://bookly:bookly123@rabbitmq:5672/bookly}
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-bookly-jwt-secret-key}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      # Services URLs
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:3001}
+      RESOURCES_SERVICE_URL: ${RESOURCES_SERVICE_URL:-http://resources-service:3002}
+      AVAILABILITY_SERVICE_URL: ${AVAILABILITY_SERVICE_URL:-http://availability-service:3003}
+      STOCKPILE_SERVICE_URL: ${STOCKPILE_SERVICE_URL:-http://stockpile-service:3004}
+      REPORTS_SERVICE_URL: ${REPORTS_SERVICE_URL:-http://reports-service:3005}
+      # Observability
+      SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      # Memory
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-1536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-1536}
+    ports:
+      - "3000:3000"
+    volumes:
+      - api_gateway_logs:/app/logs
+    networks:
+      - bookly-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      resources-service:
+        condition: service_started
+      availability-service:
+        condition: service_started
+      stockpile-service:
+        condition: service_started
+      reports-service:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # Auth Service - Autenticación y autorización
+  auth-service:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.auth-service
+      target: production
+    container_name: bookly-auth-service
+    hostname: auth-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3001
+      SERVICE_NAME: auth-service
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://bookly:bookly123@rabbitmq:5672/bookly}
+      JWT_SECRET: ${JWT_SECRET:-bookly-jwt-secret-key}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-bookly-refresh-secret-key}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      # OAuth Google
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:3001/auth/oauth/google/callback}
+      # Observability
+      SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-1536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-1536}
+    ports:
+      - "3001:3001"
+    volumes:
+      - auth_service_logs:/app/logs
+    networks:
+      - bookly-network
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # Resources Service - Gestión de recursos
+  resources-service:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.resources-service
+      target: production
+    container_name: bookly-resources-service
+    hostname: resources-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3002
+      SERVICE_NAME: resources-service
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://bookly:bookly123@rabbitmq:5672/bookly}
+      JWT_SECRET: ${JWT_SECRET:-bookly-jwt-secret-key}
+      # Google Sheets API (for bulk import)
+      GOOGLE_SHEETS_API_KEY: ${GOOGLE_SHEETS_API_KEY}
+      GOOGLE_SHEETS_CLIENT_EMAIL: ${GOOGLE_SHEETS_CLIENT_EMAIL}
+      GOOGLE_SHEETS_PRIVATE_KEY: ${GOOGLE_SHEETS_PRIVATE_KEY}
+      # Observability
+      SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-1536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-1536}
+    ports:
+      - "3002:3002"
+    volumes:
+      - resources_service_logs:/app/logs
+      - resources_uploads:/app/uploads
+    networks:
+      - bookly-network
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3002/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # Availability Service - Disponibilidad y reservas
+  availability-service:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.availability-service
+      target: production
+    container_name: bookly-availability-service
+    hostname: availability-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3003
+      SERVICE_NAME: availability-service
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://bookly:bookly123@rabbitmq:5672/bookly}
+      JWT_SECRET: ${JWT_SECRET:-bookly-jwt-secret-key}
+      # Google Calendar API
+      GOOGLE_CALENDAR_CLIENT_ID: ${GOOGLE_CALENDAR_CLIENT_ID}
+      GOOGLE_CALENDAR_CLIENT_SECRET: ${GOOGLE_CALENDAR_CLIENT_SECRET}
+      GOOGLE_CALENDAR_REDIRECT_URI: ${GOOGLE_CALENDAR_REDIRECT_URI}
+      # Outlook Calendar API
+      OUTLOOK_CLIENT_ID: ${OUTLOOK_CLIENT_ID}
+      OUTLOOK_CLIENT_SECRET: ${OUTLOOK_CLIENT_SECRET}
+      OUTLOOK_REDIRECT_URI: ${OUTLOOK_REDIRECT_URI}
+      # Observability
+      SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-3536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-3536}
+    ports:
+      - "3003:3003"
+    volumes:
+      - availability_service_logs:/app/logs
+    networks:
+      - bookly-network
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3003/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # Stockpile Service - Aprobaciones y validaciones
+  stockpile-service:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.stockpile-service
+      target: production
+    container_name: bookly-stockpile-service
+    hostname: stockpile-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3004
+      SERVICE_NAME: stockpile-service
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://bookly:bookly123@rabbitmq:5672/bookly}
+      JWT_SECRET: ${JWT_SECRET:-bookly-jwt-secret-key}
+      # WhatsApp API
+      WHATSAPP_API_URL: ${WHATSAPP_API_URL}
+      WHATSAPP_API_TOKEN: ${WHATSAPP_API_TOKEN}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      # Email Configuration
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@bookly.ufps.edu.co}
+      # PDF Generation
+      PDF_TEMPLATE_DIR: ${PDF_TEMPLATE_DIR:-/app/templates}
+      # Observability
+      SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-1536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-1536}
+    ports:
+      - "3004:3004"
+    volumes:
+      - stockpile_service_logs:/app/logs
+      - stockpile_templates:/app/templates
+      - stockpile_documents:/app/documents
+    networks:
+      - bookly-network
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3004/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # Reports Service - Reportes y análisis
+  reports-service:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/Dockerfile.reports-service
+      target: production
+    container_name: bookly-reports-service
+    hostname: reports-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3005
+      SERVICE_NAME: reports-service
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://bookly:bookly123@rabbitmq:5672/bookly}
+      JWT_SECRET: ${JWT_SECRET:-bookly-jwt-secret-key}
+      # Export Configuration
+      EXPORT_DIR: ${EXPORT_DIR:-/app/exports}
+      MAX_EXPORT_RECORDS: ${MAX_EXPORT_RECORDS:-10000}
+      # Observability
+      SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-1536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-1536}
+    ports:
+      - "3005:3005"
+    volumes:
+      - reports_service_logs:/app/logs
+      - reports_exports:/app/exports
+    networks:
+      - bookly-network
+    depends_on:
+      mongodb-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3005/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+# Volúmenes para logs y datos de aplicación
+volumes:
+  api_gateway_logs:
+    driver: local
+  auth_service_logs:
+    driver: local
+  resources_service_logs:
+    driver: local
+  resources_uploads:
+    driver: local
+  availability_service_logs:
+    driver: local
+  stockpile_service_logs:
+    driver: local
+  stockpile_templates:
+    driver: local
+  stockpile_documents:
+    driver: local
+  reports_service_logs:
+    driver: local
+  reports_exports:
+    driver: local
+# La red bookly-network es definida en docker-compose.base.yml
+# y automáticamente está disponible para estos servicios

@@ -1,0 +1,481 @@
+{
+  "info": {
+    "name": "Bookly Availability Service - RF-10 Calendar Views",
+    "description": "Postman collection for Calendar Views endpoints (RF-10)\n\nThis collection covers:\n- Resource availability for calendar display\n- Comprehensive calendar views with events\n- Calendar visualization with different view types\n\nView Types Supported:\n- DAY - Single day view\n- WEEK - Weekly view\n- MONTH - Monthly view\n- YEAR - Yearly overview\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the availability service\n- {{authToken}} - JWT Bearer token for authentication\n- {{resourceId}} - Resource ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "rf10-calendar-views",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "// Set default dates if not provided",
+          "if (!pm.environment.get('startDate')) {",
+          "  const today = new Date();",
+          "  pm.environment.set('startDate', today.toISOString());",
+          "}",
+          "",
+          "if (!pm.environment.get('endDate')) {",
+          "  const nextWeek = new Date();",
+          "  nextWeek.setDate(nextWeek.getDate() + 7);",
+          "  pm.environment.set('endDate', nextWeek.toISOString());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/availability",
+      "type": "string"
+    },
+    {
+      "key": "resourceId",
+      "value": "resource-123",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Resource Calendar Display",
+      "item": [
+        {
+          "name": "Get Resource Calendar - Full Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar/{{resourceId}}?startDate=2024-01-15T00:00:00Z&endDate=2024-01-21T23:59:59Z&includeReservations=true&includeScheduleRestrictions=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar", "{{resourceId}}"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-15T00:00:00Z",
+                  "description": "Start date (ISO format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-21T23:59:59Z",
+                  "description": "End date (ISO format)"
+                },
+                {
+                  "key": "includeReservations",
+                  "value": "true",
+                  "description": "Include existing reservations"
+                },
+                {
+                  "key": "includeScheduleRestrictions",
+                  "value": "true",
+                  "description": "Include schedule restrictions"
+                }
+              ]
+            },
+            "description": "Retrieves comprehensive availability data for calendar visualization including reservations and restrictions"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains calendar data', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('resourceId');",
+                  "  pm.expect(responseJson).to.have.property('startDate');",
+                  "  pm.expect(responseJson).to.have.property('endDate');",
+                  "  pm.expect(responseJson).to.have.property('availabilitySlots');",
+                  "});",
+                  "",
+                  "pm.test('Availability slots is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.availabilitySlots).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Reservations included when requested', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('reservations');",
+                  "  pm.expect(responseJson.reservations).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Restrictions included when requested', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('restrictions');",
+                  "  pm.expect(responseJson.restrictions).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Resource Calendar - Availability Only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar/{{resourceId}}?startDate=2024-01-15T00:00:00Z&endDate=2024-01-21T23:59:59Z&includeReservations=false&includeScheduleRestrictions=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar", "{{resourceId}}"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-15T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-21T23:59:59Z"
+                },
+                {
+                  "key": "includeReservations",
+                  "value": "false",
+                  "description": "Exclude existing reservations"
+                },
+                {
+                  "key": "includeScheduleRestrictions",
+                  "value": "false",
+                  "description": "Exclude schedule restrictions"
+                }
+              ]
+            },
+            "description": "Retrieves only availability data without reservations or restrictions"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Calendar Views",
+      "item": [
+        {
+          "name": "Get Monthly Calendar View",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-view?startDate=2024-01-01T00:00:00Z&endDate=2024-01-31T23:59:59Z&viewType=MONTH&includeAvailability=true&includeExternalEvents=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-view"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z",
+                  "description": "Start date (ISO format)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31T23:59:59Z",
+                  "description": "End date (ISO format)"
+                },
+                {
+                  "key": "viewType",
+                  "value": "MONTH",
+                  "description": "Calendar view type"
+                },
+                {
+                  "key": "includeAvailability",
+                  "value": "true",
+                  "description": "Include availability slots"
+                },
+                {
+                  "key": "includeExternalEvents",
+                  "value": "true",
+                  "description": "Include external calendar events"
+                }
+              ]
+            },
+            "description": "Get monthly calendar view showing all events and availability"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Calendar view contains events', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('events');",
+                  "  pm.expect(responseJson.events).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Date range matches request', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('startDate');",
+                  "  pm.expect(responseJson).to.have.property('endDate');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Weekly Calendar View",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-view?startDate=2024-01-15T00:00:00Z&endDate=2024-01-21T23:59:59Z&viewType=WEEK&resourceId={{resourceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-view"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-15T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-21T23:59:59Z"
+                },
+                {
+                  "key": "viewType",
+                  "value": "WEEK"
+                },
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}",
+                  "description": "Resource ID to show calendar for"
+                }
+              ]
+            },
+            "description": "Get weekly calendar view for a specific resource"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Daily Calendar View",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-view?startDate=2024-01-15T00:00:00Z&endDate=2024-01-15T23:59:59Z&viewType=DAY&resourceId={{resourceId}}&userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-view"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-15T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-15T23:59:59Z"
+                },
+                {
+                  "key": "viewType",
+                  "value": "DAY"
+                },
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "User ID for personalized view"
+                }
+              ]
+            },
+            "description": "Get daily calendar view with personalized user data"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Calendar View with Event Filtering",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-view?startDate=2024-01-01T00:00:00Z&endDate=2024-01-31T23:59:59Z&viewType=MONTH&eventTypes=RESERVATION&eventTypes=MAINTENANCE&includeAvailability=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-view"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31T23:59:59Z"
+                },
+                {
+                  "key": "viewType",
+                  "value": "MONTH"
+                },
+                {
+                  "key": "eventTypes",
+                  "value": "RESERVATION",
+                  "description": "Event types to include"
+                },
+                {
+                  "key": "eventTypes",
+                  "value": "MAINTENANCE",
+                  "description": "Event types to include"
+                },
+                {
+                  "key": "includeAvailability",
+                  "value": "false",
+                  "description": "Exclude availability slots"
+                }
+              ]
+            },
+            "description": "Get calendar view filtered to show only reservations and maintenance events"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Events are filtered correctly', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.events && responseJson.events.length > 0) {",
+                  "    responseJson.events.forEach(event => {",
+                  "      pm.expect(['RESERVATION', 'MAINTENANCE']).to.include(event.type);",
+                  "    });",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Calendar View Examples",
+      "item": [
+        {
+          "name": "Academic Calendar - Semester View",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-view?startDate=2024-01-15T00:00:00Z&endDate=2024-05-15T23:59:59Z&viewType=MONTH&eventTypes=RESERVATION&eventTypes=SCHEDULE&eventTypes=MAINTENANCE&includeAvailability=true&includeExternalEvents=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-view"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-15T00:00:00Z",
+                  "description": "Semester start"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-05-15T23:59:59Z",
+                  "description": "Semester end"
+                },
+                {
+                  "key": "viewType",
+                  "value": "MONTH"
+                },
+                {
+                  "key": "eventTypes",
+                  "value": "RESERVATION"
+                },
+                {
+                  "key": "eventTypes",
+                  "value": "SCHEDULE"
+                },
+                {
+                  "key": "eventTypes",
+                  "value": "MAINTENANCE"
+                },
+                {
+                  "key": "includeAvailability",
+                  "value": "true"
+                },
+                {
+                  "key": "includeExternalEvents",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Example: Academic semester calendar view for resource planning"
+          },
+          "response": []
+        },
+        {
+          "name": "Resource Utilization - Weekly Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/calendar-view?startDate=2024-01-15T00:00:00Z&endDate=2024-01-21T23:59:59Z&viewType=WEEK&resourceId={{resourceId}}&eventTypes=RESERVATION&includeAvailability=true&includeExternalEvents=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["calendar-view"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-15T00:00:00Z"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-21T23:59:59Z"
+                },
+                {
+                  "key": "viewType",
+                  "value": "WEEK"
+                },
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}"
+                },
+                {
+                  "key": "eventTypes",
+                  "value": "RESERVATION"
+                },
+                {
+                  "key": "includeAvailability",
+                  "value": "true"
+                },
+                {
+                  "key": "includeExternalEvents",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Example: Weekly resource utilization report showing reservations vs availability"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

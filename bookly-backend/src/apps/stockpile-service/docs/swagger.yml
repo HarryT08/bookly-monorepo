@@ -1,0 +1,560 @@
+openapi: 3.0.3
+info:
+  title: Bookly Stockpile Service API
+  version: 1.0.0
+  description: |
+    REST API for Bookly's approval flow, document generation, and notification system.
+    This service manages the complete workflow from reservation requests to final approval/rejection with automated document generation and notifications.
+
+    ## Features
+    - **Approval Flow Management**: Configure multi-level approval workflows
+    - **Document Template System**: Create and manage document templates with variable substitution
+    - **Notification Templates**: Multi-channel notification system (Email, SMS, In-App, Push)
+    - **Check-in/Check-out**: Digital validation system for reservations
+    - **Analytics & Reporting**: Comprehensive approval and document generation metrics
+
+    ## Architecture
+    - Clean Architecture with CQRS pattern
+    - Event-driven communication via RabbitMQ
+    - Role-based access control (RBAC)
+    - Multi-tenant support with program-based isolation
+  contact:
+    name: Bookly Development Team
+    email: dev@booklyapp.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/stockpile
+    description: Development server
+  - url: https://api.booklyapp.com/stockpile
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Stockpile Core Operations
+  /stockpile/approvals:
+    get:
+      tags:
+        - Stockpile Core
+      summary: Get all approval requests
+      description: Retrieves all approval requests with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - name: status
+          in: query
+          description: Filter by approval status
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+        - name: programId
+          in: query
+          description: Filter by program ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approval requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approvals:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApprovalRequestDto"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /stockpile/approvals/{id}:
+    get:
+      tags:
+        - Stockpile Core
+      summary: Get approval request by ID
+      description: Retrieves a specific approval request by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval request ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approval request retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /stockpile/approvals/{id}/approve:
+    post:
+      tags:
+        - Stockpile Core
+      summary: Approve request
+      description: Approves a pending approval request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval request ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approverId:
+                  type: string
+                  description: ID of the approver
+                comments:
+                  type: string
+                  description: Optional approval comments
+      responses:
+        "200":
+          description: Request approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /stockpile/approvals/{id}/reject:
+    post:
+      tags:
+        - Stockpile Core
+      summary: Reject request
+      description: Rejects a pending approval request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval request ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - approverId
+                - reason
+              properties:
+                approverId:
+                  type: string
+                  description: ID of the approver
+                reason:
+                  type: string
+                  description: Reason for rejection
+                comments:
+                  type: string
+                  description: Additional comments
+      responses:
+        "200":
+          description: Request rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /stockpile/approvals/{id}/generate-document:
+    post:
+      tags:
+        - Stockpile Core
+      summary: Generate approval document
+      description: Generates an approval or rejection document for the request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval request ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedDocumentDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /stockpile/notifications/send:
+    post:
+      tags:
+        - Stockpile Core
+      summary: Send notification
+      description: Sends a notification to a user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - message
+              properties:
+                userId:
+                  type: string
+                  description: ID of the recipient user
+                message:
+                  type: string
+                  description: Notification message
+                channel:
+                  type: string
+                  enum: [EMAIL, SMS, IN_APP, PUSH]
+                  description: Notification channel
+                priority:
+                  type: string
+                  enum: [LOW, NORMAL, HIGH, URGENT]
+                  description: Notification priority
+      responses:
+        "200":
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  notificationId:
+                    type: string
+                  sentAt:
+                    type: string
+                    format: date-time
+
+  /stockpile/check-in/{reservationId}:
+    post:
+      tags:
+        - Stockpile Core
+      summary: Check-in for reservation
+      description: Marks a user as checked in for their reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                location:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                    longitude:
+                      type: number
+                    accuracy:
+                      type: number
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: Check-in completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId:
+                    type: string
+                  checkInTime:
+                    type: string
+                    format: date-time
+                  success:
+                    type: boolean
+
+  /stockpile/check-out/{reservationId}:
+    post:
+      tags:
+        - Stockpile Core
+      summary: Check-out for reservation
+      description: Marks a user as checked out from their reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: Optional check-out notes
+                condition:
+                  type: string
+                  enum: [GOOD, DAMAGED, NEEDS_CLEANING]
+                  description: Resource condition after use
+      responses:
+        "200":
+          description: Check-out completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationId:
+                    type: string
+                  checkOutTime:
+                    type: string
+                    format: date-time
+                  success:
+                    type: boolean
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApprovalRequestDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the approval request
+        reservationId:
+          type: string
+          description: Associated reservation ID
+        requesterId:
+          type: string
+          description: ID of the user who made the request
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, CANCELLED]
+          description: Current status of the request
+        currentLevel:
+          type: integer
+          description: Current approval level
+        totalLevels:
+          type: integer
+          description: Total number of approval levels
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        approvedBy:
+          type: string
+          description: ID of the approver (if approved)
+        approvedAt:
+          type: string
+          format: date-time
+          description: Approval timestamp
+        comments:
+          type: string
+          description: Approval/rejection comments
+
+    GeneratedDocumentDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the generated document
+        templateId:
+          type: string
+          description: ID of the template used
+        reservationId:
+          type: string
+          description: Associated reservation ID
+        fileName:
+          type: string
+          description: Generated file name
+        filePath:
+          type: string
+          description: Path to the generated file
+        fileSize:
+          type: integer
+          description: File size in bytes
+        mimeType:
+          type: string
+          description: MIME type of the generated file
+        generatedBy:
+          type: string
+          description: ID of the user who generated the document
+        generatedAt:
+          type: string
+          format: date-time
+        variables:
+          type: object
+          description: Variables used in document generation
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - type
+        - http_code
+      properties:
+        code:
+          type: string
+          description: Error code in format SERVICE-XXXX
+          example: "STCK-0404"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Approval request not found"
+        type:
+          type: string
+          enum: [error, warning, info]
+          description: Error type classification
+        exception_code:
+          type: string
+          description: Internal exception code
+          example: "AR-404"
+        http_code:
+          type: integer
+          description: HTTP status code
+          example: 404
+        http_exception:
+          type: string
+          description: HTTP exception name
+          example: "NotFoundException"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error occurrence timestamp
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0400"
+            message: "Invalid request parameters"
+            type: "error"
+            http_code: 400
+            http_exception: "BadRequestException"
+
+    Unauthorized:
+      description: Unauthorized - Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0401"
+            message: "Authentication required"
+            type: "error"
+            http_code: 401
+            http_exception: "UnauthorizedException"
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0403"
+            message: "Insufficient permissions for this operation"
+            type: "error"
+            http_code: 403
+            http_exception: "ForbiddenException"
+
+    NotFound:
+      description: Not Found - Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0404"
+            message: "Requested resource not found"
+            type: "error"
+            http_code: 404
+            http_exception: "NotFoundException"
+
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0500"
+            message: "Internal server error occurred"
+            type: "error"
+            http_code: 500
+            http_exception: "InternalServerErrorException"
+
+tags:
+  - name: Stockpile Core
+    description: Core stockpile operations for approvals, notifications, and check-in/out
+  - name: Approval Flows
+    description: Approval flow configuration and management
+  - name: Document Templates
+    description: Document template management and generation
+  - name: Notification Templates
+    description: Notification template and channel management

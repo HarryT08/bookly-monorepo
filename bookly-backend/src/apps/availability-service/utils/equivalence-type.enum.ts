@@ -1,0 +1,7 @@
+export enum EquivalenceType {
+  IDENTICAL = 'IDENTICAL',
+  SIMILAR = 'SIMILAR',
+  ALTERNATIVE = 'ALTERNATIVE',
+  UPGRADE = 'UPGRADE',
+  DOWNGRADE = 'DOWNGRADE'
+}

@@ -1,0 +1,512 @@
+asyncapi: 3.0.0
+info:
+  title: Bookly Resources Service Events
+  version: 1.0.0
+  description: |
+    Event-driven architecture documentation for Bookly's resource management system.
+    This service handles the management of physical resources (rooms, equipment, etc.), categories, and programs.
+  contact:
+    name: Bookly Development Team
+    email: dev@booklyapp.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+defaultContentType: application/json
+
+servers:
+  development:
+    host: localhost:5672
+    protocol: amqp
+    description: Local RabbitMQ development server
+  production:
+    host: rabbitmq.booklyapp.com:5672
+    protocol: amqp
+    description: Production RabbitMQ server
+
+channels:
+  resource-management:
+    description: Channel for resource management events
+    messages:
+      resourceCreated:
+        $ref: "#/components/messages/ResourceCreated"
+      resourceUpdated:
+        $ref: "#/components/messages/ResourceUpdated"
+      resourceDeleted:
+        $ref: "#/components/messages/ResourceDeleted"
+      resourceStatusChanged:
+        $ref: "#/components/messages/ResourceStatusChanged"
+      resourceMaintenanceScheduled:
+        $ref: "#/components/messages/ResourceMaintenanceScheduled"
+
+  category-management:
+    description: Channel for category management events
+    messages:
+      categoryCreated:
+        $ref: "#/components/messages/CategoryCreated"
+      categoryUpdated:
+        $ref: "#/components/messages/CategoryUpdated"
+      categoryDeleted:
+        $ref: "#/components/messages/CategoryDeleted"
+
+  program-management:
+    description: Channel for program management events
+    messages:
+      programCreated:
+        $ref: "#/components/messages/ProgramCreated"
+      programUpdated:
+        $ref: "#/components/messages/ProgramUpdated"
+      programDeleted:
+        $ref: "#/components/messages/ProgramDeleted"
+
+operations:
+  publishResourceCreated:
+    action: send
+    channel:
+      $ref: "#/channels/resource-management"
+    messages:
+      - $ref: "#/channels/resource-management/messages/resourceCreated"
+    description: Published when a new resource is created
+
+  publishResourceUpdated:
+    action: send
+    channel:
+      $ref: "#/channels/resource-management"
+    messages:
+      - $ref: "#/channels/resource-management/messages/resourceUpdated"
+    description: Published when a resource is updated
+
+  publishResourceDeleted:
+    action: send
+    channel:
+      $ref: "#/channels/resource-management"
+    messages:
+      - $ref: "#/channels/resource-management/messages/resourceDeleted"
+    description: Published when a resource is deleted
+
+  publishCategoryCreated:
+    action: send
+    channel:
+      $ref: "#/channels/category-management"
+    messages:
+      - $ref: "#/channels/category-management/messages/categoryCreated"
+    description: Published when a new category is created
+
+  publishProgramCreated:
+    action: send
+    channel:
+      $ref: "#/channels/program-management"
+    messages:
+      - $ref: "#/channels/program-management/messages/programCreated"
+    description: Published when a new program is created
+
+components:
+  messages:
+    ResourceCreated:
+      name: ResourceCreated
+      title: Resource Created Event
+      summary: Event published when a new resource is created
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceCreatedPayload"
+
+    ResourceUpdated:
+      name: ResourceUpdated
+      title: Resource Updated Event
+      summary: Event published when a resource is updated
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceUpdatedPayload"
+
+    ResourceDeleted:
+      name: ResourceDeleted
+      title: Resource Deleted Event
+      summary: Event published when a resource is deleted
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceDeletedPayload"
+
+    ResourceStatusChanged:
+      name: ResourceStatusChanged
+      title: Resource Status Changed Event
+      summary: Event published when a resource status changes
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceStatusChangedPayload"
+
+    ResourceMaintenanceScheduled:
+      name: ResourceMaintenanceScheduled
+      title: Resource Maintenance Scheduled Event
+      summary: Event published when maintenance is scheduled for a resource
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceMaintenanceScheduledPayload"
+
+    CategoryCreated:
+      name: CategoryCreated
+      title: Category Created Event
+      summary: Event published when a new category is created
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/CategoryCreatedPayload"
+
+    CategoryUpdated:
+      name: CategoryUpdated
+      title: Category Updated Event
+      summary: Event published when a category is updated
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/CategoryUpdatedPayload"
+
+    CategoryDeleted:
+      name: CategoryDeleted
+      title: Category Deleted Event
+      summary: Event published when a category is deleted
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/CategoryDeletedPayload"
+
+    ProgramCreated:
+      name: ProgramCreated
+      title: Program Created Event
+      summary: Event published when a new program is created
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ProgramCreatedPayload"
+
+    ProgramUpdated:
+      name: ProgramUpdated
+      title: Program Updated Event
+      summary: Event published when a program is updated
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ProgramUpdatedPayload"
+
+    ProgramDeleted:
+      name: ProgramDeleted
+      title: Program Deleted Event
+      summary: Event published when a program is deleted
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ProgramDeletedPayload"
+
+  schemas:
+    DomainEvent:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - aggregateId
+        - aggregateType
+        - eventData
+        - timestamp
+        - version
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for the event
+        eventType:
+          type: string
+          description: Type of the event
+        aggregateId:
+          type: string
+          description: ID of the aggregate that generated the event
+        aggregateType:
+          type: string
+          description: Type of the aggregate
+        eventData:
+          type: object
+          description: Event-specific data payload
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        version:
+          type: integer
+          description: Version of the event schema
+
+    ResourceCreatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - resourceId
+                - name
+                - type
+                - categoryId
+                - programId
+                - createdBy
+              properties:
+                resourceId:
+                  type: string
+                  description: ID of the created resource
+                name:
+                  type: string
+                  description: Name of the resource
+                type:
+                  type: string
+                  description: Type of the resource
+                categoryId:
+                  type: string
+                  description: ID of the category
+                programId:
+                  type: string
+                  description: ID of the program
+                location:
+                  type: string
+                  description: Physical location of the resource
+                capacity:
+                  type: integer
+                  description: Capacity of the resource
+                createdBy:
+                  type: string
+                  description: ID of the user who created the resource
+
+    ResourceUpdatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - resourceId
+                - updatedBy
+                - changes
+              properties:
+                resourceId:
+                  type: string
+                  description: ID of the updated resource
+                updatedBy:
+                  type: string
+                  description: ID of the user who updated the resource
+                changes:
+                  type: object
+                  description: Fields that were changed
+                previousValues:
+                  type: object
+                  description: Previous values of changed fields
+
+    ResourceDeletedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - resourceId
+                - deletedBy
+                - reason
+              properties:
+                resourceId:
+                  type: string
+                  description: ID of the deleted resource
+                deletedBy:
+                  type: string
+                  description: ID of the user who deleted the resource
+                reason:
+                  type: string
+                  description: Reason for deletion
+                isHardDelete:
+                  type: boolean
+                  description: Whether this was a hard delete or soft delete
+
+    ResourceStatusChangedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - resourceId
+                - previousStatus
+                - newStatus
+                - changedBy
+              properties:
+                resourceId:
+                  type: string
+                  description: ID of the resource
+                previousStatus:
+                  type: string
+                  description: Previous status of the resource
+                newStatus:
+                  type: string
+                  description: New status of the resource
+                changedBy:
+                  type: string
+                  description: ID of the user who changed the status
+                reason:
+                  type: string
+                  description: Reason for status change
+
+    ResourceMaintenanceScheduledPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - resourceId
+                - maintenanceId
+                - scheduledBy
+                - startDate
+                - endDate
+              properties:
+                resourceId:
+                  type: string
+                  description: ID of the resource
+                maintenanceId:
+                  type: string
+                  description: ID of the maintenance record
+                scheduledBy:
+                  type: string
+                  description: ID of the user who scheduled maintenance
+                startDate:
+                  type: string
+                  format: date-time
+                  description: Start date of maintenance
+                endDate:
+                  type: string
+                  format: date-time
+                  description: End date of maintenance
+                description:
+                  type: string
+                  description: Description of maintenance work
+
+    CategoryCreatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - categoryId
+                - name
+                - createdBy
+              properties:
+                categoryId:
+                  type: string
+                  description: ID of the created category
+                name:
+                  type: string
+                  description: Name of the category
+                description:
+                  type: string
+                  description: Description of the category
+                createdBy:
+                  type: string
+                  description: ID of the user who created the category
+
+    CategoryUpdatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - categoryId
+                - updatedBy
+              properties:
+                categoryId:
+                  type: string
+                  description: ID of the updated category
+                updatedBy:
+                  type: string
+                  description: ID of the user who updated the category
+                changes:
+                  type: object
+                  description: Fields that were changed
+
+    CategoryDeletedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - categoryId
+                - deletedBy
+              properties:
+                categoryId:
+                  type: string
+                  description: ID of the deleted category
+                deletedBy:
+                  type: string
+                  description: ID of the user who deleted the category
+
+    ProgramCreatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - programId
+                - name
+                - createdBy
+              properties:
+                programId:
+                  type: string
+                  description: ID of the created program
+                name:
+                  type: string
+                  description: Name of the program
+                description:
+                  type: string
+                  description: Description of the program
+                coordinatorId:
+                  type: string
+                  description: ID of the program coordinator
+                createdBy:
+                  type: string
+                  description: ID of the user who created the program
+
+    ProgramUpdatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - programId
+                - updatedBy
+              properties:
+                programId:
+                  type: string
+                  description: ID of the updated program
+                updatedBy:
+                  type: string
+                  description: ID of the user who updated the program
+                changes:
+                  type: object
+                  description: Fields that were changed
+
+    ProgramDeletedPayload:
+      allOf:
+        - $ref: "#/components/schemas/DomainEvent"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              required:
+                - programId
+                - deletedBy
+              properties:
+                programId:
+                  type: string
+                  description: ID of the deleted program
+                deletedBy:
+                  type: string
+                  description: ID of the user who deleted the program

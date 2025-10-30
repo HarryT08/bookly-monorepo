@@ -1,0 +1,422 @@
+{
+  "rabbit_version": "3.12.0",
+  "rabbitmq_version": "3.12.0",
+  "product_name": "RabbitMQ",
+  "product_version": "3.12.0",
+  "users": [
+    {
+      "name": "bookly",
+      "password_hash": "msP0jMdLL/RQnJsU2XeV6Z+yU4/3BCfNC1WiNYAugXwpHRPT",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "bookly"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "bookly",
+      "vhost": "bookly",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "bookly.events",
+      "vhost": "bookly",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "booklyapp.commands",
+      "vhost": "bookly",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "bookly.notifications",
+      "vhost": "bookly",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "bookly.dlx",
+      "vhost": "bookly",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "resource.created",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "resource.updated",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "resource.deleted",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "reservation.created",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "reservation.updated",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "reservation.cancelled",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "approval.requested",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 7200000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "approval.approved",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "approval.rejected",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "notification.email",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 1800000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "notification.whatsapp",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 1800000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "notification.push",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 900000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "user.authenticated",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 1800000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "user.profile.updated",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "maintenance.scheduled",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "maintenance.completed",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "report.generated",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "audit.log",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "bookly.dlx"
+      }
+    },
+    {
+      "name": "dead.letter.queue",
+      "vhost": "bookly",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "resource.created",
+      "destination_type": "queue",
+      "routing_key": "resource.created",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "resource.updated",
+      "destination_type": "queue",
+      "routing_key": "resource.updated",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "resource.deleted",
+      "destination_type": "queue",
+      "routing_key": "resource.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "reservation.created",
+      "destination_type": "queue",
+      "routing_key": "reservation.created",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "reservation.updated",
+      "destination_type": "queue",
+      "routing_key": "reservation.updated",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "reservation.cancelled",
+      "destination_type": "queue",
+      "routing_key": "reservation.cancelled",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "approval.requested",
+      "destination_type": "queue",
+      "routing_key": "approval.requested",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "approval.approved",
+      "destination_type": "queue",
+      "routing_key": "approval.approved",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "approval.rejected",
+      "destination_type": "queue",
+      "routing_key": "approval.rejected",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "user.authenticated",
+      "destination_type": "queue",
+      "routing_key": "user.authenticated",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "user.profile.updated",
+      "destination_type": "queue",
+      "routing_key": "user.profile.updated",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "maintenance.scheduled",
+      "destination_type": "queue",
+      "routing_key": "maintenance.scheduled",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "maintenance.completed",
+      "destination_type": "queue",
+      "routing_key": "maintenance.completed",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "report.generated",
+      "destination_type": "queue",
+      "routing_key": "report.generated",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.events",
+      "vhost": "bookly",
+      "destination": "audit.log",
+      "destination_type": "queue",
+      "routing_key": "audit.*",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.notifications",
+      "vhost": "bookly",
+      "destination": "notification.email",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.notifications",
+      "vhost": "bookly",
+      "destination": "notification.whatsapp",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.notifications",
+      "vhost": "bookly",
+      "destination": "notification.push",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "bookly.dlx",
+      "vhost": "bookly",
+      "destination": "dead.letter.queue",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "bookly",
+      "name": "queue-ttl-policy",
+      "pattern": ".*",
+      "apply-to": "queues",
+      "definition": {
+        "message-ttl": 3600000,
+        "expires": 7200000
+      },
+      "priority": 0
+    }
+  ]
+}

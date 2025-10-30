@@ -1,0 +1,27 @@
+Endpoint,Método,Tipo,Descripción,RF,Acceso,Guards,Params,Query,Body,Ejemplo
+/resources,POST,Command,Crea un nuevo recurso con código auto-generado,"RF-01, RF-03",Privado,Pendiente auth,No,No,"name, type, capacity, location, programId, description, categoryId, attributes, availableSchedules","POST /resources {""name"":""Sala A-101"",""type"":""AULA""}"
+/resources,GET,Query,Obtiene todos los recursos con filtros opcionales,RF-01,Público,No,"No","type, status, categoryId, isActive, location",No,GET /resources?type=AULA&isActive=true
+/resources/paginated,GET,Query,Obtiene recursos con paginación y filtros,RF-01,Público,No,No,"page, limit, type, status, categoryId, isActive",No,GET /resources/paginated?page=1&limit=10
+/resources/search,GET,Query,Busca recursos por nombre o código,RF-01,Público,No,No,q (search query),No,GET /resources/search?q=sala%20sistemas
+/resources/:id,GET,Query,Obtiene un recurso específico por ID,RF-01,Público,No,id,No,No,GET /resources/clp2k3l4m0001xyz123
+/resources/code/:code,GET,Query,Obtiene un recurso por su código único,"RF-01, RF-03",Público,No,code,No,No,GET /resources/code/AULA-A101
+/resources/:id/availability,GET,Query,Verifica disponibilidad según reglas configuradas,RF-05,Público,No,id,"date, userType, duration",No,GET /resources/resource123/availability?date=2025-01-10T14:00:00Z
+/resources/:id,PUT,Command,Actualiza un recurso existente,"RF-01, RF-03",Privado,Pendiente auth,id,No,"name, type, capacity, location, status, description, attributes",PUT /resources/resource123
+/resources/:id,DELETE,Command,Elimina un recurso (soft/hard delete),RF-01,Privado,Pendiente auth,id,force (opcional),No,DELETE /resources/resource123?force=true
+/resource-categories/:resourceId/categories/:categoryId,POST,Command,Asigna una categoría a un recurso,RF-02,Privado,"JwtAuthGuard, RolesGuard","resourceId, categoryId",No,No,POST /resource-categories/resource123/categories/category456
+/resource-categories,GET,Query,Obtiene todas las categorías de recursos,RF-02,Público,No,No,No,No,GET /resource-categories
+/resource-categories/:id,GET,Query,Obtiene una categoría específica por ID,RF-02,Público,No,id,No,No,GET /resource-categories/category123
+/programs,GET,Query,Obtiene todos los programas académicos,RF-02,Público,No,No,No,No,GET /programs
+/programs/active,GET,Query,Obtiene solo los programas académicos activos,RF-02,Público,No,No,No,No,GET /programs/active
+/programs/:id,GET,Query,Obtiene un programa académico específico,RF-02,Público,No,id,No,No,GET /programs/program123
+/resource-import/upload,POST,Command,Inicia importación masiva desde archivo,RF-04,Privado,"JwtAuthGuard, RolesGuard",No,No,"file (multipart), templateId",POST /resource-import/upload --form file=@resources.xlsx
+/resource-import/template,GET,Query,Descarga plantilla para importación,RF-04,Público,No,No,format (opcional),No,GET /resource-import/template?format=xlsx
+/resource-import/jobs,GET,Query,Obtiene historial de trabajos de importación,RF-04,Privado,JwtAuthGuard,No,"status, page, limit",No,GET /resource-import/jobs?status=COMPLETED&page=1
+/resource-import/jobs/:jobId/status,GET,Query,Obtiene estado de trabajo de importación,RF-04,Privado,JwtAuthGuard,jobId,No,No,GET /resource-import/jobs/job123/status
+/resource-responsible,POST,Command,Asigna responsable a recursos,RF-06,Privado,"JwtAuthGuard, RolesGuard",No,No,"userId, resourceIds, roleType",POST /resource-responsible
+/resource-responsible/user/:userId,GET,Query,Obtiene recursos asignados a usuario,RF-06,Privado,JwtAuthGuard,userId,No,No,GET /resource-responsible/user/user123
+/resource-responsible/resource/:resourceId,GET,Query,Obtiene responsables de un recurso,RF-06,Privado,JwtAuthGuard,resourceId,No,No,GET /resource-responsible/resource/resource123
+/maintenance-types,GET,Query,Obtiene tipos de mantenimiento disponibles,RF-06,Público,No,No,No,No,GET /maintenance-types
+/maintenance-types,POST,Command,Crea nuevo tipo de mantenimiento,RF-06,Privado,"JwtAuthGuard, RolesGuard",No,No,"name, description, color, estimatedDuration",POST /maintenance-types
+/maintenance-types/:id,PUT,Command,Actualiza tipo de mantenimiento existente,RF-06,Privado,"JwtAuthGuard, RolesGuard",id,No,"name, description, estimatedDuration",PUT /maintenance-types/type123
+/maintenance-types/:id,DELETE,Command,Elimina un tipo de mantenimiento,RF-06,Privado,"JwtAuthGuard, RolesGuard",id,No,No,DELETE /maintenance-types/type123

@@ -1,0 +1,679 @@
+asyncapi: 3.0.0
+info:
+  title: Bookly Reports Service - AsyncAPI
+  version: 1.0.0
+  description: |
+    Event-driven architecture specification for the Bookly Reports Service.
+    
+    This service handles:
+    - Usage report generation events (RF-31)
+    - User report generation events (RF-32) 
+    - Export completion events (RF-33)
+    - Dashboard data updates (RF-36)
+    - Feedback collection events (RF-34)
+    - Audit log events (RF-44)
+    - Demand analysis events (RF-37)
+    
+    The service publishes events when reports are generated, exported, or when 
+    significant reporting activities occur that other services need to be aware of.
+  contact:
+    name: Bookly Development Team
+    email: dev@bookly.ufps.edu.co
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  rabbitmq-dev:
+    host: localhost:5672
+    protocol: amqp
+    description: RabbitMQ server for development
+    variables:
+      port:
+        default: '5672'
+        description: RabbitMQ port
+  rabbitmq-prod:
+    host: rabbitmq.bookly.ufps.edu.co:5672
+    protocol: amqp
+    description: RabbitMQ server for production
+
+defaultContentType: application/json
+
+channels:
+  reports/usage/generated:
+    address: reports.usage.generated
+    messages:
+      UsageReportGenerated:
+        $ref: '#/components/messages/UsageReportGenerated'
+    description: Channel for usage report generation events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+  reports/user/generated:
+    address: reports.user.generated
+    messages:
+      UserReportGenerated:
+        $ref: '#/components/messages/UserReportGenerated'
+    description: Channel for user report generation events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+  reports/export/completed:
+    address: reports.export.completed
+    messages:
+      ExportCompleted:
+        $ref: '#/components/messages/ExportCompleted'
+    description: Channel for export completion events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+  reports/export/failed:
+    address: reports.export.failed
+    messages:
+      ExportFailed:
+        $ref: '#/components/messages/ExportFailed'
+    description: Channel for export failure events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+  reports/dashboard/updated:
+    address: reports.dashboard.updated
+    messages:
+      DashboardUpdated:
+        $ref: '#/components/messages/DashboardUpdated'
+    description: Channel for dashboard data update events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+  reports/feedback/created:
+    address: reports.feedback.created
+    messages:
+      FeedbackCreated:
+        $ref: '#/components/messages/FeedbackCreated'
+    description: Channel for feedback creation events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+  reports/audit/logged:
+    address: reports.audit.logged
+    messages:
+      AuditLogged:
+        $ref: '#/components/messages/AuditLogged'
+    description: Channel for audit log events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+  reports/demand/analyzed:
+    address: reports.demand.analyzed
+    messages:
+      DemandAnalyzed:
+        $ref: '#/components/messages/DemandAnalyzed'
+    description: Channel for demand analysis events
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: bookly.reports
+          type: topic
+          durable: true
+          autoDelete: false
+
+operations:
+  publishUsageReportGenerated:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1usage~1generated'
+    summary: Publish usage report generation event
+    description: Published when a usage report is successfully generated
+    messages:
+      - $ref: '#/channels/reports~1usage~1generated/messages/UsageReportGenerated'
+
+  publishUserReportGenerated:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1user~1generated'
+    summary: Publish user report generation event
+    description: Published when a user report is successfully generated
+    messages:
+      - $ref: '#/channels/reports~1user~1generated/messages/UserReportGenerated'
+
+  publishExportCompleted:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1export~1completed'
+    summary: Publish export completion event
+    description: Published when a report export is successfully completed
+    messages:
+      - $ref: '#/channels/reports~1export~1completed/messages/ExportCompleted'
+
+  publishExportFailed:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1export~1failed'
+    summary: Publish export failure event
+    description: Published when a report export fails
+    messages:
+      - $ref: '#/channels/reports~1export~1failed/messages/ExportFailed'
+
+  publishDashboardUpdated:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1dashboard~1updated'
+    summary: Publish dashboard update event
+    description: Published when dashboard data is updated
+    messages:
+      - $ref: '#/channels/reports~1dashboard~1updated/messages/DashboardUpdated'
+
+  publishFeedbackCreated:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1feedback~1created'
+    summary: Publish feedback creation event
+    description: Published when new feedback is created
+    messages:
+      - $ref: '#/channels/reports~1feedback~1created/messages/FeedbackCreated'
+
+  publishAuditLogged:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1audit~1logged'
+    summary: Publish audit log event
+    description: Published when an audit event is logged
+    messages:
+      - $ref: '#/channels/reports~1audit~1logged/messages/AuditLogged'
+
+  publishDemandAnalyzed:
+    action: send
+    channel:
+      $ref: '#/channels/reports~1demand~1analyzed'
+    summary: Publish demand analysis event
+    description: Published when demand analysis is completed
+    messages:
+      - $ref: '#/channels/reports~1demand~1analyzed/messages/DemandAnalyzed'
+
+components:
+  messages:
+    UsageReportGenerated:
+      name: UsageReportGenerated
+      title: Usage Report Generated
+      summary: Event published when a usage report is generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UsageReportGeneratedPayload'
+
+    UserReportGenerated:
+      name: UserReportGenerated
+      title: User Report Generated
+      summary: Event published when a user report is generated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/UserReportGeneratedPayload'
+
+    ExportCompleted:
+      name: ExportCompleted
+      title: Export Completed
+      summary: Event published when a report export is completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExportCompletedPayload'
+
+    ExportFailed:
+      name: ExportFailed
+      title: Export Failed
+      summary: Event published when a report export fails
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExportFailedPayload'
+
+    DashboardUpdated:
+      name: DashboardUpdated
+      title: Dashboard Updated
+      summary: Event published when dashboard data is updated
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DashboardUpdatedPayload'
+
+    FeedbackCreated:
+      name: FeedbackCreated
+      title: Feedback Created
+      summary: Event published when new feedback is created
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/FeedbackCreatedPayload'
+
+    AuditLogged:
+      name: AuditLogged
+      title: Audit Logged
+      summary: Event published when an audit event is logged
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/AuditLoggedPayload'
+
+    DemandAnalyzed:
+      name: DemandAnalyzed
+      title: Demand Analyzed
+      summary: Event published when demand analysis is completed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/DemandAnalyzedPayload'
+
+  schemas:
+    UsageReportGeneratedPayload:
+      type: object
+      required:
+        - reportId
+        - reportType
+        - generatedBy
+        - timestamp
+        - filters
+        - summary
+      properties:
+        reportId:
+          type: string
+          description: Unique identifier for the generated report
+          example: "usage_report_20240115_001"
+        reportType:
+          type: string
+          enum: [USAGE_REPORT]
+          description: Type of report generated
+        generatedBy:
+          type: string
+          description: ID of the user who generated the report
+          example: "user_admin_001"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the report was generated
+        filters:
+          type: object
+          description: Filters applied to the report
+          properties:
+            programId:
+              type: string
+              example: "ING-SIS"
+            resourceType:
+              type: string
+              example: "SALON"
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+        summary:
+          type: object
+          description: Summary statistics of the report
+          properties:
+            totalResources:
+              type: number
+              example: 15
+            totalReservations:
+              type: number
+              example: 450
+            averageUtilization:
+              type: number
+              example: 75.5
+        metadata:
+          type: object
+          description: Additional metadata about the report generation
+          properties:
+            executionTime:
+              type: number
+              description: Time taken to generate the report in milliseconds
+            recordCount:
+              type: number
+              description: Number of records in the report
+
+    UserReportGeneratedPayload:
+      type: object
+      required:
+        - reportId
+        - reportType
+        - generatedBy
+        - timestamp
+        - filters
+        - summary
+      properties:
+        reportId:
+          type: string
+          description: Unique identifier for the generated report
+          example: "user_report_20240115_001"
+        reportType:
+          type: string
+          enum: [USER_REPORT]
+          description: Type of report generated
+        generatedBy:
+          type: string
+          description: ID of the user who generated the report
+        timestamp:
+          type: string
+          format: date-time
+          description: When the report was generated
+        filters:
+          type: object
+          description: Filters applied to the report
+          properties:
+            userIds:
+              type: array
+              items:
+                type: string
+            userType:
+              type: string
+              enum: [STUDENT, TEACHER, ADMINISTRATIVE]
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+        summary:
+          type: object
+          description: Summary statistics of the report
+          properties:
+            totalUsers:
+              type: number
+              example: 25
+            totalReservations:
+              type: number
+              example: 375
+            averageReservationsPerUser:
+              type: number
+              example: 15
+
+    ExportCompletedPayload:
+      type: object
+      required:
+        - exportId
+        - reportType
+        - format
+        - filename
+        - userId
+        - timestamp
+      properties:
+        exportId:
+          type: string
+          description: Unique identifier for the export
+          example: "exp_20240115_001"
+        reportType:
+          type: string
+          enum: [USAGE_REPORT, USER_REPORT, DEMAND_REPORT]
+          description: Type of report exported
+        format:
+          type: string
+          enum: [CSV, PDF, EXCEL]
+          description: Export format
+        filename:
+          type: string
+          description: Name of the exported file
+          example: "usage_report_2024_01.csv"
+        userId:
+          type: string
+          description: ID of the user who requested the export
+        timestamp:
+          type: string
+          format: date-time
+          description: When the export was completed
+        fileSize:
+          type: number
+          description: Size of the exported file in bytes
+        downloadUrl:
+          type: string
+          description: URL to download the exported file
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the export file expires
+
+    ExportFailedPayload:
+      type: object
+      required:
+        - exportId
+        - reportType
+        - userId
+        - timestamp
+        - error
+      properties:
+        exportId:
+          type: string
+          description: Unique identifier for the failed export
+        reportType:
+          type: string
+          enum: [USAGE_REPORT, USER_REPORT, DEMAND_REPORT]
+          description: Type of report that failed to export
+        userId:
+          type: string
+          description: ID of the user who requested the export
+        timestamp:
+          type: string
+          format: date-time
+          description: When the export failed
+        error:
+          type: object
+          description: Error details
+          properties:
+            code:
+              type: string
+              example: "EXPORT_TIMEOUT"
+            message:
+              type: string
+              example: "Export operation timed out"
+            details:
+              type: string
+
+    DashboardUpdatedPayload:
+      type: object
+      required:
+        - dashboardType
+        - timestamp
+        - data
+      properties:
+        dashboardType:
+          type: string
+          enum: [USAGE_DASHBOARD, USER_DASHBOARD, DEMAND_DASHBOARD]
+          description: Type of dashboard updated
+        timestamp:
+          type: string
+          format: date-time
+          description: When the dashboard was updated
+        data:
+          type: object
+          description: Updated dashboard data
+          properties:
+            metrics:
+              type: object
+              description: Key metrics
+            charts:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  data:
+                    type: object
+        triggeredBy:
+          type: string
+          description: What triggered the dashboard update
+          enum: [SCHEDULED, MANUAL, EVENT_DRIVEN]
+
+    FeedbackCreatedPayload:
+      type: object
+      required:
+        - feedbackId
+        - userId
+        - timestamp
+        - type
+      properties:
+        feedbackId:
+          type: string
+          description: Unique identifier for the feedback
+        userId:
+          type: string
+          description: ID of the user who provided feedback
+        timestamp:
+          type: string
+          format: date-time
+          description: When the feedback was created
+        type:
+          type: string
+          enum: [BUG_REPORT, FEATURE_REQUEST, GENERAL_FEEDBACK, RATING]
+          description: Type of feedback
+        resourceId:
+          type: string
+          description: ID of the resource the feedback is about (if applicable)
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          description: Rating given (if applicable)
+        category:
+          type: string
+          description: Category of the feedback
+
+    AuditLoggedPayload:
+      type: object
+      required:
+        - auditId
+        - action
+        - userId
+        - timestamp
+        - resource
+      properties:
+        auditId:
+          type: string
+          description: Unique identifier for the audit log entry
+        action:
+          type: string
+          enum: [REPORT_GENERATED, REPORT_EXPORTED, FEEDBACK_CREATED, DASHBOARD_ACCESSED]
+          description: Action that was audited
+        userId:
+          type: string
+          description: ID of the user who performed the action
+        timestamp:
+          type: string
+          format: date-time
+          description: When the action occurred
+        resource:
+          type: object
+          description: Resource that was affected
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            name:
+              type: string
+        metadata:
+          type: object
+          description: Additional metadata about the action
+        ipAddress:
+          type: string
+          description: IP address of the user
+        userAgent:
+          type: string
+          description: User agent string
+
+    DemandAnalyzedPayload:
+      type: object
+      required:
+        - analysisId
+        - timestamp
+        - period
+        - summary
+      properties:
+        analysisId:
+          type: string
+          description: Unique identifier for the demand analysis
+        timestamp:
+          type: string
+          format: date-time
+          description: When the analysis was completed
+        period:
+          type: object
+          description: Period analyzed
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+        summary:
+          type: object
+          description: Summary of demand analysis
+          properties:
+            totalDemand:
+              type: number
+              description: Total demand requests
+            unsatisfiedDemand:
+              type: number
+              description: Number of unsatisfied demand requests
+            demandSatisfactionRate:
+              type: number
+              description: Percentage of satisfied demand
+            peakDemandPeriods:
+              type: array
+              items:
+                type: object
+                properties:
+                  period:
+                    type: string
+                  demandCount:
+                    type: number
+            resourcesInHighDemand:
+              type: array
+              items:
+                type: object
+                properties:
+                  resourceId:
+                    type: string
+                  resourceName:
+                    type: string
+                  demandCount:
+                    type: number
+        triggeredBy:
+          type: string
+          description: What triggered the analysis
+          enum: [SCHEDULED, MANUAL, THRESHOLD_REACHED]

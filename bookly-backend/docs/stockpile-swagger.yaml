@@ -1,0 +1,1311 @@
+openapi: 3.0.3
+info:
+  title: Bookly Stockpile Service API
+  version: 1.0.0
+  description: |
+    REST API for Bookly's approval flow, document generation, and notification system.
+    This service manages the complete workflow from reservation requests to final approval/rejection with automated document generation and notifications.
+  contact:
+    name: Bookly Development Team
+    email: dev@booklyapp.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/stockpile
+    description: Development server
+  - url: https://api.booklyapp.com/stockpile
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Approval Flow Management
+  /approval-flows:
+    get:
+      tags:
+        - Approval Flows
+      summary: Get approval flows
+      description: Retrieves approval flows with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: programId
+          in: query
+          description: Filter by program ID
+          schema:
+            type: string
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        "200":
+          description: Approval flows retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flows:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApprovalFlowDto"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags:
+        - Approval Flows
+      summary: Create approval flow
+      description: Creates a new approval flow configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApprovalFlowDto"
+      responses:
+        "201":
+          description: Approval flow created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalFlowDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /approval-flows/{id}:
+    get:
+      tags:
+        - Approval Flows
+      summary: Get approval flow by ID
+      description: Retrieves a specific approval flow by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval flow ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approval flow retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalFlowDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags:
+        - Approval Flows
+      summary: Update approval flow
+      description: Updates an existing approval flow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval flow ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApprovalFlowDto"
+      responses:
+        "200":
+          description: Approval flow updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalFlowDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags:
+        - Approval Flows
+      summary: Delete approval flow
+      description: Soft deletes an approval flow (sets isActive to false)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval flow ID
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Approval flow deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Approval Requests
+  /approval-requests:
+    post:
+      tags:
+        - Approval Requests
+      summary: Create approval request
+      description: Creates a new approval request for a reservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApprovalRequestDto"
+      responses:
+        "201":
+          description: Approval request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /approval-requests/pending:
+    get:
+      tags:
+        - Approval Requests
+      summary: Get pending requests
+      description: Retrieves pending approval requests for the current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: approverId
+          in: query
+          description: Filter by approver ID
+          schema:
+            type: string
+        - name: programId
+          in: query
+          description: Filter by program ID
+          schema:
+            type: string
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Pending requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApprovalRequestDto"
+                  total:
+                    type: integer
+
+  /approval-requests/{id}/approve:
+    post:
+      tags:
+        - Approval Requests
+      summary: Approve request
+      description: Approves an approval request at the current level
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval request ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for approval
+                conditions:
+                  type: string
+                  description: Conditions for approval
+      responses:
+        "200":
+          description: Request approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequestDto"
+
+  /approval-requests/{id}/reject:
+    post:
+      tags:
+        - Approval Requests
+      summary: Reject request
+      description: Rejects an approval request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Approval request ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  description: Reason for rejection
+                suggestions:
+                  type: string
+                  description: Suggestions for alternative options
+      responses:
+        "200":
+          description: Request rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalRequestDto"
+
+  # Document Templates
+  /document-templates:
+    get:
+      tags:
+        - Document Templates
+      summary: Get document templates
+      description: Retrieves document templates with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+        - name: eventType
+          in: query
+          description: Filter by event type
+          schema:
+            $ref: "#/components/schemas/DocumentEventType"
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Document templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DocumentTemplateDto"
+                  total:
+                    type: integer
+
+    post:
+      tags:
+        - Document Templates
+      summary: Create document template
+      description: Creates a new document template
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentTemplateDto"
+      responses:
+        "201":
+          description: Document template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentTemplateDto"
+
+  /document-templates/{id}/upload:
+    post:
+      tags:
+        - Document Templates
+      summary: Upload template file
+      description: Uploads a Word document template file
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Document template ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Word document file (.docx)
+      responses:
+        "200":
+          description: Template file uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentTemplateDto"
+
+  /document-templates/{id}/generate:
+    post:
+      tags:
+        - Document Templates
+      summary: Generate document
+      description: Generates a document from a template with provided variables
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Document template ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDocumentDto"
+      responses:
+        "200":
+          description: Document generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedDocumentDto"
+
+  # Notification Templates
+  /notification-templates:
+    get:
+      tags:
+        - Notification Templates
+      summary: Get notification templates
+      description: Retrieves notification templates with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: eventType
+          in: query
+          description: Filter by event type
+          schema:
+            type: string
+        - name: channel
+          in: query
+          description: Filter by channel
+          schema:
+            $ref: "#/components/schemas/NotificationChannelType"
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Notification templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NotificationTemplateDto"
+                  total:
+                    type: integer
+
+    post:
+      tags:
+        - Notification Templates
+      summary: Create notification template
+      description: Creates a new notification template
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationTemplateDto"
+      responses:
+        "201":
+          description: Notification template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationTemplateDto"
+
+  /notifications/send:
+    post:
+      tags:
+        - Notifications
+      summary: Send notification
+      description: Sends a notification using a template
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendNotificationDto"
+      responses:
+        "200":
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SentNotificationDto"
+
+  /notification-configs:
+    post:
+      tags:
+        - Notification Configs
+      summary: Create notification configuration
+      description: Creates a notification configuration for a program/resource combination
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationConfigDto"
+      responses:
+        "201":
+          description: Notification configuration created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationConfigDto"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Enums
+    ApprovalStatus:
+      type: string
+      enum:
+        - PENDING
+        - APPROVED
+        - REJECTED
+        - CANCELLED
+        - EXPIRED
+
+    RequestPriority:
+      type: string
+      enum:
+        - LOW
+        - NORMAL
+        - HIGH
+        - URGENT
+
+    DocumentEventType:
+      type: string
+      enum:
+        - APPROVAL
+        - REJECTION
+        - CANCELLATION
+        - REMINDER
+        - CONFIRMATION
+
+    NotificationChannelType:
+      type: string
+      enum:
+        - EMAIL
+        - SMS
+        - IN_APP
+        - PUSH
+
+    NotificationStatus:
+      type: string
+      enum:
+        - PENDING
+        - SENT
+        - DELIVERED
+        - FAILED
+        - CANCELLED
+
+    DocumentDeliveryMethod:
+      type: string
+      enum:
+        - ATTACHMENT
+        - LINK
+        - EMBEDDED
+
+    # DTOs
+    ApprovalFlowDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        programId:
+          type: string
+        resourceTypes:
+          type: array
+          items:
+            type: string
+        categoryIds:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        autoApprovalEnabled:
+          type: boolean
+        autoApprovalConditions:
+          type: object
+        timeoutHours:
+          type: number
+        escalationEnabled:
+          type: boolean
+        escalationHours:
+          type: number
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        levels:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApprovalLevelDto"
+
+    ApprovalLevelDto:
+      type: object
+      properties:
+        id:
+          type: string
+        flowId:
+          type: string
+        level:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        approverRoles:
+          type: array
+          items:
+            type: string
+        approverUsers:
+          type: array
+          items:
+            type: string
+        requiresAll:
+          type: boolean
+        timeoutHours:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ApprovalRequestDto:
+      type: object
+      properties:
+        id:
+          type: string
+        reservationId:
+          type: string
+        flowId:
+          type: string
+        requesterId:
+          type: string
+        status:
+          $ref: "#/components/schemas/ApprovalStatus"
+        currentLevel:
+          type: integer
+        reason:
+          type: string
+        priority:
+          $ref: "#/components/schemas/RequestPriority"
+        requestedDate:
+          type: string
+          format: date-time
+        approvedAt:
+          type: string
+          format: date-time
+        rejectedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+    DocumentTemplateDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        resourceType:
+          type: string
+        categoryId:
+          type: string
+        eventType:
+          $ref: "#/components/schemas/DocumentEventType"
+        content:
+          type: string
+        fileName:
+          type: string
+        filePath:
+          type: string
+        fileSize:
+          type: integer
+        variables:
+          type: object
+        isDefault:
+          type: boolean
+        isActive:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    GeneratedDocumentDto:
+      type: object
+      properties:
+        id:
+          type: string
+        templateId:
+          type: string
+        reservationId:
+          type: string
+        fileName:
+          type: string
+        filePath:
+          type: string
+        fileSize:
+          type: integer
+        generatedBy:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        variables:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NotificationTemplateDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        eventType:
+          type: string
+        channel:
+          $ref: "#/components/schemas/NotificationChannelType"
+        subject:
+          type: string
+        content:
+          type: string
+        variables:
+          type: object
+        attachDocument:
+          type: boolean
+        documentAsLink:
+          type: boolean
+        isActive:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SentNotificationDto:
+      type: object
+      properties:
+        id:
+          type: string
+        templateId:
+          type: string
+        reservationId:
+          type: string
+        recipientId:
+          type: string
+        channel:
+          $ref: "#/components/schemas/NotificationChannelType"
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        subject:
+          type: string
+        content:
+          type: string
+        hasAttachment:
+          type: boolean
+        attachmentPath:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        variables:
+          type: object
+
+    NotificationConfigDto:
+      type: object
+      properties:
+        id:
+          type: string
+        programId:
+          type: string
+        resourceType:
+          type: string
+        categoryId:
+          type: string
+        channelId:
+          type: string
+        isEnabled:
+          type: boolean
+        isImmediate:
+          type: boolean
+        batchInterval:
+          type: integer
+        sendDocuments:
+          type: boolean
+        documentMethod:
+          $ref: "#/components/schemas/DocumentDeliveryMethod"
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Create DTOs
+    CreateApprovalFlowDto:
+      type: object
+      required:
+        - name
+        - programId
+        - resourceTypes
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        programId:
+          type: string
+        resourceTypes:
+          type: array
+          items:
+            type: string
+        categoryIds:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+          default: true
+        autoApprovalEnabled:
+          type: boolean
+          default: false
+        autoApprovalConditions:
+          type: object
+        timeoutHours:
+          type: number
+          default: 48
+        escalationEnabled:
+          type: boolean
+          default: true
+        escalationHours:
+          type: number
+        levels:
+          type: array
+          items:
+            type: object
+            required:
+              - level
+              - name
+            properties:
+              level:
+                type: integer
+              name:
+                type: string
+              description:
+                type: string
+              approverRoles:
+                type: array
+                items:
+                  type: string
+              approverUsers:
+                type: array
+                items:
+                  type: string
+              requiresAll:
+                type: boolean
+                default: false
+              timeoutHours:
+                type: number
+                default: 24
+              isActive:
+                type: boolean
+                default: true
+
+    UpdateApprovalFlowDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+        autoApprovalEnabled:
+          type: boolean
+        autoApprovalConditions:
+          type: object
+        timeoutHours:
+          type: number
+        escalationEnabled:
+          type: boolean
+        escalationHours:
+          type: number
+
+    CreateApprovalRequestDto:
+      type: object
+      required:
+        - reservationId
+        - flowId
+        - requesterId
+      properties:
+        reservationId:
+          type: string
+        flowId:
+          type: string
+        requesterId:
+          type: string
+        reason:
+          type: string
+        priority:
+          $ref: "#/components/schemas/RequestPriority"
+          default: NORMAL
+        requestedDate:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+
+    CreateDocumentTemplateDto:
+      type: object
+      required:
+        - name
+        - eventType
+        - content
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        resourceType:
+          type: string
+        categoryId:
+          type: string
+        eventType:
+          $ref: "#/components/schemas/DocumentEventType"
+        content:
+          type: string
+        variables:
+          type: object
+        isDefault:
+          type: boolean
+          default: false
+        isActive:
+          type: boolean
+          default: true
+
+    GenerateDocumentDto:
+      type: object
+      required:
+        - reservationId
+        - variables
+      properties:
+        reservationId:
+          type: string
+        variables:
+          type: object
+
+    CreateNotificationTemplateDto:
+      type: object
+      required:
+        - name
+        - eventType
+        - channel
+        - content
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        eventType:
+          type: string
+        channel:
+          $ref: "#/components/schemas/NotificationChannelType"
+        subject:
+          type: string
+        content:
+          type: string
+        variables:
+          type: object
+        attachDocument:
+          type: boolean
+          default: false
+        documentAsLink:
+          type: boolean
+          default: false
+        isActive:
+          type: boolean
+          default: true
+
+    SendNotificationDto:
+      type: object
+      required:
+        - templateId
+        - recipientId
+        - channel
+      properties:
+        templateId:
+          type: string
+        recipientId:
+          type: string
+        channel:
+          $ref: "#/components/schemas/NotificationChannelType"
+        reservationId:
+          type: string
+        variables:
+          type: object
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              fileName:
+                type: string
+              filePath:
+                type: string
+
+    CreateNotificationConfigDto:
+      type: object
+      required:
+        - programId
+        - channelId
+      properties:
+        programId:
+          type: string
+        resourceType:
+          type: string
+        categoryId:
+          type: string
+        channelId:
+          type: string
+        isEnabled:
+          type: boolean
+          default: true
+        isImmediate:
+          type: boolean
+          default: true
+        batchInterval:
+          type: integer
+          default: 0
+        sendDocuments:
+          type: boolean
+          default: false
+        documentMethod:
+          $ref: "#/components/schemas/DocumentDeliveryMethod"
+          default: ATTACHMENT
+
+    # Error Response
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        type:
+          type: string
+          description: Error type
+        exception_code:
+          type: string
+          description: Internal exception code
+        http_code:
+          type: integer
+          description: HTTP status code
+        http_exception:
+          type: string
+          description: HTTP exception name
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0400"
+            message: "Invalid request parameters"
+            type: "error"
+            exception_code: "S-01"
+            http_code: 400
+            http_exception: "BadRequestException"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0401"
+            message: "Authentication required"
+            type: "error"
+            exception_code: "S-02"
+            http_code: 401
+            http_exception: "UnauthorizedException"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0403"
+            message: "Insufficient permissions"
+            type: "error"
+            exception_code: "S-03"
+            http_code: 403
+            http_exception: "ForbiddenException"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0404"
+            message: "Resource not found"
+            type: "error"
+            exception_code: "S-04"
+            http_code: 404
+            http_exception: "NotFoundException"
+
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0409"
+            message: "Resource conflict"
+            type: "error"
+            exception_code: "S-05"
+            http_code: 409
+            http_exception: "ConflictException"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "STCK-0500"
+            message: "Internal server error"
+            type: "error"
+            exception_code: "S-06"
+            http_code: 500
+            http_exception: "InternalServerErrorException"

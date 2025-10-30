@@ -1,0 +1,323 @@
+{
+  "info": {
+    "name": "Bookly Availability Service - RF-07 Availability Management",
+    "description": "Postman collection for Basic Availability Management endpoints (RF-07)\n\nThis collection covers:\n- Creating basic availability hours\n- Managing complex schedules with restrictions\n- Checking availability for specific time slots\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the availability service (e.g., http://localhost:3000/availability)\n- {{authToken}} - JWT Bearer token for authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "rf07-availability-mgmt",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set common headers",
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "// Check if auth token exists",
+          "if (!pm.environment.get('authToken')) {",
+          "  console.warn('⚠️ authToken not set in environment variables');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common test for all requests",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has valid JSON', function () {",
+          "  pm.response.to.be.json;",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/availability",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Basic Availability",
+      "item": [
+        {
+          "name": "Create Basic Availability Hours",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-123\",\n  \"dayOfWeek\": 1,\n  \"startTime\": \"08:00\",\n  \"endTime\": \"17:00\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/basic",
+              "host": ["{{baseUrl}}"],
+              "path": ["basic"]
+            },
+            "description": "Creates basic availability hours for a resource on specific days of the week (RF-07)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains availability data', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('resourceId');",
+                  "  pm.expect(responseJson).to.have.property('dayOfWeek');",
+                  "});",
+                  "",
+                  "// Store created availability ID for other requests",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('availabilityId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Basic Availability Hours",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/basic?resourceId={{resourceId}}&dayOfWeek=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["basic"],
+              "query": [
+                {
+                  "key": "resourceId",
+                  "value": "{{resourceId}}",
+                  "description": "Filter by resource ID"
+                },
+                {
+                  "key": "dayOfWeek",
+                  "value": "1",
+                  "description": "Filter by day of week (0-6)"
+                }
+              ]
+            },
+            "description": "Retrieves basic availability hours with optional filtering (RF-07)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each availability has required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.length > 0) {",
+                  "    responseJson.forEach(availability => {",
+                  "      pm.expect(availability).to.have.property('id');",
+                  "      pm.expect(availability).to.have.property('resourceId');",
+                  "      pm.expect(availability).to.have.property('dayOfWeek');",
+                  "      pm.expect(availability).to.have.property('startTime');",
+                  "      pm.expect(availability).to.have.property('endTime');",
+                  "    });",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Availability for Time Slot",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-123\",\n  \"startDate\": \"2024-01-15T09:00:00Z\",\n  \"endDate\": \"2024-01-15T10:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/check",
+              "host": ["{{baseUrl}}"],
+              "path": ["check"]
+            },
+            "description": "Validates if a specific time slot is available for reservation (RF-10)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains availability check result', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('isAvailable');",
+                  "  pm.expect(responseJson.isAvailable).to.be.a('boolean');",
+                  "});",
+                  "",
+                  "pm.test('Response contains conflicts array', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('conflicts');",
+                  "  pm.expect(responseJson.conflicts).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Schedule Management",
+      "item": [
+        {
+          "name": "Create Complex Schedule",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-123\",\n  \"name\": \"Weekly Academic Schedule\",\n  \"type\": \"REGULAR\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"recurrenceRule\": {\n    \"frequency\": \"WEEKLY\",\n    \"interval\": 1,\n    \"daysOfWeek\": [1, 2, 3, 4, 5]\n  },\n  \"restrictions\": {\n    \"userTypes\": [\"STUDENT\", \"PROFESSOR\"],\n    \"maxDuration\": 120,\n    \"advanceBookingDays\": 7\n  },\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedule"]
+            },
+            "description": "Creates complex scheduling rules with institutional restrictions and recurrence patterns (RF-07)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains schedule data', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('resourceId');",
+                  "  pm.expect(responseJson).to.have.property('name');",
+                  "  pm.expect(responseJson).to.have.property('type');",
+                  "});",
+                  "",
+                  "// Store created schedule ID",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('scheduleId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Maintenance Schedule",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"resource-123\",\n  \"name\": \"Monthly Maintenance\",\n  \"type\": \"MAINTENANCE\",\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"recurrenceRule\": {\n    \"frequency\": \"MONTHLY\",\n    \"interval\": 1,\n    \"dayOfMonth\": 1\n  },\n  \"restrictions\": {\n    \"blockAllAccess\": true,\n    \"maintenanceWindow\": \"02:00-06:00\"\n  },\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/schedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedule"]
+            },
+            "description": "Creates maintenance schedule that blocks resource access during specified periods"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Schedule type is MAINTENANCE', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson.type).to.equal('MAINTENANCE');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

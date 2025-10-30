@@ -1,0 +1,46 @@
+{
+  "auth": {
+    "login": {
+      "success": "Login successful",
+      "invalid_credentials": "Invalid credentials",
+      "user_not_found": "User not found",
+      "account_disabled": "Account is disabled"
+    },
+    "register": {
+      "success": "Registration successful",
+      "user_exists": "User already exists",
+      "invalid_data": "Invalid registration data"
+    },
+    "jwt": {
+      "invalid_token": "Invalid token",
+      "expired_token": "Token has expired",
+      "unauthorized": "Unauthorized access"
+    }
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "min_length": "Minimum length is {{min}} characters",
+    "max_length": "Maximum length is {{max}} characters"
+  },
+  "errors": {
+    "internal_server_error": "Internal server error",
+    "not_found": "Resource not found",
+    "bad_request": "Bad request",
+    "forbidden": "Access forbidden"
+  },
+  "health": {
+    "database": {
+      "healthy": "Database connection is healthy",
+      "unhealthy": "Database connection failed"
+    },
+    "redis": {
+      "healthy": "Redis connection is healthy",
+      "unhealthy": "Redis connection failed"
+    },
+    "rabbitmq": {
+      "healthy": "RabbitMQ connection is healthy",
+      "unhealthy": "RabbitMQ connection failed"
+    }
+  }
+}

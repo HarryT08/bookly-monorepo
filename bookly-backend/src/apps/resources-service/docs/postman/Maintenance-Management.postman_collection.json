@@ -1,0 +1,313 @@
+{
+  "info": {
+    "name": "Bookly Maintenance Management",
+    "description": "Postman collection for Bookly Resources Service - Maintenance Management endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3003",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "maintenance_type_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Maintenance Type",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Mantenimiento Preventivo\",\n  \"description\": \"Mantenimiento programado para prevenir fallas\",\n  \"color\": \"#28a745\",\n  \"estimatedDuration\": 120,\n  \"priority\": \"MEDIUM\",\n  \"isActive\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/maintenance-types",
+          "host": ["{{base_url}}"],
+          "path": ["maintenance-types"]
+        },
+        "description": "Creates a new maintenance type"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response has maintenance type data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData).to.have.property('name');",
+              "    pm.expect(jsonData.name).to.eql('Mantenimiento Preventivo');",
+              "});",
+              "",
+              "// Store maintenance type ID for other requests",
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.collectionVariables.set('maintenance_type_id', jsonData.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Maintenance Types",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/maintenance-types",
+          "host": ["{{base_url}}"],
+          "path": ["maintenance-types"]
+        },
+        "description": "Retrieves all maintenance types"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is an array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Maintenance Types with Filters",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/maintenance-types?isActive=true&priority=MEDIUM",
+          "host": ["{{base_url}}"],
+          "path": ["maintenance-types"],
+          "query": [
+            {
+              "key": "isActive",
+              "value": "true"
+            },
+            {
+              "key": "priority",
+              "value": "MEDIUM"
+            }
+          ]
+        },
+        "description": "Get maintenance types with filtering"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Filtered results match criteria\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.length > 0) {",
+              "        jsonData.forEach(function(type) {",
+              "            pm.expect(type.isActive).to.be.true;",
+              "            pm.expect(type.priority).to.eql('MEDIUM');",
+              "        });",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Maintenance Type by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/maintenance-types/{{maintenance_type_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["maintenance-types", "{{maintenance_type_id}}"]
+        },
+        "description": "Get a specific maintenance type by ID"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has maintenance type data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('id');",
+              "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('maintenance_type_id'));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Maintenance Type",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Mantenimiento Preventivo Actualizado\",\n  \"description\": \"Mantenimiento programado actualizado\",\n  \"estimatedDuration\": 150,\n  \"priority\": \"HIGH\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/maintenance-types/{{maintenance_type_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["maintenance-types", "{{maintenance_type_id}}"]
+        },
+        "description": "Update an existing maintenance type"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Maintenance type was updated\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.name).to.eql('Mantenimiento Preventivo Actualizado');",
+              "    pm.expect(jsonData.estimatedDuration).to.eql(150);",
+              "    pm.expect(jsonData.priority).to.eql('HIGH');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deactivate Maintenance Type",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"isActive\": false\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/maintenance-types/{{maintenance_type_id}}/status",
+          "host": ["{{base_url}}"],
+          "path": ["maintenance-types", "{{maintenance_type_id}}", "status"]
+        },
+        "description": "Activate or deactivate a maintenance type"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Status was updated\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.isActive).to.be.false;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Maintenance Type",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/maintenance-types/{{maintenance_type_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["maintenance-types", "{{maintenance_type_id}}"]
+        },
+        "description": "Delete a maintenance type (only if not used in any maintenance records)"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204 or 400\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([204, 400]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}

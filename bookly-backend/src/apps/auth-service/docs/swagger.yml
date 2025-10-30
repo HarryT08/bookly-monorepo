@@ -1,0 +1,1468 @@
+openapi: 3.0.3
+info:
+  title: Bookly Auth Service API
+  description: |
+    **Sistema de Autenticación y Autorización - Bookly UFPS**
+    
+    Servicio de autenticación que implementa los requerimientos:
+    - **RF-41**: Gestión diferenciada de roles y permisos granulares
+    - **RF-42**: Restricción de modificación de recursos solo para administradores
+    - **RF-43**: Autenticación mediante credenciales universitarias y SSO
+    
+    **Características principales:**
+    - Autenticación tradicional (email/password) y SSO (Google Workspace)
+    - Sistema de roles predefinidos e inmutables + roles personalizados
+    - Permisos granulares con máxima especificidad (resource, action, scope, conditions)
+    - Auditoría completa de accesos y modificaciones
+    - Guards de seguridad para restricción de recursos
+    - Doble confirmación para eliminaciones críticas
+    
+    **Arquitectura:**
+    - Clean Architecture + CQRS + Event-Driven
+    - NestJS + Prisma + MongoDB
+    - JWT con roles y permisos incluidos
+    - Winston logging + OpenTelemetry + Sentry
+    
+    **Seguridad:**
+    - Rate limiting en endpoints críticos
+    - Bloqueo automático tras intentos fallidos
+    - Logging completo de actividad sospechosa
+    - Validación de roles en tiempo real
+  version: 1.0.0
+  contact:
+    name: Bookly Development Team
+    email: dev@bookly.ufps.edu.co
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.bookly.ufps.edu.co
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: Endpoints de autenticación tradicional y SSO
+  - name: OAuth2
+    description: Endpoints de autenticación SSO con Google Workspace
+  - name: Roles
+    description: Gestión de roles predefinidos y personalizados (Admin Only)
+  - name: Permissions
+    description: Gestión granular de permisos (Admin Only)
+  - name: Users
+    description: Gestión de usuarios y perfiles
+  - name: Categories
+    description: Gestión de categorías para roles y recursos
+  - name: Seed
+    description: Endpoints para inicialización de datos
+  - name: Admin Only
+    description: Endpoints que requieren permisos de administrador
+  - name: RF-42 Protected
+    description: Endpoints protegidos por restricciones de modificación de recursos
+
+paths:
+  # ==================== AUTHENTICATION ENDPOINTS ====================
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate user with email and password
+      description: |
+        **RF-43: Autenticación tradicional**
+        
+        Autentica usuarios mediante credenciales universitarias (email/password).
+        
+        **Características:**
+        - Validación de email institucional (@ufps.edu.co)
+        - Verificación de cuenta activa y verificada
+        - Sistema de bloqueo tras intentos fallidos
+        - Logging completo de intentos de acceso
+        - JWT con roles y permisos incluidos
+        
+        **Flujo de autenticación:**
+        1. Validar formato de email y contraseña
+        2. Verificar existencia del usuario
+        3. Validar contraseña con bcrypt
+        4. Verificar estado de cuenta (activa/verificada)
+        5. Generar JWT con roles y permisos
+        6. Registrar acceso exitoso con IP y timestamp
+        
+        **Seguridad:**
+        - Rate limiting aplicado
+        - Logging de intentos fallidos
+        - Bloqueo temporal tras múltiples fallos
+        - Auditoría completa de accesos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: estudiante@ufps.edu.co
+                  description: Email institucional del usuario
+                password:
+                  type: string
+                  minLength: 8
+                  example: MiPassword123!
+                  description: Contraseña del usuario (mínimo 8 caracteres)
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    description: JWT token con roles y permisos incluidos
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh JWT access token
+      description: |
+        **RF-43: Renovación de tokens**
+        
+        Renueva el token de acceso JWT usando un refresh token válido.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token renovado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user and invalidate tokens
+      description: |
+        **RF-43: Cierre de sesión seguro**
+        
+        Cierra la sesión del usuario e invalida todos los tokens activos.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logout successful
+                  timestamp:
+                    type: string
+                    example: 2024-01-15T10:30:00Z
+
+  /auth/profile:
+    get:
+      tags: [Authentication]
+      summary: Get current user profile with roles and permissions
+      description: |
+        **RF-41: Perfil de usuario con roles**
+        
+        Obtiene el perfil completo del usuario autenticado incluyendo roles y permisos.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Perfil de usuario obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  # ==================== OAUTH2 SSO ENDPOINTS ====================
+  /auth/oauth/google:
+    get:
+      tags: [OAuth2]
+      summary: Initiate Google Workspace SSO authentication
+      description: |
+        **RF-43: Autenticación SSO institucional**
+        
+        Inicia el flujo de autenticación SSO con Google Workspace.
+        
+        **Requisitos:**
+        - Configuración SSO debe estar activa
+        - Variables de entorno GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET
+        - Email debe ser del dominio @ufps.edu.co
+        
+        **Flujo SSO:**
+        1. Redirección a Google OAuth2
+        2. Usuario autoriza en Google
+        3. Callback con código de autorización
+        4. Intercambio por tokens de acceso
+        5. Obtención de perfil de usuario
+        6. Creación/actualización de usuario local
+        7. Asignación de roles por defecto
+        8. Generación de JWT local
+      responses:
+        '302':
+          description: Redirección a Google OAuth2
+        '503':
+          description: SSO no configurado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: number
+                    example: 503
+                  message:
+                    type: string
+                    example: SSO authentication is not configured. Please use local authentication instead.
+
+  /auth/oauth/google/callback:
+    get:
+      tags: [OAuth2]
+      summary: Handle Google OAuth2 callback
+      description: |
+        **RF-43: Callback SSO**
+        
+        Maneja el callback de Google OAuth2 y completa la autenticación.
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Código de autorización de Google
+        - name: state
+          in: query
+          schema:
+            type: string
+          description: Estado de seguridad (opcional)
+      responses:
+        '302':
+          description: Redirección al frontend con token
+        '400':
+          description: Error en el callback OAuth2
+
+  /auth/oauth/google/logout:
+    get:
+      tags: [OAuth2]
+      summary: Logout from Google OAuth2
+      description: |
+        **RF-43: Logout SSO**
+        
+        Cierra sesión de Google OAuth2 y redirige al frontend.
+      responses:
+        '302':
+          description: Redirección a Google logout y luego al frontend
+
+  # ==================== ROLES MANAGEMENT ENDPOINTS ====================
+  /roles:
+    get:
+      tags: [Roles, Admin Only]
+      summary: Get all roles with optional filtering
+      description: |
+        **RF-41: Gestión de Roles**
+        
+        Obtiene todos los roles del sistema con filtros opcionales.
+        
+        **Roles Predefinidos (Inmutables):**
+        1. **Estudiante**: Permisos básicos para reservar recursos
+        2. **Docente**: Permisos académicos extendidos
+        3. **Administrador General**: Acceso completo al sistema
+        4. **Administrador de Programa**: Permisos específicos por programa
+        5. **Vigilante**: Control de acceso físico
+        6. **Administrativo General**: Operaciones administrativas
+        
+        **Permisos requeridos:** Administrador General o Administrador de Programa
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [academic, administrative, security]
+          description: Filtrar por categoría de rol
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+          description: Filtrar por estado activo/inactivo
+        - name: isPredefined
+          in: query
+          schema:
+            type: boolean
+          description: Filtrar por roles predefinidos/personalizados
+      responses:
+        '200':
+          description: Lista de roles obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Roles, Admin Only]
+      summary: Create custom role (Admin Only)
+      description: |
+        **RF-41: Creación de Roles Personalizados**
+        
+        Crea un nuevo rol personalizado con permisos granulares.
+        
+        **Restricciones:**
+        - Solo administradores pueden crear roles
+        - Roles predefinidos NO pueden ser duplicados
+        - Nombre debe ser único
+        - Debe incluir al menos un permiso
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          description: Rol personalizado creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '409':
+          description: Rol con ese nombre ya existe
+
+  /roles/{id}:
+    put:
+      tags: [Roles, Admin Only]
+      summary: Update custom role (Admin Only)
+      description: |
+        **RF-41: Actualización de Roles Personalizados**
+        
+        Actualiza un rol personalizado existente.
+        
+        **Restricciones:**
+        - Solo roles personalizados pueden ser editados
+        - Roles predefinidos son INMUTABLES
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del rol a actualizar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoleRequest'
+      responses:
+        '200':
+          description: Rol actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '403':
+          description: No se puede modificar rol predefinido
+
+    delete:
+      tags: [Roles, Admin Only, RF-42 Protected]
+      summary: Delete custom role with double confirmation (Admin Only)
+      description: |
+        **RF-41 + RF-42: Eliminación de Roles con Doble Confirmación**
+        
+        Elimina un rol personalizado del sistema.
+        
+        **Restricciones:**
+        - Solo roles personalizados pueden ser eliminados
+        - Roles predefinidos son INMUTABLES
+        - Requiere doble confirmación (confirmation: "DELETE")
+        - No se puede eliminar si hay usuarios asignados
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del rol a eliminar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoubleConfirmationRequest'
+      responses:
+        '200':
+          description: Rol eliminado exitosamente
+        '400':
+          description: No se puede eliminar - usuarios asignados o confirmación faltante
+
+  # ==================== USERS MANAGEMENT ENDPOINTS ====================
+  /users:
+    get:
+      tags: [Users, Admin Only]
+      summary: Get all users with optional filtering
+      description: |
+        **RF-41: Gestión de Usuarios**
+        
+        Obtiene todos los usuarios del sistema con filtros opcionales.
+        
+        **Permisos requeridos:** Administrador General o Administrador de Programa
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+          description: Número de página
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 10
+          description: Elementos por página
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Búsqueda por nombre o email
+      responses:
+        '200':
+          description: Lista de usuarios obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProfile'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/{id}:
+    get:
+      tags: [Users, Admin Only]
+      summary: Get user by ID
+      description: |
+        **RF-41: Obtener Usuario por ID**
+        
+        Obtiene un usuario específico por su ID.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario
+      responses:
+        '200':
+          description: Usuario obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          description: Usuario no encontrado
+
+    put:
+      tags: [Users, Admin Only]
+      summary: Update user
+      description: |
+        **RF-41: Actualizar Usuario**
+        
+        Actualiza la información de un usuario.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Usuario actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          description: Usuario no encontrado
+
+    delete:
+      tags: [Users, Admin Only, RF-42 Protected]
+      summary: Delete user
+      description: |
+        **RF-41 + RF-42: Eliminar Usuario**
+        
+        Elimina un usuario del sistema.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario
+      responses:
+        '200':
+          description: Usuario eliminado exitosamente
+        '404':
+          description: Usuario no encontrado
+
+  /users/{id}/roles/assign:
+    put:
+      tags: [Users, Admin Only]
+      summary: Assign role to user
+      description: |
+        **RF-41: Asignar Rol a Usuario**
+        
+        Asigna un rol específico a un usuario.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [roleId]
+              properties:
+                roleId:
+                  type: string
+                  description: ID del rol a asignar
+      responses:
+        '200':
+          description: Rol asignado exitosamente
+        '404':
+          description: Usuario o rol no encontrado
+
+  /users/{id}/roles/remove:
+    delete:
+      tags: [Users, Admin Only]
+      summary: Remove role from user
+      description: |
+        **RF-41: Remover Rol de Usuario**
+        
+        Remueve un rol específico de un usuario.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [roleId]
+              properties:
+                roleId:
+                  type: string
+                  description: ID del rol a remover
+      responses:
+        '200':
+          description: Rol removido exitosamente
+        '404':
+          description: Usuario o rol no encontrado
+
+  # ==================== PERMISSIONS MANAGEMENT ENDPOINTS ====================
+  /permissions:
+    get:
+      tags: [Permissions, Admin Only]
+      summary: Get all permissions with optional filters
+      description: |
+        **RF-41: Gestión Granular de Permisos**
+        
+        Obtiene todos los permisos del sistema con filtros opcionales.
+        
+        **Granularidad Máxima:**
+        - Permisos por recurso específico
+        - Acciones granulares (create, read, update, delete, approve, etc.)
+        - Alcance definido (own, program, department, all)
+        - Condiciones personalizadas (JSON)
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: resource
+          in: query
+          schema:
+            type: string
+          description: Filtrar por recurso
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: Filtrar por acción
+        - name: scope
+          in: query
+          schema:
+            type: string
+          description: Filtrar por alcance
+      responses:
+        '200':
+          description: Permisos obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+
+    post:
+      tags: [Permissions, Admin Only]
+      summary: Create a new permission
+      description: |
+        **RF-41: Crear Permiso**
+        
+        Crea un nuevo permiso en el sistema.
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePermissionRequest'
+      responses:
+        '201':
+          description: Permiso creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '409':
+          description: Permiso ya existe
+
+  /permissions/active:
+    get:
+      tags: [Permissions, Admin Only]
+      summary: Get all active permissions
+      description: |
+        **RF-41: Obtener Permisos Activos**
+        
+        Obtiene todos los permisos activos del sistema.
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '200':
+          description: Permisos activos obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+
+  /permissions/resource/{resource}:
+    get:
+      tags: [Permissions, Admin Only]
+      summary: Get permissions by resource
+      description: |
+        **RF-41: Obtener Permisos por Recurso**
+        
+        Obtiene permisos filtrados por recurso específico.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Nombre del recurso
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: Filtrar por acción
+        - name: scope
+          in: query
+          schema:
+            type: string
+          description: Filtrar por alcance
+      responses:
+        '200':
+          description: Permisos obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+
+  /permissions/{id}:
+    get:
+      tags: [Permissions, Admin Only]
+      summary: Get permission by ID
+      description: |
+        **RF-41: Obtener Permiso por ID**
+        
+        Obtiene un permiso específico por su ID.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del permiso
+      responses:
+        '200':
+          description: Permiso obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '404':
+          description: Permiso no encontrado
+
+    put:
+      tags: [Permissions, Admin Only]
+      summary: Update permission
+      description: |
+        **RF-41: Actualizar Permiso**
+        
+        Actualiza un permiso existente.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del permiso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePermissionRequest'
+      responses:
+        '200':
+          description: Permiso actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '404':
+          description: Permiso no encontrado
+
+    delete:
+      tags: [Permissions, Admin Only, RF-42 Protected]
+      summary: Delete permission
+      description: |
+        **RF-41 + RF-42: Eliminar Permiso**
+        
+        Elimina un permiso del sistema.
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del permiso
+      responses:
+        '204':
+          description: Permiso eliminado exitosamente
+        '404':
+          description: Permiso no encontrado
+
+  /permissions/activate:
+    put:
+      tags: [Permissions, Admin Only]
+      summary: Activate permission
+      description: |
+        **RF-41: Activar Permiso**
+        
+        Activa un permiso desactivado.
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  description: ID del permiso a activar
+      responses:
+        '200':
+          description: Permiso activado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+
+  /permissions/deactivate:
+    put:
+      tags: [Permissions, Admin Only]
+      summary: Deactivate permission
+      description: |
+        **RF-41: Desactivar Permiso**
+        
+        Desactiva un permiso activo.
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  description: ID del permiso a desactivar
+      responses:
+        '200':
+          description: Permiso desactivado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+
+  /permissions/seed-defaults:
+    post:
+      tags: [Permissions, Admin Only]
+      summary: Create default system permissions
+      description: |
+        **RF-41: Crear Permisos por Defecto**
+        
+        Crea los permisos por defecto del sistema.
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '201':
+          description: Permisos por defecto creados exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+
+  # ==================== CATEGORIES MANAGEMENT ENDPOINTS ====================
+  /auth/categories:
+    get:
+      tags: [Categories]
+      summary: Get all role categories
+      description: |
+        **Gestión de Categorías de Roles**
+        
+        Obtiene todas las categorías de roles con paginación.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+          description: Número de página
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 10
+          description: Elementos por página
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Búsqueda por nombre
+      responses:
+        '200':
+          description: Categorías obtenidas exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+
+  /auth/categories/defaults:
+    get:
+      tags: [Categories]
+      summary: Get default role categories
+      description: |
+        **Categorías por Defecto**
+        
+        Obtiene las categorías de roles por defecto del sistema.
+      responses:
+        '200':
+          description: Categorías por defecto obtenidas exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  # ==================== SEED ENDPOINTS ====================
+  /seed/status:
+    get:
+      tags: [Seed]
+      summary: Check if database needs seeding
+      description: |
+        **Estado de Inicialización**
+        
+        Verifica si la base de datos necesita ser inicializada con datos básicos.
+      responses:
+        '200':
+          description: Estado de inicialización obtenido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  needsSeeding:
+                    type: boolean
+                    description: Si la base de datos necesita inicialización
+                  message:
+                    type: string
+                    description: Mensaje descriptivo del estado
+
+  /seed/run:
+    post:
+      tags: [Seed]
+      summary: Run database seeding
+      description: |
+        **Inicializar Base de Datos**
+        
+        Inicializa la base de datos con datos básicos si está vacía.
+        Incluye programas, roles, permisos, usuarios, categorías, tipos de mantenimiento, recursos y disponibilidad básica.
+      responses:
+        '200':
+          description: Inicialización completada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  summary:
+                    type: object
+                    properties:
+                      programs:
+                        type: number
+                      roles:
+                        type: number
+                      users:
+                        type: number
+                      categories:
+                        type: number
+                      maintenanceTypes:
+                        type: number
+                      resources:
+                        type: number
+        '400':
+          description: Inicialización fallida o base de datos ya contiene datos
+
+  /seed/run-full:
+    post:
+      tags: [Seed]
+      summary: Run full database seeding (force mode)
+      description: |
+        **Inicialización Completa (Modo Forzado)**
+        
+        Limpia todos los datos existentes y reinicializa la base de datos con datos frescos.
+        **ADVERTENCIA:** Esto eliminará todos los datos existentes incluyendo usuarios, roles, recursos, etc.
+      responses:
+        '200':
+          description: Inicialización completa exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  summary:
+                    type: object
+                    properties:
+                      programs:
+                        type: number
+                      roles:
+                        type: number
+                      users:
+                        type: number
+                      categories:
+                        type: number
+                      maintenanceTypes:
+                        type: number
+                      resources:
+                        type: number
+        '400':
+          description: Inicialización completa fallida
+
+# ==================== COMPONENTS ====================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user-123
+        email:
+          type: string
+          example: estudiante@ufps.edu.co
+        firstName:
+          type: string
+          example: Juan
+        lastName:
+          type: string
+          example: Pérez
+        isVerified:
+          type: boolean
+          example: true
+        isActive:
+          type: boolean
+          example: true
+        lastLogin:
+          type: string
+          example: 2024-01-15T09:30:00Z
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRole'
+
+    UserRole:
+      type: object
+      properties:
+        id:
+          type: string
+          example: role-estudiante
+        name:
+          type: string
+          example: Estudiante
+        description:
+          type: string
+          example: Estudiante con permisos básicos para reservar recursos
+        category:
+          type: string
+          example: academic
+        isPredefined:
+          type: boolean
+          example: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          example: role-123
+        name:
+          type: string
+          example: Coordinador de Laboratorio
+        description:
+          type: string
+          example: Coordinador con permisos específicos para gestión de laboratorios
+        category:
+          type: string
+          enum: [academic, administrative, security, custom]
+          example: academic
+        isActive:
+          type: boolean
+          example: true
+        isPredefined:
+          type: boolean
+          example: false
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+        userCount:
+          type: number
+          example: 15
+        createdAt:
+          type: string
+          example: 2024-01-01T00:00:00Z
+        updatedAt:
+          type: string
+          example: 2024-01-15T10:30:00Z
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          example: perm-123
+        resource:
+          type: string
+          example: reservations
+          description: Tipo de recurso (reservations, rooms, equipment, etc.)
+        action:
+          type: string
+          example: create
+          description: Acción permitida (create, read, update, delete, approve, etc.)
+        scope:
+          type: string
+          example: own
+          description: Alcance del permiso (own, program, department, all)
+        conditions:
+          type: object
+          example:
+            max_duration: 4_hours
+            advance_booking: 48_hours
+            resource_types: [laboratory, classroom]
+          description: Condiciones específicas del permiso (opcional)
+        description:
+          type: string
+          example: Crear reservas propias con límites de tiempo
+        isActive:
+          type: boolean
+          example: true
+
+    CreateRoleRequest:
+      type: object
+      required: [name, description, category, permissions]
+      properties:
+        name:
+          type: string
+          example: Coordinador de Laboratorio
+          description: Nombre único del rol
+        description:
+          type: string
+          example: Coordinador con permisos específicos para gestión de laboratorios
+          description: Descripción detallada del rol
+        category:
+          type: string
+          enum: [academic, administrative, security, custom]
+          example: academic
+          description: Categoría del rol
+        permissions:
+          type: array
+          items:
+            type: object
+            required: [resource, action, scope]
+            properties:
+              resource:
+                type: string
+                example: laboratories
+              action:
+                type: string
+                example: manage
+              scope:
+                type: string
+                example: department
+              conditions:
+                type: object
+                example:
+                  department_id: sistemas
+                  max_duration: 4_hours
+
+    UpdateRoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Coordinador de Laboratorio Actualizado
+        description:
+          type: string
+          example: Descripción actualizada del rol
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              resource:
+                type: string
+              action:
+                type: string
+              scope:
+                type: string
+              conditions:
+                type: object
+
+    DoubleConfirmationRequest:
+      type: object
+      required: [confirmation]
+      properties:
+        confirmation:
+          type: string
+          enum: [DELETE]
+          example: DELETE
+          description: Confirmación exacta requerida (debe ser "DELETE")
+        reason:
+          type: string
+          example: Role no longer needed after department restructure
+          description: Razón para la eliminación (opcional)
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Juan Carlos
+        lastName:
+          type: string
+          example: Pérez García
+        email:
+          type: string
+          format: email
+          example: juan.perez@ufps.edu.co
+        isActive:
+          type: boolean
+          example: true
+        isVerified:
+          type: boolean
+          example: true
+
+    CreatePermissionRequest:
+      type: object
+      required: [name, resource, action, scope]
+      properties:
+        name:
+          type: string
+          example: Create Own Reservations
+          description: Nombre único del permiso
+        resource:
+          type: string
+          example: reservations
+          description: Tipo de recurso
+        action:
+          type: string
+          example: create
+          description: Acción permitida
+        scope:
+          type: string
+          example: own
+          description: Alcance del permiso
+        conditions:
+          type: object
+          example:
+            max_duration: 4_hours
+            advance_booking: 48_hours
+          description: Condiciones específicas (opcional)
+        description:
+          type: string
+          example: Permite crear reservas propias con límites de tiempo
+          description: Descripción del permiso
+
+    UpdatePermissionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Create Own Reservations Updated
+        resource:
+          type: string
+          example: reservations
+        action:
+          type: string
+          example: create
+        scope:
+          type: string
+          example: own
+        conditions:
+          type: object
+          example:
+            max_duration: 6_hours
+        description:
+          type: string
+          example: Descripción actualizada del permiso
+        isActive:
+          type: boolean
+          example: true
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          example: cat-123
+        type:
+          type: string
+          example: AUTH
+        subtype:
+          type: string
+          example: ROLE
+        name:
+          type: string
+          example: Académico
+        code:
+          type: string
+          example: ACADEMIC
+        description:
+          type: string
+          example: Categoría para roles académicos
+        color:
+          type: string
+          example: '#2563eb'
+        isActive:
+          type: boolean
+          example: true
+        isDefault:
+          type: boolean
+          example: true
+        sortOrder:
+          type: number
+          example: 1
+        service:
+          type: string
+          example: auth-service
+        createdAt:
+          type: string
+          example: 2024-01-01T00:00:00Z
+        updatedAt:
+          type: string
+          example: 2024-01-15T10:30:00Z
+
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: number
+          example: 1
+        limit:
+          type: number
+          example: 10
+        total:
+          type: number
+          example: 25
+        totalPages:
+          type: number
+          example: 3
+        hasNext:
+          type: boolean
+          example: true
+        hasPrev:
+          type: boolean
+          example: false
+
+  responses:
+    Unauthorized:
+      description: Credenciales inválidas o cuenta no verificada
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              statusCode:
+                type: number
+                example: 401
+              message:
+                type: string
+                example: Invalid credentials or account not verified
+              error:
+                type: string
+                example: Unauthorized
+
+    Forbidden:
+      description: Acceso denegado - Permisos insuficientes
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              statusCode:
+                type: number
+                example: 403
+              message:
+                type: string
+                example: Only administrators can modify resources. This incident has been logged.
+              error:
+                type: string
+                example: Forbidden
+
+    TooManyRequests:
+      description: Demasiados intentos - cuenta bloqueada temporalmente
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              statusCode:
+                type: number
+                example: 429
+              message:
+                type: string
+                example: Too many login attempts. Account temporarily locked.
+              error:
+                type: string
+                example: Too Many Requests
+              lockoutUntil:
+                type: string
+                example: 2024-01-15T11:00:00Z

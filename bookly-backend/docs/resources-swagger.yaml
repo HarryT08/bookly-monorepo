@@ -1,0 +1,861 @@
+openapi: 3.0.3
+info:
+  title: Bookly Resources Service API
+  version: 1.0.0
+  description: |
+    REST API for Bookly's resource management system.
+    This service manages physical resources (rooms, equipment, etc.), categories, and academic programs.
+  contact:
+    name: Bookly Development Team
+    email: dev@booklyapp.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/resources
+    description: Development server
+  - url: https://api.booklyapp.com/resources
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Resource Management
+  /resources:
+    get:
+      tags:
+        - Resources
+      summary: Get resources
+      description: Retrieves resources with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+        - name: programId
+          in: query
+          description: Filter by program ID
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: Filter by location
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            $ref: "#/components/schemas/ResourceStatus"
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        "200":
+          description: Resources retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resources:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ResourceDto"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags:
+        - Resources
+      summary: Create resource
+      description: Creates a new resource
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResourceDto"
+      responses:
+        "201":
+          description: Resource created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /resources/{id}:
+    get:
+      tags:
+        - Resources
+      summary: Get resource by ID
+      description: Retrieves a specific resource by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resource retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags:
+        - Resources
+      summary: Update resource
+      description: Updates an existing resource
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResourceDto"
+      responses:
+        "200":
+          description: Resource updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags:
+        - Resources
+      summary: Delete resource
+      description: Soft deletes a resource (sets isActive to false)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource ID
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Resource deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /resources/bulk-import:
+    post:
+      tags:
+        - Resources
+      summary: Bulk import resources
+      description: Imports multiple resources from CSV file
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file with resource data
+      responses:
+        "200":
+          description: Resources imported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported:
+                    type: integer
+                    description: Number of resources imported
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        row:
+                          type: integer
+                        error:
+                          type: string
+
+  # Category Management
+  /categories:
+    get:
+      tags:
+        - Categories
+      summary: Get categories
+      description: Retrieves categories with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CategoryDto"
+                  total:
+                    type: integer
+
+    post:
+      tags:
+        - Categories
+      summary: Create category
+      description: Creates a new category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryDto"
+      responses:
+        "201":
+          description: Category created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryDto"
+
+  /categories/{id}:
+    get:
+      tags:
+        - Categories
+      summary: Get category by ID
+      description: Retrieves a specific category by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Category retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryDto"
+
+    put:
+      tags:
+        - Categories
+      summary: Update category
+      description: Updates an existing category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCategoryDto"
+      responses:
+        "200":
+          description: Category updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryDto"
+
+    delete:
+      tags:
+        - Categories
+      summary: Delete category
+      description: Soft deletes a category
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Category deleted successfully
+
+  # Program Management
+  /programs:
+    get:
+      tags:
+        - Programs
+      summary: Get programs
+      description: Retrieves academic programs with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: coordinatorId
+          in: query
+          description: Filter by coordinator ID
+          schema:
+            type: string
+        - name: isActive
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Programs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  programs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProgramDto"
+                  total:
+                    type: integer
+
+    post:
+      tags:
+        - Programs
+      summary: Create program
+      description: Creates a new academic program
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProgramDto"
+      responses:
+        "201":
+          description: Program created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramDto"
+
+  /programs/{id}:
+    get:
+      tags:
+        - Programs
+      summary: Get program by ID
+      description: Retrieves a specific program by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Program ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Program retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramDto"
+
+    put:
+      tags:
+        - Programs
+      summary: Update program
+      description: Updates an existing program
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Program ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProgramDto"
+      responses:
+        "200":
+          description: Program updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramDto"
+
+    delete:
+      tags:
+        - Programs
+      summary: Delete program
+      description: Soft deletes a program
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Program ID
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Program deleted successfully
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Enums
+    ResourceStatus:
+      type: string
+      enum:
+        - AVAILABLE
+        - OCCUPIED
+        - MAINTENANCE
+        - OUT_OF_SERVICE
+        - RESERVED
+
+    ResourceType:
+      type: string
+      enum:
+        - CLASSROOM
+        - AUDITORIUM
+        - LABORATORY
+        - OFFICE
+        - EQUIPMENT
+        - VEHICLE
+        - OTHER
+
+    # DTOs
+    ResourceDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: "#/components/schemas/ResourceType"
+        categoryId:
+          type: string
+        programId:
+          type: string
+        location:
+          type: string
+        capacity:
+          type: integer
+        status:
+          $ref: "#/components/schemas/ResourceStatus"
+        attributes:
+          type: object
+          description: Key-value pairs for resource-specific attributes
+        availabilityRules:
+          type: object
+          description: Rules defining when the resource is available
+        isActive:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        category:
+          $ref: "#/components/schemas/CategoryDto"
+        program:
+          $ref: "#/components/schemas/ProgramDto"
+
+    CategoryDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+          description: Color code for UI display
+        icon:
+          type: string
+          description: Icon identifier for UI display
+        isActive:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProgramDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+          description: Program code (e.g., "ING-SIS")
+        coordinatorId:
+          type: string
+        isActive:
+          type: boolean
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Create DTOs
+    CreateResourceDto:
+      type: object
+      required:
+        - name
+        - type
+        - categoryId
+        - programId
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: "#/components/schemas/ResourceType"
+        categoryId:
+          type: string
+        programId:
+          type: string
+        location:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        attributes:
+          type: object
+        availabilityRules:
+          type: object
+        isActive:
+          type: boolean
+          default: true
+
+    UpdateResourceDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        status:
+          $ref: "#/components/schemas/ResourceStatus"
+        attributes:
+          type: object
+        availabilityRules:
+          type: object
+        isActive:
+          type: boolean
+
+    CreateCategoryDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        icon:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+
+    UpdateCategoryDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        icon:
+          type: string
+        isActive:
+          type: boolean
+
+    CreateProgramDto:
+      type: object
+      required:
+        - name
+        - code
+        - coordinatorId
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        coordinatorId:
+          type: string
+        isActive:
+          type: boolean
+          default: true
+
+    UpdateProgramDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        code:
+          type: string
+        coordinatorId:
+          type: string
+        isActive:
+          type: boolean
+
+    # Error Response
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        type:
+          type: string
+          description: Error type
+        exception_code:
+          type: string
+          description: Internal exception code
+        http_code:
+          type: integer
+          description: HTTP status code
+        http_exception:
+          type: string
+          description: HTTP exception name
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "RSRC-0400"
+            message: "Invalid request parameters"
+            type: "error"
+            exception_code: "R-01"
+            http_code: 400
+            http_exception: "BadRequestException"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "RSRC-0401"
+            message: "Authentication required"
+            type: "error"
+            exception_code: "R-02"
+            http_code: 401
+            http_exception: "UnauthorizedException"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "RSRC-0403"
+            message: "Insufficient permissions"
+            type: "error"
+            exception_code: "R-03"
+            http_code: 403
+            http_exception: "ForbiddenException"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "RSRC-0404"
+            message: "Resource not found"
+            type: "error"
+            exception_code: "R-04"
+            http_code: 404
+            http_exception: "NotFoundException"
+
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "RSRC-0409"
+            message: "Resource conflict"
+            type: "error"
+            exception_code: "R-05"
+            http_code: 409
+            http_exception: "ConflictException"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "RSRC-0500"
+            message: "Internal server error"
+            type: "error"
+            exception_code: "R-06"
+            http_code: 500
+            http_exception: "InternalServerErrorException"

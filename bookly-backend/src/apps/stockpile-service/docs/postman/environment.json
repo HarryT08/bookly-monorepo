@@ -1,0 +1,128 @@
+{
+  "id": "stockpile-service-environment",
+  "name": "Bookly Stockpile Service Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/stockpile",
+      "description": "Base URL for the stockpile service API",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "description": "JWT Bearer token for authenticated requests (USER role)",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "description": "JWT Bearer token for admin operations (ADMIN role)",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "coordinatorToken",
+      "value": "",
+      "description": "JWT Bearer token for coordinator operations (COORDINATOR role)",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "approverToken",
+      "value": "",
+      "description": "JWT Bearer token for approver operations (APPROVER role)",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "testProgramId",
+      "value": "program-ingenieria-sistemas",
+      "description": "Test program ID for filtering operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testResourceId",
+      "value": "resource-classroom-a101",
+      "description": "Test resource ID for reservation operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testUserId",
+      "value": "user-test-123",
+      "description": "Test user ID for reservation operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testReservationId",
+      "value": "reservation-test-456",
+      "description": "Test reservation ID for approval operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testApprovalFlowId",
+      "value": "",
+      "description": "Generated approval flow ID from create operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testApprovalLevelId",
+      "value": "",
+      "description": "Generated approval level ID from create operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testTemplateId",
+      "value": "",
+      "description": "Generated template ID from create operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testChannelId",
+      "value": "",
+      "description": "Generated notification channel ID from create operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "generatedDocumentId",
+      "value": "",
+      "description": "Generated document ID from document generation",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "sentNotificationId",
+      "value": "",
+      "description": "Generated notification ID from send operations",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "notificationConfigId",
+      "value": "",
+      "description": "Generated notification configuration ID",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "approvalId",
+      "value": "",
+      "description": "Generated approval ID for testing",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2024-01-20T10:00:00.000Z",
+  "_postman_exported_using": "Postman/10.20.0"
+}

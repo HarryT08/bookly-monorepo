@@ -1,0 +1,673 @@
+asyncapi: 3.0.0
+info:
+  title: Bookly Resources Service Events
+  version: 1.0.0
+  description: |
+    Event-driven architecture documentation for Bookly's resource management system.
+    This service handles the management of physical resources (rooms, equipment, etc.), categories, programs, maintenance, and bulk imports.
+
+    ## Event Categories
+    - **Resource Management**: CRUD operations on resources
+    - **Category Management**: Resource category operations
+    - **Maintenance Management**: Maintenance scheduling and tracking
+    - **Import Management**: Bulk resource import operations
+
+    ## Event Flow
+    1. Resources are created, updated, activated/deactivated, or deleted
+    2. Categories can be created and assigned to resources
+    3. Maintenance can be scheduled, started, and completed
+    4. Bulk imports can be processed with progress tracking
+  contact:
+    name: Bookly Development Team
+    email: dev@booklyapp.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+defaultContentType: application/json
+
+servers:
+  development:
+    host: localhost:5672
+    protocol: amqp
+    description: Local RabbitMQ development server
+    variables:
+      port:
+        default: "5672"
+        description: RabbitMQ port
+  production:
+    host: rabbitmq.booklyapp.com:5672
+    protocol: amqp
+    description: Production RabbitMQ server
+    variables:
+      port:
+        default: "5672"
+        description: RabbitMQ port
+
+channels:
+  bookly.resources.lifecycle:
+    description: Channel for resource lifecycle events (create, update, delete, status changes)
+    messages:
+      ResourceCreated:
+        $ref: "#/components/messages/ResourceCreated"
+      ResourceUpdated:
+        $ref: "#/components/messages/ResourceUpdated"
+      ResourceDeleted:
+        $ref: "#/components/messages/ResourceDeleted"
+      ResourceActivated:
+        $ref: "#/components/messages/ResourceActivated"
+      ResourceDeactivated:
+        $ref: "#/components/messages/ResourceDeactivated"
+
+  bookly.resources.categories:
+    description: Channel for resource category management events
+    messages:
+      CategoryCreated:
+        $ref: "#/components/messages/CategoryCreated"
+
+  bookly.resources.maintenance:
+    description: Channel for resource maintenance events
+    messages:
+      MaintenanceScheduled:
+        $ref: "#/components/messages/MaintenanceScheduled"
+      MaintenanceStarted:
+        $ref: "#/components/messages/MaintenanceStarted"
+      MaintenanceCompleted:
+        $ref: "#/components/messages/MaintenanceCompleted"
+
+  bookly.resources.imports:
+    description: Channel for bulk resource import events
+    messages:
+      ResourceImportStarted:
+        $ref: "#/components/messages/ResourceImportStarted"
+      ResourceImportCompleted:
+        $ref: "#/components/messages/ResourceImportCompleted"
+
+operations:
+  publishResourceCreated:
+    action: send
+    channel:
+      $ref: "#/channels/bookly.resources.lifecycle"
+    messages:
+      - $ref: "#/components/messages/ResourceCreated"
+
+  publishResourceUpdated:
+    action: send
+    channel:
+      $ref: "#/channels/bookly.resources.lifecycle"
+    messages:
+      - $ref: "#/components/messages/ResourceUpdated"
+
+  publishResourceDeleted:
+    action: send
+    channel:
+      $ref: "#/channels/bookly.resources.lifecycle"
+    messages:
+      - $ref: "#/components/messages/ResourceDeleted"
+
+  publishMaintenanceScheduled:
+    action: send
+    channel:
+      $ref: "#/channels/bookly.resources.maintenance"
+    messages:
+      - $ref: "#/components/messages/MaintenanceScheduled"
+
+components:
+  messages:
+    ResourceCreated:
+      name: ResourceCreated
+      title: Resource Created Event
+      summary: Published when a new resource is created
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceCreatedPayload"
+
+    ResourceUpdated:
+      name: ResourceUpdated
+      title: Resource Updated Event
+      summary: Published when a resource is updated
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceUpdatedPayload"
+
+    ResourceDeleted:
+      name: ResourceDeleted
+      title: Resource Deleted Event
+      summary: Published when a resource is deleted
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceDeletedPayload"
+
+    ResourceActivated:
+      name: ResourceActivated
+      title: Resource Activated Event
+      summary: Published when a resource is activated
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceActivatedPayload"
+
+    ResourceDeactivated:
+      name: ResourceDeactivated
+      title: Resource Deactivated Event
+      summary: Published when a resource is deactivated
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceDeactivatedPayload"
+
+    CategoryCreated:
+      name: CategoryCreated
+      title: Category Created Event
+      summary: Published when a new category is created
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/CategoryCreatedPayload"
+
+    MaintenanceScheduled:
+      name: MaintenanceScheduled
+      title: Maintenance Scheduled Event
+      summary: Published when maintenance is scheduled for a resource
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/MaintenanceScheduledPayload"
+
+    MaintenanceStarted:
+      name: MaintenanceStarted
+      title: Maintenance Started Event
+      summary: Published when maintenance work begins
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/MaintenanceStartedPayload"
+
+    MaintenanceCompleted:
+      name: MaintenanceCompleted
+      title: Maintenance Completed Event
+      summary: Published when maintenance work is completed
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/MaintenanceCompletedPayload"
+
+    ResourceImportStarted:
+      name: ResourceImportStarted
+      title: Resource Import Started Event
+      summary: Published when bulk resource import begins
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceImportStartedPayload"
+
+    ResourceImportCompleted:
+      name: ResourceImportCompleted
+      title: Resource Import Completed Event
+      summary: Published when bulk resource import completes
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/ResourceImportCompletedPayload"
+
+  schemas:
+    BaseEventPayload:
+      type: object
+      properties:
+        eventId:
+          type: string
+          description: Unique identifier for the event
+          example: "resource-created-1692789123456-abc123def"
+        eventType:
+          type: string
+          description: Type of the event
+        aggregateType:
+          type: string
+          description: Type of the aggregate
+        aggregateId:
+          type: string
+          description: ID of the aggregate
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        version:
+          type: integer
+          description: Event schema version
+          example: 1
+        userId:
+          type: string
+          description: ID of the user who triggered the event
+          example: "64f1a2b3c4d5e6f7g8h9i0j2"
+      required:
+        - eventId
+        - eventType
+        - aggregateType
+        - aggregateId
+        - timestamp
+        - version
+
+    ResourceCreatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                resourceId:
+                  type: string
+                  example: "64f1a2b3c4d5e6f7g8h9i0j1"
+                resourceName:
+                  type: string
+                  example: "Aula Magna 101"
+                resourceType:
+                  type: string
+                  example: "CLASSROOM"
+                description:
+                  type: string
+                  example: "Aula magna con capacidad para 150 estudiantes"
+                capacity:
+                  type: integer
+                  example: 150
+                location:
+                  type: string
+                  example: "Edificio A, Piso 1"
+                categoryIds:
+                  type: array
+                  items:
+                    type: string
+                  example: ["64f1a2b3c4d5e6f7g8h9i0j3"]
+                responsibleUserId:
+                  type: string
+                  example: "64f1a2b3c4d5e6f7g8h9i0j4"
+                specifications:
+                  type: object
+                  additionalProperties: true
+                  example: { "projector": true, "airConditioning": true }
+                isActive:
+                  type: boolean
+                  example: true
+                timestamp:
+                  type: string
+                  format: date-time
+                programId:
+                  type: string
+                  example: "64f1a2b3c4d5e6f7g8h9i0j5"
+              required:
+                - resourceId
+                - resourceName
+                - resourceType
+                - categoryIds
+                - isActive
+                - timestamp
+
+    ResourceUpdatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                resourceId:
+                  type: string
+                resourceName:
+                  type: string
+                resourceType:
+                  type: string
+                previousData:
+                  type: object
+                  additionalProperties: true
+                  description: Previous resource data
+                newData:
+                  type: object
+                  additionalProperties: true
+                  description: New resource data
+                changedFields:
+                  type: array
+                  items:
+                    type: string
+                  description: List of fields that were changed
+                  example: ["capacity", "description"]
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - resourceId
+                - resourceName
+                - resourceType
+                - previousData
+                - newData
+                - changedFields
+                - timestamp
+
+    ResourceDeletedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                resourceId:
+                  type: string
+                resourceName:
+                  type: string
+                resourceType:
+                  type: string
+                reason:
+                  type: string
+                  description: Reason for deletion
+                  example: "Resource no longer available"
+                isHardDelete:
+                  type: boolean
+                  description: Whether this is a hard delete or soft delete
+                  example: false
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - resourceId
+                - resourceName
+                - resourceType
+                - isHardDelete
+                - timestamp
+
+    ResourceActivatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                resourceId:
+                  type: string
+                resourceName:
+                  type: string
+                resourceType:
+                  type: string
+                activatedBy:
+                  type: string
+                  description: ID of user who activated the resource
+                reason:
+                  type: string
+                  description: Reason for activation
+                  example: "Maintenance completed"
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - resourceId
+                - resourceName
+                - resourceType
+                - activatedBy
+                - timestamp
+
+    ResourceDeactivatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                resourceId:
+                  type: string
+                resourceName:
+                  type: string
+                resourceType:
+                  type: string
+                deactivatedBy:
+                  type: string
+                  description: ID of user who deactivated the resource
+                reason:
+                  type: string
+                  description: Reason for deactivation
+                  example: "Scheduled maintenance"
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - resourceId
+                - resourceName
+                - resourceType
+                - deactivatedBy
+                - timestamp
+
+    CategoryCreatedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                categoryId:
+                  type: string
+                categoryName:
+                  type: string
+                  example: "Laboratorio de Computación"
+                description:
+                  type: string
+                  example: "Espacios equipados con computadoras"
+                isDeletable:
+                  type: boolean
+                  example: true
+                createdBy:
+                  type: string
+                  description: ID of user who created the category
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - categoryId
+                - categoryName
+                - isDeletable
+                - createdBy
+                - timestamp
+
+    MaintenanceScheduledPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                maintenanceId:
+                  type: string
+                resourceId:
+                  type: string
+                resourceName:
+                  type: string
+                maintenanceTypeId:
+                  type: string
+                maintenanceTypeName:
+                  type: string
+                  example: "Mantenimiento Preventivo"
+                scheduledDate:
+                  type: string
+                  format: date-time
+                estimatedDuration:
+                  type: integer
+                  description: Estimated duration in minutes
+                  example: 120
+                description:
+                  type: string
+                  example: "Revisión general de equipos"
+                priority:
+                  type: string
+                  enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                  example: "MEDIUM"
+                scheduledBy:
+                  type: string
+                  description: ID of user who scheduled the maintenance
+                assignedTo:
+                  type: string
+                  description: ID of user assigned to perform maintenance
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - maintenanceId
+                - resourceId
+                - resourceName
+                - maintenanceTypeId
+                - maintenanceTypeName
+                - scheduledDate
+                - estimatedDuration
+                - priority
+                - scheduledBy
+                - timestamp
+
+    MaintenanceStartedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                maintenanceId:
+                  type: string
+                resourceId:
+                  type: string
+                resourceName:
+                  type: string
+                startedBy:
+                  type: string
+                  description: ID of user who started the maintenance
+                actualStartTime:
+                  type: string
+                  format: date-time
+                estimatedEndTime:
+                  type: string
+                  format: date-time
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - maintenanceId
+                - resourceId
+                - resourceName
+                - startedBy
+                - actualStartTime
+                - estimatedEndTime
+                - timestamp
+
+    MaintenanceCompletedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                maintenanceId:
+                  type: string
+                resourceId:
+                  type: string
+                resourceName:
+                  type: string
+                completedBy:
+                  type: string
+                  description: ID of user who completed the maintenance
+                actualEndTime:
+                  type: string
+                  format: date-time
+                actualDuration:
+                  type: integer
+                  description: Actual duration in minutes
+                  example: 135
+                status:
+                  type: string
+                  enum: [COMPLETED, PARTIALLY_COMPLETED, FAILED]
+                  example: "COMPLETED"
+                notes:
+                  type: string
+                  example: "All equipment checked and cleaned successfully"
+                nextMaintenanceDate:
+                  type: string
+                  format: date-time
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - maintenanceId
+                - resourceId
+                - resourceName
+                - completedBy
+                - actualEndTime
+                - actualDuration
+                - status
+                - timestamp
+
+    ResourceImportStartedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                importId:
+                  type: string
+                fileName:
+                  type: string
+                  example: "recursos_2024.csv"
+                totalRecords:
+                  type: integer
+                  example: 250
+                importedBy:
+                  type: string
+                  description: ID of user who started the import
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - importId
+                - fileName
+                - totalRecords
+                - importedBy
+                - timestamp
+
+    ResourceImportCompletedPayload:
+      allOf:
+        - $ref: "#/components/schemas/BaseEventPayload"
+        - type: object
+          properties:
+            eventData:
+              type: object
+              properties:
+                importId:
+                  type: string
+                fileName:
+                  type: string
+                totalRecords:
+                  type: integer
+                successfulRecords:
+                  type: integer
+                  example: 245
+                failedRecords:
+                  type: integer
+                  example: 5
+                errors:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    [
+                      "Row 15: Invalid capacity value",
+                      "Row 23: Missing resource name",
+                    ]
+                duration:
+                  type: integer
+                  description: Import duration in milliseconds
+                  example: 15000
+                timestamp:
+                  type: string
+                  format: date-time
+              required:
+                - importId
+                - fileName
+                - totalRecords
+                - successfulRecords
+                - failedRecords
+                - errors
+                - duration
+                - timestamp

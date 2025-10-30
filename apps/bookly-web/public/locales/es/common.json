@@ -1,0 +1,167 @@
+{
+  "appName": "Bookly",
+  "tagline": "Sistema de Reservas Institucionales",
+  "welcome": "Bienvenido a",
+  "community": "nuestra comunidad",
+  "welcomeMessage": "Bookly ayuda a las instituciones educativas a gestionar reservas de espacios y recursos de manera organizada y eficiente. Únete y comienza a optimizar la gestión de tu institución hoy.",
+  "joinMessage": "Más de 100 instituciones se han unido, es tu turno",
+  "signIn": "Iniciar Sesión",
+  "signUp": "Registrarse",
+  "email": "Correo Electrónico",
+  "password": "Contraseña",
+  "rememberMe": "Recordarme",
+  "forgotPassword": "¿Olvidaste tu contraseña?",
+  "continueWith": "O continúa con",
+  "noAccount": "¿No tienes una cuenta?",
+  "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+  "firstName": "Nombre",
+  "lastName": "Apellido",
+  "confirmPassword": "Confirmar Contraseña",
+  "acceptTerms": "Acepto los términos y condiciones",
+  "loading": "Cargando...",
+  "error": "Error",
+  "success": "Éxito",
+  "warning": "Advertencia",
+  "info": "Información",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "delete": "Eliminar",
+  "edit": "Editar",
+  "view": "Ver",
+  "create": "Crear",
+  "update": "Actualizar",
+  "search": "Buscar",
+  "clear": "Limpiar",
+  "filter": "Filtrar",
+  "export": "Exportar",
+  "import": "Importar",
+  "close": "Cerrar",
+  "open": "Abrir",
+  "yes": "Sí",
+  "no": "No",
+  "next": "Siguiente",
+  "previous": "Anterior",
+  "finish": "Finalizar",
+  "submit": "Enviar",
+  "reset": "Restablecer",
+  "dashboard": {
+    "overview": "Panel de Control",
+    "quickActions": "Acciones Rápidas",
+    "stats": {
+      "totalResources": "Total de Recursos",
+      "resourcesSubtitle": "Recursos registrados",
+      "availableToday": "Disponibles Hoy",
+      "availableSubtitle": "Recursos disponibles",
+      "pendingReservations": "Reservas Pendientes",
+      "pendingSubtitle": "Esperando aprobación",
+      "maintenanceNeeded": "Requieren Mantenimiento",
+      "maintenanceSubtitle": "Recursos con incidencias"
+    }
+  },
+  "resources": {
+    "title": "Recursos",
+    "subtitle": "Gestiona salas, laboratorios, auditorios y equipos institucionales",
+    "createNew": "Crear Recurso",
+    "createFirst": "Crear el Primer Recurso",
+    "backToList": "Volver a la Lista",
+    "loading": "Cargando recursos...",
+    "loadError": "Error al cargar los recursos",
+    "filterLoadError": "Error al cargar los filtros",
+    "searchPlaceholder": "Buscar por nombre, tipo o ubicación...",
+    "filterByCategory": "Filtrar por categoría",
+    "filterByProgram": "Filtrar por programa",
+    "allCategories": "Todas las categorías",
+    "allPrograms": "Todos los programas",
+    "sortBy": "Ordenar por",
+    "equipment": "Equipamiento",
+    "capacity": "Capacidad",
+    "updatedAt": "Actualizado",
+    "resultsCount": "Mostrando {{count}} de {{total}} recursos",
+    "status": {
+      "all": "Todos los estados",
+      "active": "Activos",
+      "inactive": "Inactivos",
+      "available": "Disponibles",
+      "unavailable": "No disponibles"
+    },
+    "sortOptions": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "capacity": "Capacidad",
+      "createdAt": "Fecha de creación",
+      "updatedAt": "Última actualización"
+    },
+    "empty": {
+      "title": "No hay recursos disponibles",
+      "description": "Comienza creando tu primer recurso para gestionar reservas."
+    },
+    "notFound": {
+      "title": "Recurso no encontrado",
+      "description": "El recurso que buscas no existe o ha sido eliminado."
+    },
+    "types": {
+      "classroom": "Salón de Clases",
+      "laboratory": "Laboratorio",
+      "auditorium": "Auditorio",
+      "multimedia": "Equipo Multimedia",
+      "office": "Oficina"
+    },
+    "form": {
+      "createTitle": "Crear Nuevo Recurso",
+      "createSubtitle": "Registra un nuevo recurso institucional",
+      "editTitle": "Editar Recurso",
+      "editSubtitle": "Modifica la información del recurso",
+      "name": "Nombre del Recurso",
+      "namePlaceholder": "Ej: Salón 101, Laboratorio de Química A",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Describe las características principales del recurso",
+      "type": "Tipo de Recurso",
+      "selectType": "Selecciona un tipo",
+      "capacity": "Capacidad",
+      "location": "Ubicación",
+      "locationPlaceholder": "Ej: Edificio A, Piso 2",
+      "academicProgram": "Programa Académico",
+      "selectProgram": "Selecciona un programa",
+      "equipment": "Equipamiento",
+      "accessibility": "Accesibilidad",
+      "specialConditions": "Condiciones Especiales",
+      "availabilityNote": "La disponibilidad se configurará automáticamente con horarios estándar. Podrás modificarla después de crear el recurso.",
+      "tabs": {
+        "basicInfo": "Información Básica",
+        "attributes": "Atributos",
+        "categories": "Categorías",
+        "availability": "Disponibilidad"
+      },
+      "createSuccess": "Recurso creado exitosamente",
+      "updateSuccess": "Recurso actualizado exitosamente",
+      "loadError": "Error al cargar los datos del formulario",
+      "submitError": "Error al guardar el recurso"
+    }
+  },
+  "reservations": {
+    "createNew": "Nueva Reserva"
+  },
+  "reports": {
+    "view": "Ver Reportes"
+  },
+  "actions": {
+    "view": "Ver",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "create": "Crear",
+    "update": "Actualizar",
+    "cancel": "Cancelar",
+    "clearFilters": "Limpiar Filtros"
+  },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "emailInvalid": "Formato de correo electrónico inválido",
+    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+    "minLength": "Debe tener al menos {{count}} caracteres",
+    "min": "El valor mínimo es {{count}}"
+  }
+}

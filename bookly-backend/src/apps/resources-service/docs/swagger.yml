@@ -1,0 +1,1157 @@
+openapi: 3.0.0
+info:
+  title: Bookly Resources Service API
+  version: 1.0.0
+  description: |
+    RESTful API for managing physical resources, categories, maintenance, and bulk imports in Bookly.
+
+    ## Features
+    - **Resource Management**: CRUD operations for rooms, equipment, and facilities
+    - **Category Management**: Dynamic categorization system
+    - **Maintenance Tracking**: Schedule and track maintenance activities
+    - **Bulk Import**: CSV-based resource import functionality
+    - **Program Association**: Link resources to academic programs
+
+    ## Authentication
+    All endpoints require JWT Bearer token authentication with appropriate role permissions.
+  contact:
+    name: Bookly Development Team
+    email: dev@booklyapp.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3003
+    description: Development server
+  - url: https://api.booklyapp.com/resources
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Resources
+    description: Resource management operations
+  - name: Categories
+    description: Category management operations
+  - name: Maintenance
+    description: Maintenance scheduling and tracking
+  - name: Programs
+    description: Academic program management
+  - name: Import
+    description: Bulk resource import operations
+
+paths:
+  /resources:
+    get:
+      tags: [Resources]
+      summary: Get all resources
+      description: Retrieves all resources with optional filtering
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter by resource type
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by resource status
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+          description: Filter by category ID
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+        - name: location
+          in: query
+          schema:
+            type: string
+          description: Filter by location (partial match)
+      responses:
+        "200":
+          description: Resources retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceResponse"
+    post:
+      tags: [Resources]
+      summary: Create new resource
+      description: Creates a new resource with auto-generated unique code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResource"
+      responses:
+        "201":
+          description: Resource created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "400":
+          description: Invalid input data
+        "409":
+          description: Resource code already exists
+
+  /resources/paginated:
+    get:
+      tags: [Resources]
+      summary: Get resources with pagination
+      description: Retrieves resources with pagination support
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter by resource type
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by resource status
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+          description: Filter by category ID
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+      responses:
+        "200":
+          description: Paginated resources retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedResourceResponse"
+
+  /resources/search:
+    get:
+      tags: [Resources]
+      summary: Search resources
+      description: Search resources by name, description, or code
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+      responses:
+        "200":
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceResponse"
+
+  /resources/{id}:
+    get:
+      tags: [Resources]
+      summary: Get resource by ID
+      description: Retrieves a single resource by its unique identifier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      responses:
+        "200":
+          description: Resource retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "404":
+          description: Resource not found
+    put:
+      tags: [Resources]
+      summary: Update resource
+      description: Updates an existing resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResource"
+      responses:
+        "200":
+          description: Resource updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "400":
+          description: Invalid input data
+        "404":
+          description: Resource not found
+    delete:
+      tags: [Resources]
+      summary: Delete resource
+      description: Deletes a resource (soft delete if has relations, hard delete otherwise)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+        - name: force
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Force hard delete even with relations
+      responses:
+        "204":
+          description: Resource deleted successfully
+        "400":
+          description: Cannot delete resource with active relations
+        "404":
+          description: Resource not found
+
+  /resources/code/{code}:
+    get:
+      tags: [Resources]
+      summary: Get resource by code
+      description: Retrieves a single resource by its unique code
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource code
+      responses:
+        "200":
+          description: Resource retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+        "404":
+          description: Resource not found
+
+  /resources/{id}/availability:
+    get:
+      tags: [Resources]
+      summary: Check resource availability
+      description: Checks if a resource is available for reservation based on configured rules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Requested date (ISO string)
+        - name: userType
+          in: query
+          required: true
+          schema:
+            type: string
+          description: User type making the request
+        - name: duration
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Reservation duration in minutes
+      responses:
+        "200":
+          description: Availability check completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceAvailabilityResponse"
+        "404":
+          description: Resource not found
+
+  # Resource Categories Management
+  /resource-categories/{resourceId}/categories/{categoryId}:
+    post:
+      tags: [Categories]
+      summary: Assign category to resource
+      description: Assigns a single category to a resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      responses:
+        "201":
+          description: Category assigned to resource successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceCategoryResponse"
+        "409":
+          description: Resource is already assigned to this category
+        "403":
+          description: Insufficient permissions
+    delete:
+      tags: [Categories]
+      summary: Remove category from resource
+      description: Removes a specific category assignment from a resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      responses:
+        "204":
+          description: Category removed from resource successfully
+        "404":
+          description: Resource is not assigned to this category
+        "403":
+          description: Insufficient permissions
+
+  /resource-categories/{resourceId}/categories:
+    get:
+      tags: [Categories]
+      summary: Get resource categories
+      description: Retrieves all categories assigned to a specific resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      responses:
+        "200":
+          description: Resource categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceCategoryResponse"
+    post:
+      tags: [Categories]
+      summary: Assign multiple categories to resource
+      description: Assigns multiple categories to a resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                categoryIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "201":
+          description: Categories assigned to resource successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceCategoryResponse"
+        "400":
+          description: At least one category must be provided
+        "403":
+          description: Insufficient permissions
+    put:
+      tags: [Categories]
+      summary: Replace resource categories
+      description: Replaces all categories assigned to a resource with new ones
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                categoryIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Resource categories replaced successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceCategoryResponse"
+        "400":
+          description: At least one category must be provided
+        "403":
+          description: Insufficient permissions
+    delete:
+      tags: [Categories]
+      summary: Remove all categories from resource
+      description: Removes all category assignments from a resource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      responses:
+        "204":
+          description: All categories removed from resource successfully
+        "403":
+          description: Insufficient permissions
+
+  # Programs Management
+  /programs:
+    get:
+      tags: [Programs]
+      summary: Get all programs
+      description: Retrieves all academic programs with optional filtering
+      parameters:
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name or code
+      responses:
+        "200":
+          description: Programs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProgramResponse"
+    post:
+      tags: [Programs]
+      summary: Create new program
+      description: Creates a new academic program
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProgram"
+      responses:
+        "201":
+          description: Program created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramResponse"
+        "400":
+          description: Invalid input data
+        "409":
+          description: Program code already exists
+
+  /programs/{id}:
+    get:
+      tags: [Programs]
+      summary: Get program by ID
+      description: Retrieves a single program by its unique identifier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Program ID
+      responses:
+        "200":
+          description: Program retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramResponse"
+        "404":
+          description: Program not found
+    put:
+      tags: [Programs]
+      summary: Update program
+      description: Updates an existing academic program
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Program ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProgram"
+      responses:
+        "200":
+          description: Program updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgramResponse"
+        "400":
+          description: Invalid input data
+        "404":
+          description: Program not found
+    delete:
+      tags: [Programs]
+      summary: Delete program
+      description: Deletes an academic program (soft delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Program ID
+      responses:
+        "204":
+          description: Program deleted successfully
+        "404":
+          description: Program not found
+
+  # Maintenance Types Management
+  /maintenance-types:
+    get:
+      tags: [Maintenance]
+      summary: Get all maintenance types
+      description: Retrieves all maintenance types with optional filtering
+      parameters:
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+      responses:
+        "200":
+          description: Maintenance types retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MaintenanceTypeResponse"
+    post:
+      tags: [Maintenance]
+      summary: Create new maintenance type
+      description: Creates a new maintenance type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaintenanceType"
+      responses:
+        "201":
+          description: Maintenance type created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceTypeResponse"
+        "400":
+          description: Invalid input data
+        "409":
+          description: Maintenance type name already exists
+
+  /maintenance-types/{id}:
+    get:
+      tags: [Maintenance]
+      summary: Get maintenance type by ID
+      description: Retrieves a single maintenance type by its unique identifier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Maintenance type ID
+      responses:
+        "200":
+          description: Maintenance type retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceTypeResponse"
+        "404":
+          description: Maintenance type not found
+    put:
+      tags: [Maintenance]
+      summary: Update maintenance type
+      description: Updates an existing maintenance type
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Maintenance type ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMaintenanceType"
+      responses:
+        "200":
+          description: Maintenance type updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceTypeResponse"
+        "400":
+          description: Invalid input data
+        "404":
+          description: Maintenance type not found
+    delete:
+      tags: [Maintenance]
+      summary: Delete maintenance type
+      description: Deletes a maintenance type (soft delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Maintenance type ID
+      responses:
+        "204":
+          description: Maintenance type deleted successfully
+        "404":
+          description: Maintenance type not found
+
+  # Resource Import Management
+  /resource-import/preview:
+    post:
+      tags: [Import]
+      summary: Preview CSV import
+      description: Validates and previews a CSV file before starting the actual import process
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: CSV preview generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportPreview"
+        "400":
+          description: Invalid CSV file or format
+        "403":
+          description: Insufficient permissions
+
+  /resource-import/start:
+    post:
+      tags: [Import]
+      summary: Start resource import
+      description: Starts the bulk import process for resources from a CSV file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "202":
+          description: Import started successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceImportResponse"
+        "400":
+          description: Invalid CSV file or validation errors prevent import
+        "403":
+          description: Insufficient permissions
+
+  /resource-import/{importId}/status:
+    get:
+      tags: [Import]
+      summary: Get import status
+      description: Retrieves the current status of a resource import process
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Import process ID
+      responses:
+        "200":
+          description: Import status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceImportResponse"
+        "404":
+          description: Import process not found
+
+  /resource-import/template:
+    get:
+      tags: [Import]
+      summary: Download CSV template
+      description: Downloads a CSV template file for resource import
+      responses:
+        "200":
+          description: CSV template downloaded successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateResource:
+      type: object
+      required:
+        - name
+        - type
+        - categoryId
+      properties:
+        name:
+          type: string
+          example: "Aula Magna 101"
+        type:
+          type: string
+          example: "CLASSROOM"
+        capacity:
+          type: integer
+          example: 150
+        location:
+          type: string
+          example: "Edificio A, Piso 1"
+        description:
+          type: string
+          example: "Aula magna con capacidad para 150 estudiantes"
+        attributes:
+          type: object
+          additionalProperties: true
+          example: { "projector": true, "airConditioning": true }
+        availableSchedules:
+          type: array
+          items:
+            type: object
+        categoryId:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+
+    UpdateResource:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        capacity:
+          type: integer
+        location:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
+        availableSchedules:
+          type: array
+          items:
+            type: object
+        categoryId:
+          type: string
+
+    ResourceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        name:
+          type: string
+          example: "Aula Magna 101"
+        code:
+          type: string
+          example: "AM-101"
+        description:
+          type: string
+          example: "Aula magna con capacidad para 150 estudiantes"
+        type:
+          type: string
+          example: "CLASSROOM"
+        capacity:
+          type: integer
+          example: 150
+        location:
+          type: string
+          example: "Edificio A, Piso 1"
+        status:
+          type: string
+          example: "AVAILABLE"
+        attributes:
+          type: object
+          additionalProperties: true
+          example: { "projector": true, "airConditioning": true }
+        availableSchedules:
+          type: array
+          items:
+            type: object
+        categoryId:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaginatedResourceResponse:
+      type: object
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceResponse"
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 10
+
+    ResourceAvailabilityResponse:
+      type: object
+      properties:
+        available:
+          type: boolean
+          example: true
+        reason:
+          type: string
+          example: "Resource is available for the requested time"
+        priority:
+          type: integer
+          example: 1
+
+    ResourceCategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        resourceId:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        categoryId:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        assignedAt:
+          type: string
+          format: date-time
+        assignedBy:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+
+    CreateProgram:
+      type: object
+      required:
+        - name
+        - code
+      properties:
+        name:
+          type: string
+          example: "Ingeniería de Sistemas"
+        code:
+          type: string
+          example: "ISYS"
+        description:
+          type: string
+          example: "Programa de Ingeniería de Sistemas"
+        facultyId:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+
+    UpdateProgram:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        facultyId:
+          type: string
+        isActive:
+          type: boolean
+
+    ProgramResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        name:
+          type: string
+          example: "Ingeniería de Sistemas"
+        code:
+          type: string
+          example: "ISYS"
+        description:
+          type: string
+          example: "Programa de Ingeniería de Sistemas"
+        facultyId:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateMaintenanceType:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          example: "Mantenimiento Preventivo"
+        type:
+          type: string
+          enum: ["PREVENTIVO", "CORRECTIVO", "EMERGENCIA", "LIMPIEZA"]
+          example: "PREVENTIVO"
+        description:
+          type: string
+          example: "Mantenimiento programado para prevenir fallas"
+        estimatedDuration:
+          type: integer
+          example: 120
+        priority:
+          type: string
+          enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+          example: "MEDIUM"
+
+    UpdateMaintenanceType:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: ["PREVENTIVO", "CORRECTIVO", "EMERGENCIA", "LIMPIEZA"]
+        description:
+          type: string
+        estimatedDuration:
+          type: integer
+        priority:
+          type: string
+          enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        isActive:
+          type: boolean
+
+    MaintenanceTypeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        name:
+          type: string
+          example: "Mantenimiento Preventivo"
+        type:
+          type: string
+          example: "PREVENTIVO"
+        description:
+          type: string
+          example: "Mantenimiento programado para prevenir fallas"
+        estimatedDuration:
+          type: integer
+          example: 120
+        priority:
+          type: string
+          example: "MEDIUM"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ImportPreview:
+      type: object
+      properties:
+        totalRecords:
+          type: integer
+          example: 100
+        validRecords:
+          type: integer
+          example: 95
+        invalidRecords:
+          type: integer
+          example: 5
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              row:
+                type: integer
+              field:
+                type: string
+              message:
+                type: string
+        preview:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    ResourceImportResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"
+        fileName:
+          type: string
+          example: "resources_import.csv"
+        status:
+          type: string
+          enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED", "CANCELLED"]
+          example: "PROCESSING"
+        totalRecords:
+          type: integer
+          example: 100
+        processedRecords:
+          type: integer
+          example: 50
+        successfulRecords:
+          type: integer
+          example: 45
+        failedRecords:
+          type: integer
+          example: 5
+        errors:
+          type: array
+          items:
+            type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        importedBy:
+          type: string
+          example: "64f1a2b3c4d5e6f7g8h9i0j1"

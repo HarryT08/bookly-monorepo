@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <users>
+        <!-- Usuario por defecto -->
+        <default>
+            <password></password>
+            <networks>
+                <ip>::/0</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+        </default>
+
+        <!-- Usuario para SigNoz -->
+        <signoz>
+            <password>signoz123</password>
+            <networks>
+                <ip>::/0</ip>
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+            <access_management>1</access_management>
+            <databases>
+                <database>signoz_traces</database>
+                <database>signoz_metrics</database>
+                <database>signoz_logs</database>
+            </databases>
+        </signoz>
+
+        <!-- Usuario readonly para consultas -->
+        <readonly>
+            <password>readonly123</password>
+            <networks>
+                <ip>::/0</ip>
+            </networks>
+            <profile>readonly</profile>
+            <quota>default</quota>
+        </readonly>
+    </users>
+
+    <profiles>
+        <!-- Perfil por defecto -->
+        <default>
+            <max_memory_usage>10000000000</max_memory_usage>
+            <use_uncompressed_cache>0</use_uncompressed_cache>
+            <load_balancing>random</load_balancing>
+            <max_query_size>268435456</max_query_size>
+        </default>
+
+        <!-- Perfil readonly -->
+        <readonly>
+            <readonly>1</readonly>
+            <max_memory_usage>5000000000</max_memory_usage>
+            <use_uncompressed_cache>0</use_uncompressed_cache>
+            <load_balancing>random</load_balancing>
+            <max_query_size>134217728</max_query_size>
+        </readonly>
+    </profiles>
+
+    <quotas>
+        <!-- Cuota por defecto -->
+        <default>
+            <interval>
+                <duration>3600</duration>
+                <queries>0</queries>
+                <errors>0</errors>
+                <result_rows>0</result_rows>
+                <read_rows>0</read_rows>
+                <execution_time>0</execution_time>
+            </interval>
+        </default>
+    </quotas>
+</clickhouse>

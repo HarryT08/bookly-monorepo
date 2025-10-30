@@ -1,0 +1,1093 @@
+openapi: 3.0.3
+info:
+  title: Bookly Availability Service API
+  version: 1.0.0
+  description: |
+    REST API for Bookly's availability and reservation management system.
+    This service handles reservation scheduling, availability management, calendar integration, and conflict resolution.
+  contact:
+    name: Bookly Development Team
+    email: dev@booklyapp.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/availability
+    description: Development server
+  - url: https://api.booklyapp.com/availability
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Reservation Management
+  /reservations:
+    get:
+      tags:
+        - Reservations
+      summary: Get reservations
+      description: Retrieves reservations with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceId
+          in: query
+          description: Filter by resource ID
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            $ref: "#/components/schemas/ReservationStatus"
+        - name: startDate
+          in: query
+          description: Filter reservations starting from this date
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          description: Filter reservations ending before this date
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+      responses:
+        "200":
+          description: Reservations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReservationDto"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags:
+        - Reservations
+      summary: Create reservation
+      description: Creates a new reservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReservationDto"
+      responses:
+        "201":
+          description: Reservation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /reservations/{id}:
+    get:
+      tags:
+        - Reservations
+      summary: Get reservation by ID
+      description: Retrieves a specific reservation by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reservation retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags:
+        - Reservations
+      summary: Update reservation
+      description: Updates an existing reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReservationDto"
+      responses:
+        "200":
+          description: Reservation updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+    delete:
+      tags:
+        - Reservations
+      summary: Cancel reservation
+      description: Cancels an existing reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for cancellation
+      responses:
+        "200":
+          description: Reservation cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /reservations/{id}/confirm:
+    post:
+      tags:
+        - Reservations
+      summary: Confirm reservation
+      description: Confirms a pending reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reservation confirmed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDto"
+
+  /reservations/{id}/check-in:
+    post:
+      tags:
+        - Reservations
+      summary: Check in to reservation
+      description: Marks the user as checked in to their reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                location:
+                  type: object
+                  description: Location data if available
+      responses:
+        "200":
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDto"
+
+  /reservations/{id}/check-out:
+    post:
+      tags:
+        - Reservations
+      summary: Check out from reservation
+      description: Marks the user as checked out from their reservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Reservation ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Check-out successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationDto"
+
+  # Availability Management
+  /availability:
+    get:
+      tags:
+        - Availability
+      summary: Check availability
+      description: Checks availability for resources within a time range
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceIds
+          in: query
+          description: Comma-separated list of resource IDs
+          schema:
+            type: string
+        - name: startTime
+          in: query
+          required: true
+          description: Start time for availability check
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          required: true
+          description: End time for availability check
+          schema:
+            type: string
+            format: date-time
+        - name: resourceType
+          in: query
+          description: Filter by resource type
+          schema:
+            type: string
+        - name: capacity
+          in: query
+          description: Minimum capacity required
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Availability information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AvailabilitySlotDto"
+                  unavailable:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UnavailabilityDto"
+
+  /availability/search:
+    post:
+      tags:
+        - Availability
+      summary: Advanced availability search
+      description: Performs advanced search for available resources
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilitySearchDto"
+      responses:
+        "200":
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AvailabilityResultDto"
+                  alternatives:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AlternativeSlotDto"
+
+  /availability/calendar:
+    get:
+      tags:
+        - Availability
+      summary: Get calendar view
+      description: Retrieves calendar view of reservations and availability
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceIds
+          in: query
+          description: Comma-separated list of resource IDs
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: true
+          description: Start date for calendar view
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          description: End date for calendar view
+          schema:
+            type: string
+            format: date
+        - name: view
+          in: query
+          description: Calendar view type
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: week
+      responses:
+        "200":
+          description: Calendar data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarViewDto"
+
+  # Recurring Reservations
+  /reservations/recurring:
+    post:
+      tags:
+        - Recurring Reservations
+      summary: Create recurring reservation
+      description: Creates a series of recurring reservations
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRecurringReservationDto"
+      responses:
+        "201":
+          description: Recurring reservations created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  seriesId:
+                    type: string
+                    description: ID of the recurring series
+                  reservations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReservationDto"
+                  conflicts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ConflictDto"
+
+  /reservations/recurring/{seriesId}:
+    get:
+      tags:
+        - Recurring Reservations
+      summary: Get recurring series
+      description: Retrieves all reservations in a recurring series
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: seriesId
+          in: path
+          required: true
+          description: Recurring series ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Recurring series retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  seriesId:
+                    type: string
+                  reservations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReservationDto"
+
+    put:
+      tags:
+        - Recurring Reservations
+      summary: Update recurring series
+      description: Updates all future reservations in a recurring series
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: seriesId
+          in: path
+          required: true
+          description: Recurring series ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRecurringReservationDto"
+      responses:
+        "200":
+          description: Recurring series updated successfully
+
+    delete:
+      tags:
+        - Recurring Reservations
+      summary: Cancel recurring series
+      description: Cancels all future reservations in a recurring series
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: seriesId
+          in: path
+          required: true
+          description: Recurring series ID
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Recurring series cancelled successfully
+
+  # Waitlist Management
+  /waitlist:
+    post:
+      tags:
+        - Waitlist
+      summary: Join waitlist
+      description: Adds user to waitlist for a specific resource and time
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinWaitlistDto"
+      responses:
+        "201":
+          description: Added to waitlist successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistEntryDto"
+
+  /waitlist/{id}:
+    delete:
+      tags:
+        - Waitlist
+      summary: Leave waitlist
+      description: Removes user from waitlist
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Waitlist entry ID
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Removed from waitlist successfully
+
+  /waitlist/my-entries:
+    get:
+      tags:
+        - Waitlist
+      summary: Get my waitlist entries
+      description: Retrieves current user's waitlist entries
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Waitlist entries retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WaitlistEntryDto"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Enums
+    ReservationStatus:
+      type: string
+      enum:
+        - PENDING
+        - CONFIRMED
+        - CHECKED_IN
+        - CHECKED_OUT
+        - CANCELLED
+        - NO_SHOW
+        - COMPLETED
+
+    RecurrencePattern:
+      type: string
+      enum:
+        - DAILY
+        - WEEKLY
+        - MONTHLY
+        - YEARLY
+
+    ConflictType:
+      type: string
+      enum:
+        - TIME_OVERLAP
+        - RESOURCE_UNAVAILABLE
+        - CAPACITY_EXCEEDED
+        - MAINTENANCE_SCHEDULED
+
+    # DTOs
+    ReservationDto:
+      type: object
+      properties:
+        id:
+          type: string
+        resourceId:
+          type: string
+        userId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/ReservationStatus"
+        purpose:
+          type: string
+        attendees:
+          type: integer
+        notes:
+          type: string
+        seriesId:
+          type: string
+          description: ID of recurring series if applicable
+        checkInTime:
+          type: string
+          format: date-time
+        checkOutTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        resource:
+          type: object
+          description: Basic resource information
+        user:
+          type: object
+          description: Basic user information
+
+    AvailabilitySlotDto:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        isAvailable:
+          type: boolean
+        capacity:
+          type: integer
+        availableCapacity:
+          type: integer
+        restrictions:
+          type: array
+          items:
+            type: string
+
+    UnavailabilityDto:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        type:
+          type: string
+          enum: [RESERVED, MAINTENANCE, BLOCKED, HOLIDAY]
+
+    AvailabilityResultDto:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        resourceName:
+          type: string
+        availableSlots:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilitySlotDto"
+        score:
+          type: number
+          description: Relevance score for the search
+
+    AlternativeSlotDto:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        resourceName:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        reason:
+          type: string
+          description: Why this is suggested as alternative
+
+    CalendarViewDto:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              start:
+                type: string
+                format: date-time
+              end:
+                type: string
+                format: date-time
+              resourceId:
+                type: string
+              type:
+                type: string
+                enum: [RESERVATION, MAINTENANCE, BLOCKED, HOLIDAY]
+              status:
+                type: string
+
+    WaitlistEntryDto:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        resourceId:
+          type: string
+        desiredStartTime:
+          type: string
+          format: date-time
+        desiredEndTime:
+          type: string
+          format: date-time
+        position:
+          type: integer
+        estimatedWaitTime:
+          type: integer
+          description: Estimated wait time in minutes
+        createdAt:
+          type: string
+          format: date-time
+
+    ConflictDto:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          $ref: "#/components/schemas/ConflictType"
+        description:
+          type: string
+        reservationId:
+          type: string
+        conflictingReservationId:
+          type: string
+        resourceId:
+          type: string
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+
+    # Create DTOs
+    CreateReservationDto:
+      type: object
+      required:
+        - resourceId
+        - startTime
+        - endTime
+      properties:
+        resourceId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+        attendees:
+          type: integer
+          minimum: 1
+        notes:
+          type: string
+        sendNotifications:
+          type: boolean
+          default: true
+
+    UpdateReservationDto:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+        attendees:
+          type: integer
+          minimum: 1
+        notes:
+          type: string
+
+    CreateRecurringReservationDto:
+      type: object
+      required:
+        - resourceId
+        - startTime
+        - endTime
+        - pattern
+        - endDate
+      properties:
+        resourceId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+        attendees:
+          type: integer
+        pattern:
+          $ref: "#/components/schemas/RecurrencePattern"
+        interval:
+          type: integer
+          description: Interval for recurrence (e.g., every 2 weeks)
+          default: 1
+        endDate:
+          type: string
+          format: date
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Days of week for weekly pattern (0=Sunday)
+        excludeDates:
+          type: array
+          items:
+            type: string
+            format: date
+          description: Dates to exclude from the series
+
+    UpdateRecurringReservationDto:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+        attendees:
+          type: integer
+        updateFutureOnly:
+          type: boolean
+          default: true
+          description: Whether to update only future reservations
+
+    AvailabilitySearchDto:
+      type: object
+      required:
+        - startTime
+        - endTime
+        - duration
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Required duration in minutes
+        resourceTypes:
+          type: array
+          items:
+            type: string
+        capacity:
+          type: integer
+          description: Minimum capacity required
+        features:
+          type: array
+          items:
+            type: string
+          description: Required features/equipment
+        location:
+          type: string
+        programId:
+          type: string
+        categoryId:
+          type: string
+        flexible:
+          type: boolean
+          default: false
+          description: Whether to allow flexible timing
+
+    JoinWaitlistDto:
+      type: object
+      required:
+        - resourceId
+        - desiredStartTime
+        - desiredEndTime
+      properties:
+        resourceId:
+          type: string
+        desiredStartTime:
+          type: string
+          format: date-time
+        desiredEndTime:
+          type: string
+          format: date-time
+        maxWaitTime:
+          type: integer
+          description: Maximum wait time in minutes
+        autoAccept:
+          type: boolean
+          default: false
+          description: Whether to automatically accept when available
+
+    # Error Response
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        type:
+          type: string
+          description: Error type
+        exception_code:
+          type: string
+          description: Internal exception code
+        http_code:
+          type: integer
+          description: HTTP status code
+        http_exception:
+          type: string
+          description: HTTP exception name
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "AVAIL-0400"
+            message: "Invalid request parameters"
+            type: "error"
+            exception_code: "A-01"
+            http_code: 400
+            http_exception: "BadRequestException"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "AVAIL-0401"
+            message: "Authentication required"
+            type: "error"
+            exception_code: "A-02"
+            http_code: 401
+            http_exception: "UnauthorizedException"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "AVAIL-0403"
+            message: "Insufficient permissions"
+            type: "error"
+            exception_code: "A-03"
+            http_code: 403
+            http_exception: "ForbiddenException"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "AVAIL-0404"
+            message: "Resource not found"
+            type: "error"
+            exception_code: "A-04"
+            http_code: 404
+            http_exception: "NotFoundException"
+
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "AVAIL-0409"
+            message: "Reservation conflict detected"
+            type: "error"
+            exception_code: "A-05"
+            http_code: 409
+            http_exception: "ConflictException"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            code: "AVAIL-0500"
+            message: "Internal server error"
+            type: "error"
+            exception_code: "A-06"
+            http_code: 500
+            http_exception: "InternalServerErrorException"

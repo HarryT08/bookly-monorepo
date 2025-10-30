@@ -1,0 +1,61 @@
+# Dockerfile para Resources Service
+FROM node:22-alpine AS base
+
+RUN apk add --no-cache python3 make g++ libc6-compat dumb-init
+RUN addgroup -g 1001 -S bookly && adduser -S bookly -u 1001
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3002
+ENV SERVICE_NAME=resources-service
+
+COPY package*.json ./
+
+RUN npm ci
+
+COPY prisma/schema.prisma ./prisma/schema.prisma
+
+COPY . .
+
+RUN npx prisma generate
+
+# No build stage - usando ts-node
+
+FROM node:22-alpine AS production
+RUN apk add --no-cache dumb-init su-exec
+RUN addgroup -g 1001 -S bookly && adduser -S bookly -u 1001
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3002
+ENV SERVICE_NAME=resources-service
+
+COPY --from=base --chown=bookly:bookly /app/src ./src
+COPY --from=base --chown=bookly:bookly /app/node_modules ./node_modules
+COPY --from=base --chown=bookly:bookly /app/package.json ./
+COPY --from=base --chown=bookly:bookly /app/prisma ./prisma
+COPY --from=base --chown=bookly:bookly /app/tsconfig.json ./
+COPY --from=base --chown=bookly:bookly /app/nest-cli.json ./
+
+# Crear entrypoint script inline
+RUN cat > /usr/local/bin/docker-entrypoint.sh <<'EOF'
+#!/bin/sh
+set -e
+mkdir -p /app/logs /app/uploads /app/templates /app/documents /app/exports
+chown -R bookly:bookly /app/logs 2>/dev/null || true
+chown -R bookly:bookly /app/uploads 2>/dev/null || true
+chown -R bookly:bookly /app/templates 2>/dev/null || true
+chown -R bookly:bookly /app/documents 2>/dev/null || true
+chown -R bookly:bookly /app/exports 2>/dev/null || true
+exec dumb-init su-exec bookly "$@"
+EOF
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+EXPOSE 3002
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:3002/health || exit 1
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "-r", "ts-node/register", "-r", "tsconfig-paths/register", "src/apps/resources-service/main.ts"]

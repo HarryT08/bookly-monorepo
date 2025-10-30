@@ -1,0 +1,734 @@
+{
+  "info": {
+    "name": "Bookly Availability Service - Comprehensive Reassignment",
+    "description": "Complete Postman collection for all Reassignment Management endpoints\n\nThis collection covers all reassignment functionality:\n- Create and manage reassignment requests\n- Find equivalent resources and validate requests\n- Auto-processing and bulk operations\n- Analytics and success prediction\n- User history and configuration optimization\n\nEnvironment Variables Required:\n- {{baseUrl}} - Base URL for the availability service (e.g., http://localhost:3000/availability)\n- {{authToken}} - JWT Bearer token for authentication\n- {{adminToken}} - JWT Bearer token for admin operations\n- {{testResourceId}} - Resource ID for testing\n- {{testUserId}} - User ID for testing\n- {{testReservationId}} - Reservation ID for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "reassignment-comprehensive",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({",
+          "  key: 'Content-Type',",
+          "  value: 'application/json'",
+          "});",
+          "",
+          "// Generate test data if not set",
+          "if (!pm.environment.get('testResourceId')) {",
+          "  pm.environment.set('testResourceId', 'resource-test-' + Date.now());",
+          "}",
+          "if (!pm.environment.get('testUserId')) {",
+          "  pm.environment.set('testUserId', 'user-test-' + Date.now());",
+          "}",
+          "if (!pm.environment.get('testReservationId')) {",
+          "  pm.environment.set('testReservationId', 'reservation-test-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/availability",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Core Reassignment Operations",
+      "item": [
+        {
+          "name": "Create Reassignment Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalReservationId\": \"{{testReservationId}}\",\n  \"reason\": \"Original room has technical issues\",\n  \"preferredResourceIds\": [\"{{testResourceId}}\"],\n  \"flexibleTiming\": true,\n  \"maxTimeDeviation\": 60,\n  \"priority\": \"HIGH\",\n  \"requiredFeatures\": [\"PROJECTOR\", \"WHITEBOARD\"],\n  \"minCapacity\": 20,\n  \"notes\": \"Need room with presentation capabilities\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment"]
+            },
+            "description": "Creates a new reassignment request for an existing reservation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Reassignment request created', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('status');",
+                  "  pm.expect(responseJson).to.have.property('originalReservationId');",
+                  "  pm.expect(responseJson).to.have.property('createdAt');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.environment.set('reassignmentRequestId', responseJson.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Reassignment Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reassignment?page=1&limit=10&status=PENDING&priority=HIGH&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "priority",
+                  "value": "HIGH",
+                  "description": "Filter by priority"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt",
+                  "description": "Sort field"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc",
+                  "description": "Sort order"
+                }
+              ]
+            },
+            "description": "Retrieves reassignment requests with filtering, pagination, and sorting"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination info', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('requests');",
+                  "  pm.expect(responseJson).to.have.property('total');",
+                  "  pm.expect(responseJson).to.have.property('page');",
+                  "  pm.expect(responseJson).to.have.property('limit');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Reassignment Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/{{reassignmentRequestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "{{reassignmentRequestId}}"]
+            },
+            "description": "Retrieves a specific reassignment request by ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Request has all required fields', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('id');",
+                  "  pm.expect(responseJson).to.have.property('originalReservationId');",
+                  "  pm.expect(responseJson).to.have.property('status');",
+                  "  pm.expect(responseJson).to.have.property('reason');",
+                  "  pm.expect(responseJson).to.have.property('createdAt');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Reassignment Request",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Found alternative solution\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/{{reassignmentRequestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "{{reassignmentRequestId}}"]
+            },
+            "description": "Cancels a reassignment request with optional reason"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Response and Processing",
+      "item": [
+        {
+          "name": "Respond to Reassignment Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"ACCEPT\",\n  \"proposedResourceId\": \"{{testResourceId}}\",\n  \"proposedStartTime\": \"2024-01-16T10:00:00Z\",\n  \"proposedEndTime\": \"2024-01-16T11:00:00Z\",\n  \"adminNotes\": \"Alternative room with better facilities\",\n  \"notifyUser\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/{{reassignmentRequestId}}/respond",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "{{reassignmentRequestId}}", "respond"]
+            },
+            "description": "Responds to a reassignment request with acceptance or rejection (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response processed successfully', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('success');",
+                  "  pm.expect(responseJson).to.have.property('newReservationId');",
+                  "  pm.expect(responseJson).to.have.property('updatedStatus');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auto-Process Reassignment Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useAI\": true,\n  \"maxAlternatives\": 5,\n  \"prioritizeFeatures\": true,\n  \"allowTimeAdjustment\": true,\n  \"notifyUser\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/{{reassignmentRequestId}}/auto-process",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "{{reassignmentRequestId}}", "auto-process"]
+            },
+            "description": "Automatically processes a reassignment request using AI algorithms (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Auto-processing results', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('processed');",
+                  "  pm.expect(responseJson).to.have.property('alternatives');",
+                  "  pm.expect(responseJson).to.have.property('confidence');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Resource Discovery",
+      "item": [
+        {
+          "name": "Find Equivalent Resources",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalResourceId\": \"{{testResourceId}}\",\n  \"startTime\": \"2024-01-16T09:00:00Z\",\n  \"endTime\": \"2024-01-16T10:00:00Z\",\n  \"requiredFeatures\": [\"PROJECTOR\", \"WHITEBOARD\"],\n  \"minCapacity\": 15,\n  \"maxDistance\": 500,\n  \"includePartialMatches\": true,\n  \"sortBy\": \"SIMILARITY\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/find-equivalent",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "find-equivalent"]
+            },
+            "description": "Finds equivalent or similar resources for reassignment"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Equivalent resources found', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('resources');",
+                  "  pm.expect(responseJson).to.have.property('totalFound');",
+                  "  pm.expect(responseJson.resources).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each resource has similarity score', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.resources.length > 0) {",
+                  "    responseJson.resources.forEach(resource => {",
+                  "      pm.expect(resource).to.have.property('id');",
+                  "      pm.expect(resource).to.have.property('similarityScore');",
+                  "      pm.expect(resource).to.have.property('availableSlots');",
+                  "    });",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Reassignment Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalReservationId\": \"{{testReservationId}}\",\n  \"targetResourceId\": \"{{testResourceId}}\",\n  \"proposedStartTime\": \"2024-01-16T10:00:00Z\",\n  \"proposedEndTime\": \"2024-01-16T11:00:00Z\",\n  \"checkConflicts\": true,\n  \"validateFeatures\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "validate"]
+            },
+            "description": "Validates if a reassignment request is feasible"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Validation result returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('isValid');",
+                  "  pm.expect(responseJson).to.have.property('conflicts');",
+                  "  pm.expect(responseJson).to.have.property('warnings');",
+                  "  pm.expect(responseJson).to.have.property('recommendations');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytics and Insights",
+      "item": [
+        {
+          "name": "Get Reassignment Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/analytics?period=monthly&resourceType=CLASSROOM&includeSuccessRate=true&includeTrends=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "monthly",
+                  "description": "Analysis period"
+                },
+                {
+                  "key": "resourceType",
+                  "value": "CLASSROOM",
+                  "description": "Filter by resource type"
+                },
+                {
+                  "key": "includeSuccessRate",
+                  "value": "true",
+                  "description": "Include success rate metrics"
+                },
+                {
+                  "key": "includeTrends",
+                  "value": "true",
+                  "description": "Include trend analysis"
+                }
+              ]
+            },
+            "description": "Retrieves comprehensive reassignment analytics (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Analytics data returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('totalRequests');",
+                  "  pm.expect(responseJson).to.have.property('successRate');",
+                  "  pm.expect(responseJson).to.have.property('averageProcessingTime');",
+                  "  pm.expect(responseJson).to.have.property('commonReasons');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Predict Reassignment Success",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalResourceId\": \"{{testResourceId}}\",\n  \"targetResourceId\": \"alternative-resource-id\",\n  \"timeSlot\": {\n    \"startTime\": \"2024-01-16T10:00:00Z\",\n    \"endTime\": \"2024-01-16T11:00:00Z\"\n  },\n  \"requiredFeatures\": [\"PROJECTOR\"],\n  \"userProfile\": {\n    \"role\": \"PROFESSOR\",\n    \"department\": \"COMPUTER_SCIENCE\",\n    \"previousReassignments\": 3\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/predict-success",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "predict-success"]
+            },
+            "description": "Predicts the success probability of a reassignment request using ML models (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Prediction results returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('successProbability');",
+                  "  pm.expect(responseJson).to.have.property('confidence');",
+                  "  pm.expect(responseJson).to.have.property('factors');",
+                  "  pm.expect(responseJson).to.have.property('recommendations');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations and History",
+      "item": [
+        {
+          "name": "Bulk Process Reassignment Requests",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestIds\": [\"{{reassignmentRequestId}}\"],\n  \"action\": \"AUTO_PROCESS\",\n  \"criteria\": {\n    \"maxProcessingTime\": 300,\n    \"prioritizeHighPriority\": true,\n    \"useAI\": true,\n    \"notifyUsers\": true\n  },\n  \"batchSize\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/bulk-process",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "bulk-process"]
+            },
+            "description": "Processes multiple reassignment requests in bulk (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Bulk processing results', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('processedCount');",
+                  "  pm.expect(responseJson).to.have.property('successfulCount');",
+                  "  pm.expect(responseJson).to.have.property('failedCount');",
+                  "  pm.expect(responseJson).to.have.property('results');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Reassignment History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/user/{{testUserId}}/history?page=1&limit=20&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "user", "{{testUserId}}", "history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01",
+                  "description": "Start date filter"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31",
+                  "description": "End date filter"
+                }
+              ]
+            },
+            "description": "Retrieves reassignment history for a specific user"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('History data returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('history');",
+                  "  pm.expect(responseJson).to.have.property('total');",
+                  "  pm.expect(responseJson).to.have.property('summary');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Optimize Reassignment Configuration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analysisPeriod\": \"LAST_3_MONTHS\",\n  \"optimizationGoals\": [\"REDUCE_PROCESSING_TIME\", \"INCREASE_SUCCESS_RATE\"],\n  \"includeUserFeedback\": true,\n  \"generateRecommendations\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reassignment/optimize-config",
+              "host": ["{{baseUrl}}"],
+              "path": ["reassignment", "optimize-config"]
+            },
+            "description": "Analyzes reassignment patterns and optimizes system configuration (Admin only)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Optimization results returned', function () {",
+                  "  const responseJson = pm.response.json();",
+                  "  pm.expect(responseJson).to.have.property('currentMetrics');",
+                  "  pm.expect(responseJson).to.have.property('recommendations');",
+                  "  pm.expect(responseJson).to.have.property('projectedImprovements');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

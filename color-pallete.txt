@@ -1,0 +1,50 @@
+Paleta de Colores Vibrante y Profesional para Bookly
+Esta paleta combina tonos vivos con una base institucional para lograr una interfaz moderna, llamativa y funcional, sin perder la elegancia y la coherencia visual necesaria para un entorno universitario.
+
+Aplicación por Modo
+Modo Claro
+En el modo claro, el fondo principal será un gris muy suave (#F9FAFB) para mantener una sensación limpia y ligera.
+El texto primario se mostrará en un gris casi negro (#111827) para asegurar máxima legibilidad, mientras que el texto secundario utilizará un gris medio (#6B7280) para descripciones y etiquetas menos relevantes.
+
+Los elementos interactivos, como botones, enlaces y pestañas, utilizarán un azul eléctrico (#2563EB) como color principal. Para acentos y métricas clave se empleará un turquesa brillante (#14B8A6), dando un toque fresco y tecnológico.
+
+Los estados del sistema se representarán con colores vivos: verde brillante (#22C55E) para éxito, naranja vivo (#F97316) para advertencias y rojo vivo (#EF4444) para errores críticos.
+
+Las sombras y bordes usarán un gris claro (#E5E7EB) para separar componentes de forma sutil.
+
+Modo Oscuro
+En el modo oscuro, el fondo principal será un gris antracita (#1E293B) para reducir el brillo y fatiga visual.
+El texto primario pasará a un blanco suave (#F9FAFB) para alto contraste, y el texto secundario a un gris claro azulado (#CBD5E1) para información secundaria.
+
+Los elementos interactivos mantendrán el azul eléctrico, pero en un tono ligeramente más claro (#3B82F6) para resaltar sobre el fondo oscuro.
+Los elementos destacados como métricas o datos clave usarán un turquesa más luminoso (#2DD4BF).
+
+Los estados se mantendrán consistentes con el modo claro, pero con fondos adaptados: verde brillante (#22C55E) sobre verde oscuro, naranja vivo (#F97316) sobre naranja profundo y rojo vivo (#EF4444) sobre rojo oscuro.
+
+Los bordes y separadores se harán con un gris oscuro (#334155), conservando la jerarquía visual sin recargar.
+
+Guía Rápida de Uso por Componente
+Botones
+Botón primario: azul eléctrico (#2563EB) con texto blanco y un tono más oscuro en hover (#1D4ED8). Se usa para las acciones principales como “Reservar” o “Guardar”.
+
+Botón secundario: turquesa brillante (#14B8A6) con texto blanco y un tono más oscuro en hover (#0D9488). Ideal para acciones complementarias.
+
+Botón deshabilitado: gris claro (#E5E7EB) con texto gris apagado (#9CA3AF) en modo claro, y tonos de baja opacidad en modo oscuro.
+
+Tarjetas y Bloques de Información
+En modo claro, las tarjetas tendrán fondo blanco con bordes grises claros. En modo oscuro, el fondo será gris antracita con bordes gris oscuro.
+Se utilizan para mostrar detalles de recursos, reservas o información relevante, combinando texto primario y secundario con íconos de acento.
+
+Header y Barra de Navegación
+Utilizan azul eléctrico como fondo, con texto e íconos blancos. Se pueden incluir acentos en turquesa para resaltar el logo o enlaces activos.
+
+Alertas y Estados
+Éxito: fondo verde suave con texto verde oscuro e ícono de confirmación.
+
+Advertencia: fondo amarillo suave con texto naranja oscuro e ícono de advertencia.
+
+Error: fondo rojo suave con texto rojo oscuro e ícono de error.
+Estos estilos se mantienen consistentes en ambos modos, adaptando el contraste según el fondo.
+
+Enlaces
+Usan el azul eléctrico como color base, con subrayado o cambio de tono al pasar el cursor, manteniendo accesibilidad según WCAG.

@@ -1,0 +1,6 @@
+export enum ApprovalActionType {
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  COMMENTED = 'COMMENTED',
+  DELEGATED = 'DELEGATED'
+}
