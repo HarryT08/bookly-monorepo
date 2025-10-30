@@ -1,8 +1,6 @@
 # Docker Compose Master para Bookly Backend
 # Orquestación completa de todos los servicios
 
-version: '3.8'
-
 # Extender configuraciones específicas
 include:
   - docker-compose.base.yml

@@ -30,6 +30,24 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.client;
   }
 
+  /**
+   * Check if Redis client is healthy and ready for operations
+   * @returns true if client is ready or open
+   */
+  isHealthy(): boolean {
+    return this.client.isReady || this.client.isOpen;
+  }
+
+  /**
+   * Get current connection state
+   * @returns 'ready', 'open', or 'disconnected'
+   */
+  getConnectionState(): string {
+    if (this.client.isReady) return 'ready';
+    if (this.client.isOpen) return 'open';
+    return 'disconnected';
+  }
+
   zRemRangeByScore(key: string, min: number, max: number) {
     return this.client.zRemRangeByScore(key, min, max);
   }
@@ -59,6 +77,23 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       socket: {
         host: this.configService.get('REDIS_HOST'),
         port: this.configService.get('REDIS_PORT'),
+        // Keep connection alive to prevent disconnections
+        keepAlive: 30000, // 30 seconds
+        // Increase timeouts for GCP environment
+        connectTimeout: 10000, // 10 seconds
+        // More aggressive reconnection strategy
+        reconnectStrategy: (retries) => {
+          if (retries > 20) {
+            this.loggingService.error('Redis reconnection failed after 20 attempts', new Error('Max retries reached'), 'RedisService');
+            return new Error('Max reconnection attempts reached');
+          }
+          // Exponential backoff with jitter
+          const baseDelay = Math.min(retries * 200, 5000);
+          const jitter = Math.random() * 1000;
+          const delay = baseDelay + jitter;
+          this.loggingService.log(`Attempting to reconnect to Redis (attempt ${retries}, delay: ${Math.round(delay)}ms)`, 'RedisService');
+          return delay;
+        },
       },
       password: this.configService.get('REDIS_PASSWORD'),
       database: this.configService.get('REDIS_DB'),
@@ -71,14 +106,30 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client.on('connect', () => {
       this.loggingService.log('✅ Redis connected successfully', 'RedisService');
     });
+
+    this.client.on('reconnecting', () => {
+      this.loggingService.log('🔄 Redis reconnecting...', 'RedisService');
+    });
+
+    this.client.on('ready', () => {
+      this.loggingService.log('✅ Redis client ready', 'RedisService');
+    });
   }
 
   async onModuleInit() {
     try {
+      // Check if already connected
+      if (this.client.isOpen) {
+        this.loggingService.log('Redis client already connected', 'RedisService');
+        return;
+      }
+      
       await this.client.connect();
+      this.loggingService.log('Redis connection established', 'RedisService');
     } catch (error) {
       this.loggingService.error('❌ Failed to connect to Redis', error, 'RedisService');
-      throw error;
+      // Don't throw - allow service to start even if Redis is temporarily unavailable
+      // Health checks will report the issue
     }
   }
 

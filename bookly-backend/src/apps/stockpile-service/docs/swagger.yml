@@ -5,14 +5,14 @@ info:
   description: |
     REST API for Bookly's approval flow, document generation, and notification system.
     This service manages the complete workflow from reservation requests to final approval/rejection with automated document generation and notifications.
-    
+
     ## Features
     - **Approval Flow Management**: Configure multi-level approval workflows
     - **Document Template System**: Create and manage document templates with variable substitution
     - **Notification Templates**: Multi-channel notification system (Email, SMS, In-App, Push)
     - **Check-in/Check-out**: Digital validation system for reservations
     - **Analytics & Reporting**: Comprehensive approval and document generation metrics
-    
+
     ## Architecture
     - Clean Architecture with CQRS pattern
     - Event-driven communication via RabbitMQ
@@ -20,7 +20,7 @@ info:
     - Multi-tenant support with program-based isolation
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -28,7 +28,7 @@ info:
 servers:
   - url: http://localhost:3000/stockpile
     description: Development server
-  - url: https://api.bookly.com/stockpile
+  - url: https://api.booklyapp.com/stockpile
     description: Production server
 
 security:
@@ -70,7 +70,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Approval requests retrieved successfully
           content:
             application/json:
@@ -80,15 +80,15 @@ paths:
                   approvals:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ApprovalRequestDto'
+                      $ref: "#/components/schemas/ApprovalRequestDto"
                   total:
                     type: integer
                   page:
                     type: integer
                   limit:
                     type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /stockpile/approvals/{id}:
     get:
@@ -106,14 +106,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Approval request retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalRequestDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /stockpile/approvals/{id}/approve:
     post:
@@ -144,14 +144,14 @@ paths:
                   type: string
                   description: Optional approval comments
       responses:
-        '200':
+        "200":
           description: Request approved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalRequestDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /stockpile/approvals/{id}/reject:
     post:
@@ -188,14 +188,14 @@ paths:
                   type: string
                   description: Additional comments
       responses:
-        '200':
+        "200":
           description: Request rejected successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalRequestDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /stockpile/approvals/{id}/generate-document:
     post:
@@ -213,14 +213,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Document generated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GeneratedDocumentDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/GeneratedDocumentDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /stockpile/notifications/send:
     post:
@@ -255,7 +255,7 @@ paths:
                   enum: [LOW, NORMAL, HIGH, URGENT]
                   description: Notification priority
       responses:
-        '200':
+        "200":
           description: Notification sent successfully
           content:
             application/json:
@@ -303,7 +303,7 @@ paths:
                 notes:
                   type: string
       responses:
-        '200':
+        "200":
           description: Check-in completed successfully
           content:
             application/json:
@@ -347,7 +347,7 @@ paths:
                   enum: [GOOD, DAMAGED, NEEDS_CLEANING]
                   description: Resource condition after use
       responses:
-        '200':
+        "200":
           description: Check-out completed successfully
           content:
             application/json:
@@ -489,7 +489,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0400"
             message: "Invalid request parameters"
@@ -502,7 +502,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0401"
             message: "Authentication required"
@@ -515,7 +515,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0403"
             message: "Insufficient permissions for this operation"
@@ -528,7 +528,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0404"
             message: "Requested resource not found"
@@ -541,7 +541,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0500"
             message: "Internal server error occurred"

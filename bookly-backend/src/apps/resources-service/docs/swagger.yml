@@ -4,19 +4,19 @@ info:
   version: 1.0.0
   description: |
     RESTful API for managing physical resources, categories, maintenance, and bulk imports in Bookly.
-    
+
     ## Features
     - **Resource Management**: CRUD operations for rooms, equipment, and facilities
     - **Category Management**: Dynamic categorization system
     - **Maintenance Tracking**: Schedule and track maintenance activities
     - **Bulk Import**: CSV-based resource import functionality
     - **Program Association**: Link resources to academic programs
-    
+
     ## Authentication
     All endpoints require JWT Bearer token authentication with appropriate role permissions.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -24,7 +24,7 @@ info:
 servers:
   - url: http://localhost:3003
     description: Development server
-  - url: https://api.bookly.com/resources
+  - url: https://api.booklyapp.com/resources
     description: Production server
 
 security:
@@ -75,14 +75,14 @@ paths:
             type: string
           description: Filter by location (partial match)
       responses:
-        '200':
+        "200":
           description: Resources retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResourceResponse'
+                  $ref: "#/components/schemas/ResourceResponse"
     post:
       tags: [Resources]
       summary: Create new resource
@@ -92,17 +92,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateResource'
+              $ref: "#/components/schemas/CreateResource"
       responses:
-        '201':
+        "201":
           description: Resource created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceResponse'
-        '400':
+                $ref: "#/components/schemas/ResourceResponse"
+        "400":
           description: Invalid input data
-        '409':
+        "409":
           description: Resource code already exists
 
   /resources/paginated:
@@ -144,12 +144,12 @@ paths:
             type: boolean
           description: Filter by active status
       responses:
-        '200':
+        "200":
           description: Paginated resources retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResourceResponse'
+                $ref: "#/components/schemas/PaginatedResourceResponse"
 
   /resources/search:
     get:
@@ -164,14 +164,14 @@ paths:
             type: string
           description: Search query
       responses:
-        '200':
+        "200":
           description: Search results retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResourceResponse'
+                  $ref: "#/components/schemas/ResourceResponse"
 
   /resources/{id}:
     get:
@@ -186,13 +186,13 @@ paths:
             type: string
           description: Resource ID
       responses:
-        '200':
+        "200":
           description: Resource retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceResponse'
-        '404':
+                $ref: "#/components/schemas/ResourceResponse"
+        "404":
           description: Resource not found
     put:
       tags: [Resources]
@@ -210,17 +210,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateResource'
+              $ref: "#/components/schemas/UpdateResource"
       responses:
-        '200':
+        "200":
           description: Resource updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceResponse'
-        '400':
+                $ref: "#/components/schemas/ResourceResponse"
+        "400":
           description: Invalid input data
-        '404':
+        "404":
           description: Resource not found
     delete:
       tags: [Resources]
@@ -240,11 +240,11 @@ paths:
             default: false
           description: Force hard delete even with relations
       responses:
-        '204':
+        "204":
           description: Resource deleted successfully
-        '400':
+        "400":
           description: Cannot delete resource with active relations
-        '404':
+        "404":
           description: Resource not found
 
   /resources/code/{code}:
@@ -260,13 +260,13 @@ paths:
             type: string
           description: Resource code
       responses:
-        '200':
+        "200":
           description: Resource retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceResponse'
-        '404':
+                $ref: "#/components/schemas/ResourceResponse"
+        "404":
           description: Resource not found
 
   /resources/{id}/availability:
@@ -301,13 +301,13 @@ paths:
             type: integer
           description: Reservation duration in minutes
       responses:
-        '200':
+        "200":
           description: Availability check completed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceAvailabilityResponse'
-        '404':
+                $ref: "#/components/schemas/ResourceAvailabilityResponse"
+        "404":
           description: Resource not found
 
   # Resource Categories Management
@@ -330,15 +330,15 @@ paths:
             type: string
           description: Category ID
       responses:
-        '201':
+        "201":
           description: Category assigned to resource successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceCategoryResponse'
-        '409':
+                $ref: "#/components/schemas/ResourceCategoryResponse"
+        "409":
           description: Resource is already assigned to this category
-        '403':
+        "403":
           description: Insufficient permissions
     delete:
       tags: [Categories]
@@ -358,11 +358,11 @@ paths:
             type: string
           description: Category ID
       responses:
-        '204':
+        "204":
           description: Category removed from resource successfully
-        '404':
+        "404":
           description: Resource is not assigned to this category
-        '403':
+        "403":
           description: Insufficient permissions
 
   /resource-categories/{resourceId}/categories:
@@ -378,14 +378,14 @@ paths:
             type: string
           description: Resource ID
       responses:
-        '200':
+        "200":
           description: Resource categories retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResourceCategoryResponse'
+                  $ref: "#/components/schemas/ResourceCategoryResponse"
     post:
       tags: [Categories]
       summary: Assign multiple categories to resource
@@ -409,17 +409,17 @@ paths:
                   items:
                     type: string
       responses:
-        '201':
+        "201":
           description: Categories assigned to resource successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResourceCategoryResponse'
-        '400':
+                  $ref: "#/components/schemas/ResourceCategoryResponse"
+        "400":
           description: At least one category must be provided
-        '403':
+        "403":
           description: Insufficient permissions
     put:
       tags: [Categories]
@@ -444,17 +444,17 @@ paths:
                   items:
                     type: string
       responses:
-        '200':
+        "200":
           description: Resource categories replaced successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResourceCategoryResponse'
-        '400':
+                  $ref: "#/components/schemas/ResourceCategoryResponse"
+        "400":
           description: At least one category must be provided
-        '403':
+        "403":
           description: Insufficient permissions
     delete:
       tags: [Categories]
@@ -468,9 +468,9 @@ paths:
             type: string
           description: Resource ID
       responses:
-        '204':
+        "204":
           description: All categories removed from resource successfully
-        '403':
+        "403":
           description: Insufficient permissions
 
   # Programs Management
@@ -491,14 +491,14 @@ paths:
             type: string
           description: Search by name or code
       responses:
-        '200':
+        "200":
           description: Programs retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProgramResponse'
+                  $ref: "#/components/schemas/ProgramResponse"
     post:
       tags: [Programs]
       summary: Create new program
@@ -508,17 +508,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateProgram'
+              $ref: "#/components/schemas/CreateProgram"
       responses:
-        '201':
+        "201":
           description: Program created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProgramResponse'
-        '400':
+                $ref: "#/components/schemas/ProgramResponse"
+        "400":
           description: Invalid input data
-        '409':
+        "409":
           description: Program code already exists
 
   /programs/{id}:
@@ -534,13 +534,13 @@ paths:
             type: string
           description: Program ID
       responses:
-        '200':
+        "200":
           description: Program retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProgramResponse'
-        '404':
+                $ref: "#/components/schemas/ProgramResponse"
+        "404":
           description: Program not found
     put:
       tags: [Programs]
@@ -558,17 +558,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateProgram'
+              $ref: "#/components/schemas/UpdateProgram"
       responses:
-        '200':
+        "200":
           description: Program updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProgramResponse'
-        '400':
+                $ref: "#/components/schemas/ProgramResponse"
+        "400":
           description: Invalid input data
-        '404':
+        "404":
           description: Program not found
     delete:
       tags: [Programs]
@@ -582,9 +582,9 @@ paths:
             type: string
           description: Program ID
       responses:
-        '204':
+        "204":
           description: Program deleted successfully
-        '404':
+        "404":
           description: Program not found
 
   # Maintenance Types Management
@@ -600,14 +600,14 @@ paths:
             type: boolean
           description: Filter by active status
       responses:
-        '200':
+        "200":
           description: Maintenance types retrieved successfully
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MaintenanceTypeResponse'
+                  $ref: "#/components/schemas/MaintenanceTypeResponse"
     post:
       tags: [Maintenance]
       summary: Create new maintenance type
@@ -617,17 +617,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateMaintenanceType'
+              $ref: "#/components/schemas/CreateMaintenanceType"
       responses:
-        '201':
+        "201":
           description: Maintenance type created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MaintenanceTypeResponse'
-        '400':
+                $ref: "#/components/schemas/MaintenanceTypeResponse"
+        "400":
           description: Invalid input data
-        '409':
+        "409":
           description: Maintenance type name already exists
 
   /maintenance-types/{id}:
@@ -643,13 +643,13 @@ paths:
             type: string
           description: Maintenance type ID
       responses:
-        '200':
+        "200":
           description: Maintenance type retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MaintenanceTypeResponse'
-        '404':
+                $ref: "#/components/schemas/MaintenanceTypeResponse"
+        "404":
           description: Maintenance type not found
     put:
       tags: [Maintenance]
@@ -667,17 +667,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateMaintenanceType'
+              $ref: "#/components/schemas/UpdateMaintenanceType"
       responses:
-        '200':
+        "200":
           description: Maintenance type updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MaintenanceTypeResponse'
-        '400':
+                $ref: "#/components/schemas/MaintenanceTypeResponse"
+        "400":
           description: Invalid input data
-        '404':
+        "404":
           description: Maintenance type not found
     delete:
       tags: [Maintenance]
@@ -691,9 +691,9 @@ paths:
             type: string
           description: Maintenance type ID
       responses:
-        '204':
+        "204":
           description: Maintenance type deleted successfully
-        '404':
+        "404":
           description: Maintenance type not found
 
   # Resource Import Management
@@ -713,15 +713,15 @@ paths:
                   type: string
                   format: binary
       responses:
-        '200':
+        "200":
           description: CSV preview generated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImportPreview'
-        '400':
+                $ref: "#/components/schemas/ImportPreview"
+        "400":
           description: Invalid CSV file or format
-        '403':
+        "403":
           description: Insufficient permissions
 
   /resource-import/start:
@@ -740,15 +740,15 @@ paths:
                   type: string
                   format: binary
       responses:
-        '202':
+        "202":
           description: Import started successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceImportResponse'
-        '400':
+                $ref: "#/components/schemas/ResourceImportResponse"
+        "400":
           description: Invalid CSV file or validation errors prevent import
-        '403':
+        "403":
           description: Insufficient permissions
 
   /resource-import/{importId}/status:
@@ -764,13 +764,13 @@ paths:
             type: string
           description: Import process ID
       responses:
-        '200':
+        "200":
           description: Import status retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceImportResponse'
-        '404':
+                $ref: "#/components/schemas/ResourceImportResponse"
+        "404":
           description: Import process not found
 
   /resource-import/template:
@@ -779,7 +779,7 @@ paths:
       summary: Download CSV template
       description: Downloads a CSV template file for resource import
       responses:
-        '200':
+        "200":
           description: CSV template downloaded successfully
           content:
             text/csv:
@@ -820,7 +820,7 @@ components:
         attributes:
           type: object
           additionalProperties: true
-          example: {"projector": true, "airConditioning": true}
+          example: { "projector": true, "airConditioning": true }
         availableSchedules:
           type: array
           items:
@@ -884,7 +884,7 @@ components:
         attributes:
           type: object
           additionalProperties: true
-          example: {"projector": true, "airConditioning": true}
+          example: { "projector": true, "airConditioning": true }
         availableSchedules:
           type: array
           items:
@@ -908,7 +908,7 @@ components:
         resources:
           type: array
           items:
-            $ref: '#/components/schemas/ResourceResponse'
+            $ref: "#/components/schemas/ResourceResponse"
         total:
           type: integer
           example: 100

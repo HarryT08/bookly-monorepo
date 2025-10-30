@@ -8,12 +8,20 @@ services:
     container_name: bookly-mongodb-primary
     hostname: mongodb-primary
     restart: unless-stopped
-    command: [
-      "--replSet", "bookly-rs",
-      "--bind_ip_all",
-      "--keyFile", "/opt/keyfile/mongodb-keyfile",
-      "--auth"
-    ]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /opt/keyfile
+        if [ -f /host-keyfile/mongodb-keyfile ]; then
+          cp /host-keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile
+          chmod 400 /opt/keyfile/mongodb-keyfile
+          chown mongodb:mongodb /opt/keyfile/mongodb-keyfile
+        else
+          echo "ERROR: Keyfile no encontrado en /host-keyfile/mongodb-keyfile"
+          exit 1
+        fi
+        exec docker-entrypoint.sh mongod --replSet bookly-rs --bind_ip_all --keyFile /opt/keyfile/mongodb-keyfile --auth
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
@@ -23,7 +31,7 @@ services:
     volumes:
       - mongodb_primary_data:/data/db
       - mongodb_primary_config:/data/configdb
-      - ./mongodb/keyfile:/opt/keyfile:ro
+      - ./mongodb/keyfile:/host-keyfile:ro
       - ./mongodb/init-replica.js:/docker-entrypoint-initdb.d/init-replica.js:ro
     networks:
       - bookly-network
@@ -32,20 +40,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 40s
 
   mongodb-secondary1:
     image: mongo:7.0
     container_name: bookly-mongodb-secondary1
     hostname: mongodb-secondary1
     restart: unless-stopped
-    command: [
-      "--replSet", "bookly-rs",
-      "--bind_ip_all",
-      "--port", "27018",
-      "--keyFile", "/opt/keyfile/mongodb-keyfile",
-      "--auth"
-    ]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /opt/keyfile
+        if [ -f /host-keyfile/mongodb-keyfile ]; then
+          cp /host-keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile
+          chmod 400 /opt/keyfile/mongodb-keyfile
+          chown mongodb:mongodb /opt/keyfile/mongodb-keyfile
+        else
+          echo "ERROR: Keyfile no encontrado en /host-keyfile/mongodb-keyfile"
+          exit 1
+        fi
+        exec docker-entrypoint.sh mongod --replSet bookly-rs --bind_ip_all --port 27018 --keyFile /opt/keyfile/mongodb-keyfile --auth
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
@@ -54,30 +69,47 @@ services:
     volumes:
       - mongodb_secondary1_data:/data/db
       - mongodb_secondary1_config:/data/configdb
-      - ./mongodb/keyfile:/opt/keyfile:ro
+      - ./mongodb/keyfile:/host-keyfile:ro
     networks:
       - bookly-network
     depends_on:
       - mongodb-primary
     healthcheck:
-      test: ["CMD", "mongosh", "--host", "localhost", "--port", "27018", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--host",
+          "localhost",
+          "--port",
+          "27018",
+          "--eval",
+          "db.adminCommand('ping')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 40s
 
   mongodb-secondary2:
     image: mongo:7.0
     container_name: bookly-mongodb-secondary2
     hostname: mongodb-secondary2
     restart: unless-stopped
-    command: [
-      "--replSet", "bookly-rs",
-      "--bind_ip_all",
-      "--port", "27019",
-      "--keyFile", "/opt/keyfile/mongodb-keyfile",
-      "--auth"
-    ]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /opt/keyfile
+        if [ -f /host-keyfile/mongodb-keyfile ]; then
+          cp /host-keyfile/mongodb-keyfile /opt/keyfile/mongodb-keyfile
+          chmod 400 /opt/keyfile/mongodb-keyfile
+          chown mongodb:mongodb /opt/keyfile/mongodb-keyfile
+        else
+          echo "ERROR: Keyfile no encontrado en /host-keyfile/mongodb-keyfile"
+          exit 1
+        fi
+        exec docker-entrypoint.sh mongod --replSet bookly-rs --bind_ip_all --port 27019 --keyFile /opt/keyfile/mongodb-keyfile --auth
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-bookly}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-bookly123}
@@ -86,17 +118,27 @@ services:
     volumes:
       - mongodb_secondary2_data:/data/db
       - mongodb_secondary2_config:/data/configdb
-      - ./mongodb/keyfile:/opt/keyfile:ro
+      - ./mongodb/keyfile:/host-keyfile:ro
     networks:
       - bookly-network
     depends_on:
       - mongodb-primary
     healthcheck:
-      test: ["CMD", "mongosh", "--host", "localhost", "--port", "27019", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--host",
+          "localhost",
+          "--port",
+          "27019",
+          "--eval",
+          "db.adminCommand('ping')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 40s
 
   # Redis para cache y sesiones
   redis:
@@ -105,13 +147,30 @@ services:
     hostname: redis
     restart: unless-stopped
     command: [
-      "redis-server",
-      "--requirepass", "${REDIS_PASSWORD:-bookly123}",
-      "--appendonly", "yes",
-      "--appendfsync", "everysec",
-      "--maxmemory", "512mb",
-      "--maxmemory-policy", "allkeys-lru"
-    ]
+        "redis-server",
+        "--requirepass",
+        "${REDIS_PASSWORD:-bookly123}",
+        "--appendonly",
+        "yes",
+        "--appendfsync",
+        "everysec",
+        "--maxmemory",
+        "512mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+        # TCP keepalive for stable connections
+        "--tcp-keepalive",
+        "60",
+        # Timeout for idle clients (0 = never timeout)
+        "--timeout",
+        "0",
+        # Max number of clients
+        "--maxclients",
+        "10000",
+        # TCP backlog
+        "--tcp-backlog",
+        "511",
+      ]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
     ports:
@@ -137,10 +196,10 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-bookly}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-bookly123}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/bookly}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-bookly}
       RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:-bookly-cookie-secret}
     ports:
-      - "5672:5672"   # AMQP port
+      - "5672:5672" # AMQP port
       - "15672:15672" # Management UI
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
@@ -149,24 +208,32 @@ services:
     networks:
       - bookly-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test:
+        [
+          "CMD-SHELL",
+          "rabbitmq-diagnostics check_port_connectivity && rabbitmq-diagnostics check_running && rabbitmq-diagnostics check_local_alarms",
+        ]
+      interval: 15s
+      timeout: 15s
+      retries: 15
+      start_period: 120s # RabbitMQ needs more time for all boot steps
 
-  # Nginx como reverse proxy y API Gateway
+  # Nginx como reverse proxy y API Gateway con SSL
   nginx:
     image: nginx:1.25-alpine
     container_name: bookly-nginx
     hostname: nginx
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "80:80"
-      - "8080:8080"
+      - "80:80" # HTTP
+      - "443:443" # HTTPS para booklyapp.com
+      - "8080:8080" # Management port
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
       - nginx_logs:/var/log/nginx
     networks:
       - bookly-network
@@ -175,7 +242,15 @@ services:
       - redis
       - rabbitmq
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/health || true",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -186,7 +261,7 @@ services:
     image: mongo:7.0
     container_name: bookly-mongodb-init
     hostname: mongodb-init
-    restart: "no"  # Solo ejecutar una vez
+    restart: "no" # Solo ejecutar una vez
     command: ["/bin/bash", "/scripts/init-replica-auto.sh"]
     volumes:
       - ./mongodb/init-replica-auto.sh:/scripts/init-replica-auto.sh:ro

@@ -58,6 +58,215 @@ dev-clean: ## Limpiar servicios de desarrollo
 	@echo "🧹 Limpiando servicios de desarrollo..."
 	@$(DOCKER_SCRIPT) clean
 
+dev-fix-mongo: ## Fix del keyfile de MongoDB y reiniciar
+	@echo "🔧 Aplicando fix de MongoDB keyfile..."
+	@chmod +x scripts/fix-mongodb-keyfile.sh
+	@bash scripts/fix-mongodb-keyfile.sh
+	@echo "🔄 Reiniciando MongoDB..."
+	@docker compose -f docker-compose.base.yml restart mongodb-primary mongodb-secondary1 mongodb-secondary2
+	@echo "✅ Fix aplicado. Verifica logs con: make logs s=mongodb-primary"
+
+dev-fix-rabbitmq: ## Fix de RabbitMQ - Recarga definiciones y vhost
+	@echo "🐰 Aplicando fix de RabbitMQ..."
+	@echo "⚠️  IMPORTANTE: Esto eliminará el volumen de RabbitMQ"
+	@echo "🛑 Deteniendo RabbitMQ..."
+	@docker compose -f docker-compose.base.yml stop rabbitmq
+	@echo "🗑️  Eliminando volumen de RabbitMQ..."
+	@docker volume rm bookly_rabbitmq_data 2>/dev/null || echo "Volumen no existe"
+	@echo "🚀 Iniciando RabbitMQ con nuevas definiciones..."
+	@docker compose -f docker-compose.base.yml up -d rabbitmq
+	@echo "⏳ Esperando a que RabbitMQ esté listo (60s)..."
+	@sleep 60
+	@echo "✅ RabbitMQ reiniciado con nuevas configuraciones"
+	@echo "🔍 Verificando vhost:"
+	@docker exec bookly-rabbitmq rabbitmqctl list_vhosts
+	@echo "🔍 Verificando permisos:"
+	@docker exec bookly-rabbitmq rabbitmqctl list_permissions -p bookly
+	@echo "✅ Fix completado. Ahora reinicia los microservicios con: make microservices-restart"
+
+# =============================================================================
+# GESTIÓN DE MICROSERVICIOS
+# =============================================================================
+
+microservices: ## Iniciar microservicios (requiere servicios base)
+	@echo "🚀 Iniciando microservicios..."
+	@docker network inspect bookly-network >/dev/null 2>&1 || \
+		(echo "⚠️  Red bookly-network no existe. Iniciando servicios base primero..." && $(MAKE) dev-start)
+	@docker compose -f docker-compose.microservices.yml up -d
+	@echo "✅ Microservicios iniciados"
+	@echo "📊 Ver estado: make status"
+
+microservices-stop: ## Detener microservicios
+	@echo "⏹️  Deteniendo microservicios..."
+	@docker compose -f docker-compose.microservices.yml down
+	@echo "✅ Microservicios detenidos"
+
+microservices-restart: microservices-stop microservices ## Reiniciar microservicios
+
+microservices-logs: ## Ver logs de microservicios
+	@docker compose -f docker-compose.microservices.yml logs -f
+
+dev-full: ## Iniciar servicios base + microservicios (todo en uno)
+	@echo "🚀 Iniciando stack completo (base + microservicios)..."
+	@docker compose -f docker-compose.dev.yml up -d
+	@echo "✅ Stack completo iniciado"
+	@echo "📊 Ver estado: docker ps"
+	@echo "📋 Ver logs: make logs"
+
+dev-full-stop: ## Detener stack completo
+	@echo "⏹️  Deteniendo stack completo..."
+	@docker compose -f docker-compose.dev.yml down
+	@echo "✅ Stack completo detenido"
+
+dev-full-logs: ## Ver logs del stack completo
+	@docker compose -f docker-compose.dev.yml logs -f
+
+dev-full-restart: dev-full-stop dev-full ## Reiniciar stack completo
+
+# =============================================================================
+# GESTIÓN DE SERVICIOS INDIVIDUALES
+# =============================================================================
+
+## Servicios Base
+
+# MongoDB Primary
+mongodb-primary-start: ## Iniciar MongoDB Primary
+	@docker compose -f docker-compose.base.yml up -d mongodb-primary
+
+mongodb-primary-stop: ## Detener MongoDB Primary
+	@docker compose -f docker-compose.base.yml stop mongodb-primary
+
+mongodb-primary-logs: ## Ver logs de MongoDB Primary
+	@docker logs bookly-mongodb-primary -f
+
+mongodb-primary-restart: mongodb-primary-stop mongodb-primary-start ## Reiniciar MongoDB Primary
+
+# Redis
+redis-start: ## Iniciar Redis
+	@docker compose -f docker-compose.base.yml up -d redis
+
+redis-stop: ## Detener Redis
+	@docker compose -f docker-compose.base.yml stop redis
+
+redis-logs: ## Ver logs de Redis
+	@docker logs bookly-redis -f
+
+redis-restart: redis-stop redis-start ## Reiniciar Redis
+
+# RabbitMQ
+rabbitmq-start: ## Iniciar RabbitMQ
+	@docker compose -f docker-compose.base.yml up -d rabbitmq
+
+rabbitmq-stop: ## Detener RabbitMQ
+	@docker compose -f docker-compose.base.yml stop rabbitmq
+
+rabbitmq-logs: ## Ver logs de RabbitMQ
+	@docker logs bookly-rabbitmq -f
+
+rabbitmq-restart: rabbitmq-stop rabbitmq-start ## Reiniciar RabbitMQ
+
+## Microservicios
+
+# API Gateway
+api-gateway-start: ## Iniciar API Gateway
+	@docker compose -f docker-compose.microservices.yml up -d api-gateway
+
+api-gateway-stop: ## Detener API Gateway
+	@docker compose -f docker-compose.microservices.yml stop api-gateway
+
+api-gateway-logs: ## Ver logs de API Gateway
+	@docker logs bookly-api-gateway -f
+
+api-gateway-restart: api-gateway-stop api-gateway-start ## Reiniciar API Gateway
+
+# Auth Service
+auth-start: ## Iniciar Auth Service
+	@docker compose -f docker-compose.microservices.yml up -d auth-service
+
+auth-stop: ## Detener Auth Service
+	@docker compose -f docker-compose.microservices.yml stop auth-service
+
+auth-logs: ## Ver logs de Auth Service
+	@docker logs bookly-auth-service -f
+
+auth-restart: auth-stop auth-start ## Reiniciar Auth Service
+
+# Resources Service
+resources-start: ## Iniciar Resources Service
+	@docker compose -f docker-compose.microservices.yml up -d resources-service
+
+resources-stop: ## Detener Resources Service
+	@docker compose -f docker-compose.microservices.yml stop resources-service
+
+resources-logs: ## Ver logs de Resources Service
+	@docker logs bookly-resources-service -f
+
+resources-restart: resources-stop resources-start ## Reiniciar Resources Service
+
+# Availability Service
+availability-start: ## Iniciar Availability Service
+	@docker compose -f docker-compose.microservices.yml up -d availability-service
+
+availability-stop: ## Detener Availability Service
+	@docker compose -f docker-compose.microservices.yml stop availability-service
+
+availability-logs: ## Ver logs de Availability Service
+	@docker logs bookly-availability-service -f
+
+availability-restart: availability-stop availability-start ## Reiniciar Availability Service
+
+# Stockpile Service
+stockpile-start: ## Iniciar Stockpile Service
+	@docker compose -f docker-compose.microservices.yml up -d stockpile-service
+
+stockpile-stop: ## Detener Stockpile Service
+	@docker compose -f docker-compose.microservices.yml stop stockpile-service
+
+stockpile-logs: ## Ver logs de Stockpile Service
+	@docker logs bookly-stockpile-service -f
+
+stockpile-restart: stockpile-stop stockpile-start ## Reiniciar Stockpile Service
+
+# Reports Service
+reports-start: ## Iniciar Reports Service
+	@docker compose -f docker-compose.microservices.yml up -d reports-service
+
+reports-stop: ## Detener Reports Service
+	@docker compose -f docker-compose.microservices.yml stop reports-service
+
+reports-logs: ## Ver logs de Reports Service
+	@docker logs bookly-reports-service -f
+
+reports-restart: reports-stop reports-start ## Reiniciar Reports Service
+
+# =============================================================================
+# GESTIÓN DE NGINX
+# =============================================================================
+
+nginx-start: ## Iniciar Nginx (verifica microservicios)
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh start
+
+nginx-stop: ## Detener Nginx
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh stop
+
+nginx-restart: ## Reiniciar Nginx
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh restart
+
+nginx-status: ## Ver estado de Nginx y microservicios
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh status
+
+nginx-logs: ## Ver logs de Nginx en tiempo real
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh logs
+
+nginx-errors: ## Buscar errores en logs de Nginx
+	@chmod +x scripts/manage-nginx.sh
+	@bash scripts/manage-nginx.sh errors
+
 # =============================================================================
 # GESTIÓN COMPLETA
 # =============================================================================
@@ -296,3 +505,107 @@ urls: ## Mostrar todas las URLs importantes
 # s = servicio (para shell y exec)
 # c = comando (para exec)
 # force = forzar operación (para clean y reset)
+
+# =============================================================================
+# FIXES Y DIAGNÓSTICO
+# =============================================================================
+
+dev-fix-host-binding: ## Aplicar fix de host binding (localhost → 0.0.0.0)
+	@echo "🔧 Aplicando fix de host binding..."
+	@chmod +x scripts/apply-host-binding-fix.sh
+	@./scripts/apply-host-binding-fix.sh
+
+dev-fix-redis-health: ## Aplicar fix de Redis health check (result: null)
+	@echo "🔧 Aplicando fix de Redis health check..."
+	@chmod +x scripts/apply-redis-health-fix.sh
+	@./scripts/apply-redis-health-fix.sh
+
+dev-fix-redis-stability: ## Aplicar fix de estabilidad Redis (desconexiones frecuentes)
+	@echo "🔧 Aplicando fix de estabilidad Redis..."
+	@chmod +x scripts/apply-redis-stability-fix.sh
+	@./scripts/apply-redis-stability-fix.sh
+
+dev-fix-rabbitmq-boot: ## Aplicar fix de inicialización RabbitMQ (boot steps lentos)
+	@echo "🐰 Aplicando fix de RabbitMQ (boot steps)..."
+	@echo "📋 Paso 1: Rebuilding microservicios..."
+	@docker compose -f docker-compose.microservices.yml build
+	@echo "📋 Paso 2: Recreando RabbitMQ..."
+	@docker compose -p bookly -f docker-compose.base.yml stop rabbitmq
+	@docker rm bookly-rabbitmq || true
+	@docker compose -p bookly -f docker-compose.base.yml up -d rabbitmq
+	@echo "⏳ Esperando 120 segundos para boot steps..."
+	@sleep 120
+	@echo "📋 Paso 3: Reiniciando microservicios..."
+	@docker compose -p bookly -f docker-compose.microservices.yml down
+	@docker compose -p bookly -f docker-compose.microservices.yml up -d
+	@sleep 30
+	@echo "✅ Fix de RabbitMQ aplicado"
+	@echo "🔍 Verificar con: curl -s http://localhost:3001/api/v1/health | jq .info.rabbitmq"
+
+dev-fix-service-ports: ## Aplicar fix de puertos incorrectos (resources:3002, availability:3003)
+	@echo "🔧 Aplicando fix de puertos de microservicios..."
+	@chmod +x scripts/fix-service-ports.sh
+	@./scripts/fix-service-ports.sh
+
+dev-diagnose: ## Diagnóstico completo de microservicios
+	@echo "🔍 Ejecutando diagnóstico..."
+	@chmod +x scripts/check-microservices-logs.sh
+	@./scripts/check-microservices-logs.sh
+
+dev-security-check: ## Ver intentos de ataque (path traversal, etc)
+	@echo "🛡️ Revisando intentos de ataque..."
+	@echo ""
+	@echo "📊 Path Traversal attempts (últimos 50):"
+	@docker logs bookly-api-gateway 2>&1 | grep "Path Traversal" | tail -50 || echo "No attacks detected"
+	@echo ""
+	@echo "📊 IPs más activas en ataques:"
+	@docker logs bookly-api-gateway 2>&1 | grep "Path Traversal" | grep -oP 'ip":\s*"\K[^"]+' | sort | uniq -c | sort -rn | head -10 || echo "No attacks detected"
+	@echo ""
+	@echo "📊 Patrones de ataque más comunes:"
+	@docker logs bookly-api-gateway 2>&1 | grep "Path Traversal" | grep -oP 'url":\s*"\K[^"]+' | sort | uniq -c | sort -rn | head -10 || echo "No attacks detected"
+
+dev-fix-all: dev-fix-mongodb dev-fix-host-binding dev-fix-redis-stability dev-fix-rabbitmq-boot dev-fix-service-ports ## Aplicar todos los fixes
+	@echo "✅ Todos los fixes aplicados"
+
+# =============================================================================
+# SSL PARA QA - booklyapp.com
+# =============================================================================
+
+dev-ssl-generate: ## Generar certificados SSL autofirmados para QA
+	@echo "🔐 Generando certificados SSL para QA..."
+	@chmod +x scripts/generate-ssl-certificates-qa.sh
+	@./scripts/generate-ssl-certificates-qa.sh
+
+dev-ssl-verify: ## Verificar certificados SSL
+	@echo "🔍 Verificando certificados SSL..."
+	@openssl x509 -in nginx/ssl/booklyapp.com.crt -noout -text | grep -A 2 "Subject:"
+	@openssl x509 -in nginx/ssl/booklyapp.com.crt -noout -dates
+	@echo ""
+	@echo "✅ Certificados verificados"
+
+dev-ssl-test: ## Probar conexión HTTPS
+	@echo "🌐 Probando conexión HTTPS a bookly.com..."
+	@curl -k -I https://bookly.com || echo "❌ No se pudo conectar a bookly.com"
+	@echo ""
+	@curl -k -s https://bookly.com/nginx-health || echo "❌ Nginx health check falló"
+
+# =============================================================================
+# GCP LOAD BALANCER
+# =============================================================================
+
+dev-setup-lb: ## Configurar Nginx para GCP Load Balancer
+	@echo "🔧 Configurando Nginx para Load Balancer..."
+	@chmod +x scripts/setup-loadbalancer-nginx.sh
+	@./scripts/setup-loadbalancer-nginx.sh
+
+dev-test-lb: ## Probar configuración con Load Balancer
+	@echo "🧪 Probando configuración con Load Balancer..."
+	@echo ""
+	@echo "📋 Health check local:"
+	@curl -s http://localhost/health || echo "❌ Health check falló"
+	@echo ""
+	@echo "📋 Nginx funcionando:"
+	@docker ps | grep nginx
+	@echo ""
+	@echo "⚠️  Para probar con Load Balancer:"
+	@echo "   curl -I https://booklyapp.com"

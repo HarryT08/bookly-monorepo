@@ -7,7 +7,7 @@ info:
     This service manages the complete workflow from reservation requests to final approval/rejection with automated document generation and notifications.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -15,7 +15,7 @@ info:
 servers:
   - url: http://localhost:3000/stockpile
     description: Development server
-  - url: https://api.bookly.com/stockpile
+  - url: https://api.booklyapp.com/stockpile
     description: Production server
 
 security:
@@ -66,7 +66,7 @@ paths:
             default: 10
             maximum: 100
       responses:
-        '200':
+        "200":
           description: Approval flows retrieved successfully
           content:
             application/json:
@@ -76,17 +76,17 @@ paths:
                   flows:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ApprovalFlowDto'
+                      $ref: "#/components/schemas/ApprovalFlowDto"
                   total:
                     type: integer
                   page:
                     type: integer
                   limit:
                     type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
     post:
       tags:
@@ -100,20 +100,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateApprovalFlowDto'
+              $ref: "#/components/schemas/CreateApprovalFlowDto"
       responses:
-        '201':
+        "201":
           description: Approval flow created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalFlowDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: "#/components/schemas/ApprovalFlowDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /approval-flows/{id}:
     get:
@@ -131,14 +131,14 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Approval flow retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalFlowDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ApprovalFlowDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags:
@@ -159,16 +159,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateApprovalFlowDto'
+              $ref: "#/components/schemas/UpdateApprovalFlowDto"
       responses:
-        '200':
+        "200":
           description: Approval flow updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalFlowDto'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ApprovalFlowDto"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       tags:
@@ -185,10 +185,10 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        "204":
           description: Approval flow deleted successfully
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   # Approval Requests
   /approval-requests:
@@ -204,16 +204,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateApprovalRequestDto'
+              $ref: "#/components/schemas/CreateApprovalRequestDto"
       responses:
-        '201':
+        "201":
           description: Approval request created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalRequestDto'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/ApprovalRequestDto"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   /approval-requests/pending:
     get:
@@ -257,7 +257,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Pending requests retrieved successfully
           content:
             application/json:
@@ -267,7 +267,7 @@ paths:
                   requests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ApprovalRequestDto'
+                      $ref: "#/components/schemas/ApprovalRequestDto"
                   total:
                     type: integer
 
@@ -300,12 +300,12 @@ paths:
                   type: string
                   description: Conditions for approval
       responses:
-        '200':
+        "200":
           description: Request approved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalRequestDto'
+                $ref: "#/components/schemas/ApprovalRequestDto"
 
   /approval-requests/{id}/reject:
     post:
@@ -338,12 +338,12 @@ paths:
                   type: string
                   description: Suggestions for alternative options
       responses:
-        '200':
+        "200":
           description: Request rejected successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalRequestDto'
+                $ref: "#/components/schemas/ApprovalRequestDto"
 
   # Document Templates
   /document-templates:
@@ -369,7 +369,7 @@ paths:
           in: query
           description: Filter by event type
           schema:
-            $ref: '#/components/schemas/DocumentEventType'
+            $ref: "#/components/schemas/DocumentEventType"
         - name: isActive
           in: query
           description: Filter by active status
@@ -388,7 +388,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Document templates retrieved successfully
           content:
             application/json:
@@ -398,7 +398,7 @@ paths:
                   templates:
                     type: array
                     items:
-                      $ref: '#/components/schemas/DocumentTemplateDto'
+                      $ref: "#/components/schemas/DocumentTemplateDto"
                   total:
                     type: integer
 
@@ -414,14 +414,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateDocumentTemplateDto'
+              $ref: "#/components/schemas/CreateDocumentTemplateDto"
       responses:
-        '201':
+        "201":
           description: Document template created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DocumentTemplateDto'
+                $ref: "#/components/schemas/DocumentTemplateDto"
 
   /document-templates/{id}/upload:
     post:
@@ -450,12 +450,12 @@ paths:
                   format: binary
                   description: Word document file (.docx)
       responses:
-        '200':
+        "200":
           description: Template file uploaded successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DocumentTemplateDto'
+                $ref: "#/components/schemas/DocumentTemplateDto"
 
   /document-templates/{id}/generate:
     post:
@@ -477,14 +477,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenerateDocumentDto'
+              $ref: "#/components/schemas/GenerateDocumentDto"
       responses:
-        '200':
+        "200":
           description: Document generated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GeneratedDocumentDto'
+                $ref: "#/components/schemas/GeneratedDocumentDto"
 
   # Notification Templates
   /notification-templates:
@@ -505,7 +505,7 @@ paths:
           in: query
           description: Filter by channel
           schema:
-            $ref: '#/components/schemas/NotificationChannelType'
+            $ref: "#/components/schemas/NotificationChannelType"
         - name: isActive
           in: query
           description: Filter by active status
@@ -524,7 +524,7 @@ paths:
             type: integer
             default: 10
       responses:
-        '200':
+        "200":
           description: Notification templates retrieved successfully
           content:
             application/json:
@@ -534,7 +534,7 @@ paths:
                   templates:
                     type: array
                     items:
-                      $ref: '#/components/schemas/NotificationTemplateDto'
+                      $ref: "#/components/schemas/NotificationTemplateDto"
                   total:
                     type: integer
 
@@ -550,14 +550,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateNotificationTemplateDto'
+              $ref: "#/components/schemas/CreateNotificationTemplateDto"
       responses:
-        '201':
+        "201":
           description: Notification template created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationTemplateDto'
+                $ref: "#/components/schemas/NotificationTemplateDto"
 
   /notifications/send:
     post:
@@ -572,14 +572,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SendNotificationDto'
+              $ref: "#/components/schemas/SendNotificationDto"
       responses:
-        '200':
+        "200":
           description: Notification sent successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SentNotificationDto'
+                $ref: "#/components/schemas/SentNotificationDto"
 
   /notification-configs:
     post:
@@ -594,14 +594,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateNotificationConfigDto'
+              $ref: "#/components/schemas/CreateNotificationConfigDto"
       responses:
-        '201':
+        "201":
           description: Notification configuration created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationConfigDto'
+                $ref: "#/components/schemas/NotificationConfigDto"
 
 components:
   securitySchemes:
@@ -705,7 +705,7 @@ components:
         levels:
           type: array
           items:
-            $ref: '#/components/schemas/ApprovalLevelDto'
+            $ref: "#/components/schemas/ApprovalLevelDto"
 
     ApprovalLevelDto:
       type: object
@@ -753,13 +753,13 @@ components:
         requesterId:
           type: string
         status:
-          $ref: '#/components/schemas/ApprovalStatus'
+          $ref: "#/components/schemas/ApprovalStatus"
         currentLevel:
           type: integer
         reason:
           type: string
         priority:
-          $ref: '#/components/schemas/RequestPriority'
+          $ref: "#/components/schemas/RequestPriority"
         requestedDate:
           type: string
           format: date-time
@@ -795,7 +795,7 @@ components:
         categoryId:
           type: string
         eventType:
-          $ref: '#/components/schemas/DocumentEventType'
+          $ref: "#/components/schemas/DocumentEventType"
         content:
           type: string
         fileName:
@@ -860,7 +860,7 @@ components:
         eventType:
           type: string
         channel:
-          $ref: '#/components/schemas/NotificationChannelType'
+          $ref: "#/components/schemas/NotificationChannelType"
         subject:
           type: string
         content:
@@ -894,9 +894,9 @@ components:
         recipientId:
           type: string
         channel:
-          $ref: '#/components/schemas/NotificationChannelType'
+          $ref: "#/components/schemas/NotificationChannelType"
         status:
-          $ref: '#/components/schemas/NotificationStatus'
+          $ref: "#/components/schemas/NotificationStatus"
         subject:
           type: string
         content:
@@ -947,7 +947,7 @@ components:
         sendDocuments:
           type: boolean
         documentMethod:
-          $ref: '#/components/schemas/DocumentDeliveryMethod'
+          $ref: "#/components/schemas/DocumentDeliveryMethod"
         createdBy:
           type: string
         createdAt:
@@ -1063,7 +1063,7 @@ components:
         reason:
           type: string
         priority:
-          $ref: '#/components/schemas/RequestPriority'
+          $ref: "#/components/schemas/RequestPriority"
           default: NORMAL
         requestedDate:
           type: string
@@ -1087,7 +1087,7 @@ components:
         categoryId:
           type: string
         eventType:
-          $ref: '#/components/schemas/DocumentEventType'
+          $ref: "#/components/schemas/DocumentEventType"
         content:
           type: string
         variables:
@@ -1125,7 +1125,7 @@ components:
         eventType:
           type: string
         channel:
-          $ref: '#/components/schemas/NotificationChannelType'
+          $ref: "#/components/schemas/NotificationChannelType"
         subject:
           type: string
         content:
@@ -1154,7 +1154,7 @@ components:
         recipientId:
           type: string
         channel:
-          $ref: '#/components/schemas/NotificationChannelType'
+          $ref: "#/components/schemas/NotificationChannelType"
         reservationId:
           type: string
         variables:
@@ -1196,7 +1196,7 @@ components:
           type: boolean
           default: false
         documentMethod:
-          $ref: '#/components/schemas/DocumentDeliveryMethod'
+          $ref: "#/components/schemas/DocumentDeliveryMethod"
           default: ATTACHMENT
 
     # Error Response
@@ -1231,7 +1231,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0400"
             message: "Invalid request parameters"
@@ -1245,7 +1245,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0401"
             message: "Authentication required"
@@ -1259,7 +1259,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0403"
             message: "Insufficient permissions"
@@ -1273,7 +1273,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0404"
             message: "Resource not found"
@@ -1287,7 +1287,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0409"
             message: "Resource conflict"
@@ -1301,7 +1301,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
           example:
             code: "STCK-0500"
             message: "Internal server error"

@@ -1,0 +1,11 @@
+# Docker Compose Master para Bookly Backend
+# Orquestación completa de todos los servicios
+
+# Extender configuraciones específicas
+include:
+  - docker-compose.base.yml
+  - docker-compose.microservices.yml
+# Este archivo maestro permite gestionar todo el stack con un solo comando
+# Uso: docker-compose up -d (inicia todo el stack)
+#      docker-compose -f docker-compose.base.yml up -d (solo servicios base)
+#      docker-compose -f docker-compose.microservices.yml up -d (solo microservicios)

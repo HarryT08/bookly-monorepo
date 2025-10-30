@@ -17,8 +17,9 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       SERVICE_NAME: api-gateway
+      SERVICE_HOST: 0.0.0.0
       # Database
-      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@localhost:27017,localhost:27018,localhost:27019/bookly?replicaSet=bookly-rs&authSource=admin}
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       # Redis
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
@@ -46,15 +47,29 @@ services:
       - api_gateway_logs:/app/logs
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
-      - auth-service
-      - resources-service
-      - availability-service
-      - stockpile-service
-      - reports-service
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      resources-service:
+        condition: service_started
+      availability-service:
+        condition: service_started
+      stockpile-service:
+        condition: service_started
+      reports-service:
+        condition: service_started
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,7 +88,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       SERVICE_NAME: auth-service
-      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@localhost:27017,localhost:27018,localhost:27019/bookly?replicaSet=bookly-rs&authSource=admin}
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
@@ -97,7 +113,6 @@ services:
       - auth_service_logs:/app/logs
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -106,7 +121,15 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -125,7 +148,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3002
       SERVICE_NAME: resources-service
-      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@localhost:27017,localhost:27018,localhost:27019/bookly?replicaSet=bookly-rs&authSource=admin}
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
@@ -147,7 +171,6 @@ services:
       - resources_uploads:/app/uploads
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -156,7 +179,15 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3002/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3002/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -175,7 +206,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3003
       SERVICE_NAME: availability-service
-      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@localhost:27017,localhost:27018,localhost:27019/bookly?replicaSet=bookly-rs&authSource=admin}
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
@@ -192,15 +224,14 @@ services:
       # Observability
       SENTRY_DSN: ${SENTRY_DSN:-http://admin@bookly.local:password@sentry-web:9000/1}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
-      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-1536}
-      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-1536}
+      MEMORY_HEAP_THRESHOLD_MB: ${MEMORY_HEAP_THRESHOLD_MB:-3536}
+      MEMORY_RSS_THRESHOLD_MB: ${MEMORY_RSS_THRESHOLD_MB:-3536}
     ports:
       - "3003:3003"
     volumes:
       - availability_service_logs:/app/logs
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -209,7 +240,15 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3003/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3003/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -228,7 +267,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3004
       SERVICE_NAME: stockpile-service
-      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@localhost:27017,localhost:27018,localhost:27019/bookly?replicaSet=bookly-rs&authSource=admin}
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
@@ -260,7 +300,6 @@ services:
       - stockpile_documents:/app/documents
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -269,7 +308,15 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3004/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3004/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -288,7 +335,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3005
       SERVICE_NAME: reports-service
-      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@localhost:27017,localhost:27018,localhost:27019/bookly?replicaSet=bookly-rs&authSource=admin}
+      SERVICE_HOST: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:-mongodb://bookly:bookly123@mongodb-primary:27017,mongodb-secondary1:27017,mongodb-secondary2:27017/bookly?replicaSet=bookly-rs&authSource=admin}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-bookly123}
@@ -309,7 +357,6 @@ services:
       - reports_exports:/app/exports
     networks:
       - bookly-network
-      - bookly-observability
     depends_on:
       mongodb-primary:
         condition: service_healthy
@@ -318,7 +365,15 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3005/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3005/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -346,10 +401,5 @@ volumes:
     driver: local
   reports_exports:
     driver: local
-
-# Redes
-networks:
-  bookly-network:
-    external: true
-  bookly-observability:
-    external: true
+# La red bookly-network es definida en docker-compose.base.yml
+# y automáticamente está disponible para estos servicios

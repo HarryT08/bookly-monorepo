@@ -7,7 +7,7 @@ info:
     This service handles reservation scheduling, availability management, and calendar integration.
   contact:
     name: Bookly Development Team
-    email: dev@bookly.com
+    email: dev@booklyapp.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -20,7 +20,7 @@ servers:
     protocol: amqp
     description: Local RabbitMQ development server
   production:
-    host: rabbitmq.bookly.com:5672
+    host: rabbitmq.booklyapp.com:5672
     protocol: amqp
     description: Production RabbitMQ server
 
@@ -29,79 +29,79 @@ channels:
     description: Channel for reservation management events
     messages:
       reservationCreated:
-        $ref: '#/components/messages/ReservationCreated'
+        $ref: "#/components/messages/ReservationCreated"
       reservationUpdated:
-        $ref: '#/components/messages/ReservationUpdated'
+        $ref: "#/components/messages/ReservationUpdated"
       reservationCancelled:
-        $ref: '#/components/messages/ReservationCancelled'
+        $ref: "#/components/messages/ReservationCancelled"
       reservationConfirmed:
-        $ref: '#/components/messages/ReservationConfirmed'
+        $ref: "#/components/messages/ReservationConfirmed"
       reservationCheckIn:
-        $ref: '#/components/messages/ReservationCheckIn'
+        $ref: "#/components/messages/ReservationCheckIn"
       reservationCheckOut:
-        $ref: '#/components/messages/ReservationCheckOut'
+        $ref: "#/components/messages/ReservationCheckOut"
 
   availability-management:
     description: Channel for availability management events
     messages:
       availabilityUpdated:
-        $ref: '#/components/messages/AvailabilityUpdated'
+        $ref: "#/components/messages/AvailabilityUpdated"
       availabilityBlocked:
-        $ref: '#/components/messages/AvailabilityBlocked'
+        $ref: "#/components/messages/AvailabilityBlocked"
       availabilityUnblocked:
-        $ref: '#/components/messages/AvailabilityUnblocked'
+        $ref: "#/components/messages/AvailabilityUnblocked"
       recurringAvailabilityCreated:
-        $ref: '#/components/messages/RecurringAvailabilityCreated'
+        $ref: "#/components/messages/RecurringAvailabilityCreated"
 
   conflict-management:
     description: Channel for conflict and validation events
     messages:
       reservationConflictDetected:
-        $ref: '#/components/messages/ReservationConflictDetected'
+        $ref: "#/components/messages/ReservationConflictDetected"
       reservationConflictResolved:
-        $ref: '#/components/messages/ReservationConflictResolved'
+        $ref: "#/components/messages/ReservationConflictResolved"
       waitlistPositionChanged:
-        $ref: '#/components/messages/WaitlistPositionChanged'
+        $ref: "#/components/messages/WaitlistPositionChanged"
 
 operations:
   publishReservationCreated:
     action: send
     channel:
-      $ref: '#/channels/reservation-management'
+      $ref: "#/channels/reservation-management"
     messages:
-      - $ref: '#/channels/reservation-management/messages/reservationCreated'
+      - $ref: "#/channels/reservation-management/messages/reservationCreated"
     description: Published when a new reservation is created
 
   publishReservationUpdated:
     action: send
     channel:
-      $ref: '#/channels/reservation-management'
+      $ref: "#/channels/reservation-management"
     messages:
-      - $ref: '#/channels/reservation-management/messages/reservationUpdated'
+      - $ref: "#/channels/reservation-management/messages/reservationUpdated"
     description: Published when a reservation is updated
 
   publishReservationCancelled:
     action: send
     channel:
-      $ref: '#/channels/reservation-management'
+      $ref: "#/channels/reservation-management"
     messages:
-      - $ref: '#/channels/reservation-management/messages/reservationCancelled'
+      - $ref: "#/channels/reservation-management/messages/reservationCancelled"
     description: Published when a reservation is cancelled
 
   publishAvailabilityUpdated:
     action: send
     channel:
-      $ref: '#/channels/availability-management'
+      $ref: "#/channels/availability-management"
     messages:
-      - $ref: '#/channels/availability-management/messages/availabilityUpdated'
+      - $ref: "#/channels/availability-management/messages/availabilityUpdated"
     description: Published when resource availability is updated
 
   publishReservationConflictDetected:
     action: send
     channel:
-      $ref: '#/channels/conflict-management'
+      $ref: "#/channels/conflict-management"
     messages:
-      - $ref: '#/channels/conflict-management/messages/reservationConflictDetected'
+      - $ref: "#/channels/conflict-management/messages/reservationConflictDetected"
     description: Published when a reservation conflict is detected
 
 components:
@@ -112,7 +112,7 @@ components:
       summary: Event published when a new reservation is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCreatedPayload'
+        $ref: "#/components/schemas/ReservationCreatedPayload"
 
     ReservationUpdated:
       name: ReservationUpdated
@@ -120,7 +120,7 @@ components:
       summary: Event published when a reservation is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationUpdatedPayload'
+        $ref: "#/components/schemas/ReservationUpdatedPayload"
 
     ReservationCancelled:
       name: ReservationCancelled
@@ -128,7 +128,7 @@ components:
       summary: Event published when a reservation is cancelled
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCancelledPayload'
+        $ref: "#/components/schemas/ReservationCancelledPayload"
 
     ReservationConfirmed:
       name: ReservationConfirmed
@@ -136,7 +136,7 @@ components:
       summary: Event published when a reservation is confirmed
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationConfirmedPayload'
+        $ref: "#/components/schemas/ReservationConfirmedPayload"
 
     ReservationCheckIn:
       name: ReservationCheckIn
@@ -144,7 +144,7 @@ components:
       summary: Event published when a user checks in to their reservation
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCheckInPayload'
+        $ref: "#/components/schemas/ReservationCheckInPayload"
 
     ReservationCheckOut:
       name: ReservationCheckOut
@@ -152,7 +152,7 @@ components:
       summary: Event published when a user checks out from their reservation
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationCheckOutPayload'
+        $ref: "#/components/schemas/ReservationCheckOutPayload"
 
     AvailabilityUpdated:
       name: AvailabilityUpdated
@@ -160,7 +160,7 @@ components:
       summary: Event published when resource availability is updated
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AvailabilityUpdatedPayload'
+        $ref: "#/components/schemas/AvailabilityUpdatedPayload"
 
     AvailabilityBlocked:
       name: AvailabilityBlocked
@@ -168,7 +168,7 @@ components:
       summary: Event published when resource availability is blocked
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AvailabilityBlockedPayload'
+        $ref: "#/components/schemas/AvailabilityBlockedPayload"
 
     AvailabilityUnblocked:
       name: AvailabilityUnblocked
@@ -176,7 +176,7 @@ components:
       summary: Event published when resource availability is unblocked
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/AvailabilityUnblockedPayload'
+        $ref: "#/components/schemas/AvailabilityUnblockedPayload"
 
     RecurringAvailabilityCreated:
       name: RecurringAvailabilityCreated
@@ -184,7 +184,7 @@ components:
       summary: Event published when recurring availability is created
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/RecurringAvailabilityCreatedPayload'
+        $ref: "#/components/schemas/RecurringAvailabilityCreatedPayload"
 
     ReservationConflictDetected:
       name: ReservationConflictDetected
@@ -192,7 +192,7 @@ components:
       summary: Event published when a reservation conflict is detected
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationConflictDetectedPayload'
+        $ref: "#/components/schemas/ReservationConflictDetectedPayload"
 
     ReservationConflictResolved:
       name: ReservationConflictResolved
@@ -200,7 +200,7 @@ components:
       summary: Event published when a reservation conflict is resolved
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/ReservationConflictResolvedPayload'
+        $ref: "#/components/schemas/ReservationConflictResolvedPayload"
 
     WaitlistPositionChanged:
       name: WaitlistPositionChanged
@@ -208,7 +208,7 @@ components:
       summary: Event published when a user's waitlist position changes
       contentType: application/json
       payload:
-        $ref: '#/components/schemas/WaitlistPositionChangedPayload'
+        $ref: "#/components/schemas/WaitlistPositionChangedPayload"
 
   schemas:
     DomainEvent:
@@ -248,7 +248,7 @@ components:
 
     ReservationCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -290,7 +290,7 @@ components:
 
     ReservationUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -315,7 +315,7 @@ components:
 
     ReservationCancelledPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -345,7 +345,7 @@ components:
 
     ReservationConfirmedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -368,7 +368,7 @@ components:
 
     ReservationCheckInPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -394,7 +394,7 @@ components:
 
     ReservationCheckOutPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -420,7 +420,7 @@ components:
 
     AvailabilityUpdatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -446,7 +446,7 @@ components:
 
     AvailabilityBlockedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -481,7 +481,7 @@ components:
 
     AvailabilityUnblockedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -503,7 +503,7 @@ components:
 
     RecurringAvailabilityCreatedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -535,7 +535,7 @@ components:
 
     ReservationConflictDetectedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -568,7 +568,7 @@ components:
 
     ReservationConflictResolvedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:
@@ -595,7 +595,7 @@ components:
 
     WaitlistPositionChangedPayload:
       allOf:
-        - $ref: '#/components/schemas/DomainEvent'
+        - $ref: "#/components/schemas/DomainEvent"
         - type: object
           properties:
             eventData:

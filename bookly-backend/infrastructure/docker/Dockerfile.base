@@ -23,10 +23,13 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Copiar archivos de configuración de paquetes
-COPY package*.json package-lock.json ./
+COPY package*.json ./
 
 # Instalar dependencias
-RUN npm install
+RUN npm ci
+
+# Copiar schema de Prisma
+COPY prisma/schema.prisma ./prisma/schema.prisma
 
 # Copiar código fuente
 COPY . .

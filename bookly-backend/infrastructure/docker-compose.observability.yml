@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Servicios de observabilidad para Bookly Backend: SigNoz, Sentry
 # Stack completo de monitoreo, logging, tracing y alertas
 
