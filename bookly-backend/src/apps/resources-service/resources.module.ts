@@ -8,6 +8,7 @@ import { ResourcesIncidentReportCategoryService } from "@apps/resources-service/
 import { ResourcesProgramCategoryService } from "@apps/resources-service/application/services/resources-program-category.service";
 import { ResourcesResourceCategoryService } from "@apps/resources-service/application/services/resources-resource-category.service";
 import { ResourcesService } from "@apps/resources-service/application/services/resources.service";
+import { ProgramService } from "@apps/resources-service/application/services/program.service";
 import { CategoryController } from "@apps/resources-service/infrastructure/controllers/category.controller";
 import { MaintenanceTypeController } from "@apps/resources-service/infrastructure/controllers/maintenance-type.controller";
 import { ProgramController } from "@apps/resources-service/infrastructure/controllers/program.controller";
@@ -23,6 +24,8 @@ import { PrismaResourceCategoryRepository } from "@apps/resources-service/infras
 import { PrismaResourceImportRepository } from "@apps/resources-service/infrastructure/repositories/prisma-resource-import.repository";
 import { PrismaResourceResponsibleRepository } from "@apps/resources-service/infrastructure/repositories/prisma-resource-responsible.repository";
 import { PrismaResourceRepository } from "@apps/resources-service/infrastructure/repositories/prisma-resource.repository";
+import { PrismaProgramRepository } from "@apps/resources-service/infrastructure/repositories/prisma-program.repository";
+import { ProgramRepository } from "@apps/resources-service/domain/repositories/program.repository";
 import { CommonModule } from "@libs/common/common.module";
 import { IncidentReportCategoryRepository } from "@libs/common/repositories/incident-report-category.repository";
 import { ProgramCategoryRepository } from "@libs/common/repositories/program-category.repository";
@@ -97,6 +100,14 @@ import { GetCategoryByIdHandler } from "@apps/resources-service/application/hand
 import { GetDefaultCategoriesHandler } from "@apps/resources-service/application/handlers/get-default-categories.handler";
 import { ReactivateCategoryHandler } from "@apps/resources-service/application/handlers/reactivate-category.handler";
 import { UpdateCategoryHandler } from "@apps/resources-service/application/handlers/update-category.handler";
+
+// Program Handlers
+import { 
+  GetProgramHandler, 
+  GetProgramByCodeHandler, 
+  GetProgramsHandler, 
+  GetActiveProgramsHandler 
+} from "@apps/resources-service/application/handlers/get-program.handler";
 
 // Query Handlers
 import {
@@ -202,6 +213,11 @@ const QueryHandlers = [
   GetCategoryByIdHandler,
   GetActiveCategoriesHandler,
   GetDefaultCategoriesHandler,
+  // Program Queries
+  GetProgramHandler,
+  GetProgramByCodeHandler,
+  GetProgramsHandler,
+  GetActiveProgramsHandler,
 ];
 
 /**
@@ -234,6 +250,7 @@ const QueryHandlers = [
   providers: [
     // Services
     ResourcesService,
+    ProgramService,
     ResourceCategoryService,
     ResourcesResourceCategoryService,
     ResourcesProgramCategoryService,
@@ -273,6 +290,10 @@ const QueryHandlers = [
       provide: "ResourceResponsibleRepository",
       useClass: PrismaResourceResponsibleRepository,
     },
+    {
+      provide: "ProgramRepository",
+      useClass: PrismaProgramRepository,
+    },
     // Command Handlers
     ...CommandHandlers,
     // Query Handlers
@@ -285,7 +306,9 @@ const QueryHandlers = [
     "MaintenanceTypeRepository",
     "ResourceImportRepository",
     "ResourceResponsibleRepository",
+    "ProgramRepository",
     ResourcesService,
+    ProgramService,
     ResourceCategoryService,
     MaintenanceTypeService,
     ResourceImportService,

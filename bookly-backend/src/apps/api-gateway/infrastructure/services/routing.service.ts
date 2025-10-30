@@ -517,6 +517,15 @@ export class RoutingService {
       { auth: true }
     );
 
+    // V1 Programs routes
+    this.addVersionedRoute(
+      "GET",
+      this.buildRouteVersion("programs", RESOURCES_URLS.PROGRAMS_ACTIVE),
+      "resources",
+      "v1",
+      { auth: true, cache: true }
+    );
+
     // V1 Availability routes
     this.addVersionedRoute(
       "GET",
