@@ -124,14 +124,16 @@ export class ProgramController {
     type: PaginatedResponseDto,
   })
   async getPrograms(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
     @Query('search') search?: string,
     @Query('isActive') isActive?: boolean,
   ) {
-    const query = new GetProgramsQuery(page, limit, search, isActive);
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    const query = new GetProgramsQuery(pageNum, limitNum, search, isActive);
     const result = await this.queryBus.execute(query);
-    return ResponseUtil.paginated(result.programs, result.total, page, limit, 'Programs retrieved successfully');
+    return ResponseUtil.paginated(result.programs, result.total, pageNum, limitNum, 'Programs retrieved successfully');
   }
 
   /**

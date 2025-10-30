@@ -17,6 +17,7 @@ export const SERVICES = {
   
   // Resources Service (port 3003) via API Gateway  
   RESOURCES: 'resources',
+  PROGRAMS: 'programs',
   
   // Availability Service (port 3002) via API Gateway
   AVAILABILITY: 'availability',

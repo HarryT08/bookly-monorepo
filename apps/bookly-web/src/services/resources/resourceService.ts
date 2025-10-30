@@ -16,6 +16,7 @@ import type {
 
 // Service URLs - mapped to resources-service endpoints via API Gateway
 const RESOURCES_SERVICE = SERVICES.RESOURCES;
+const PROGRAMS_SERVICE = SERVICES.PROGRAMS;
 
 export const resourceService = {
   // Resource CRUD operations
@@ -128,7 +129,7 @@ export const resourceService = {
 
   async getAcademicPrograms(): Promise<AcademicProgram[]> {
     const response = await api.get<AcademicProgram[]>(
-      buildServiceUrl(RESOURCES_SERVICE, 'academic-programs')
+      buildServiceUrl(PROGRAMS_SERVICE, 'active')
     );
     return response.data!;
   },
