@@ -127,8 +127,8 @@ export class ResourcesController {
     summary: 'Get resources with pagination',
     description: 'Retrieves resources with pagination support and optional filtering.'
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10)' })
+  @ApiQuery({ name: 'page', required: false, type: String, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: String, description: 'Items per page (default: 10)' })
   @ApiQuery({ name: 'type', required: false, description: 'Filter by resource type' })
   @ApiQuery({ name: 'status', required: false, description: 'Filter by resource status' })
   @ApiQuery({ name: 'categoryId', required: false, description: 'Filter by category ID' })
@@ -140,8 +140,8 @@ export class ResourcesController {
     type: PaginatedResponseDto
   })
   async findAllPaginated(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
     @Query('type') type?: string,
     @Query('status') status?: string,
     @Query('categoryId') categoryId?: string,
@@ -156,10 +156,12 @@ export class ResourcesController {
       location,
     };
 
-    const query = new GetResourcesWithPaginationQuery(Number(page), Number(limit), filters);
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    const query = new GetResourcesWithPaginationQuery(pageNum, limitNum, filters);
     const result = await this.queryBus.execute(query);
     const responseData = result.resources.map(resource => this.mapToResponseDto(resource));
-    return ResponseUtil.paginated(responseData, result.total, Number(page), Number(limit), 'Resources retrieved successfully');
+    return ResponseUtil.paginated(responseData, result.total, pageNum, limitNum, 'Resources retrieved successfully');
   }
 
   /**

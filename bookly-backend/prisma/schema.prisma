@@ -228,7 +228,7 @@ model Resource {
 
   // Relations
   category     Category?     @relation(fields: [categoryId], references: [id])
-  categoryId   String?       @db.ObjectId
+  categoryId   String?      @db.ObjectId
   program      Program?      @relation(fields: [programId], references: [id]) // HITO 6
   reservations Reservation[]
   maintenance  Maintenance[]

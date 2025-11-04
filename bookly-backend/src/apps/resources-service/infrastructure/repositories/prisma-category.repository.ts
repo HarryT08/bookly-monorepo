@@ -11,9 +11,10 @@ import {
 import { PrismaService } from "@libs/common/services/prisma.service";
 import { EventBusService } from "@libs/event-bus/services/event-bus.service";
 import { Injectable } from "@nestjs/common";
+import { CategoryFilters, CategoryRepository, CategoryRepositoryResponse } from "../../domain/repositories/category.repository";
 
 @Injectable()
-export class PrismaCategoryRepository extends BaseCategoryRepository {
+export class PrismaCategoryRepository implements CategoryRepository {
   createDefaultCategories(): Promise<void> {
     throw new Error("Method not implemented.");
   }
@@ -22,8 +23,70 @@ export class PrismaCategoryRepository extends BaseCategoryRepository {
     protected readonly eventBus: EventBusService,
     protected readonly serviceName: string
   ) {
-    super(serviceName);
   }
+  
+  findActive(): Promise<CategoryEntity[]> {
+    throw new Error("Method not implemented.");
+  }
+
+  findDefaults(service: string): Promise<CategoryEntity[]> {
+    throw new Error("Method not implemented.");
+  }
+
+  findCustom(): Promise<CategoryEntity[]> {
+    throw new Error("Method not implemented.");
+  }
+
+  findWithFilters(filters: CategoryFilters): Promise<CategoryRepositoryResponse> {
+    throw new Error("Method not implemented.");
+  }
+
+  deactivate(id: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  reactivate(id: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  existsByName(name: string): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  
+  findWithPagination(page: number, limit: number, filters?: { isActive?: boolean; isDefault?: boolean; search?: string; }): Promise<{ categories: CategoryEntity[]; total: number; page: number; limit: number; totalPages: number; }> {
+    throw new Error("Method not implemented.");
+  }
+
+  async create(category: CategoryEntity): Promise<CategoryEntity> {
+    return this.save(category);
+  }
+
+  async findByName(name: string): Promise<CategoryEntity | null> {
+    const category = await this.prisma.category.findFirst({
+      where: {
+        name: name,
+        service: this.serviceName,
+      },
+    });
+
+    return category ? this.toDomain(category) : null;
+  }
+
+  async findByNameAndService(
+    name: string,
+    service: string
+  ): Promise<CategoryEntity | null> {
+    const category = await this.prisma.category.findFirst({
+      where: {
+        name: name,
+        service: service,
+      },
+    });
+
+    return category ? this.toDomain(category) : null;
+  }
+
+  
 
   async findById(id: string): Promise<CategoryEntity | null> {
     const category = await this.prisma.category.findFirst({
@@ -51,6 +114,19 @@ export class PrismaCategoryRepository extends BaseCategoryRepository {
     });
 
     return category ? this.toDomain(category) : null;
+  }
+
+  async findByService(service: string): Promise<CategoryEntity[]> {
+    const categories = await this.prisma.category.findMany({
+      where: {
+        service: service,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+    console.log("Categories found by service:", categories);
+    return categories.map(category => this.toDomain(category));
   }
 
   async findAll(filter?: CategoryFilter): Promise<CategoryEntity[]> {
@@ -127,11 +203,11 @@ export class PrismaCategoryRepository extends BaseCategoryRepository {
     return this.toDomain(result);
   }
 
-  async update(category: CategoryEntity): Promise<CategoryEntity> {
+  async update(id: string, category: CategoryEntity): Promise<CategoryEntity> {
     const props = category.toProps();
 
     const result = await this.prisma.category.update({
-      where: { id: props.id! },
+      where: { id },
       data: {
         name: props.name,
         description: props.description,
