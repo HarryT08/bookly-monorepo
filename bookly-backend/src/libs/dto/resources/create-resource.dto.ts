@@ -136,6 +136,11 @@ export class CreateResourceDto {
   @IsString()
   categoryId?: string;
 
+  @ApiPropertyOptional({ description: 'Category IDs' })
+  @IsOptional()
+  @IsString({ each: true })
+  categoryIds?: string[];
+
   @ApiProperty({ description: 'Academic Program ID - Required for resource classification' })
   @IsString()
   programId: string;

@@ -517,12 +517,29 @@ export class RoutingService {
       { auth: true }
     );
 
+    this.addVersionedRoute(
+      'GET',
+      this.buildRouteVersion('resources', RESOURCES_URLS.RESOURCE_PAGINATED),
+      "resources",
+      version,
+      { auth: true, cache: true }
+    );
+
     // V1 Programs routes
     this.addVersionedRoute(
       "GET",
       this.buildRouteVersion("programs", RESOURCES_URLS.PROGRAMS_ACTIVE),
       "resources",
       "v1",
+      { auth: true, cache: true }
+    );
+
+    // V1 categories routes
+    this.addVersionedRoute(
+      "GET",
+      this.buildRouteVersion("categories/resources", RESOURCES_URLS.RESOURCE_CATEGORIES_ACTIVE),
+      "resources",
+      version,
       { auth: true, cache: true }
     );
 

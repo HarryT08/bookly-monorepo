@@ -88,7 +88,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
       type: '',
       capacity: 0,
       location: '',
-      academicProgramId: '',
+      programId: '',
       categoryIds: [],
       attributes: {
         equipment: [],
@@ -123,7 +123,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
           type: resource.type,
           capacity: resource.capacity,
           location: resource.location || '',
-          academicProgramId: resource.academicProgramId || '',
+          programId: resource.programId || '',
           categoryIds: resource.categories.map(c => c.id),
           attributes: {
             equipment: resource.attributes?.equipment || [],
@@ -352,7 +352,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
                 <div>
                   <Select
                     label={t('resources.form.academicProgram')}
-                    {...register('academicProgramId')}
+                    {...register('programId')}
                   >
                     <option value="">{t('resources.form.selectProgram')}</option>
                     {programs.map((program) => (

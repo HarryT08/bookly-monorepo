@@ -18,6 +18,7 @@ export const RESOURCES_URLS = {
   RESOURCE_DISABLE: "/:id/disable",
   RESOURCE_ARCHIVE: "/:id/archive",
   RESOURCE_DETAILS: "/:id/details",
+  RESOURCE_PAGINATED: "/paginated",
 
   // Resource Category Association endpoints
   RESOURCE_CATEGORY_TAG: "Resource Category Association",

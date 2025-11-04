@@ -8,7 +8,7 @@ export interface Resource {
   location?: string;
   isActive: boolean;
   isAvailable: boolean;
-  academicProgramId?: string;
+  programId?: string;
   categories: Category[];
   attributes: ResourceAttributes;
   availability?: ResourceAvailability;
@@ -88,7 +88,7 @@ export interface CreateResourceRequest {
   type: string;
   capacity: number;
   location?: string;
-  academicProgramId?: string;
+  programId?: string;
   categoryIds: string[];
   attributes: ResourceAttributes;
   availability?: Omit<ResourceAvailability, 'id' | 'resourceId'>[];

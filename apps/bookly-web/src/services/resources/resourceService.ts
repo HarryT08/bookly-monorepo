@@ -17,6 +17,7 @@ import type {
 // Service URLs - mapped to resources-service endpoints via API Gateway
 const RESOURCES_SERVICE = SERVICES.RESOURCES;
 const PROGRAMS_SERVICE = SERVICES.PROGRAMS;
+const CATEGORIES_RESOURCE = SERVICES.CATEGORIES;
 
 export const resourceService = {
   // Resource CRUD operations
@@ -109,7 +110,7 @@ export const resourceService = {
   // Categories & Programs  
   async getCategories(): Promise<Category[]> {
     const response = await api.get<Category[]>(
-      buildServiceUrl(RESOURCES_SERVICE, RESOURCES_ENDPOINTS.CATEGORIES)
+      buildServiceUrl(CATEGORIES_RESOURCE, RESOURCES_ENDPOINTS.CATEGORIES_ACTIVE)
     );
     
     if (response.success && response.data) {

@@ -18,6 +18,7 @@ export const SERVICES = {
   // Resources Service (port 3003) via API Gateway  
   RESOURCES: 'resources',
   PROGRAMS: 'programs',
+  CATEGORIES: 'categories',
   
   // Availability Service (port 3002) via API Gateway
   AVAILABILITY: 'availability',
@@ -70,7 +71,7 @@ export const RESOURCES_ENDPOINTS = {
   BULK_DELETE: 'bulk',
   
   // Categories & Programs
-  CATEGORIES: 'resource-categories',
+  CATEGORIES_ACTIVE: 'resources/active',
   PROGRAMS: 'programs', 
   PROGRAMS_ACTIVE: 'programs/active',
   

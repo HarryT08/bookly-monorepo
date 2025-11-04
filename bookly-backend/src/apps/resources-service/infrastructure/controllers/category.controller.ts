@@ -175,8 +175,9 @@ export class CategoryController {
   async getActiveCategories(): Promise<ApiResponseBookly<CategoryEntity[]>> {
     const query = new GetActiveCategoriesQuery();
     const categories = await this.queryBus.execute(query);
+    const resultCategories = categories.map(cat => cat.toDisplay());
     return ResponseUtil.success(
-      categories,
+      resultCategories,
       "Active categories retrieved successfully"
     );
   }
